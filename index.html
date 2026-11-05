@@ -77,7 +77,7 @@ section.mapfull #map{touch-action:none}
 #qBox{margin-top:12px;display:flex;flex-direction:column;gap:10px}
 #qBox[hidden],#tip[hidden]{display:none}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
-@media (min-width:941px){.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain;border-radius:14px}}
+@media (min-width:941px){.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;border-radius:14px;scrollbar-width:thin}}
 .crumbs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.86rem;margin:-2px 0 10px;padding-right:34px;position:relative}
 .crumbs .sep{color:var(--muted)} .crumbs .lnk{font-size:.86rem}
 .sheetx{position:absolute;right:-4px;top:-6px;width:32px;height:32px;border-radius:50%;border:0;background:var(--sunk);color:var(--fg);font-size:1.2rem;line-height:1;cursor:pointer}
@@ -258,6 +258,19 @@ img.adph,img.dealph,img.thb,#tip .tph{background:linear-gradient(90deg,var(--sun
 @media (prefers-reduced-motion:reduce){img.adph,img.dealph,img.thb,#tip .tph{animation:none}}
 .empty{margin:10px 0 0;padding:14px;border:1px dashed var(--line);border-radius:10px;text-align:center;color:var(--muted);font-size:.84rem}
 .avg{margin:-2px 0 10px;font-size:.78rem;color:var(--muted);display:flex;gap:6px;align-items:baseline}.avg::before{content:"Ø";font-weight:800;color:var(--accent)}
+
+/* --- défilement --- */
+html{scroll-padding-top:12px} @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+.panel,section{scroll-margin-top:12px}
+.scrollbox,.scrollbox.tall{max-height:none;overflow-x:auto;overflow-y:hidden}
+@media (max-width:560px){.adt .addv .lbl{display:none}.adt .addv{padding:5px 9px}}
+@media (max-width:560px){.adt{font-size:.76rem}.adt td,.adt th{padding:5px 3px}.adt .thb{width:34px;height:30px}.adt td:not(.r):not(.tcell){white-space:normal;line-height:1.25;hyphens:auto}.adt td.r{font-size:.72rem}.panel{padding:14px}}
+.scrollbox tr.more{display:none}
+.morebtn{display:flex;width:100%;justify-content:center;margin-top:6px;font:inherit;font-size:.8rem;font-weight:700;color:var(--accent);background:var(--sunk);border:0;border-radius:8px;padding:8px;cursor:pointer}
+.morebtn:hover{background:var(--accent-soft)}
+.wheelhint{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;background:rgb(0 0 0 / .45);color:#fff;font-weight:700;font-size:.95rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:4}
+.wheelhint.on{opacity:1}
+@media (max-width:940px){.qdetail .adact{margin:12px max(-14px,calc(-1 * env(safe-area-inset-left,0px) - 14px)) calc(-16px - env(safe-area-inset-bottom,0px));padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
@@ -339,6 +352,7 @@ img.adph,img.dealph,img.thb,#tip .tph{background:linear-gradient(90deg,var(--sun
           <button type="button" id="zFull" aria-pressed="false" aria-label="Plein écran" title="Plein écran (F)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
         <button type="button" class="mapchip" id="mapChip" aria-label="Aller à la fiche de la ville"></button>
+        <div class="wheelhint" id="wheelHint" aria-hidden="true">Cliquez sur la carte ou maintenez Ctrl (⌘ sur Mac) pour zoomer avec la molette</div>
         <div class="maphint" id="mapHint">2 doigts pour déplacer · double-tap pour zoomer</div>
       </div>
       <div class="legend" id="mapLegend"></div>
@@ -765,7 +779,8 @@ function flyTo(bb,pad=1.15){const w=(bb[2]-bb[0])*pad, h=(bb[3]-bb[1])*pad, k=Ma
 function toVB(e){const svg=svgEl(), m=svg.getScreenCTM(); if(!m){const r=svg.getBoundingClientRect(); return [(e.clientX-r.left)*VW/r.width,(e.clientY-r.top)*VH/r.height];} const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return [p.x,p.y];}
 (function bindNav(){
  const svg=svgEl(), tip=document.getElementById("tip"), pts=new Map(); let drag=null, pinch=null, moved=false;
- svg.addEventListener("wheel",e=>{e.preventDefault(); cancelAnimationFrame(anim); const [x,y]=toVB(e); zoomAt(x,y,Math.exp(-e.deltaY*(e.deltaMode?0.05:0.0016)));},{passive:false});
+ let wheelOn=false; svg.addEventListener("pointerdown",()=>{wheelOn=true;}); svg.parentElement.addEventListener("pointerleave",()=>{wheelOn=false;});
+ svg.addEventListener("wheel",e=>{if(!(wheelOn||e.ctrlKey||e.metaKey||document.getElementById("mapSec").classList.contains("mapfull"))){wheelHint(); return;} e.preventDefault(); cancelAnimationFrame(anim); const [x,y]=toVB(e); zoomAt(x,y,Math.exp(-e.deltaY*(e.deltaMode?0.05:0.0016)));},{passive:false});
  const isFull=()=>document.getElementById("mapSec").classList.contains("mapfull");
  let start=null, lastTap=null, hinted=false;
  const hint=()=>{if(hinted) return; hinted=true; const h=document.getElementById("mapHint"); if(!h) return; h.classList.add("flash"); setTimeout(()=>h.classList.remove("flash"),1600);};
@@ -1053,10 +1068,10 @@ function venteBien(ck,a){const t=venteIris(ck,a[1]); return {ville:ck,quartier:t
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.map(a=>({ck,a,r:venteCalc(ck,a)})));
 const isAdded=url=>BIENS.some(b=>b.url===url);
-function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}">+ ${big?"Ajouter à nos biens":"Ajouter"}</button>`;}
+function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}" aria-label="Ajouter à nos biens">+${big?" Ajouter à nos biens":`<span class="lbl"> Ajouter</span>`}</button>`;}
 function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99));
  return `<div class="scrollbox"><table class="adt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
-  return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td>${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono">${String(a[0]).replace(".",",")}</td><td class="r mono">${keur(a[2])}</td><td class="r mono hm">${eur(a[2]/a[0])}</td><td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td style="white-space:nowrap"><a href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
+  return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td>${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono">${String(a[0]).replace(".",",")}</td><td class="r mono">${keur(a[2])}</td><td class="r mono hm">${eur(a[2]/a[0])}</td><td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td style="white-space:nowrap"><a class="hm" href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
  <p class="sub" style="margin:4px 0 0">Prix affichés (frais d'agence en général inclus), relevé du ${ADS.date||"5 novembre 2026"}. Calcul avec notaire, meubles, petits travaux et le loyer du quartier. ⚠ = banque trop juste.</p>`;}
 function ventesLine(t){const A=ADS[t.ck]; if(!A||!A.ventes) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
  const l=A.ventes.filter(a=>a[1]===d); if(!l.length) return `<p class="sub" style="margin:0 0 6px">Aucun studio à vendre en ce moment dans le secteur « ${esc(d)} » sur Bien'ici.</p>`;
@@ -1320,6 +1335,20 @@ addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey) return; const 
 function emptyNote(host,show,txt){if(!host) return; let p=host.querySelector(":scope > .empty"); if(!p){p=document.createElement("p"); p.className="empty"; host.appendChild(p);} p.textContent=txt; p.hidden=!show;}
 const _adFilter=adFilter; adFilter=function(w){_adFilter(w); const n=[...w.querySelectorAll("tbody tr")].filter(tr=>!tr.hidden).length; emptyNote(w,n===0,"Aucune annonce avec ces filtres. Essayez « Tout » ou un autre secteur.");};
 document.getElementById("qSearch").addEventListener("input",function(){const n=[...document.querySelectorAll("#zBody tr")].filter(tr=>!tr.hidden).length, q=document.getElementById("qSearch"); emptyNote(q.closest(".qall"),n===0,`Aucun quartier ne contient « ${q.value} ».`);});
+
+/* ---------- défilement : molette sur la carte, listes repliées ---------- */
+function wheelHint(){const w=document.getElementById("wheelHint"); if(!w) return; w.classList.add("on"); clearTimeout(wheelHint.t); wheelHint.t=setTimeout(()=>w.classList.remove("on"),1100);}
+const CLIPN=8;
+function clipBox(sb){const rows=[...sb.querySelectorAll("tbody tr")], vis=rows.filter(tr=>!tr.hidden), open=sb.dataset.open==="1";
+ vis.forEach((tr,i)=>{const m=!open&&i>=CLIPN&&!tr.classList.contains("sel"); if(tr.classList.contains("more")!==m) tr.classList.toggle("more",m);});
+ rows.filter(tr=>tr.hidden&&tr.classList.contains("more")).forEach(tr=>tr.classList.remove("more"));
+ let b=sb.nextElementSibling; if(!b||!b.classList.contains("morebtn")){b=document.createElement("button"); b.type="button"; b.className="morebtn"; sb.after(b);
+  b.addEventListener("click",()=>{const was=sb.dataset.open==="1"; sb.dataset.open=was?"":"1"; clipBox(sb); if(was) sb.scrollIntoView({block:"nearest"});});}
+ const extra=vis.length-CLIPN, txt=open?"Replier la liste":`Afficher les ${extra} autres`, hide=extra<=0;
+ if(b.textContent!==txt) b.textContent=txt; if(b.hidden!==hide) b.hidden=hide;}
+let clipQ=false; const clipAll=()=>{clipQ=false; document.querySelectorAll(".scrollbox").forEach(clipBox);};
+new MutationObserver(()=>{if(!clipQ){clipQ=true; requestAnimationFrame(clipAll);}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
+clipAll();
 
 fitVH();
 loadLocal();
