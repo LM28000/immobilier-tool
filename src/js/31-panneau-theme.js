@@ -1,3 +1,4 @@
+let LASTUSER=0; ["pointerdown","keydown"].forEach(ev=>addEventListener(ev,()=>{LASTUSER=Date.now();},true));
 /* ---------- panneau de droite : ville / quartier / annonce ---------- */
 const wide=()=>matchMedia("(min-width:941px)").matches;
 function renderSide(){const sd=document.getElementById("qDetail"), det=document.getElementById("detail"); if(!sd) return;
@@ -11,9 +12,10 @@ function renderSide(){const sd=document.getElementById("qDetail"), det=document.
  document.getElementById("qDetailBody").innerHTML=AD?adFiche(AD):qCard(QSEL);
  sd.hidden=false; det.hidden=wide(); document.body.classList.toggle("sheet-on",!wide()||document.getElementById("mapSec").classList.contains("mapfull"));
  sd.scrollTop=0;
- if(!wide()&&!document.getElementById("mapSec").classList.contains("mapfull")&&!renderSide.open){const m=document.querySelector("#mapSec .mapbox").getBoundingClientRect(); if(m.top<0||m.bottom>innerHeight*0.48) scrollBy({top:m.top-8,behavior:"smooth"});}
+ const byUser=Date.now()-LASTUSER<1500; // ne défile jamais tout seul (chargement, relevé, synchronisation)
+ if(byUser&&!wide()&&!document.getElementById("mapSec").classList.contains("mapfull")&&!renderSide.open){const m=document.querySelector("#mapSec .mapbox").getBoundingClientRect(); if(m.top<0||m.bottom>innerHeight*0.48) scrollBy({top:m.top-8,behavior:"smooth"});}
  renderSide.open=true;
- if(wide()){const r=sd.getBoundingClientRect(); if(r.top<0||r.top>innerHeight-120) sd.scrollIntoView({behavior:"smooth",block:"nearest"});}
+ if(byUser&&wide()){const r=sd.getBoundingClientRect(); if(r.top<0||r.top>innerHeight-120) sd.scrollIntoView({behavior:"smooth",block:"nearest"});}
  updateCmpButtons();}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-crumb]"); if(!b) return; e.preventDefault();
  if(b.dataset.crumb==="city"){AD=null; QSEL=null;} else AD=null; draw(); renderQBox();});

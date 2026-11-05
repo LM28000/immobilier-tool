@@ -2,8 +2,8 @@
 <div class="wrap">
   <script>(function(){var t="light";try{t=localStorage.getItem("theme")||"light"}catch(e){}document.documentElement.setAttribute("data-theme",t)})();</script>
   <header>
-    <div class="hrow"><h1>Où acheter notre studio ?</h1><a href="#sources" class="freshpill" id="freshPill" hidden></a><button type="button" class="btn sm" id="installBtn" hidden>Installer l'appli</button><span class="hctl"><span class="seg2 modeseg" id="netSeg" role="group" aria-label="Chiffres affichés"><button type="button" data-net="1">Chiffres nets</button><button type="button" data-net="0">Bruts</button></span><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
-    <p>Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans treize villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour. Détail complet dans le <a href="https://claude.ai/artifact/CYGE62kVytaHFsk8qqUk3c" target="_blank" rel="noopener">simulateur locatif</a>.</p>
+    <div class="hrow"><h1>Où acheter notre studio ?</h1><a href="#sources" class="freshpill" id="freshPill" hidden data-opensrc></a><button type="button" class="btn sm" id="installBtn" hidden>Installer l'appli</button><span class="hctl"><span class="seg2 modeseg" id="netSeg" role="group" aria-label="Chiffres affichés"><button type="button" data-net="1">Chiffres nets</button><button type="button" data-net="0">Bruts</button></span><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
+    <p>Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans treize villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour.</p>
   </header>
 
   <section class="panel" id="shortPanel">
@@ -134,23 +134,49 @@
     </div>
   </section>
 
-  <footer>
-    <p><b>Méthode.</b> Prix = prix moyen des studios vendus × surcote × 22 m², plus notaire, meubles et petits travaux. Loyer = loyer médian des studios ramené à la surface du bien (loyer × (surface / surface de référence)^0,6 : les grands studios se louent moins cher au m²), moins 40 € de charges payées par le locataire. Charges propriétaire identiques partout, sauf la taxe foncière qui suit le taux 2025 de la ville (hors ordures ménagères, payées par le locataire ; le montant réel dépend aussi du logement). Rendement sur 15 ans = rendement annuel de votre mise, revente comprise, après impôts sur les loyers (micro-BIC ou réel, au plus avantageux), CFE, comptable au réel et impôt sur la plus-value, avant frais de vente. Banque : (mensualité + ton prêt étudiant de 486 €) ÷ (2 307 € de salaires + 70 % du loyer). Trajets depuis Laval et Nantes : temps en voiture estimé à partir de la distance (×1,2, 105 km/h de moyenne, surtout autoroute). Depuis Paris : meilleur train direct ou avec une correspondance, approximatif. Lignes de train : grandes lignes, tracé simplifié. Quartiers : contours IRIS, prix RealAdvisor du quartier rapportés au prix des studios de la ville, loyers ajustés de l'écart RealAdvisor (±15 % au plus) ou estimés à partir du prix. Vacance selon l'emplacement : 0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (estimation simple, désactivable). Repères placés à la main, approximatifs. Estimations, pas un conseil financier.</p>
-    <p id="sources"><b>Sources.</b></p>
-    <ul>
-      <li>Prix des studios vendus : <a href="https://immobilier.pappers.fr/prix-immobilier" target="_blank" rel="noopener">Pappers Immobilier, données DVF</a></li>
-      <li>Loyers médians et demande : <a href="https://www.locservice.fr/tensiometre/tensiometre-studio-72181.html" target="_blank" rel="noopener">Tensiomètre LocService</a>, studios et T1, charges comprises</li>
-      <li>Taxe foncière 2025 : <a href="https://habity.fr/ville/le-mans-72/finance" target="_blank" rel="noopener">Habity, d'après le ministère de l'Économie</a></li>
-      <li>Étudiants, rentrée 2023 : <a href="https://www.75secondes.fr/classement/les-villes-avec-le-plus-detudiants-en-france" target="_blank" rel="noopener">75 Secondes</a></li>
-      <li>Population, logements vacants et chômage, 2023 : <a href="https://www.insee.fr/fr/statistiques/1405599?geo=COM-72181" target="_blank" rel="noopener">Insee, comparateur de territoires</a> (Tours, Poitiers, Orléans : <a href="https://www.villesavivre.fr/tours-37261" target="_blank" rel="noopener">Villes à vivre</a>, d'après l'Insee)</li>
-      <li>DPE : <a href="https://data.ademe.fr/datasets/dpe03existant" target="_blank" rel="noopener">ADEME, DPE des logements existants depuis juillet 2021</a> (appartements de 30 m² ou moins)</li>
-      <li>Prix et loyers par quartier : RealAdvisor <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-le-mans" target="_blank" rel="noopener">Le Mans</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/44600-saint-nazaire" target="_blank" rel="noopener">Saint-Nazaire</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-angers" target="_blank" rel="noopener">Angers</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-caen" target="_blank" rel="noopener">Caen</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-orleans" target="_blank" rel="noopener">Orléans</a> (octobre 2026)</li>
-      <li>Contours des quartiers : <a href="https://geoservices.ign.fr/contoursiris" target="_blank" rel="noopener">IRIS de l'INSEE, IGN</a></li>
-      <li>Annonces de location : <a href="https://www.bienici.com/recherche/location/le-mans-72000/appartement/studio" target="_blank" rel="noopener">Bien'ici</a>, relevé quotidien (dernier : <span class="adsdate"></span>)</li>
-      <li>Contours des départements : <a href="https://github.com/gregoiredavid/france-geojson" target="_blank" rel="noopener">france-geojson</a> (données IGN simplifiées)</li>
-    </ul>
-    <div id="freshBox"></div>
-    <p class="sub" id="installTip"><b>Sur téléphone :</b> ouvrez la page GitHub (lm28000.github.io/immobilier-tool) puis, sur iPhone, Partager → « Sur l'écran d'accueil » ; sur Android, le bouton « Installer l'appli » en haut. Elle s'ouvre ensuite hors ligne avec les dernières données.</p>
+  <footer class="foot">
+    <div class="fcols">
+      <section>
+        <h3>Où acheter notre studio ?</h3>
+        <p>Un outil à nous deux pour choisir où acheter un studio meublé à louer : 13 villes de l'Ouest, leurs quartiers, les annonces Bien'ici du jour et nos biens suivis.</p>
+        <p class="fwarn">Ce sont des estimations, pas un conseil financier, fiscal ni bancaire. Vérifiez chaque chiffre (notaire, banque, comptable) avant de signer.</p>
+      </section>
+      <section>
+        <h3>Mises à jour</h3>
+        <ul class="flist">
+          <li>Annonces relevées chaque soir · dernier relevé : <b class="adsdate"></b></li>
+          <li>Villes suivies : Le Mans, Saint-Nazaire, Angers, Caen, Orléans</li>
+          <li><a href="#sources" data-opensrc>Sources et fraîcheur des données</a> <a href="#sources" class="freshpill" id="freshPill2" hidden data-opensrc></a></li>
+          <li>Code : <a href="https://github.com/LM28000/immobilier-tool" target="_blank" rel="noopener">github.com/LM28000/immobilier-tool</a></li>
+        </ul>
+      </section>
+      <section>
+        <h3>Sur téléphone</h3>
+        <p id="installTip">Ouvrez <a href="https://lm28000.github.io/immobilier-tool/" target="_blank" rel="noopener">lm28000.github.io/immobilier-tool</a>, puis sur iPhone : Partager → « Sur l'écran d'accueil » ; sur Android : « Installer l'appli » en haut de la page. Elle s'ouvre ensuite hors ligne avec les dernières données.</p>
+        <h3>Raccourcis (ordinateur)</h3>
+        <p class="kbd"><kbd>←</kbd><kbd>→</kbd> annonces · <kbd>A</kbd> ajouter · <kbd>C</kbd> comparer · <kbd>F</kbd> plein écran · <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> tout voir · <kbd>Échap</kbd> fermer</p>
+      </section>
+    </div>
+    <details class="fdet">
+      <summary>Comment c'est calculé</summary>
+      <dl class="fmeth">
+        <dt>Prix</dt><dd>Prix moyen des studios vendus dans la ville (DVF) × surcote petite surface × surface, ou prix affiché de l'annonce. On ajoute le notaire, les meubles, les petits travaux et la garantie du prêt : c'est le « budget tout compris ».</dd>
+        <dt>Loyer</dt><dd>Loyer médian des studios, ramené à la surface du bien (loyer × (surface ÷ surface de référence)^0,6 : les grands studios se louent moins cher au m²), ajusté selon le quartier (écart RealAdvisor plafonné à ±15 %), moins les charges payées par le locataire.</dd>
+        <dt>Mois vides</dt><dd>0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (désactivable).</dd>
+        <dt>Charges</dt><dd>Copropriété (part propriétaire), assurance PNO et entretien, taxe foncière au taux 2025 de la ville (hors ordures ménagères, payées par le locataire).</dd>
+        <dt>Impôts</dt><dd>Régime le plus avantageux entre micro-BIC (50 % des loyers imposés) et réel (charges, intérêts et amortissements déduits), selon la tranche de chacun et les prélèvements sociaux de 18,6 %. CFE et comptable (au réel) comptés. À la revente : impôt sur la plus-value avec abattements pour durée de détention, amortissements réintégrés.</dd>
+        <dt>Rendement 15 ans</dt><dd>Rendement annuel de l'apport, revente comprise (taux de rendement interne). Brut : avant impôts et frais fiscaux ; net : après. Avant frais de vente.</dd>
+        <dt>Banque</dt><dd>(Mensualité + prêt étudiant) ÷ (salaires + 70 % du loyer). Passe jusqu'à 33 %, limite jusqu'à 35 %.</dd>
+        <dt>Quartiers</dt><dd>Contours IRIS de l'INSEE. Prix RealAdvisor du quartier rapportés au prix des studios de la ville ; loyers ajustés de l'écart RealAdvisor ou estimés à partir du prix.</dd>
+        <dt>Trajets</dt><dd>Depuis Laval et Nantes : temps en voiture estimé depuis la distance (×1,2 à 105 km/h). Depuis Paris : meilleur train direct ou avec une correspondance. Repères et lignes de train approximatifs.</dd>
+        <dt>Annonces</dt><dd>Pages de résultats Bien'ici lues chaque soir comme un visiteur. Une annonce absente deux jours de suite est considérée comme vendue ou retirée.</dd>
+      </dl>
+    </details>
+    <details class="fdet" id="sources">
+      <summary>Sources et fraîcheur des données</summary>
+      <div id="freshBox"></div>
+    </details>
+    <p class="fbot">Où acheter notre studio ? · estimations, pas un conseil · <a href="#" data-top>Haut de page ↑</a></p>
   </footer>
 </div>
 <div class="vpanel" id="visitPanel" hidden role="dialog" aria-modal="true" aria-label="Visite du bien"><div class="vsheet"><button type="button" class="sheetx vclose" aria-label="Fermer">×</button><div id="visitBody"></div></div></div>

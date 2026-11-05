@@ -1,23 +1,26 @@
 /* ---------- fraîcheur des données ---------- */
 // relevé = date à laquelle la donnée a été récupérée ; age = âge maximal avant de la signaler (jours)
 const FRESH=[
- ["Annonces Bien'ici (loyers et ventes)","chaque jour",()=>ADS.iso||"2026-11-05",2],
- ["Taux du crédit","novembre 2026","2026-11-05",60],
- ["Prix des studios vendus (DVF, Pappers)","12 derniers mois","2026-11-04",180],
- ["Loyers médians (LocService)","annonces récentes","2026-11-04",180],
- ["Prix et loyers par quartier (RealAdvisor)","octobre 2026","2026-11-04",180],
- ["DPE des petits appartements (ADEME)","depuis juillet 2021","2026-11-04",180],
- ["Taxe foncière","taux 2025","2026-11-04",365],
- ["Population, logements vides, chômage (Insee)","2023","2026-11-04",365],
- ["Étudiants","rentrée 2023","2026-11-04",365],
- ["Contours des quartiers (IRIS)","2025","2026-11-04",730],
- ["Règles fiscales (LMNP, prélèvements sociaux)","lois de finances 2025-2026","2026-11-05",180]];
-function renderFresh(){const box=document.getElementById("freshBox"), pill=document.getElementById("freshPill"); if(!box) return; const now=new Date(); let stale=0;
- const rows=FRESH.map(([l,per,d,max])=>{const iso=typeof d==="function"?d():d, age=Math.round((now-new Date(iso+"T12:00:00"))/864e5), old=age>max; if(old) stale++;
-  return `<tr><td>${l}</td><td>${per}</td><td class="mono">${new Date(iso+"T12:00:00").toLocaleDateString("fr-FR")}</td><td><span class="pill ${old?"p-warn":"p-ok"}">${old?`à rafraîchir (${age} j)`:"à jour"}</span></td></tr>`;}).join("");
- box.innerHTML=`<p><b>Fraîcheur des données.</b></p><div class="tablewrap"><table class="fresh"><thead><tr><th>Donnée</th><th>Période</th><th>Relevée le</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`;
- pill.hidden=!stale; pill.textContent=`${stale} donnée${stale>1?"s":""} à rafraîchir`;}
+ ["Annonces de location et de vente","<a href=\"https://www.bienici.com/\" target=\"_blank\" rel=\"noopener\">Bien'ici</a>, relevé quotidien","chaque jour",()=>ADS.iso||"2026-11-05",2],
+ ["Taux du crédit","Offres bancaires, profil emprunteur","novembre 2026","2026-11-05",60],
+ ["Prix des studios vendus","<a href=\"https://immobilier.pappers.fr/prix-immobilier\" target=\"_blank\" rel=\"noopener\">Pappers Immobilier</a>, données DVF","12 derniers mois","2026-11-04",180],
+ ["Loyers médians et demande","<a href=\"https://www.locservice.fr/tensiometre/tensiometre-studio-72181.html\" target=\"_blank\" rel=\"noopener\">Tensiomètre LocService</a>, studios et T1","annonces récentes","2026-11-04",180],
+ ["Prix et loyers par quartier","RealAdvisor : <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-le-mans\" target=\"_blank\" rel=\"noopener\">Le Mans</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/44600-saint-nazaire\" target=\"_blank\" rel=\"noopener\">Saint-Nazaire</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-angers\" target=\"_blank\" rel=\"noopener\">Angers</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-caen\" target=\"_blank\" rel=\"noopener\">Caen</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-orleans\" target=\"_blank\" rel=\"noopener\">Orléans</a>","octobre 2026","2026-11-04",180],
+ ["DPE des petits appartements","<a href=\"https://data.ademe.fr/datasets/dpe03existant\" target=\"_blank\" rel=\"noopener\">ADEME</a>, appartements de 30 m² ou moins","depuis juillet 2021","2026-11-04",180],
+ ["Taxe foncière","<a href=\"https://habity.fr/ville/le-mans-72/finance\" target=\"_blank\" rel=\"noopener\">Habity</a>, d'après le ministère de l'Économie","taux 2025","2026-11-04",365],
+ ["Population, logements vides, chômage","<a href=\"https://www.insee.fr/fr/statistiques/1405599?geo=COM-72181\" target=\"_blank\" rel=\"noopener\">Insee</a> (<a href=\"https://www.villesavivre.fr/tours-37261\" target=\"_blank\" rel=\"noopener\">Villes à vivre</a> pour Tours, Poitiers, Orléans)","2023","2026-11-04",365],
+ ["Étudiants","<a href=\"https://www.75secondes.fr/classement/les-villes-avec-le-plus-detudiants-en-france\" target=\"_blank\" rel=\"noopener\">75 Secondes</a>","rentrée 2023","2026-11-04",365],
+ ["Contours des quartiers","<a href=\"https://geoservices.ign.fr/contoursiris\" target=\"_blank\" rel=\"noopener\">IRIS de l'INSEE, IGN</a>","2025","2026-11-04",730],
+ ["Fond de carte","<a href=\"https://github.com/gregoiredavid/france-geojson\" target=\"_blank\" rel=\"noopener\">france-geojson</a> (IGN simplifié)","2024","2026-11-04",730],
+ ["Règles fiscales (LMNP, prélèvements sociaux)","<a href=\"https://www.hagnere-patrimoine.fr/guides-patrimoine/investissement-immobilier/lfss-2026-prelevements-sociaux-186-lmnp-impact-rendement\" target=\"_blank\" rel=\"noopener\">LFSS 2026</a>, <a href=\"https://www.investissement-locatif.com/lmnp-2026.html\" target=\"_blank\" rel=\"noopener\">LMNP 2026</a>","lois de finances 2025-2026","2026-11-05",180]];
+function renderFresh(){const box=document.getElementById("freshBox"); if(!box) return; const now=new Date(); let stale=0;
+ const rows=FRESH.map(([l,src,per,d,max])=>{const iso=typeof d==="function"?d():d, age=Math.round((now-new Date(iso+"T12:00:00"))/864e5), old=age>max; if(old) stale++;
+  return `<tr><td><b>${l}</b><div class="sub" style="margin:0">${src}</div></td><td>${per}</td><td class="mono">${new Date(iso+"T12:00:00").toLocaleDateString("fr-FR")}</td><td><span class="pill ${old?"p-warn":"p-ok"}">${old?`à rafraîchir (${age} j)`:"à jour"}</span></td></tr>`;}).join("");
+ box.innerHTML=`<div class="tablewrap"><table class="fresh"><thead><tr><th>Donnée et source</th><th>Période</th><th>Relevée le</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ ["freshPill","freshPill2"].forEach(id=>{const p=document.getElementById(id); if(!p) return; p.hidden=!stale; p.textContent=`${stale} donnée${stale>1?"s":""} à rafraîchir`;});}
 renderFresh();
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("[data-opensrc],[data-top],#freshPill"); if(!a) return; e.preventDefault();
+ if(a.dataset.top!==undefined){scrollTo({top:0,behavior:"smooth"}); return;} const d=document.getElementById("sources"); d.open=true; d.scrollIntoView({behavior:"smooth",block:"start"});});
 
 /* ---------- appli sur téléphone (version GitHub) ---------- */
 (function(){let ev=null; const b=document.getElementById("installBtn"); if(!b) return;

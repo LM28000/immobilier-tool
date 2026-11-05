@@ -224,8 +224,19 @@ td.r,th.r{text-align:right}
 tbody tr{cursor:pointer} tbody tr:hover{background:var(--sunk)} tbody tr.sel{background:var(--accent-soft)}
 .scorebar{display:inline-block;width:64px;height:8px;border-radius:4px;background:var(--sunk);vertical-align:middle;margin-right:6px;overflow:hidden}
 .scorebar i{display:block;height:100%;background:var(--accent)}
-footer{font-size:.8rem;color:var(--muted);max-width:94ch}
-footer ul{padding-left:18px;margin:6px 0 0}
+footer.foot{margin-top:28px;border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted)}
+.fcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px 28px}
+.fcols h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fg);margin:0 0 6px}
+.fcols p{margin:0 0 10px;line-height:1.5} .fcols h3+p{margin-top:0} .fcols section h3:not(:first-child){margin-top:12px}
+.fwarn{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 10px;font-weight:600}
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;line-height:1.4}
+.kbd kbd{font:600 .74rem/1 ui-monospace,monospace;background:var(--surface);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:2px 5px;margin-right:2px;color:var(--fg)}
+.fdet{margin-top:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.fdet>summary{cursor:pointer;padding:12px 14px;font-weight:700;color:var(--fg)} .fdet[open]>summary{border-bottom:1px solid var(--line)}
+.fdet>:not(summary){padding:12px 14px}
+.fmeth{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0;line-height:1.5} .fmeth dt{font-weight:700;color:var(--fg)} .fmeth dd{margin:0}
+@media (max-width:560px){.fmeth{grid-template-columns:1fr} .fmeth dd{margin-bottom:6px}}
+.fbot{text-align:center;margin:18px 0 8px;font-size:.76rem}
 
 
 /* --- boutons : un seul système --- */
@@ -376,6 +387,39 @@ tr.gsep td{background:var(--bg)!important;color:var(--muted);font-size:.74rem;fo
 .cards.row .bph img{height:90px}
 details.bmore{font-size:.8rem} details.bmore summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.76rem}
 details.bmore[open] summary{margin-bottom:6px}
+/* visite enrichie */
+.vnav{position:sticky;top:-20px;z-index:3;display:flex;gap:4px;flex-wrap:wrap;background:var(--surface);padding:8px 0;margin:0 0 4px;border-bottom:1px solid var(--line)}
+.vnav a{font-size:.76rem;font-weight:700;color:var(--accent);text-decoration:none;background:var(--accent-soft);border-radius:999px;padding:4px 10px}
+.ckgrp{margin:0 0 10px} .ckgrp h4{margin:8px 0 4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ckrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dotted var(--line);font-size:.84rem}
+.ckrow.bad span:first-child{color:var(--bad);font-weight:600}
+.tri{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.tri button{font:inherit;font-size:.74rem;font-weight:700;border:0;background:var(--surface);color:var(--muted);padding:4px 9px;cursor:pointer} .tri button+button{border-left:1px solid var(--line)}
+.tri .t-oui[aria-pressed="true"]{background:var(--ok-soft);color:var(--ok)} .tri .t-non[aria-pressed="true"]{background:var(--bad-soft);color:var(--bad)} .tri .t-q[aria-pressed="true"]{background:var(--warn-soft);color:var(--warn)}
+.verd{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.verd .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.f.inl{flex-direction:row;align-items:center;gap:6px} .f.inl .inp{width:130px}
+.vother{background:var(--sunk);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.84rem}
+.vl{margin:4px 0 0} .vl.plus::before{content:"+ ";color:var(--ok);font-weight:800} .vl.moins::before{content:"− ";color:var(--bad);font-weight:800}
+.vq{margin:0;padding-left:20px;font-size:.86rem;line-height:1.5}
+/* fiche à emporter enrichie */
+.fh{align-items:flex-start} .fph{width:220px;max-width:40%;aspect-ratio:16/10;object-fit:cover;border-radius:8px}
+.fht{flex:1;min-width:220px} .fdate{font-size:.78rem}
+.plv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.plv div{border:1px solid #d6dce4;border-radius:8px;padding:8px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.plv div.tg{border:2px solid #2f47b3;background:#eef1fb} .plv span{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#5b6575;font-weight:700} .plv b{font-size:1.15rem} .plv small{color:#5b6575}
+.fnote{font-size:.76rem;color:#5b6575;margin:6px 0 0}
+.fqgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:start} .fqmap{width:100%;border-radius:8px;border:1px solid #d6dce4}
+@media (max-width:560px){.fqgrid{grid-template-columns:1fr}.fph{max-width:100%;width:100%}}
+.ftab{width:100%;min-width:0;border-collapse:collapse;font-size:.84rem} .ftab th,.ftab td{text-align:left;padding:4px 6px;border-bottom:1px solid #e3e8ee} .ftab th{font-size:.7rem;text-transform:uppercase;color:#5b6575}
+.fiche h3{font-size:.8rem;margin:10px 0 4px;color:#18202c}
+.cb{display:inline-grid;place-items:center;font-size:.7rem;font-weight:800} .cb.ok{color:#1d7a4a;border-color:#1d7a4a} .cb.ko{color:#b4233c;border-color:#b4233c}
+@media print{.fbreak{break-before:page}}
+/* infobulles */
+.tipb{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--muted);font:700 .6rem/1 system-ui,sans-serif;cursor:help;vertical-align:1px;opacity:.75;text-transform:none;letter-spacing:0;flex:none}
+.tipb:hover,.tipb:focus-visible{opacity:1;color:var(--accent)}
+#tipPop{position:fixed;z-index:120;background:var(--fg);color:var(--bg);font-size:.78rem;line-height:1.45;font-weight:500;padding:9px 11px;border-radius:9px;box-shadow:0 8px 24px rgb(0 0 0 / .25);pointer-events:none;text-transform:none;letter-spacing:0}
+@media print{.tipb{display:none}}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
@@ -404,8 +448,8 @@ details.bmore[open] summary{margin-bottom:6px}
 <div class="wrap">
   <script>(function(){var t="light";try{t=localStorage.getItem("theme")||"light"}catch(e){}document.documentElement.setAttribute("data-theme",t)})();</script>
   <header>
-    <div class="hrow"><h1>Où acheter notre studio ?</h1><a href="#sources" class="freshpill" id="freshPill" hidden></a><button type="button" class="btn sm" id="installBtn" hidden>Installer l'appli</button><span class="hctl"><span class="seg2 modeseg" id="netSeg" role="group" aria-label="Chiffres affichés"><button type="button" data-net="1">Chiffres nets</button><button type="button" data-net="0">Bruts</button></span><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
-    <p>Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans treize villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour. Détail complet dans le <a href="https://claude.ai/artifact/CYGE62kVytaHFsk8qqUk3c" target="_blank" rel="noopener">simulateur locatif</a>.</p>
+    <div class="hrow"><h1>Où acheter notre studio ?</h1><a href="#sources" class="freshpill" id="freshPill" hidden data-opensrc></a><button type="button" class="btn sm" id="installBtn" hidden>Installer l'appli</button><span class="hctl"><span class="seg2 modeseg" id="netSeg" role="group" aria-label="Chiffres affichés"><button type="button" data-net="1">Chiffres nets</button><button type="button" data-net="0">Bruts</button></span><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
+    <p>Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans treize villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour.</p>
   </header>
 
   <section class="panel" id="shortPanel">
@@ -536,23 +580,49 @@ details.bmore[open] summary{margin-bottom:6px}
     </div>
   </section>
 
-  <footer>
-    <p><b>Méthode.</b> Prix = prix moyen des studios vendus × surcote × 22 m², plus notaire, meubles et petits travaux. Loyer = loyer médian des studios ramené à la surface du bien (loyer × (surface / surface de référence)^0,6 : les grands studios se louent moins cher au m²), moins 40 € de charges payées par le locataire. Charges propriétaire identiques partout, sauf la taxe foncière qui suit le taux 2025 de la ville (hors ordures ménagères, payées par le locataire ; le montant réel dépend aussi du logement). Rendement sur 15 ans = rendement annuel de votre mise, revente comprise, après impôts sur les loyers (micro-BIC ou réel, au plus avantageux), CFE, comptable au réel et impôt sur la plus-value, avant frais de vente. Banque : (mensualité + ton prêt étudiant de 486 €) ÷ (2 307 € de salaires + 70 % du loyer). Trajets depuis Laval et Nantes : temps en voiture estimé à partir de la distance (×1,2, 105 km/h de moyenne, surtout autoroute). Depuis Paris : meilleur train direct ou avec une correspondance, approximatif. Lignes de train : grandes lignes, tracé simplifié. Quartiers : contours IRIS, prix RealAdvisor du quartier rapportés au prix des studios de la ville, loyers ajustés de l'écart RealAdvisor (±15 % au plus) ou estimés à partir du prix. Vacance selon l'emplacement : 0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (estimation simple, désactivable). Repères placés à la main, approximatifs. Estimations, pas un conseil financier.</p>
-    <p id="sources"><b>Sources.</b></p>
-    <ul>
-      <li>Prix des studios vendus : <a href="https://immobilier.pappers.fr/prix-immobilier" target="_blank" rel="noopener">Pappers Immobilier, données DVF</a></li>
-      <li>Loyers médians et demande : <a href="https://www.locservice.fr/tensiometre/tensiometre-studio-72181.html" target="_blank" rel="noopener">Tensiomètre LocService</a>, studios et T1, charges comprises</li>
-      <li>Taxe foncière 2025 : <a href="https://habity.fr/ville/le-mans-72/finance" target="_blank" rel="noopener">Habity, d'après le ministère de l'Économie</a></li>
-      <li>Étudiants, rentrée 2023 : <a href="https://www.75secondes.fr/classement/les-villes-avec-le-plus-detudiants-en-france" target="_blank" rel="noopener">75 Secondes</a></li>
-      <li>Population, logements vacants et chômage, 2023 : <a href="https://www.insee.fr/fr/statistiques/1405599?geo=COM-72181" target="_blank" rel="noopener">Insee, comparateur de territoires</a> (Tours, Poitiers, Orléans : <a href="https://www.villesavivre.fr/tours-37261" target="_blank" rel="noopener">Villes à vivre</a>, d'après l'Insee)</li>
-      <li>DPE : <a href="https://data.ademe.fr/datasets/dpe03existant" target="_blank" rel="noopener">ADEME, DPE des logements existants depuis juillet 2021</a> (appartements de 30 m² ou moins)</li>
-      <li>Prix et loyers par quartier : RealAdvisor <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-le-mans" target="_blank" rel="noopener">Le Mans</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/44600-saint-nazaire" target="_blank" rel="noopener">Saint-Nazaire</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-angers" target="_blank" rel="noopener">Angers</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-caen" target="_blank" rel="noopener">Caen</a>, <a href="https://realadvisor.fr/fr/prix-m2-immobilier/ville-orleans" target="_blank" rel="noopener">Orléans</a> (octobre 2026)</li>
-      <li>Contours des quartiers : <a href="https://geoservices.ign.fr/contoursiris" target="_blank" rel="noopener">IRIS de l'INSEE, IGN</a></li>
-      <li>Annonces de location : <a href="https://www.bienici.com/recherche/location/le-mans-72000/appartement/studio" target="_blank" rel="noopener">Bien'ici</a>, relevé quotidien (dernier : <span class="adsdate"></span>)</li>
-      <li>Contours des départements : <a href="https://github.com/gregoiredavid/france-geojson" target="_blank" rel="noopener">france-geojson</a> (données IGN simplifiées)</li>
-    </ul>
-    <div id="freshBox"></div>
-    <p class="sub" id="installTip"><b>Sur téléphone :</b> ouvrez la page GitHub (lm28000.github.io/immobilier-tool) puis, sur iPhone, Partager → « Sur l'écran d'accueil » ; sur Android, le bouton « Installer l'appli » en haut. Elle s'ouvre ensuite hors ligne avec les dernières données.</p>
+  <footer class="foot">
+    <div class="fcols">
+      <section>
+        <h3>Où acheter notre studio ?</h3>
+        <p>Un outil à nous deux pour choisir où acheter un studio meublé à louer : 13 villes de l'Ouest, leurs quartiers, les annonces Bien'ici du jour et nos biens suivis.</p>
+        <p class="fwarn">Ce sont des estimations, pas un conseil financier, fiscal ni bancaire. Vérifiez chaque chiffre (notaire, banque, comptable) avant de signer.</p>
+      </section>
+      <section>
+        <h3>Mises à jour</h3>
+        <ul class="flist">
+          <li>Annonces relevées chaque soir · dernier relevé : <b class="adsdate"></b></li>
+          <li>Villes suivies : Le Mans, Saint-Nazaire, Angers, Caen, Orléans</li>
+          <li><a href="#sources" data-opensrc>Sources et fraîcheur des données</a> <a href="#sources" class="freshpill" id="freshPill2" hidden data-opensrc></a></li>
+          <li>Code : <a href="https://github.com/LM28000/immobilier-tool" target="_blank" rel="noopener">github.com/LM28000/immobilier-tool</a></li>
+        </ul>
+      </section>
+      <section>
+        <h3>Sur téléphone</h3>
+        <p id="installTip">Ouvrez <a href="https://lm28000.github.io/immobilier-tool/" target="_blank" rel="noopener">lm28000.github.io/immobilier-tool</a>, puis sur iPhone : Partager → « Sur l'écran d'accueil » ; sur Android : « Installer l'appli » en haut de la page. Elle s'ouvre ensuite hors ligne avec les dernières données.</p>
+        <h3>Raccourcis (ordinateur)</h3>
+        <p class="kbd"><kbd>←</kbd><kbd>→</kbd> annonces · <kbd>A</kbd> ajouter · <kbd>C</kbd> comparer · <kbd>F</kbd> plein écran · <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> tout voir · <kbd>Échap</kbd> fermer</p>
+      </section>
+    </div>
+    <details class="fdet">
+      <summary>Comment c'est calculé</summary>
+      <dl class="fmeth">
+        <dt>Prix</dt><dd>Prix moyen des studios vendus dans la ville (DVF) × surcote petite surface × surface, ou prix affiché de l'annonce. On ajoute le notaire, les meubles, les petits travaux et la garantie du prêt : c'est le « budget tout compris ».</dd>
+        <dt>Loyer</dt><dd>Loyer médian des studios, ramené à la surface du bien (loyer × (surface ÷ surface de référence)^0,6 : les grands studios se louent moins cher au m²), ajusté selon le quartier (écart RealAdvisor plafonné à ±15 %), moins les charges payées par le locataire.</dd>
+        <dt>Mois vides</dt><dd>0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (désactivable).</dd>
+        <dt>Charges</dt><dd>Copropriété (part propriétaire), assurance PNO et entretien, taxe foncière au taux 2025 de la ville (hors ordures ménagères, payées par le locataire).</dd>
+        <dt>Impôts</dt><dd>Régime le plus avantageux entre micro-BIC (50 % des loyers imposés) et réel (charges, intérêts et amortissements déduits), selon la tranche de chacun et les prélèvements sociaux de 18,6 %. CFE et comptable (au réel) comptés. À la revente : impôt sur la plus-value avec abattements pour durée de détention, amortissements réintégrés.</dd>
+        <dt>Rendement 15 ans</dt><dd>Rendement annuel de l'apport, revente comprise (taux de rendement interne). Brut : avant impôts et frais fiscaux ; net : après. Avant frais de vente.</dd>
+        <dt>Banque</dt><dd>(Mensualité + prêt étudiant) ÷ (salaires + 70 % du loyer). Passe jusqu'à 33 %, limite jusqu'à 35 %.</dd>
+        <dt>Quartiers</dt><dd>Contours IRIS de l'INSEE. Prix RealAdvisor du quartier rapportés au prix des studios de la ville ; loyers ajustés de l'écart RealAdvisor ou estimés à partir du prix.</dd>
+        <dt>Trajets</dt><dd>Depuis Laval et Nantes : temps en voiture estimé depuis la distance (×1,2 à 105 km/h). Depuis Paris : meilleur train direct ou avec une correspondance. Repères et lignes de train approximatifs.</dd>
+        <dt>Annonces</dt><dd>Pages de résultats Bien'ici lues chaque soir comme un visiteur. Une annonce absente deux jours de suite est considérée comme vendue ou retirée.</dd>
+      </dl>
+    </details>
+    <details class="fdet" id="sources">
+      <summary>Sources et fraîcheur des données</summary>
+      <div id="freshBox"></div>
+    </details>
+    <p class="fbot">Où acheter notre studio ? · estimations, pas un conseil · <a href="#" data-top>Haut de page ↑</a></p>
   </footer>
 </div>
 <div class="vpanel" id="visitPanel" hidden role="dialog" aria-modal="true" aria-label="Visite du bien"><div class="vsheet"><button type="button" class="sheetx vclose" aria-label="Fermer">×</button><div id="visitBody"></div></div></div>
@@ -1409,7 +1479,7 @@ function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v
  const ph=bienPhoto(b,480,240); return `<div class="bcard${b.statut==="écarté"?" off":""}">${ph?`<button type="button" class="bph" data-openad="b|${b.ville}|${b.id}" aria-label="Ouvrir la fiche"><img src="${esc(ph)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()"></button>`:""}<div class="bch"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button><button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button><button type="button" class="unshort" data-unshort="${b.id}" aria-label="Écarter ce bien" title="Écarter (retirer de la shortlist)">×</button></div>
   <div class="sub" style="margin:0">${c?c.name:""}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)}${b.par?` · ajouté par ${esc(b.par)}`:""}</div>
   <div class="bcn"><span><small>Cash-flow ${mlab()}</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b>${altCf(r.x,1)}</span><span><small>15 ans ${mlab()}</small><b class="mono" style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b>${altIrr(r.x,1)}</span></div>
-  <div class="bcf"><button type="button" class="btn sm" data-openad="b|${b.ville}|${b.id}">Détail</button>${stPill(b)}<span class="pill ${bc}" title="Avis probable de la banque">${bt}</span></div>
+  <div class="bcf"><button type="button" class="btn sm" data-openad="b|${b.ville}|${b.id}">Détail</button>${stPill(b)}<span class="pill ${bc}" title="Avis probable de la banque">${bt}</span>${visitFlags(b)?`<span class="pill p-bad" title="Points négatifs relevés en visite">${visitFlags(b)} ✗</span>`:""}</div>
   <details class="bmore"><summary>Prix à viser et actions</summary>${(()=>{const g=targetsFor(b); return `<div class="btg"><span><i class="dot d1"></i>Autofinancé<b class="mono">${g.cf==null?"—":"≤ "+keur(g.cf)}</b>${tgtChip(g.cf,g.ref,1)}</span><span><i class="dot d2"></i>7 %/an<b class="mono">${g.r7==null?"—":"≤ "+keur(g.r7)}</b>${tgtChip(g.r7,g.ref,1)}</span></div>`;})()}
   <div class="bcf">${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<button type="button" class="lnk" data-visit="${b.id}">visite${visitScore(b)!=null?" "+fr(visitScore(b),1)+"/5":""}</button>${cmpBtn({kind:"b",id:b.id})}</div></details></div>`;}
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
@@ -1553,6 +1623,7 @@ function adFiche(ad){if(ad.kind==="b") return bienFiche(ad.suf); const a=findAd(
   <div class="adact">${adNav(ad)}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>`;}
 
 
+let LASTUSER=0; ["pointerdown","keydown"].forEach(ev=>addEventListener(ev,()=>{LASTUSER=Date.now();},true));
 /* ---------- panneau de droite : ville / quartier / annonce ---------- */
 const wide=()=>matchMedia("(min-width:941px)").matches;
 function renderSide(){const sd=document.getElementById("qDetail"), det=document.getElementById("detail"); if(!sd) return;
@@ -1566,9 +1637,10 @@ function renderSide(){const sd=document.getElementById("qDetail"), det=document.
  document.getElementById("qDetailBody").innerHTML=AD?adFiche(AD):qCard(QSEL);
  sd.hidden=false; det.hidden=wide(); document.body.classList.toggle("sheet-on",!wide()||document.getElementById("mapSec").classList.contains("mapfull"));
  sd.scrollTop=0;
- if(!wide()&&!document.getElementById("mapSec").classList.contains("mapfull")&&!renderSide.open){const m=document.querySelector("#mapSec .mapbox").getBoundingClientRect(); if(m.top<0||m.bottom>innerHeight*0.48) scrollBy({top:m.top-8,behavior:"smooth"});}
+ const byUser=Date.now()-LASTUSER<1500; // ne défile jamais tout seul (chargement, relevé, synchronisation)
+ if(byUser&&!wide()&&!document.getElementById("mapSec").classList.contains("mapfull")&&!renderSide.open){const m=document.querySelector("#mapSec .mapbox").getBoundingClientRect(); if(m.top<0||m.bottom>innerHeight*0.48) scrollBy({top:m.top-8,behavior:"smooth"});}
  renderSide.open=true;
- if(wide()){const r=sd.getBoundingClientRect(); if(r.top<0||r.top>innerHeight-120) sd.scrollIntoView({behavior:"smooth",block:"nearest"});}
+ if(byUser&&wide()){const r=sd.getBoundingClientRect(); if(r.top<0||r.top>innerHeight-120) sd.scrollIntoView({behavior:"smooth",block:"nearest"});}
  updateCmpButtons();}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-crumb]"); if(!b) return; e.preventDefault();
  if(b.dataset.crumb==="city"){AD=null; QSEL=null;} else AD=null; draw(); renderQBox();});
@@ -1594,23 +1666,47 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  const t=wide()?document.getElementById("side"):null; if(t) t.scrollIntoView({behavior:"smooth",block:"start"});});
 
 
-/* ---------- visites : checklist, notes à deux, recalcul, fiche à emporter ---------- */
+/* ---------- visites : checklist, avis à deux, offre simulée, questions, fiche à emporter ---------- */
 const CRIT=[["cuisine","Cuisine"],["sdb","Salle de bain, WC"],["fenetres","Fenêtres, isolation"],["bruit","Calme"],["lumiere","Luminosité"],["etage","Étage, ascenseur"],["transports","Transports à pied"],["impression","Impression générale"]];
+const CHECK=[
+ ["L'immeuble",[["fac","Façade et cage d'escalier en bon état"],["humid","Aucune trace d'humidité ni de fissure"],["rdc","Pas de nuisance au rez-de-chaussée (bar, restaurant)"],["communs","Interphone, boîtes aux lettres, local vélo"]]],
+ ["Le logement",[["chauf","Chauffage récent (type et âge notés)"],["ecs","Eau chaude correcte (ballon, débit)"],["elec","Électricité aux normes (tableau, prises)"],["vitrage","Double vitrage"],["surf","Surface réelle conforme à l'annonce"],["range","Rangements suffisants"]]],
+ ["Location meublée",[["mobilier","Place pour le mobilier obligatoire (lit, plaques, frigo, rangements…)"],["lit","Un vrai lit tient, pas seulement un canapé"],["cible","Cible claire : étudiant ou jeune actif"]]],
+ ["Documents à obtenir",[["pv","3 derniers PV d'assemblée générale"],["charges","Relevé des charges de copropriété"],["fonds","Fonds de travaux et travaux votés"],["diag","Diagnostics (DPE, électricité, amiante…)"],["tfavis","Dernier avis de taxe foncière"]]]];
+const VERD={go:["On fonce","p-ok"],prix:["Oui, au bon prix","p-warn"],non:["Non","p-bad"]};
 const meV=()=>(myName()||H.nomA||"Moi").trim();
 function visitScore(b){const av=(b.visite&&b.visite.avis)||{}, v=Object.values(av).flatMap(a=>CRIT.map(([k])=>+a[k]).filter(n=>n>0)); return v.length?v.reduce((s,n)=>s+n,0)/v.length:null;}
-// avant visite = estimations ; après = chiffres réels saisis
+function visitFlags(b){const c=(b.visite&&b.visite.check)||{}; return Object.values(c).filter(v=>v==="non").length;}
 function beforeAfter(b){const pre=Object.assign({},b,{copro:0,tf:0,travaux:0}), x0=calcBien(pre).x, x1=calcBien(b).x, g0=targetsFor(pre), g1=targetsFor(b); return {x0,x1,g0,g1};}
+// les 3 prix de la négociation
+function priceLevels(b){const g=targetsFor(b), pr=+b.prix, v=[g.cf,g.r7].filter(p=>p!=null); if(!v.length) return null;
+ const cible=Math.min(...v), max=Math.min(pr,Math.max(...v)), ouv=Math.floor(cible*0.95/500)*500; return {ouv:Math.min(ouv,pr),cible:Math.min(cible,pr),max,pr};}
+// questions à poser à l'agent, d'après ce qu'on sait du bien
+function agentQuestions(b){const s=bienSuf(b), v=s?vu("v",b.ville,s):null, Q=["Pourquoi le propriétaire vend-il, et depuis quand le bien est-il en vente ?","Des offres ont-elles déjà été faites ? À quel prix ?"];
+ if(v&&v.days>=30) Q.push(`L'annonce est en ligne depuis ${v.days} jours : le vendeur est-il pressé ?`);
+ if(v&&v.drops) Q.push("Le prix a déjà baissé : jusqu'où le vendeur est-il prêt à descendre ?");
+ if(!(+b.copro)) Q.push("Combien coûtent les charges de copropriété et que comprennent-elles ?");
+ Q.push("Des travaux sont-ils votés ou envisagés en copropriété (ravalement, toiture, ascenseur) ?");
+ if(/[EFG]/.test(b.dpe||"")) Q.push(`Le DPE est ${b.dpe} : quels travaux pour en sortir ? Existe-t-il des devis ?`); else if(!b.dpe) Q.push("Quelle est la classe du DPE, et de quand date le diagnostic ?");
+ if(!(+b.tf)) Q.push("Quel est le montant exact de la taxe foncière ?");
+ Q.push("Le logement est-il loué en ce moment ? Si oui : bail, loyer, date de fin.","Le mobilier ou l'électroménager sont-ils inclus dans le prix ?");
+ return Q;}
 
 let VISIT=null;
 function openVisit(id){VISIT=id; renderVisit(); document.getElementById("visitPanel").hidden=false; document.body.classList.add("noscroll"); setTimeout(()=>document.querySelector("#visitPanel .vclose").focus(),50);}
 function closeVisit(){VISIT=null; document.getElementById("visitPanel").hidden=true; document.body.classList.remove("noscroll");}
 function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.find(x=>x.id===VISIT); if(!el) return; if(!b){closeVisit(); return;}
- const v=b.visite||{}, av=v.avis||{}, me=meV(), others=Object.keys(av).filter(n=>n!==me), {x0,x1,g0,g1}=beforeAfter(b), sc=visitScore(b);
+ const sc0=el.closest(".vsheet")?el.closest(".vsheet").scrollTop:0;
+ const v=b.visite||{}, av=v.avis||{}, me=meV(), others=Object.keys(av).filter(n=>n!==me), {x0,x1,g0,g1}=beforeAfter(b), sc=visitScore(b), ck=v.check||{}, my=av[me]||{};
  const stars=(who,k,edit)=>{const n=+((av[who]||{})[k])||0; return `<span class="stars${edit?"":" ro"}">${[1,2,3,4,5].map(i=>edit?`<button type="button" data-vk="${k}" data-vn="${i}" aria-label="${i} sur 5" class="${i<=n?"on":""}">★</button>`:`<i class="${i<=n?"on":""}">★</i>`).join("")}</span>`;};
- const cmp=(l,f,good)=>{const a=f(x0,g0), z=f(x1,g1); return `<tr><td>${l}</td><td class="r mono">${a}</td><td class="r mono">${z}</td></tr>`;};
- el.innerHTML=`<div class="dh"><h3 style="margin:0">${esc(b.titre||"Bien")}</h3>${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}</div>
+ const cmp=(l,f)=>`<tr><td>${l}</td><td class="r mono">${f(x0,g0)}</td><td class="r mono">${f(x1,g1)}</td></tr>`;
+ const tri=k=>`<span class="tri" role="group">${[["oui","Oui"],["non","Non"],["?","?"]].map(([val,l])=>`<button type="button" data-vck="${k}|${val}" aria-pressed="${ck[k]===val}" class="t-${val==="?"?"q":val}">${l}</button>`).join("")}</span>`;
+ const off=+v.offre||0, xo=off?calcBien(Object.assign({},b,{prix:off})).x:null, nFl=visitFlags(b), lv=priceLevels(b);
+ const lines=s=>(s||"").split("\n").map(t=>t.trim()).filter(Boolean);
+ el.innerHTML=`<div class="dh"><h3 style="margin:0">${esc(b.titre||"Bien")}</h3><span style="display:flex;gap:6px;flex-wrap:wrap">${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}${nFl?`<span class="pill p-bad">${nFl} point${nFl>1?"s":""} à problème</span>`:""}</span></div>
  <p class="sub" style="margin:2px 0 12px">${C.find(c=>c.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché</p>
- <h2 class="psec">Les chiffres réels</h2>
+ <nav class="vnav">${["Chiffres","Checklist","Avis","Offre","Questions"].map((t,i)=>`<a href="#vs${i}">${t}</a>`).join("")}</nav>
+ <h2 class="psec" id="vs0">Les chiffres réels</h2>
  <div class="fields vf">
   <label class="f">DPE réel<span class="inp"><select data-vf="dpe"><option value="">?</option>${"ABCDEFG".split("").map(l=>`<option${b.dpe===l?" selected":""}>${l}</option>`).join("")}</select></span></label>
   <label class="f">Charges copro (part proprio)<span class="inp"><input data-vf="copro" type="number" min="0" step="5" value="${+b.copro||""}" placeholder="estimées"><span>€/mois</span></span></label>
@@ -1619,69 +1715,112 @@ function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.fi
   <label class="f wide">Travaux votés en copropriété<span class="inp"><input data-vf="votes" maxlength="200" value="${esc(v.votes||"")}" placeholder="ravalement 2027, toiture…"></span></label>
  </div>
  ${/[FG]/.test(b.dpe||"")?`<p class="warnline">DPE ${b.dpe} : ${b.dpe==="G"?"location déjà interdite":"location interdite à partir de 2028"} sans travaux de rénovation. Chiffrez-les et intégrez-les dans « Travaux à prévoir ».</p>`:""}
- <h2 class="psec">Avant et après la visite</h2>
  <table class="scnt"><thead><tr><th></th><th class="r">Estimé</th><th class="r">Après visite</th></tr></thead><tbody>
   ${cmp("Budget tout compris",x=>keur(x.cost))}
-  ${cmp("Cash-flow / mois",x=>`<span class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</span>`)}
-  ${cmp("Rendement 15 ans",x=>x.irr==null?"n.d.":`<b style="color:${colIrr(x.irr)}">${pct(x.irr)}</b>`)}
+  ${cmp(`Cash-flow ${mlab()} / mois`,x=>`<span class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</span>`)}
+  ${cmp(`Rendement 15 ans ${mlab()}`,x=>x.irr==null?"n.d.":`<b style="color:${colIrr(x.irr)}">${pct(x.irr)}</b>`)}
   ${cmp("Prix max. autofinancé",(x,g)=>g.cf==null?"—":"≤ "+keur(g.cf))}
   ${cmp("Prix max. 7 %/an",(x,g)=>g.r7==null?"—":"≤ "+keur(g.r7))}
  </tbody></table>
- <h2 class="psec">Nos notes</h2>
+ <h2 class="psec" id="vs1">Checklist de visite</h2>
+ <p class="sub" style="margin:0 0 6px">Une réponse commune. Chaque « non » apparaît en rouge sur la fiche du bien.</p>
+ ${CHECK.map(([t,items])=>`<div class="ckgrp"><h4>${t}</h4>${items.map(([k,l])=>`<div class="ckrow${ck[k]==="non"?" bad":""}"><span>${l}</span>${tri(k)}</div>`).join("")}</div>`).join("")}
+ <h2 class="psec" id="vs2">Nos avis</h2>
  <p class="sub" style="margin:0 0 6px">Vous notez sous le nom « ${esc(me)} »${myName()?"":" (changez-le dans « Partager la liste »)"}.${others.length?"":" L'autre avis apparaîtra ici quand il sera saisi."}</p>
  <table class="scnt vnotes"><thead><tr><th></th><th>${esc(me)}</th>${others.map(n=>`<th>${esc(n)}</th>`).join("")}</tr></thead><tbody>
   ${CRIT.map(([k,l])=>`<tr><td>${l}</td><td>${stars(me,k,true)}</td>${others.map(n=>`<td>${stars(n,k,false)}</td>`).join("")}</tr>`).join("")}
  </tbody></table>
- <label class="f wide" style="margin-top:8px">Mon commentaire<span class="inp"><textarea data-vc rows="3" maxlength="600" placeholder="Ce qui nous a plu, ce qui inquiète…">${esc((av[me]||{}).com||"")}</textarea></span></label>
- ${others.filter(n=>(av[n]||{}).com).map(n=>`<p class="vcom"><b>${esc(n)} :</b> ${esc(av[n].com)}</p>`).join("")}
- <div class="vfoot"><button type="button" class="btn ghost" data-fiche="${b.id}">Fiche à emporter</button><button type="button" class="btn vclose2">Terminer</button></div>`;}
+ <div class="fields vf" style="margin-top:10px">
+  <label class="f">Ce qui m'a plu<span class="inp"><textarea data-va="plus" rows="3" maxlength="600" placeholder="Une idée par ligne">${esc(my.plus||"")}</textarea></span></label>
+  <label class="f">Ce qui m'inquiète<span class="inp"><textarea data-va="moins" rows="3" maxlength="600" placeholder="Une idée par ligne">${esc(my.moins||"")}</textarea></span></label>
+ </div>
+ <div class="verd"><span class="sub" style="margin:0">Mon verdict :</span>${Object.entries(VERD).map(([k,[l]])=>`<button type="button" class="chip${my.verdict===k?" on":""}" data-vv="${k}" aria-pressed="${my.verdict===k}">${l}</button>`).join("")}
+  ${my.verdict==="prix"?`<label class="f inl">à<span class="inp"><input data-va="vprix" type="number" step="500" value="${+my.vprix||""}" placeholder="${lv?lv.cible:""}"><span>€</span></span></label>`:""}</div>
+ <label class="f wide" style="margin-top:8px">Commentaire libre<span class="inp"><textarea data-va="com" rows="2" maxlength="600">${esc(my.com||"")}</textarea></span></label>
+ ${others.map(n=>{const a=av[n]||{}; return `<div class="vother"><b>${esc(n)}</b>${a.verdict?` <span class="pill ${VERD[a.verdict][1]}">${VERD[a.verdict][0]}${a.verdict==="prix"&&a.vprix?" "+keur(+a.vprix):""}</span>`:""}
+  ${lines(a.plus).length?`<p class="vl plus">${lines(a.plus).map(esc).join(" · ")}</p>`:""}${lines(a.moins).length?`<p class="vl moins">${lines(a.moins).map(esc).join(" · ")}</p>`:""}${a.com?`<p class="vcom">${esc(a.com)}</p>`:""}</div>`;}).join("")}
+ <h2 class="psec" id="vs3">Simuler une offre</h2>
+ ${lv?`<p class="sub" style="margin:0 0 6px">Repères : ouverture <b>${keur(lv.ouv)}</b> · cible <b>${keur(lv.cible)}</b> · maximum <b>${keur(lv.max)}</b> (prix affiché ${keur(lv.pr)}).</p>`:""}
+ <div class="fields vf"><label class="f">Prix proposé<span class="inp"><input data-vf2="offre" type="number" step="500" value="${off||""}" placeholder="${lv?lv.cible:""}"><span>€</span></span></label></div>
+ ${xo?`<table class="scnt"><thead><tr><th></th><th class="r">Prix affiché</th><th class="r">Offre ${keur(off)}</th></tr></thead><tbody>
+  <tr><td>Budget tout compris</td><td class="r mono">${keur(x1.cost)}</td><td class="r mono">${keur(xo.cost)}</td></tr>
+  <tr><td>Cash-flow ${mlab()} / mois</td><td class="r mono ${x1.cf>=0?"pos":"neg"}">${sgn(x1.cf)}</td><td class="r mono ${xo.cf>=0?"pos":"neg"}">${sgn(xo.cf)}</td></tr>
+  <tr><td>Rendement 15 ans ${mlab()}</td><td class="r mono">${x1.irr==null?"n.d.":pct(x1.irr)}</td><td class="r mono"><b style="color:${colIrr(xo.irr)}">${xo.irr==null?"n.d.":pct(xo.irr)}</b></td></tr>
+  <tr><td>Banque</td><td class="r">${(()=>{const [c,t]=bank(x1.ratio);return `<span class="pill ${c}">${t}</span>`;})()}</td><td class="r">${(()=>{const [c,t]=bank(xo.ratio);return `<span class="pill ${c}">${t}</span>`;})()}</td></tr>
+  <tr><td>Remise demandée</td><td></td><td class="r mono">−${fr((1-off/+b.prix)*100,0)} %</td></tr></tbody></table>`:`<p class="sub" style="margin:0">Entrez un prix pour voir son effet.</p>`}
+ <h2 class="psec" id="vs4">Questions à poser</h2>
+ <ol class="vq">${agentQuestions(b).map(q=>`<li>${esc(q)}</li>`).join("")}</ol>
+ <div class="vfoot"><button type="button" class="btn ghost" data-fiche="${b.id}">Fiche à emporter</button><button type="button" class="btn vclose2">Terminer</button></div>`;
+ if(el.closest(".vsheet")) el.closest(".vsheet").scrollTop=sc0;}
 
 async function saveVisit(patch){const b=BIENS.find(x=>x.id===VISIT); if(!b) return; try{await DB.collection("biens").doc(b.id).update(patch);}catch(e){toast("Enregistrement refusé ("+(e&&e.code||"erreur")+").");}}
-function avisPatch(b,me,k,val){const v=JSON.parse(JSON.stringify(b.visite||{})); v.avis=v.avis||{}; v.avis[me]=Object.assign({},v.avis[me],{[k]:val}); return {visite:v};}
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-visit],[data-vk],.vclose,.vclose2,[data-fiche],#visitPanel"); if(!t) return;
+const visCopy=b=>JSON.parse(JSON.stringify(b.visite||{}));
+function avisPatch(b,me,k,val){const v=visCopy(b); v.avis=v.avis||{}; v.avis[me]=Object.assign({},v.avis[me],{[k]:val}); return {visite:v};}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-visit],[data-vk],[data-vck],[data-vv],.vclose,.vclose2,[data-fiche],#visitPanel,.vnav a"); if(!t) return;
  if(t.dataset.visit){e.preventDefault(); openVisit(t.dataset.visit); return;}
  if(t.dataset.fiche){e.preventDefault(); openFiche(t.dataset.fiche); return;}
  if(t.classList.contains("vclose")||t.classList.contains("vclose2")){closeVisit(); return;}
- if(t.dataset.vk){const b=BIENS.find(x=>x.id===VISIT); if(!b) return; const cur=+(((b.visite||{}).avis||{})[meV()]||{})[t.dataset.vk]||0, n=+t.dataset.vn;
-  saveVisit(avisPatch(b,meV(),t.dataset.vk,cur===n?0:n)); return;}
+ if(t.matches(".vnav a")){e.preventDefault(); const s=document.getElementById(t.getAttribute("href").slice(1)); if(s) s.scrollIntoView({behavior:"smooth",block:"start"}); return;}
+ const b=BIENS.find(x=>x.id===VISIT); if(!b&&t.id!=="visitPanel") return;
+ if(t.dataset.vk){const cur=+(((b.visite||{}).avis||{})[meV()]||{})[t.dataset.vk]||0, n=+t.dataset.vn; saveVisit(avisPatch(b,meV(),t.dataset.vk,cur===n?0:n)); return;}
+ if(t.dataset.vck){const [k,val]=t.dataset.vck.split("|"), v=visCopy(b); v.check=v.check||{}; v.check[k]=v.check[k]===val?null:val; saveVisit({visite:v}); return;}
+ if(t.dataset.vv){const cur=(((b.visite||{}).avis||{})[meV()]||{}).verdict; saveVisit(avisPatch(b,meV(),"verdict",cur===t.dataset.vv?null:t.dataset.vv)); return;}
  if(t.id==="visitPanel"&&e.target===t) closeVisit();});
-document.addEventListener("change",e=>{if(!VISIT) return; const f=e.target.closest&&e.target.closest("[data-vf],[data-vc]"); if(!f) return; const b=BIENS.find(x=>x.id===VISIT); if(!b) return;
- if(f.dataset.vc!==undefined){saveVisit(avisPatch(b,meV(),"com",f.value.trim())); return;}
- const k=f.dataset.vf; if(k==="votes"){const v=Object.assign({},b.visite,{votes:f.value.trim()}); saveVisit({visite:v}); return;}
+document.addEventListener("change",e=>{if(!VISIT) return; const f=e.target.closest&&e.target.closest("[data-vf],[data-va],[data-vf2]"); if(!f) return; const b=BIENS.find(x=>x.id===VISIT); if(!b) return;
+ if(f.dataset.va){saveVisit(avisPatch(b,meV(),f.dataset.va,f.dataset.va==="vprix"?(+f.value||0):f.value.trim())); return;}
+ if(f.dataset.vf2){const v=visCopy(b); v.offre=+f.value||0; saveVisit({visite:v}); return;}
+ const k=f.dataset.vf; if(k==="votes"){const v=visCopy(b); v.votes=f.value.trim(); saveVisit({visite:v}); return;}
  saveVisit({[k]:k==="dpe"?f.value:(+f.value||0)});});
 addEventListener("keydown",e=>{if(e.key==="Escape"&&VISIT){e.stopImmediatePropagation(); closeVisit();}},true);
 
 /* ---------- fiche à emporter (imprimable) ---------- */
 function negoArgs(b,x,g,t){const A=[], pm2=+b.prix/(+b.surface||22);
- if(g.cf!=null&&g.cf<+b.prix) A.push(`À <b>${keur(g.cf)}</b>, le loyer paie tout : crédit, charges, impôts. Au-delà, il faut remettre de l'argent chaque mois.`);
+ if(g.cf!=null&&g.cf<+b.prix) A.push(`À <b>${keur(g.cf)}</b>, le loyer paie tout : crédit, charges${H.net?", impôts":""}. Au-delà, il faut remettre de l'argent chaque mois.`);
  if(t&&t.price){const d=(pm2/(t.price*(1+H.surcote/100))-1)*100; if(d>3) A.push(`Le prix demandé (${eur(pm2)}/m²) est <b>${fr(d,0)} % au-dessus</b> du prix d'un studio comparable dans le quartier (${eur(t.price*(1+H.surcote/100))}/m², surcote petite surface comprise).`);}
  if(/[EFG]/.test(b.dpe||"")) A.push(`DPE <b>${b.dpe}</b> : ${b.dpe==="E"?"location interdite en 2034":b.dpe==="F"?"location interdite en 2028":"location déjà interdite"} sans rénovation. Le coût des travaux est à déduire du prix.`);
  if(+b.travaux>H.travaux) A.push(`<b>${eur(+b.travaux)}</b> de travaux à prévoir d'après la visite.`);
  if(b.visite&&b.visite.votes) A.push(`Travaux votés en copropriété : ${esc(b.visite.votes)}.`);
  if(b.vu&&b.vu.days>=45) A.push(`Annonce en ligne depuis <b>${b.vu.days} jours</b> : le vendeur peut être ouvert à la négociation.`);
  if(b.vu&&b.vu.drops) A.push(`Le prix a déjà baissé ${b.vu.drops} fois.`);
- return A.slice(0,4);}
-function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const sf=(b0.url||"").startsWith(VTURL)?b0.url.slice(VTURL.length):null, b=Object.assign({},b0,{vu:sf?vu("v",b0.ville,sf):null}); const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville);
+ const fl=visitFlags(b); if(fl) A.push(`${fl} point${fl>1?"s":""} négatif${fl>1?"s":""} relevé${fl>1?"s":""} pendant la visite.`);
+ return A.slice(0,5);}
+// mini-carte du quartier : contour, quartiers voisins, gare, université, centre
+function quartierMap(b,t){if(!t||!IR[b.ville]) return ""; const bb=t.bb, w=bb[2]-bb[0], h=bb[3]-bb[1], m=Math.max(w,h)*1.6, cx=(bb[0]+bb[2])/2, cy=(bb[1]+bb[3])/2, vb=[cx-m,cy-m*0.62,m*2,m*1.24];
+ const others=IR[b.ville].list.filter(o=>o!==t&&!(o.bb[2]<vb[0]||o.bb[0]>vb[0]+vb[2]||o.bb[3]<vb[1]||o.bb[1]>vb[1]+vb[3]));
+ const mk=Object.entries(MARK[b.ville]||{}).map(([k,p])=>{const [x,y]=pxy(p[0],p[1]); return `<g><circle cx="${x}" cy="${y}" r="${m*0.025}" fill="#18202c"/><text x="${x+m*0.04}" y="${y+m*0.015}" font-size="${m*0.055}" font-weight="700" fill="#18202c" paint-order="stroke" stroke="#fff" stroke-width="${m*0.012}">${MARKTXT[k]}</text></g>`;}).join("");
+ return `<svg class="fqmap" viewBox="${vb.join(" ")}" role="img" aria-label="Carte du quartier"><rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="#eef2f6"/>${others.map(o=>`<path d="${o.d}" fill="#fff" stroke="#c9d1db" stroke-width="${m*0.004}"/>`).join("")}<path d="${t.d}" fill="#2f47b3" fill-opacity=".22" stroke="#2f47b3" stroke-width="${m*0.01}"/>${mk}</svg>`;}
+function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const sf=bienSuf(b0), b=Object.assign({},b0,{vu:sf?vu("v",b0.ville,sf):null}); const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville), t=r.t, lv=priceLevels(b), ph=bienPhoto(b,720,400), V=b.visite||{}, ck=V.check||{};
+ const A=ADS[b.ville], sec=t?sectorOf(t):(sf&&findAd("v",b.ville,sf)||[])[1], d=t?demandOf(t):null;
+ const rents=A&&sec?A.ads.filter(a=>a[1]===sec).sort((p,q)=>r22(p)-r22(q)).slice(0,5):[], sales=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec&&a[3]!==sf).sort((p,q)=>p[2]/p[0]-q[2]/q[0]).slice(0,5):[], sold=sec?soldList(b.ville,sec).slice(0,3):[];
+ const qp=t&&t.price?t.price*(1+H.surcote/100):null, fg=t?fgPct(t.dpe):null, nd=t?t.dpe.reduce((a,z)=>a+z,0):0;
  const el=document.getElementById("ficheBody");
- el.innerHTML=`<header class="fh"><div><h1>${esc(b.titre||"Bien")}</h1><p>${c.name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché (${eur(+b.prix/(+b.surface||22))}/m²)${b.dpe?" · DPE "+b.dpe:""}</p></div><p class="fdate">Fiche du ${new Date().toLocaleDateString("fr-FR")}</p></header>
+ el.innerHTML=`<header class="fh">${ph?`<img class="fph" src="${esc(ph)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="fht"><h1>${esc(b.titre||"Bien")}</h1><p>${c.name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché (${eur(r.pm2)}/m²)${b.dpe?" · DPE "+b.dpe:""}</p><p class="fdate">Fiche du ${new Date().toLocaleDateString("fr-FR")}${b.vu?` · annonce vue pour la première fois le ${new Date(HIST[b.ville].v[sf].f+"T12:00:00").toLocaleDateString("fr-FR")}`:""}</p></div></header>
  <div class="fgrid">
   <div class="fbox"><h2>Les chiffres</h2>
    <div class="trow"><span>Budget tout compris</span><b>${keur(x.cost)}</b></div>
    <div class="trow"><span>Loyer hors charges</span><b>${eur(x.rentHC)}</b></div>
-   <div class="trow"><span>Cash-flow à deux</span><b>${sgn(x.cf)}/mois</b></div>
-   <div class="trow"><span>Rendement 15 ans</span><b>${x.irr==null?"n.d.":pct(x.irr)}</b></div>
+   <div class="trow"><span>Cash-flow net / brut</span><b>${sgn(x.cfNet)} / ${sgn(x.cfBrut)} par mois</b></div>
+   <div class="trow"><span>Rendement 15 ans net / brut</span><b>${x.irrNet==null?"n.d.":pct(x.irrNet)} / ${x.irrBrut==null?"n.d.":pct(x.irrBrut)}</b></div>
+   <div class="trow"><span>Rendement locatif brut</span><b>${pct(x.brut)}</b></div>
    <div class="trow"><span>Banque</span><b>${bt} (${pct(x.ratio*100,0)})</b></div></div>
-  <div class="fbox"><h2>Prix à viser</h2>
-   <div class="trow"><span>Autofinancé</span><b>${g.cf==null?"—":"≤ "+keur(g.cf)}</b></div>
-   <div class="trow"><span>7 % par an</span><b>${g.r7==null?"—":"≤ "+keur(g.r7)}</b></div>
-   <div class="trow"><span>Prix affiché</span><b>${keur(+b.prix)}</b></div></div>
+  <div class="fbox"><h2>Nos prix pour négocier</h2>${lv?`
+   <div class="plv"><div><span>Ouverture</span><b>${keur(lv.ouv)}</b><small>−${fr((1-lv.ouv/lv.pr)*100,0)} %</small></div><div class="tg"><span>Cible</span><b>${keur(lv.cible)}</b><small>−${fr((1-lv.cible/lv.pr)*100,0)} %</small></div><div><span>Maximum</span><b>${keur(lv.max)}</b><small>−${fr((1-lv.max/lv.pr)*100,0)} %</small></div></div>
+   <p class="fnote">Cible : le plus bas des deux prix « autofinancé » (${g.cf==null?"—":keur(g.cf)}) et « 7 %/an » (${g.r7==null?"—":keur(g.r7)}). Maximum : le plus haut des deux. Ouverture : 5 % sous la cible.</p>`:`<p>Aucun prix ne permet d'atteindre nos objectifs avec ces réglages.</p>`}</div>
  </div>
- <div class="fbox"><h2>Arguments pour négocier</h2>${(()=>{const a=negoArgs(b,x,g,r.t); return a.length?`<ol>${a.map(s=>`<li>${s}</li>`).join("")}</ol>`:`<p>Le prix affiché est déjà cohérent avec nos objectifs.</p>`;})()}</div>
- <div class="fbox"><h2>Pendant la visite</h2><ul class="fcheck">
-  ${["DPE et date du diagnostic","Charges de copro (3 derniers PV d'AG)","Taxe foncière (dernier avis)","Travaux votés ou prévus en copro","État cuisine, salle de bain, fenêtres","Chauffage et eau chaude (type, âge)","Bruit (rue, voisins) et luminosité","Étage, ascenseur, cave, local vélo","Transports et commerces à pied","Pourquoi le vendeur vend, depuis quand"].map(s=>`<li><span class="cb"></span>${s}</li>`).join("")}</ul>
-  <div class="flines"><span></span><span></span><span></span><span></span></div></div>
- <p class="fsrc">Estimations calculées par « Où acheter notre studio ? » avec nos réglages (apport ${eur(H.apport)}, taux ${pct(H.taux,2)} sur ${H.duree} ans). Pas un conseil financier.</p>`;
- document.getElementById("fichePanel").hidden=false; document.body.classList.add("noscroll","fiche-on");}
+ <div class="fbox"><h2>Arguments pour négocier</h2>${(()=>{const a=negoArgs(b,x,g,t); return a.length?`<ol>${a.map(s=>`<li>${s}</li>`).join("")}</ol>`:`<p>Le prix affiché est déjà cohérent avec nos objectifs.</p>`;})()}</div>
+ <div class="fbox fq"><h2>Le quartier${t?" : "+esc(t.name):""}</h2><div class="fqgrid">${quartierMap(b,t)}<div>
+   ${qp?`<div class="trow"><span>Prix d'un studio du quartier</span><b>${eur(qp)}/m²</b></div><div class="trow"><span>Ce bien</span><b>${eur(r.pm2)}/m² (${r.pm2>=qp?"+":"−"}${fr(Math.abs(r.pm2/qp-1)*100,0)} %)</b></div>`:""}
+   ${d?`<div class="trow"><span>Distance gare, université ou centre</span><b>${fr(d.d,1)} km</b></div>`:""}
+   <div class="trow"><span>Mois vides par an retenus</span><b>${fr(r.vac,1)}</b></div>
+   ${fg!=null&&nd>=15?`<div class="trow"><span>Petits appartements en DPE F ou G</span><b>${fr(fg,0)} %</b></div>`:""}
+   ${b.vu?`<div class="trow"><span>Annonce en ligne depuis</span><b>${b.vu.days} jours${b.vu.drops?` · ${b.vu.drops} baisse${b.vu.drops>1?"s":""}`:""}</b></div>`:""}</div></div></div>
+ ${rents.length?`<div class="fbox"><h2>Locations concurrentes${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Type</th><th>Loyer CC</th><th>Ramené à 22 m²</th></tr></thead><tbody>${rents.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${a[3]?"meublé":"vide"}</td><td>${eur(a[2])}</td><td>${eur(r22(a))}</td></tr>`).join("")}</tbody></table><p class="fnote">Notre calcul retient ${eur(x.rentHC+H.chLoc)} charges comprises pour ce bien. Loyers demandés, pas forcément signés.</p></div>`:""}
+ ${sales.length||sold.length?`<div class="fbox"><h2>Ventes comparables${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Prix</th><th>€/m²</th><th>État</th></tr></thead><tbody>${sales.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${keur(a[2])}</td><td>${eur(a[2]/a[0])}</td><td>en vente</td></tr>`).join("")}${sold.map(({e})=>{const p=e.p[e.p.length-1][1]; return `<tr><td>${String(e.m[0]).replace(".",",")} m²</td><td>${keur(p)}</td><td>${eur(p/e.m[0])}</td><td>parti le ${dm(e.g)}</td></tr>`;}).join("")}</tbody></table></div>`:""}
+ <div class="fbox fbreak"><h2>Checklist de visite</h2>${CHECK.map(([gt,items])=>`<h3>${gt}</h3><ul class="fcheck">${items.map(([k,l])=>`<li><span class="cb${ck[k]==="oui"?" ok":ck[k]==="non"?" ko":""}">${ck[k]==="oui"?"✓":ck[k]==="non"?"✗":""}</span>${l}</li>`).join("")}</ul>`).join("")}</div>
+ <div class="fbox"><h2>Questions à poser</h2><ol>${agentQuestions(b).map(q=>`<li>${esc(q)}</li>`).join("")}</ol></div>
+ <div class="fbox"><h2>Notes</h2><div class="flines"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
+ <p class="fsrc">Estimations calculées par « Où acheter notre studio ? » avec nos réglages (apport ${eur(H.apport)}, taux ${pct(H.taux,2)} sur ${H.duree} ans, ${REG[x.regime]}). Pas un conseil financier.</p>`;
+ document.getElementById("fichePanel").hidden=false; document.body.classList.add("noscroll","fiche-on"); document.getElementById("fichePanel").scrollTop=0;}
 function closeFiche(){document.getElementById("fichePanel").hidden=true; document.body.classList.remove("fiche-on"); if(!VISIT) document.body.classList.remove("noscroll");}
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest(".fclose,.fprint"); if(!t) return; if(t.classList.contains("fclose")) closeFiche(); else {try{window.print();}catch(_){} setTimeout(()=>toast("Si rien ne s'ouvre (version Claude), utilisez la page GitHub pour imprimer ou enregistrer en PDF."),400);}});
 addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("fichePanel").hidden){e.stopImmediatePropagation(); closeFiche();}},true);
@@ -1704,7 +1843,7 @@ function bienFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class
  ${negoBlock(b)}
  ${priceCurve(v)}
  <h2 class="psec">Visite</h2>
- ${sc!=null||real.length||coms.length?`<div class="vsum">${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}${real.length?`<span class="sub" style="margin:0">${real.join(" · ")}</span>`:""}</div>${coms.map(([n,a])=>`<p class="vcom"><b>${esc(n)} :</b> ${esc(a.com)}</p>`).join("")}`:`<p class="sub" style="margin:0">Pas encore visité. Le bouton « Visite » permet de saisir les chiffres réels et vos notes.</p>`}
+ ${sc!=null||real.length||coms.length||visitFlags(b)||Object.values(av).some(z=>z.verdict)?`<div class="vsum">${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}${visitFlags(b)?`<span class="pill p-bad">${visitFlags(b)} point${visitFlags(b)>1?"s":""} à problème</span>`:""}${Object.entries(av).filter(([,z])=>z.verdict).map(([n,z])=>`<span class="pill ${VERD[z.verdict][1]}">${esc(n)} : ${VERD[z.verdict][0]}${z.verdict==="prix"&&z.vprix?" "+keur(+z.vprix):""}</span>`).join("")}${real.length?`<span class="sub" style="margin:0">${real.join(" · ")}</span>`:""}</div>${coms.map(([n,a])=>`<p class="vcom"><b>${esc(n)} :</b> ${esc(a.com)}</p>`).join("")}`:`<p class="sub" style="margin:0">Pas encore visité. Le bouton « Visite » permet de saisir les chiffres réels et vos notes.</p>`}
  ${b.notes?`<p class="vcom"><b>Notes :</b> ${esc(b.notes)}</p>`:""}
  <h2 class="psec">Et si…</h2>${scnBox("bien",scnBien(b))}
  <div class="adact many">${adNav({kind:"b",ck:b.ville,suf:b.id})}<button type="button" class="btn addv" data-visit="${b.id}">Visite${sc!=null?" · "+fr(sc,1)+"/5":""}</button><button type="button" class="btn ghost sm" data-fiche="${b.id}">Fiche à emporter</button>${cmpBtn({kind:"b",id:b.id})}${b.url?`<a class="btn ghost sm" href="${esc(b.url)}" target="_blank" rel="noopener">Annonce ↗</a>`:""}${out?"":`<button type="button" class="btn ghost sm" data-unshort="${b.id}">Écarter</button>`}</div>`;}
@@ -1831,29 +1970,91 @@ addEventListener("resize",rowArrows); rowArrows();
 /* ---------- fraîcheur des données ---------- */
 // relevé = date à laquelle la donnée a été récupérée ; age = âge maximal avant de la signaler (jours)
 const FRESH=[
- ["Annonces Bien'ici (loyers et ventes)","chaque jour",()=>ADS.iso||"2026-11-05",2],
- ["Taux du crédit","novembre 2026","2026-11-05",60],
- ["Prix des studios vendus (DVF, Pappers)","12 derniers mois","2026-11-04",180],
- ["Loyers médians (LocService)","annonces récentes","2026-11-04",180],
- ["Prix et loyers par quartier (RealAdvisor)","octobre 2026","2026-11-04",180],
- ["DPE des petits appartements (ADEME)","depuis juillet 2021","2026-11-04",180],
- ["Taxe foncière","taux 2025","2026-11-04",365],
- ["Population, logements vides, chômage (Insee)","2023","2026-11-04",365],
- ["Étudiants","rentrée 2023","2026-11-04",365],
- ["Contours des quartiers (IRIS)","2025","2026-11-04",730],
- ["Règles fiscales (LMNP, prélèvements sociaux)","lois de finances 2025-2026","2026-11-05",180]];
-function renderFresh(){const box=document.getElementById("freshBox"), pill=document.getElementById("freshPill"); if(!box) return; const now=new Date(); let stale=0;
- const rows=FRESH.map(([l,per,d,max])=>{const iso=typeof d==="function"?d():d, age=Math.round((now-new Date(iso+"T12:00:00"))/864e5), old=age>max; if(old) stale++;
-  return `<tr><td>${l}</td><td>${per}</td><td class="mono">${new Date(iso+"T12:00:00").toLocaleDateString("fr-FR")}</td><td><span class="pill ${old?"p-warn":"p-ok"}">${old?`à rafraîchir (${age} j)`:"à jour"}</span></td></tr>`;}).join("");
- box.innerHTML=`<p><b>Fraîcheur des données.</b></p><div class="tablewrap"><table class="fresh"><thead><tr><th>Donnée</th><th>Période</th><th>Relevée le</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`;
- pill.hidden=!stale; pill.textContent=`${stale} donnée${stale>1?"s":""} à rafraîchir`;}
+ ["Annonces de location et de vente","<a href=\"https://www.bienici.com/\" target=\"_blank\" rel=\"noopener\">Bien'ici</a>, relevé quotidien","chaque jour",()=>ADS.iso||"2026-11-05",2],
+ ["Taux du crédit","Offres bancaires, profil emprunteur","novembre 2026","2026-11-05",60],
+ ["Prix des studios vendus","<a href=\"https://immobilier.pappers.fr/prix-immobilier\" target=\"_blank\" rel=\"noopener\">Pappers Immobilier</a>, données DVF","12 derniers mois","2026-11-04",180],
+ ["Loyers médians et demande","<a href=\"https://www.locservice.fr/tensiometre/tensiometre-studio-72181.html\" target=\"_blank\" rel=\"noopener\">Tensiomètre LocService</a>, studios et T1","annonces récentes","2026-11-04",180],
+ ["Prix et loyers par quartier","RealAdvisor : <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-le-mans\" target=\"_blank\" rel=\"noopener\">Le Mans</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/44600-saint-nazaire\" target=\"_blank\" rel=\"noopener\">Saint-Nazaire</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-angers\" target=\"_blank\" rel=\"noopener\">Angers</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-caen\" target=\"_blank\" rel=\"noopener\">Caen</a>, <a href=\"https://realadvisor.fr/fr/prix-m2-immobilier/ville-orleans\" target=\"_blank\" rel=\"noopener\">Orléans</a>","octobre 2026","2026-11-04",180],
+ ["DPE des petits appartements","<a href=\"https://data.ademe.fr/datasets/dpe03existant\" target=\"_blank\" rel=\"noopener\">ADEME</a>, appartements de 30 m² ou moins","depuis juillet 2021","2026-11-04",180],
+ ["Taxe foncière","<a href=\"https://habity.fr/ville/le-mans-72/finance\" target=\"_blank\" rel=\"noopener\">Habity</a>, d'après le ministère de l'Économie","taux 2025","2026-11-04",365],
+ ["Population, logements vides, chômage","<a href=\"https://www.insee.fr/fr/statistiques/1405599?geo=COM-72181\" target=\"_blank\" rel=\"noopener\">Insee</a> (<a href=\"https://www.villesavivre.fr/tours-37261\" target=\"_blank\" rel=\"noopener\">Villes à vivre</a> pour Tours, Poitiers, Orléans)","2023","2026-11-04",365],
+ ["Étudiants","<a href=\"https://www.75secondes.fr/classement/les-villes-avec-le-plus-detudiants-en-france\" target=\"_blank\" rel=\"noopener\">75 Secondes</a>","rentrée 2023","2026-11-04",365],
+ ["Contours des quartiers","<a href=\"https://geoservices.ign.fr/contoursiris\" target=\"_blank\" rel=\"noopener\">IRIS de l'INSEE, IGN</a>","2025","2026-11-04",730],
+ ["Fond de carte","<a href=\"https://github.com/gregoiredavid/france-geojson\" target=\"_blank\" rel=\"noopener\">france-geojson</a> (IGN simplifié)","2024","2026-11-04",730],
+ ["Règles fiscales (LMNP, prélèvements sociaux)","<a href=\"https://www.hagnere-patrimoine.fr/guides-patrimoine/investissement-immobilier/lfss-2026-prelevements-sociaux-186-lmnp-impact-rendement\" target=\"_blank\" rel=\"noopener\">LFSS 2026</a>, <a href=\"https://www.investissement-locatif.com/lmnp-2026.html\" target=\"_blank\" rel=\"noopener\">LMNP 2026</a>","lois de finances 2025-2026","2026-11-05",180]];
+function renderFresh(){const box=document.getElementById("freshBox"); if(!box) return; const now=new Date(); let stale=0;
+ const rows=FRESH.map(([l,src,per,d,max])=>{const iso=typeof d==="function"?d():d, age=Math.round((now-new Date(iso+"T12:00:00"))/864e5), old=age>max; if(old) stale++;
+  return `<tr><td><b>${l}</b><div class="sub" style="margin:0">${src}</div></td><td>${per}</td><td class="mono">${new Date(iso+"T12:00:00").toLocaleDateString("fr-FR")}</td><td><span class="pill ${old?"p-warn":"p-ok"}">${old?`à rafraîchir (${age} j)`:"à jour"}</span></td></tr>`;}).join("");
+ box.innerHTML=`<div class="tablewrap"><table class="fresh"><thead><tr><th>Donnée et source</th><th>Période</th><th>Relevée le</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ ["freshPill","freshPill2"].forEach(id=>{const p=document.getElementById(id); if(!p) return; p.hidden=!stale; p.textContent=`${stale} donnée${stale>1?"s":""} à rafraîchir`;});}
 renderFresh();
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("[data-opensrc],[data-top],#freshPill"); if(!a) return; e.preventDefault();
+ if(a.dataset.top!==undefined){scrollTo({top:0,behavior:"smooth"}); return;} const d=document.getElementById("sources"); d.open=true; d.scrollIntoView({behavior:"smooth",block:"start"});});
 
 /* ---------- appli sur téléphone (version GitHub) ---------- */
 (function(){let ev=null; const b=document.getElementById("installBtn"); if(!b) return;
  addEventListener("beforeinstallprompt",e=>{e.preventDefault(); ev=e; b.hidden=false;});
  b.addEventListener("click",async()=>{if(!ev) return; ev.prompt(); try{await ev.userChoice;}catch(_){} ev=null; b.hidden=true;});
  addEventListener("appinstalled",()=>{b.hidden=true; toast("Appli installée sur l'écran d'accueil.");});})();
+
+/* ---------- infobulles : explications au survol (ordinateur) ou au toucher (téléphone) ---------- */
+const TIPS={
+ budget:()=>`Prix affiché + notaire (${fr(H.notaire,0)} %) + meubles (${eur(H.meubles)}) + petits travaux (${eur(H.travaux)}) + garantie du prêt (${fr(H.garantie,1)} % du prêt). L'apport (${eur(H.apport)}) en couvre une partie, le reste est emprunté.`,
+ loyer:()=>`Loyer hors charges que l'on peut espérer : loyer médian des studios du quartier (ou de la ville), ramené à la surface du bien, moins les ${eur(H.chLoc)} de charges payées par le locataire.`,
+ cf:()=>`Ce qui reste (ou manque) chaque mois à vous deux : loyer encaissé, mois vides déduits − mensualité et assurance du prêt − charges (copro, taxe foncière, assurance PNO, entretien).${H.net?" En net : aussi les impôts sur les loyers, la CFE et le comptable.":" En brut : avant impôts et frais fiscaux."}`,
+ irr:()=>`Rendement annuel de votre apport sur 15 ans, revente comprise : il compte tout ce que vous mettez et récupérez, comme un taux d'épargne. ${H.net?"Net : après impôts sur les loyers, CFE, comptable et impôt sur la plus-value.":"Brut : avant impôts et frais fiscaux."} Repères : livret A 1,7 %, LEP 2,5 %.`,
+ banque:()=>`Taux d'endettement estimé : (mensualité + prêt étudiant de ${eur(H.pretEtud)}) ÷ (salaires de ${eur(H.salaires)} + 70 % du loyer). Les banques vont en général jusqu'à 35 %. Passe ≤ 33 %, Limite entre 33 et 35 %, Trop haut au-delà.`,
+ vac:()=>`Mois sans locataire par an retenus dans le calcul. Avec « Vacance selon l'emplacement » : 0,5 mois près de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus.`,
+ autof:()=>`Prix d'achat maximum pour que le loyer paie tout chaque mois (cash-flow ${H.net?"net":"brut"} ≥ 0 €), avec vos réglages actuels.`,
+ r7:()=>`Prix d'achat maximum pour que votre apport rapporte 7 % par an sur 15 ans, revente comprise (${H.net?"après impôts":"avant impôts"}).`,
+ prixmax:()=>`Les deux prix à ne pas dépasser selon votre objectif : « autofinancé » (rien à sortir chaque mois) ou « 7 % par an ». La différence avec le prix affiché, c'est la marge à négocier.`,
+ brutloc:()=>`Loyers d'une année ÷ budget tout compris. C'est le chiffre des annonces et des agences : il ignore le crédit, les charges et les impôts.`,
+ b2n:()=>`Le passage du chiffre brut (avant impôts) au chiffre net : impôts sur les loyers, CFE, comptable si régime réel, et impôt sur la plus-value à la revente.`,
+ pm2:()=>`Prix affiché divisé par la surface. Pour un studio, le prix au m² est en général 10 à 20 % plus élevé que la moyenne des appartements du quartier.`,
+ etsi:()=>`Testez une hypothèse sans toucher à vos réglages : la colonne « Et si… » se remplit dès qu'une case est cochée. La durée de revente s'applique aux deux colonnes.`,
+ pess:()=>`Loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +${fr(H.px,1)} %. Le taux ne change pas : il est fixé à la signature.`,
+ vacq:()=>`Ajuste les mois vides selon la distance du quartier à la gare, à l'université ou au centre (0,5 à 2,5 mois par an). Décoché : ${fr(H.vacance,1)} mois partout.`,
+ surcote:()=>`Écart entre le prix que vous paierez et le prix moyen des studios vendus dans la ville (DVF). Un studio bien placé et en bon état se vend souvent 10 à 20 % plus cher.`,
+ loyerAdj:()=>`Ajuste le loyer médian : positif pour un studio très bien placé ou bien meublé, négatif pour un bien moins attractif.`,
+ taux:()=>`Taux nominal du crédit, hors assurance. Il est fixé à la signature de l'offre de prêt.`,
+ regime:()=>`Micro-BIC : 50 % des loyers sont imposés, sans comptable. Réel : on déduit charges, intérêts et amortissements, l'impôt est souvent nul pendant des années, mais il faut une déclaration comptable (service en ligne ≈ 150 €/an) et l'amortissement est réintégré dans la plus-value à la revente.`,
+ tmi:()=>`Votre tranche marginale d'impôt. Si quelqu'un est rattaché au foyer fiscal de ses parents, c'est la tranche des parents qui compte. Les prélèvements sociaux (18,6 %) s'ajoutent toujours.`,
+ cfe:()=>`Cotisation foncière des entreprises, due par les loueurs en meublé. Pas de cotisation minimum sous 5 000 € de recettes par an. Le montant dépend de la commune.`,
+ compta:()=>`Uniquement au régime réel : la déclaration comptable (liasse 2031) passe en pratique par un service en ligne spécialisé, ≈ 100 à 250 €/an. Une seule déclaration pour vous deux (indivision).`,
+ garantie:()=>`Caution du prêt (Crédit Logement ou équivalent), payée au départ, en général 1 à 1,5 % du montant emprunté.`,
+ assur:()=>`Taux annuel de l'assurance emprunteur, appliqué au capital emprunté. La quotité, c'est la part du prêt couverte pour cette personne (100 % chacun = couverture totale en cas de problème).`,
+ notaire:()=>`Frais d'acquisition dans l'ancien : environ 7 à 8 % du prix, surtout des taxes.`,
+ apport:()=>`Ce que vous mettez de votre poche au départ (à deux). Le reste du budget tout compris est emprunté.`,
+ chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, entretien des parties communes, ordures ménagères).`,
+ copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire).`,
+ dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
+ statut:()=>`Où vous en êtes avec ce bien. « Écarté » le retire de la shortlist et de la carte ; il reste dans « Nos biens ».`};
+// étiquettes reconnues automatiquement → infobulle
+const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
+ [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];
+const TIPID={"f-pess":"pess","f-vacq":"vacq","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro"};
+const tipBtn=k=>`<button type="button" class="tipb" data-tip="${k}" aria-label="Explication">?</button>`;
+let TIPBUSY=false;
+function addTips(root){if(TIPBUSY) return; TIPBUSY=true;
+ root.querySelectorAll(".big4>div>span:first-child,.bcn small,.ngl,.ngh>b,.btg>small,h2.psec,details.b2n summary>span:first-child,table:not(.adt):not(.ftab):not(.scnt) thead th,.fincard .trow>span:first-child").forEach(el=>{if(el.dataset.tipped||el.closest(".fiche")) return; const t=el.textContent.trim().replace(/\s+/g," ");
+  const m=TIPMAP.find(([re])=>re.test(t)); if(!m) return; el.dataset.tipped="1"; el.insertAdjacentHTML("beforeend",tipBtn(m[1]));});
+ Object.entries(TIPID).forEach(([id,k])=>{const inp=document.getElementById(id); if(!inp) return; const lab=inp.closest("label")||document.querySelector(`label[for="${id}"]`); if(!lab||lab.dataset.tipped) return; lab.dataset.tipped="1";
+  const tn=[...lab.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()); if(tn) tn.after(document.createRange().createContextualFragment(tipBtn(k))); else lab.insertAdjacentHTML("beforeend",tipBtn(k));});
+ TIPBUSY=false;}
+const tipPop=document.createElement("div"); tipPop.id="tipPop"; tipPop.setAttribute("role","tooltip"); tipPop.hidden=true; document.body.appendChild(tipPop);
+let TIPCUR=null;
+function showTip(b){const f=TIPS[b.dataset.tip]; if(!f) return; TIPCUR=b; tipPop.textContent=f(); tipPop.hidden=false; const r=b.getBoundingClientRect(), w=Math.min(300,innerWidth-24);
+ tipPop.style.width=w+"px"; const left=Math.max(12,Math.min(r.left+r.width/2-w/2,innerWidth-w-12)); const h=tipPop.offsetHeight; tipPop.style.left=left+"px"; tipPop.style.top=(r.top-h-8>8?r.top-h-8:r.bottom+8)+"px";}
+function hideTip(){tipPop.hidden=true; TIPCUR=null;}
+document.addEventListener("mouseover",e=>{const b=e.target.closest&&e.target.closest(".tipb"); if(b&&matchMedia("(pointer:fine)").matches) showTip(b);});
+document.addEventListener("mouseout",e=>{const b=e.target.closest&&e.target.closest(".tipb"); if(b&&matchMedia("(pointer:fine)").matches) hideTip();});
+document.addEventListener("focusin",e=>{const b=e.target.closest&&e.target.closest(".tipb"); if(b) showTip(b);});
+document.addEventListener("focusout",e=>{if(e.target.closest&&e.target.closest(".tipb")) hideTip();});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".tipb"); if(b){e.preventDefault(); e.stopPropagation(); if(TIPCUR===b) hideTip(); else showTip(b); return;} if(TIPCUR) hideTip();},true);
+addEventListener("scroll",()=>{if(TIPCUR) hideTip();},{passive:true,capture:true});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&TIPCUR) hideTip();});
+let TIPT=null; new MutationObserver(ms=>{if(TIPBUSY||ms.every(m=>m.target.closest&&m.target.closest("svg"))) return; clearTimeout(TIPT); TIPT=setTimeout(()=>addTips(document),150);}).observe(document.body,{childList:true,subtree:true});
+addTips(document);
 
 initFin();
 fitVH();

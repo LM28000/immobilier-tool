@@ -217,8 +217,19 @@ td.r,th.r{text-align:right}
 tbody tr{cursor:pointer} tbody tr:hover{background:var(--sunk)} tbody tr.sel{background:var(--accent-soft)}
 .scorebar{display:inline-block;width:64px;height:8px;border-radius:4px;background:var(--sunk);vertical-align:middle;margin-right:6px;overflow:hidden}
 .scorebar i{display:block;height:100%;background:var(--accent)}
-footer{font-size:.8rem;color:var(--muted);max-width:94ch}
-footer ul{padding-left:18px;margin:6px 0 0}
+footer.foot{margin-top:28px;border-top:1px solid var(--line);padding-top:20px;font-size:.84rem;color:var(--muted)}
+.fcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px 28px}
+.fcols h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fg);margin:0 0 6px}
+.fcols p{margin:0 0 10px;line-height:1.5} .fcols h3+p{margin-top:0} .fcols section h3:not(:first-child){margin-top:12px}
+.fwarn{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 10px;font-weight:600}
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;line-height:1.4}
+.kbd kbd{font:600 .74rem/1 ui-monospace,monospace;background:var(--surface);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:2px 5px;margin-right:2px;color:var(--fg)}
+.fdet{margin-top:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.fdet>summary{cursor:pointer;padding:12px 14px;font-weight:700;color:var(--fg)} .fdet[open]>summary{border-bottom:1px solid var(--line)}
+.fdet>:not(summary){padding:12px 14px}
+.fmeth{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0;line-height:1.5} .fmeth dt{font-weight:700;color:var(--fg)} .fmeth dd{margin:0}
+@media (max-width:560px){.fmeth{grid-template-columns:1fr} .fmeth dd{margin-bottom:6px}}
+.fbot{text-align:center;margin:18px 0 8px;font-size:.76rem}
 
 
 /* --- boutons : un seul système --- */
@@ -369,6 +380,39 @@ tr.gsep td{background:var(--bg)!important;color:var(--muted);font-size:.74rem;fo
 .cards.row .bph img{height:90px}
 details.bmore{font-size:.8rem} details.bmore summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.76rem}
 details.bmore[open] summary{margin-bottom:6px}
+/* visite enrichie */
+.vnav{position:sticky;top:-20px;z-index:3;display:flex;gap:4px;flex-wrap:wrap;background:var(--surface);padding:8px 0;margin:0 0 4px;border-bottom:1px solid var(--line)}
+.vnav a{font-size:.76rem;font-weight:700;color:var(--accent);text-decoration:none;background:var(--accent-soft);border-radius:999px;padding:4px 10px}
+.ckgrp{margin:0 0 10px} .ckgrp h4{margin:8px 0 4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ckrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dotted var(--line);font-size:.84rem}
+.ckrow.bad span:first-child{color:var(--bad);font-weight:600}
+.tri{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.tri button{font:inherit;font-size:.74rem;font-weight:700;border:0;background:var(--surface);color:var(--muted);padding:4px 9px;cursor:pointer} .tri button+button{border-left:1px solid var(--line)}
+.tri .t-oui[aria-pressed="true"]{background:var(--ok-soft);color:var(--ok)} .tri .t-non[aria-pressed="true"]{background:var(--bad-soft);color:var(--bad)} .tri .t-q[aria-pressed="true"]{background:var(--warn-soft);color:var(--warn)}
+.verd{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.verd .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.f.inl{flex-direction:row;align-items:center;gap:6px} .f.inl .inp{width:130px}
+.vother{background:var(--sunk);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.84rem}
+.vl{margin:4px 0 0} .vl.plus::before{content:"+ ";color:var(--ok);font-weight:800} .vl.moins::before{content:"− ";color:var(--bad);font-weight:800}
+.vq{margin:0;padding-left:20px;font-size:.86rem;line-height:1.5}
+/* fiche à emporter enrichie */
+.fh{align-items:flex-start} .fph{width:220px;max-width:40%;aspect-ratio:16/10;object-fit:cover;border-radius:8px}
+.fht{flex:1;min-width:220px} .fdate{font-size:.78rem}
+.plv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.plv div{border:1px solid #d6dce4;border-radius:8px;padding:8px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.plv div.tg{border:2px solid #2f47b3;background:#eef1fb} .plv span{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#5b6575;font-weight:700} .plv b{font-size:1.15rem} .plv small{color:#5b6575}
+.fnote{font-size:.76rem;color:#5b6575;margin:6px 0 0}
+.fqgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:start} .fqmap{width:100%;border-radius:8px;border:1px solid #d6dce4}
+@media (max-width:560px){.fqgrid{grid-template-columns:1fr}.fph{max-width:100%;width:100%}}
+.ftab{width:100%;min-width:0;border-collapse:collapse;font-size:.84rem} .ftab th,.ftab td{text-align:left;padding:4px 6px;border-bottom:1px solid #e3e8ee} .ftab th{font-size:.7rem;text-transform:uppercase;color:#5b6575}
+.fiche h3{font-size:.8rem;margin:10px 0 4px;color:#18202c}
+.cb{display:inline-grid;place-items:center;font-size:.7rem;font-weight:800} .cb.ok{color:#1d7a4a;border-color:#1d7a4a} .cb.ko{color:#b4233c;border-color:#b4233c}
+@media print{.fbreak{break-before:page}}
+/* infobulles */
+.tipb{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:var(--muted);font:700 .6rem/1 system-ui,sans-serif;cursor:help;vertical-align:1px;opacity:.75;text-transform:none;letter-spacing:0;flex:none}
+.tipb:hover,.tipb:focus-visible{opacity:1;color:var(--accent)}
+#tipPop{position:fixed;z-index:120;background:var(--fg);color:var(--bg);font-size:.78rem;line-height:1.45;font-weight:500;padding:9px 11px;border-radius:9px;box-shadow:0 8px 24px rgb(0 0 0 / .25);pointer-events:none;text-transform:none;letter-spacing:0}
+@media print{.tipb{display:none}}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
