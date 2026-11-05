@@ -12,7 +12,7 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `src/js/` | le code, découpé par thème ; les fichiers sont assemblés dans l'ordre de leur numéro |
 | `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour et historique |
 | `tools/` | scripts Python qui ont servi à préparer les données (IRIS, DVF, carte) |
-| `tests/run.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright |
+| `tests/run.js`, `tests/visit.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright |
 | `build.py` | assemble `index.html` (la page servie) et `dist/` |
 | `supabase.sql` | table partagée « Nos biens » (accès par code de groupe) |
 | `sync.sh`, `install-sync.sh` | poussent automatiquement les changements sur GitHub (launchd) |

@@ -4,7 +4,7 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac});
  if(+b.loyer>0){o.rent=+b.loyer; o.rentM2=S;} else o.rent=c.rent*rr;
- if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(scn) o._s=scn;
+ if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(+b.travaux>0) o.trav=+b.travaux; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
@@ -15,7 +15,7 @@ function renderBiens(){const box=document.getElementById("biensList"), st=docume
    <td class="r mono">${eur(+b.prix)}</td><td class="r mono">${eur(r.pm2)}${dif!=null?`<div class="sub" style="margin:0">${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs quartier</div>`:""}</td><td class="r mono">${eur(r.x.rentHC)}${+b.loyer>0?"":"<sup>*</sup>"}</td>
    <td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}</td><td><span class="pill ${bc}">${bt}</span></td>
    <td>${b.dpe?`<span class="pill ${bad?"p-bad":"p-n"}">${b.dpe}${bad?" · interdit bientôt":""}</span>`:"—"}</td>
-   <td style="white-space:nowrap">${cmpBtn({kind:"b",id:b.id})} <button type="button" class="lnk" data-del="${b.id}">supprimer</button></td></tr>`;}).join("")}</tbody></table></div>
+   <td style="white-space:nowrap"><button type="button" class="btn sm" data-visit="${b.id}">Visite${visitScore(b)!=null?" · "+fr(visitScore(b),1)+"/5":""}</button> <button type="button" class="btn ghost sm" data-fiche="${b.id}">Fiche</button> ${cmpBtn({kind:"b",id:b.id})} <button type="button" class="lnk" data-del="${b.id}">supprimer</button></td></tr>`;}).join("")}</tbody></table></div>
   <p class="sub"><sup>*</sup> loyer estimé (médiane du quartier ou de la ville). Les prix d'annonce incluent en général les frais d'agence ; le notaire, les meubles et les petits travaux sont ajoutés comme pour la ville.</p>`;
  box.querySelectorAll("[data-del]").forEach(btn=>btn.addEventListener("click",async()=>{const old=BIENS.find(x=>x.id===btn.dataset.del); if(!old) return; const {id,by,...keep}=old;
   try{await DB.collection("biens").doc(btn.dataset.del).delete(); toast(`« ${old.titre||"Bien"} » supprimé.`,{label:"Annuler",fn:async()=>{try{await DB.collection("biens").add(keep); toast("Bien restauré.");}catch(_){toast("Restauration impossible.");}}});}catch(e){st.textContent="Suppression refusée : il faut un accès en modification à la page.";}}));}
@@ -56,7 +56,7 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
   hook(db);
  }).catch(()=>{clearTimeout(timer); if(!DB){DB=localDB(); hook(DB);}});
  function hook(db){
-  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>Object.assign({id:d.id},d.data())); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw();},
+  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>Object.assign({id:d.id},d.data())); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit();},
    e=>{clearTimeout(timer); st.textContent="Lecture de la liste impossible ("+(e&&e.code||"erreur")+").";});
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();

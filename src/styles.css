@@ -293,6 +293,35 @@ details.mini{margin:8px 0 0;font-size:.78rem;color:var(--muted)} details.mini su
 .scnchips .seg2 button{font:inherit;font-size:.74rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:4px 9px;cursor:pointer}
 .scnchips .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
 .scnt{width:100%;min-width:0;font-size:.82rem;border-collapse:collapse} .scnt td,.scnt th{padding:5px 6px;border-bottom:1px solid var(--line)} .scnt th{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+/* visite */
+.vpanel{position:fixed;inset:0;z-index:70;background:rgb(0 0 0 / .45);display:flex;justify-content:flex-end}
+.vsheet{position:relative;background:var(--surface);width:min(560px,100%);height:100%;overflow:auto;padding:20px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) 18px;box-shadow:-10px 0 30px rgb(0 0 0 / .2)}
+.vsheet .sheetx{position:absolute;right:12px;top:12px}
+.vsheet .dh{padding-right:40px}
+.vf{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stars{display:inline-flex;gap:1px} .stars button,.stars i{font:inherit;font-style:normal;font-size:1.15rem;line-height:1;border:0;background:none;color:var(--line);cursor:pointer;padding:2px}
+.stars .on{color:#e5a100} .stars.ro i{font-size:.95rem;cursor:default}
+.vnotes td{vertical-align:middle}
+.vcom{background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:.84rem;margin:6px 0}
+.warnline{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:8px 10px;font-size:.84rem;margin:8px 0}
+.vfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;position:sticky;bottom:-20px;background:var(--surface);padding:10px 0}
+textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg);padding:8px 10px;resize:vertical}
+/* fiche à emporter */
+.fpanel{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 30px max(16px,env(safe-area-inset-left,0px))}
+.fbar{position:sticky;top:0;display:flex;justify-content:space-between;gap:8px;padding:12px 0;background:var(--bg);z-index:1}
+.fiche{max-width:780px;margin:0 auto;background:#fff;color:#18202c;border-radius:12px;padding:28px;box-shadow:0 4px 20px rgb(0 0 0 / .1)}
+.fiche h1{font-size:1.5rem;margin:0 0 4px} .fiche h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#5b6575;margin:0 0 8px}
+.fh{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:2px solid #18202c;padding-bottom:12px;margin-bottom:16px} .fh p{margin:0;color:#5b6575}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px}
+.fbox{border:1px solid #d6dce4;border-radius:10px;padding:12px 14px;margin-bottom:12px;break-inside:avoid}
+.fbox .trow{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dotted #d6dce4}
+.fbox ol{margin:0;padding-left:20px;line-height:1.5}
+.fcheck{list-style:none;margin:0;padding:0;columns:2;column-gap:20px} .fcheck li{display:flex;gap:8px;align-items:center;padding:4px 0;break-inside:avoid}
+.cb{width:13px;height:13px;border:1.5px solid #18202c;border-radius:3px;flex:none}
+.flines span{display:block;border-bottom:1px solid #d6dce4;height:26px}
+.fsrc{font-size:.74rem;color:#5b6575;margin:8px 0 0}
+@media (max-width:560px){.fcheck{columns:1}.fiche{padding:18px}}
+@media print{body.fiche-on>*:not(#fichePanel){display:none!important} body.fiche-on #fichePanel{position:static;padding:0;background:#fff} .fbar{display:none} .fiche{box-shadow:none;max-width:none;padding:0}}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
