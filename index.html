@@ -1,4 +1,6 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Où acheter notre studio ?</title>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2f47b3"><link rel="apple-touch-icon" href="icons/icone-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Notre studio">
+<script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")&&!/claude\.ai|claudeusercontent/.test(location.host))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+</head><body><title>Où acheter notre studio ?</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -333,6 +335,9 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
 .hb.drop{background:var(--ok-soft);color:var(--ok)} .hb.new{background:var(--accent-soft);color:var(--accent)} .hb.old{background:var(--sunk);color:var(--muted)}
 .annh .chip[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
 .pcurve svg{width:100%;max-width:420px}
+/* fraîcheur */
+.fresh{min-width:0;font-size:.8rem} .fresh td,.fresh th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+.freshpill{font-size:.72rem;font-weight:700;background:var(--warn-soft);color:var(--warn);border-radius:999px;padding:3px 9px;text-decoration:none;align-self:center}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
@@ -361,7 +366,7 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
 <div class="wrap">
   <script>(function(){var t="light";try{t=localStorage.getItem("theme")||"light"}catch(e){}document.documentElement.setAttribute("data-theme",t)})();</script>
   <header>
-    <div class="hrow"><h1>Où acheter notre studio ?</h1><span class="hctl"><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
+    <div class="hrow"><h1>Où acheter notre studio ?</h1><a href="#sources" class="freshpill" id="freshPill" hidden></a><button type="button" class="btn sm" id="installBtn" hidden>Installer l'appli</button><span class="hctl"><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
     <p>Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans treize villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour. Détail complet dans le <a href="https://claude.ai/artifact/CYGE62kVytaHFsk8qqUk3c" target="_blank" rel="noopener">simulateur locatif</a>.</p>
   </header>
 
@@ -493,8 +498,8 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
   </section>
 
   <footer>
-    <p><b>Méthode.</b> Prix = prix moyen des studios vendus × surcote × 22 m², plus notaire, meubles et petits travaux. Loyer = loyer médian des studios ramené à la surface du bien (loyer × (surface / surface de référence)^0,6 : les grands studios se louent moins cher au m²), moins 40 € de charges payées par le locataire. Charges propriétaire identiques partout, sauf la taxe foncière qui suit le taux 2025 de la ville (hors ordures ménagères, payées par le locataire ; le montant réel dépend aussi du logement). Rendement sur 15 ans = rendement annuel de votre mise, revente comprise, avant impôt et frais de vente. Banque : (mensualité + ton prêt étudiant de 486 €) ÷ (2 307 € de salaires + 70 % du loyer). Trajets depuis Laval et Nantes : temps en voiture estimé à partir de la distance (×1,2, 105 km/h de moyenne, surtout autoroute). Depuis Paris : meilleur train direct ou avec une correspondance, approximatif. Lignes de train : grandes lignes, tracé simplifié. Quartiers : contours IRIS, prix RealAdvisor du quartier rapportés au prix des studios de la ville, loyers ajustés de l'écart RealAdvisor (±15 % au plus) ou estimés à partir du prix. Vacance selon l'emplacement : 0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (estimation simple, désactivable). Repères placés à la main, approximatifs. Estimations, pas un conseil financier.</p>
-    <p><b>Sources.</b></p>
+    <p><b>Méthode.</b> Prix = prix moyen des studios vendus × surcote × 22 m², plus notaire, meubles et petits travaux. Loyer = loyer médian des studios ramené à la surface du bien (loyer × (surface / surface de référence)^0,6 : les grands studios se louent moins cher au m²), moins 40 € de charges payées par le locataire. Charges propriétaire identiques partout, sauf la taxe foncière qui suit le taux 2025 de la ville (hors ordures ménagères, payées par le locataire ; le montant réel dépend aussi du logement). Rendement sur 15 ans = rendement annuel de votre mise, revente comprise, après impôts sur les loyers (micro-BIC ou réel, au plus avantageux), CFE, comptable au réel et impôt sur la plus-value, avant frais de vente. Banque : (mensualité + ton prêt étudiant de 486 €) ÷ (2 307 € de salaires + 70 % du loyer). Trajets depuis Laval et Nantes : temps en voiture estimé à partir de la distance (×1,2, 105 km/h de moyenne, surtout autoroute). Depuis Paris : meilleur train direct ou avec une correspondance, approximatif. Lignes de train : grandes lignes, tracé simplifié. Quartiers : contours IRIS, prix RealAdvisor du quartier rapportés au prix des studios de la ville, loyers ajustés de l'écart RealAdvisor (±15 % au plus) ou estimés à partir du prix. Vacance selon l'emplacement : 0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (estimation simple, désactivable). Repères placés à la main, approximatifs. Estimations, pas un conseil financier.</p>
+    <p id="sources"><b>Sources.</b></p>
     <ul>
       <li>Prix des studios vendus : <a href="https://immobilier.pappers.fr/prix-immobilier" target="_blank" rel="noopener">Pappers Immobilier, données DVF</a></li>
       <li>Loyers médians et demande : <a href="https://www.locservice.fr/tensiometre/tensiometre-studio-72181.html" target="_blank" rel="noopener">Tensiomètre LocService</a>, studios et T1, charges comprises</li>
@@ -507,6 +512,8 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
       <li>Annonces de location : <a href="https://www.bienici.com/recherche/location/le-mans-72000/appartement/studio" target="_blank" rel="noopener">Bien'ici</a>, relevé quotidien (dernier : <span class="adsdate"></span>)</li>
       <li>Contours des départements : <a href="https://github.com/gregoiredavid/france-geojson" target="_blank" rel="noopener">france-geojson</a> (données IGN simplifiées)</li>
     </ul>
+    <div id="freshBox"></div>
+    <p class="sub" id="installTip"><b>Sur téléphone :</b> ouvrez la page GitHub (lm28000.github.io/immobilier-tool) puis, sur iPhone, Partager → « Sur l'écran d'accueil » ; sur Android, le bouton « Installer l'appli » en haut. Elle s'ouvre ensuite hors ligne avec les dernières données.</p>
   </footer>
 </div>
 <div class="vpanel" id="visitPanel" hidden role="dialog" aria-modal="true" aria-label="Visite du bien"><div class="vsheet"><button type="button" class="sheetx vclose" aria-label="Fermer">×</button><div id="visitBody"></div></div></div>
@@ -1366,9 +1373,9 @@ function sbCode(){try{return localStorage.getItem("biens-code")||"";}catch(_){re
 function sbDB(code){const HD={apikey:SB.key,"x-groupe":code,"Content-Type":"application/json"};
  const base=SB.url.replace(/\/$/,"")+"/rest/v1/biens", subs=[]; let last=[];
  const chk=async r=>{if(!r.ok){let m=""; try{m=(await r.json()).message||"";}catch(_){} throw {code:"http_"+r.status,message:m};} return r;};
- async function load(){const r=await chk(await fetch(base+"?select=id,data,created_at&order=created_at.desc&limit=500",{headers:HD})); last=await r.json();
+ async function load(){const r=await chk(await fetch(base+"?select=id,data,created_at&order=created_at.desc&limit=500",{headers:HD})); last=await r.json(); try{localStorage.setItem("biens-cache-"+code,JSON.stringify(last));}catch(_){}
   subs.forEach(s=>s.next({docs:last.map(x=>({id:x.id,data:()=>x.data}))}));}
- const tick=()=>load().catch(e=>subs.forEach(s=>s.err&&s.err(e)));
+ const tick=()=>load().catch(e=>{let c=null; try{c=JSON.parse(localStorage.getItem("biens-cache-"+code)||"null");}catch(_){} if(c&&!last.length){last=c; subs.forEach(s=>s.next({docs:last.map(x=>({id:x.id,data:()=>x.data}))})); toast("Hors ligne : liste commune affichée telle qu'au dernier chargement.");} else subs.forEach(s=>s.err&&s.err(e));});
  setInterval(()=>{if(!document.hidden) tick();},20000); document.addEventListener("visibilitychange",()=>{if(!document.hidden) tick();});
  const col={orderBy(){return col;},limit(){return col;},onSnapshot(next,err){subs.push({next,err}); tick(); return ()=>{};},
   add:async b=>{await chk(await fetch(base,{method:"POST",headers:Object.assign({},HD,{Prefer:"return=minimal"}),body:JSON.stringify({groupe:code,data:b})})); tick(); return {};},
@@ -1702,6 +1709,33 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  const host=b.parentElement.parentElement; host.querySelectorAll(`:scope > .ptabs [data-pt^="${id}|"]`).forEach(x=>x.setAttribute("aria-pressed",x===b)); host.querySelectorAll(`:scope > [data-ptp^="${id}|"]`).forEach(p=>p.hidden=p.dataset.ptp!==`${id}|${i}`);});
 
 document.querySelectorAll(".adsdate").forEach(e=>e.textContent=ADS.date||"");
+
+/* ---------- fraîcheur des données ---------- */
+// relevé = date à laquelle la donnée a été récupérée ; age = âge maximal avant de la signaler (jours)
+const FRESH=[
+ ["Annonces Bien'ici (loyers et ventes)","chaque jour",()=>ADS.iso||"2026-11-05",2],
+ ["Taux du crédit","novembre 2026","2026-11-05",60],
+ ["Prix des studios vendus (DVF, Pappers)","12 derniers mois","2026-11-04",180],
+ ["Loyers médians (LocService)","annonces récentes","2026-11-04",180],
+ ["Prix et loyers par quartier (RealAdvisor)","octobre 2026","2026-11-04",180],
+ ["DPE des petits appartements (ADEME)","depuis juillet 2021","2026-11-04",180],
+ ["Taxe foncière","taux 2025","2026-11-04",365],
+ ["Population, logements vides, chômage (Insee)","2023","2026-11-04",365],
+ ["Étudiants","rentrée 2023","2026-11-04",365],
+ ["Contours des quartiers (IRIS)","2025","2026-11-04",730],
+ ["Règles fiscales (LMNP, prélèvements sociaux)","lois de finances 2025-2026","2026-11-05",180]];
+function renderFresh(){const box=document.getElementById("freshBox"), pill=document.getElementById("freshPill"); if(!box) return; const now=new Date(); let stale=0;
+ const rows=FRESH.map(([l,per,d,max])=>{const iso=typeof d==="function"?d():d, age=Math.round((now-new Date(iso+"T12:00:00"))/864e5), old=age>max; if(old) stale++;
+  return `<tr><td>${l}</td><td>${per}</td><td class="mono">${new Date(iso+"T12:00:00").toLocaleDateString("fr-FR")}</td><td><span class="pill ${old?"p-warn":"p-ok"}">${old?`à rafraîchir (${age} j)`:"à jour"}</span></td></tr>`;}).join("");
+ box.innerHTML=`<p><b>Fraîcheur des données.</b></p><div class="tablewrap"><table class="fresh"><thead><tr><th>Donnée</th><th>Période</th><th>Relevée le</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ pill.hidden=!stale; pill.textContent=`${stale} donnée${stale>1?"s":""} à rafraîchir`;}
+renderFresh();
+
+/* ---------- appli sur téléphone (version GitHub) ---------- */
+(function(){let ev=null; const b=document.getElementById("installBtn"); if(!b) return;
+ addEventListener("beforeinstallprompt",e=>{e.preventDefault(); ev=e; b.hidden=false;});
+ b.addEventListener("click",async()=>{if(!ev) return; ev.prompt(); try{await ev.userChoice;}catch(_){} ev=null; b.hidden=true;});
+ addEventListener("appinstalled",()=>{b.hidden=true; toast("Appli installée sur l'écran d'accueil.");});})();
 
 initFin();
 fitVH();

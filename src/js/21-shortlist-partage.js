@@ -37,9 +37,9 @@ function sbCode(){try{return localStorage.getItem("biens-code")||"";}catch(_){re
 function sbDB(code){const HD={apikey:SB.key,"x-groupe":code,"Content-Type":"application/json"};
  const base=SB.url.replace(/\/$/,"")+"/rest/v1/biens", subs=[]; let last=[];
  const chk=async r=>{if(!r.ok){let m=""; try{m=(await r.json()).message||"";}catch(_){} throw {code:"http_"+r.status,message:m};} return r;};
- async function load(){const r=await chk(await fetch(base+"?select=id,data,created_at&order=created_at.desc&limit=500",{headers:HD})); last=await r.json();
+ async function load(){const r=await chk(await fetch(base+"?select=id,data,created_at&order=created_at.desc&limit=500",{headers:HD})); last=await r.json(); try{localStorage.setItem("biens-cache-"+code,JSON.stringify(last));}catch(_){}
   subs.forEach(s=>s.next({docs:last.map(x=>({id:x.id,data:()=>x.data}))}));}
- const tick=()=>load().catch(e=>subs.forEach(s=>s.err&&s.err(e)));
+ const tick=()=>load().catch(e=>{let c=null; try{c=JSON.parse(localStorage.getItem("biens-cache-"+code)||"null");}catch(_){} if(c&&!last.length){last=c; subs.forEach(s=>s.next({docs:last.map(x=>({id:x.id,data:()=>x.data}))})); toast("Hors ligne : liste commune affichée telle qu'au dernier chargement.");} else subs.forEach(s=>s.err&&s.err(e));});
  setInterval(()=>{if(!document.hidden) tick();},20000); document.addEventListener("visibilitychange",()=>{if(!document.hidden) tick();});
  const col={orderBy(){return col;},limit(){return col;},onSnapshot(next,err){subs.push({next,err}); tick(); return ()=>{};},
   add:async b=>{await chk(await fetch(base,{method:"POST",headers:Object.assign({},HD,{Prefer:"return=minimal"}),body:JSON.stringify({groupe:code,data:b})})); tick(); return {};},
