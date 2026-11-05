@@ -65,7 +65,7 @@ svg{display:block;width:100%;height:auto}
 .mapbox{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
 #map{touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 section.mapfull #map{touch-action:none}
-.maphint{position:absolute;right:8px;top:8px;background:var(--surface);color:var(--muted);font-size:.68rem;font-weight:600;padding:3px 7px;border-radius:6px;opacity:.9;pointer-events:none;transition:opacity .4s,background .3s,color .3s;animation:hintout 1s 6s forwards}
+.maphint{position:absolute;left:10px;top:52px;max-width:calc(100% - 72px);background:var(--surface);color:var(--muted);font-size:.68rem;font-weight:600;padding:3px 7px;border-radius:6px;opacity:.9;pointer-events:none;transition:opacity .4s,background .3s,color .3s;animation:hintout 1s 6s forwards}
 @keyframes hintout{to{opacity:0}}
 .maphint.flash{animation:none}
 @media (max-width:560px){.ctl{gap:5px}.ctl button{padding:6px 9px;font-size:.78rem}.chk{font-size:.78rem}}
@@ -223,6 +223,63 @@ tbody tr{cursor:pointer} tbody tr:hover{background:var(--sunk)} tbody tr.sel{bac
 .scorebar i{display:block;height:100%;background:var(--accent)}
 footer{font-size:.8rem;color:var(--muted);max-width:94ch}
 footer ul{padding-left:18px;margin:6px 0 0}
+
+
+/* --- boutons : un seul système --- */
+.btn{border-radius:9px;transition:background .15s,filter .15s,transform .1s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;line-height:1.2}
+.btn:hover:not(:disabled){filter:brightness(1.08)} .btn:active:not(:disabled){transform:translateY(1px)}
+.btn.ghost:hover:not(:disabled){background:var(--accent-soft);filter:none}
+.btn.sm{font-size:.78rem;padding:5px 11px;border-radius:8px}
+.cmpb{border-radius:8px;padding:4px 10px;transition:background .15s} .cmpb:hover{background:var(--accent-soft)} .cmpb.on:hover{background:var(--accent)}
+.lnk{text-decoration:none;font-weight:600} .lnk:hover{text-decoration:underline}
+.ctl button{border-radius:8px}
+/* barre d'action collée en bas de la fiche */
+.adact{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:12px -18px -18px;padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);border-radius:0 0 10px 10px}
+.adact .addv:not(.sm){flex:1 1 auto;justify-content:center} .adact>a.btn{margin-left:auto} .ngc .tchip{white-space:normal}
+.adnav{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)} .adnav .btn{min-width:34px;justify-content:center;font-size:1rem;padding:3px 8px}
+@media (max-width:940px){.qdetail .adact{border-radius:0}}
+/* statuts en pastilles */
+.stp{font:inherit;font-size:.76rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:4px 10px 4px 8px;cursor:pointer;transition:filter .15s}
+.stp:hover{filter:brightness(.96)} .stp i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.stp.st0{background:var(--sunk);color:var(--muted)} .stp.st1{background:var(--accent-soft);color:var(--accent)} .stp.st2{background:var(--ok-soft);color:var(--ok)} .stp.st3{background:var(--bad-soft);color:var(--bad)}
+/* message avec action */
+#toast{display:flex;align-items:center;gap:12px} #toast.act{pointer-events:auto}
+#toast button{font:inherit;font-weight:800;border:0;background:none;color:var(--accent-soft);cursor:pointer;padding:2px 4px;text-decoration:underline}
+/* transitions de fiche */
+@keyframes sl{from{opacity:0;transform:translateX(24px)}} @keyframes sr{from{opacity:0;transform:translateX(-24px)}}
+.slide-l{animation:sl .22s ease-out} .slide-r{animation:sr .22s ease-out}
+@media (prefers-reduced-motion:reduce){.slide-l,.slide-r{animation:none}}
+
+/* feuille du bas : plein écran au glisser */
+@media (max-width:940px){.qdetail{transition:max-height .25s ease,transform .2s ease}.qdetail.full{max-height:92vh}}
+/* chargements et listes vides */
+@keyframes shim{to{background-position:-200% 0}}
+img.adph,img.dealph,img.thb,#tip .tph{background:linear-gradient(90deg,var(--sunk) 25%,var(--line) 50%,var(--sunk) 75%);background-size:200% 100%;animation:shim 1.3s linear infinite}
+@media (prefers-reduced-motion:reduce){img.adph,img.dealph,img.thb,#tip .tph{animation:none}}
+.empty{margin:10px 0 0;padding:14px;border:1px dashed var(--line);border-radius:10px;text-align:center;color:var(--muted);font-size:.84rem}
+[hidden]{display:none!important}
+.mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
+/* --- carte : barre d'outils, repère, pastilles de vente --- */
+.mtools{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 14px rgb(0 0 0 / .14);overflow:hidden;z-index:3}
+.mtools button{width:38px;height:38px;display:grid;place-items:center;border:0;background:transparent;color:var(--fg);cursor:pointer;padding:0}
+.mtools button+button{border-top:1px solid var(--line)}
+.mtools button:hover:not(:disabled){background:var(--sunk)} .mtools button:disabled{opacity:.35;cursor:default}
+.mtools button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+@media (pointer:coarse){.mtools .mt-zoom{display:none}}
+.mwhere{position:absolute;left:10px;top:10px;right:60px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none;z-index:3}
+.mwhere>*{pointer-events:auto}
+.mwhere button,.mw-here{white-space:nowrap;font:inherit;font-size:.8rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:6px 11px;box-shadow:0 3px 10px rgb(0 0 0 / .12)}
+.mw-back{background:var(--surface);color:var(--fg);border:1px solid var(--line);cursor:pointer}
+.mw-here{background:var(--fg);color:var(--surface)}
+.mw-go{background:var(--accent);color:var(--surface);border:0;cursor:pointer}
+.mw-back:hover{background:var(--sunk)}
+#qg{transition:opacity .25s}
+.vpin{cursor:pointer} .vpin:hover rect,.vpin:focus rect{stroke:var(--fg);stroke-width:2}
+#tip.rich{padding:0;width:230px;overflow:hidden}
+#tip .tph{display:block;width:100%;height:110px;object-fit:cover;background:var(--sunk)}
+#tip .tbd{padding:8px 10px;display:flex;flex-direction:column;gap:3px;font-size:.78rem}
+#tip .tbd b{font-size:.86rem}
+#tip .trow{display:flex;justify-content:space-between;gap:8px}
 </style>
 
 <div class="wrap">
@@ -235,6 +292,7 @@ footer ul{padding-left:18px;margin:6px 0 0}
   <section class="panel" id="shortPanel">
     <h2>Notre shortlist</h2>
     <div class="cards" id="shortList"></div>
+    <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
     <h2 style="margin-top:18px">Ventes du jour à regarder <span class="h2n">les meilleurs rendements parmi les studios à vendre que la banque accepterait</span></h2>
     <div class="cards" id="dealsList"></div>
   </section>
@@ -267,16 +325,18 @@ footer ul{padding-left:18px;margin:6px 0 0}
         <div class="ctl">
           <span class="seg2" id="cmode" role="group" aria-label="Couleur de la carte"><button type="button" data-m="irr" aria-pressed="true">Rendement</button><button type="button" data-m="cf" aria-pressed="false">Cash-flow</button></span>
           <label class="chk"><input type="checkbox" id="f-bank"> Banque OK</label>
-          <button type="button" id="zCity"></button>
-          <button type="button" id="zAll">Tout l'Ouest</button>
-          <button type="button" id="zOut" aria-label="Dézoomer">−</button>
-          <button type="button" id="zIn" aria-label="Zoomer">+</button>
-          <button type="button" id="zFull" aria-pressed="false">Plein écran</button>
         </div>
       </div>
       <div class="mapbox">
         <svg id="map" role="img" aria-label="Carte des villes comparées, zoomable jusqu'aux quartiers"></svg>
         <div id="tip" hidden></div>
+        <div class="mwhere" id="mWhere"><button type="button" class="mw-back" id="zAll" title="Revenir à toute la carte"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tout l'Ouest</span></button><span class="mw-here" id="mwHere"></span><button type="button" class="mw-go" id="zCity"></button></div>
+        <div class="mtools" role="toolbar" aria-label="Outils de la carte">
+          <button type="button" id="zIn" class="mt-zoom" aria-label="Zoomer" title="Zoomer (+)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" id="zOut" class="mt-zoom" aria-label="Dézoomer" title="Dézoomer (−)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" id="zHome" aria-label="Toute la carte" title="Toute la carte (0)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 8 8 3.2 13.5 8M4.2 6.8V13h7.6V6.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" id="zFull" aria-pressed="false" aria-label="Plein écran" title="Plein écran (F)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
         <button type="button" class="mapchip" id="mapChip" aria-label="Aller à la fiche de la ville"></button>
         <div class="maphint" id="mapHint">2 doigts pour déplacer · double-tap pour zoomer</div>
       </div>
@@ -566,7 +626,7 @@ function cityInView(){const cx=(VW/2-V.x)/V.k, cy=(VH/2-V.y)/V.k; let best=null,
 function draw(){
  const svg=svgEl(), wg=document.getElementById("wg"); if(!wg) return;
  wg.setAttribute("transform",`translate(${V.x} ${V.y}) scale(${V.k})`);
- const qm=V.k>=KQ; document.getElementById("qg").style.display=qm?"":"none";
+ const qm=V.k>=KQ; const qgE=document.getElementById("qg"), qo=Math.min(1,Math.max(0,(V.k-KQ*0.7)/(KQ*0.3))); qgE.style.display=qo>0?"":"none"; qgE.style.opacity=qo; qgE.style.pointerEvents=qm?"":"none";
  const hl=document.getElementById("hl"); hl.setAttribute("d",qm&&QSEL?QSEL.d:"");
  const P=(x,y)=>[x*V.k+V.x,y*V.k+V.y], G=(lat,lon)=>P(...pxy(lat,lon));
  const rows=draw.rows||C.map(c=>({c,x:calc(c)}));
@@ -598,6 +658,7 @@ function draw(){
   Object.values(IR).forEach(z=>z.list.forEach(t=>{const w=(t.bb[2]-t.bb[0])*V.k, h=(t.bb[3]-t.bb[1])*V.k; const [x,y]=P(t.cx,t.cy);
    if(x<0||x>VW||y<0||y>VH) return; cand.push({t,w,h,x,y});}));
   const pinB=[]; Object.values(MARK).forEach(m=>Object.entries(m).forEach(([k,p])=>{const [x,y]=G(p[0],p[1]); pinB.push([x-9,y-9,x+14+MARKTXT[k].length*6.5,y+9]);}));
+  s+=ventePins(P,pinB,boxes);
   adsPins(QC||"").concat(...Object.keys(IR).filter(k=>k!==QC).map(adsPins)).forEach(p=>{const [x,y]=P(p.x,p.y); if(x<0||x>VW||y<0||y>VH) return; const t=`${p.n} annonce${p.n>1?"s":""} · ${eur(p.med)}`, w=t.length*5.9+14;
    const hit=(y0)=>pinB.some(b=>!(x+w/2<b[0]||x-w/2>b[2]||y0+18<b[1]||y0>b[3]));
    let y0=[17,40,-6,63,-29].map(d=>y+d).find(v=>!hit(v)); if(y0==null) return; pinB.push([x-w/2-2,y0-2,x+w/2+2,y0+19]); boxes.push([x-w/2,y0-1,x+w/2,y0+18]);
@@ -621,13 +682,12 @@ function draw(){
  }
  document.getElementById("ov").innerHTML=s+pills; bindCities(svg);
  const nQC=qm?cityInView():null; if(nQC!==QC||qm!==draw.qm){QC=nQC; draw.qm=qm; if(QSEL&&QSEL.ck!==QC) QSEL=null; renderQBox(); renderLegend();}
- const zc=document.getElementById("zCity"); const sc=C.find(c=>c.k===SEL);
- zc.hidden=!IR[SEL]||(qm&&QC===SEL); zc.textContent=`Quartiers de ${sc.name}`;
+ renderWhere(qm);
  document.getElementById("zOut").disabled=V.k<=1.001; document.getElementById("zIn").disabled=V.k>=KMAX-0.01;
 }
 function renderLegend(){const qm=V.k>=KQ, sc=C.find(c=>c.k===SEL);
  document.getElementById("mapLegend").innerHTML=qm
-  ?`<span>${CMODE==="cf"?"Cash-flow mensuel à deux":"Rendement 15 ans du quartier"} :</span>${CLS().map(k=>`<span><i style="background:${k.c};opacity:${Math.min(1,k.o+.25)}"></i>${k.t}</span>`).join("")}<span><i style="background:var(--sunk);border:1px dashed var(--muted)"></i>zone d'activité ou sans prix${BANKOK?", ou banque trop juste":""}</span><span><b>■</b> gare · <b>●</b> université · <b>◆</b> centre</span><span><i style="background:var(--accent)"></i>annonces Bien'ici en ligne</span>`
+  ?`<span>${CMODE==="cf"?"Cash-flow mensuel à deux":"Rendement 15 ans du quartier"} :</span>${CLS().map(k=>`<span><i style="background:${k.c};opacity:${Math.min(1,k.o+.25)}"></i>${k.t}</span>`).join("")}<span><i style="background:var(--sunk);border:1px dashed var(--muted)"></i>zone d'activité ou sans prix${BANKOK?", ou banque trop juste":""}</span><span><b>■</b> gare · <b>●</b> université · <b>◆</b> centre</span><span><i style="background:var(--accent)"></i>loyers des annonces Bien'ici</span><span>Prix des studios à vendre : <i style="background:var(--ok)"></i>bon prix <i style="background:var(--warn)"></i>à négocier (≤ 15 %) <i style="background:var(--bad)"></i>trop cher</span>`
   :`${CMODE==="cf"?`<span>Cash-flow à deux :</span><span><i style="background:var(--ok)"></i>positif</span><span><i style="background:var(--warn)"></i>0 à −50 €</span><span><i style="background:var(--bad)"></i>moins de −50 €</span>`:`<span>Rendement 15 ans :</span><span><i style="background:var(--ok)"></i>5 % et plus</span><span><i style="background:var(--warn)"></i>2,5 à 5 %</span><span><i style="background:var(--bad)"></i>sous le LEP (2,5 %)</span>`}<span>Taille = étudiants</span><span><s></s>grandes lignes de train</span><span>Traits bleus : trajets de ${sc.name} vers Laval, Nantes et Paris (plein = moins de 1 h 30)</span><span><b>Zoomez</b> (molette, pincement ou +) pour voir les quartiers du Mans, de Saint-Nazaire, d'Angers, de Caen et d'Orléans</span>`;}
 
 function qCard(t){const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe);
@@ -719,7 +779,10 @@ function toVB(e){const svg=svgEl(), m=svg.getScreenCTM(); if(!m){const r=svg.get
    if(drag&&moved){svg.classList.add("grabbing"); V.x=drag.v.x+(p[0]-drag.p[0]); V.y=drag.v.y+(p[1]-drag.p[1]); clampV(); draw(); return;}
    if(pts.size>0&&e.pointerType!=="mouse") return;}
   if(e.pointerType!=="mouse") return;
-  const el=document.elementFromPoint(e.clientX,e.clientY), ip=el&&el.closest&&el.closest("[data-iris]");
+  const el=document.elementFromPoint(e.clientX,e.clientY), ip=el&&el.closest&&el.closest("[data-iris]"), vp=el&&el.closest&&el.closest("[data-vpin],[data-bpin]");
+  if(vp){const box=svg.parentElement.getBoundingClientRect(); tip.innerHTML=pinPreview(vp); tip.classList.add("rich"); tip.hidden=false;
+   const tx=e.clientX-box.left+16, ty=e.clientY-box.top+16; tip.style.left=Math.min(tx,box.width-tip.offsetWidth-6)+"px"; tip.style.top=Math.min(ty,box.height-tip.offsetHeight-6)+"px"; return;}
+  tip.classList.remove("rich");
   if(ip&&V.k>=KQ){const [ck,i]=ip.dataset.iris.split(":"), t=IR[ck].list[+i], x=QX[ck+i], box=svg.parentElement.getBoundingClientRect();
    tip.innerHTML=`<b>${t.name}</b><br>${x?`${x.irr==null?"n.d.":pct(x.irr)} sur 15 ans · ${sgn(x.cf)}/mois<br>${eur(t.price)}/m² · loyer ${eur(x.rentHC)}`:(t.type==="H"?"pas de prix publié":"zone d'activité")}`;
    tip.hidden=false; const tx=e.clientX-box.left+14, ty=e.clientY-box.top+14; tip.style.left=Math.min(tx,box.width-tip.offsetWidth-4)+"px"; tip.style.top=ty+"px";
@@ -732,14 +795,15 @@ function toVB(e){const svg=svgEl(), m=svg.getScreenCTM(); if(!m){const r=svg.get
    const el=document.elementFromPoint(e.clientX,e.clientY); if(!el) return;
    const cg=el.closest(".city"); if(cg){if(SEL!==cg.dataset.k){SEL=cg.dataset.k; QSEL=null; AD=null; render();} return;}
    const ap=el.closest("[data-ads]"); if(ap){openAds(ap.dataset.ads); return;}
+   const vpn=el.closest("[data-vpin]"); if(vpn){const [kind,ck,...r]=vpn.dataset.vpin.split("|"); openAd(kind,ck,r.join("|")); return;}
    const bpn=el.closest("[data-bpin]"); if(bpn){openBien(bpn.dataset.bpin); return;}
    const ip=el.closest("[data-iris]"); if(ip&&V.k>=KQ){const [ck,i]=ip.dataset.iris.split(":"); QSEL=IR[ck].list[+i]; AD=null; if(QC!==ck) QC=ck; if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}}};
  svg.addEventListener("pointerup",end); svg.addEventListener("pointercancel",end);
  svg.addEventListener("pointerleave",()=>{tip.hidden=true;});
  const mid=()=>[VW/2,VH/2];
  svg.addEventListener("dblclick",e=>{const [x,y]=toVB(e); flyZoom(x,y,2);});
- document.getElementById("zIn").addEventListener("click",()=>zoomAt(...mid(),2));
- document.getElementById("zOut").addEventListener("click",()=>zoomAt(...mid(),.5));
+ document.getElementById("zIn").addEventListener("click",()=>flyZoom(...mid(),2));
+ document.getElementById("zOut").addEventListener("click",()=>flyZoom(...mid(),.5)); document.getElementById("zHome").addEventListener("click",()=>{QSEL=null; AD=null; flyTo([0,0,WW,MAP.H],1);});
  document.getElementById("zAll").addEventListener("click",()=>flyTo([0,0,WW,MAP.H],1));
  document.getElementById("zCity").addEventListener("click",()=>{if(IR[SEL]) flyTo(IR[SEL].bb);});
 })();
@@ -843,24 +907,25 @@ const bankFail=x=>BANKOK&&x.ratio>0.35;
 let CMP=[];
 const CMPCOL=["var(--accent)","var(--c2)","var(--c3)"];
 function cmpKey(it){return it.kind+":"+(it.kind==="c"?it.k:it.kind==="q"?it.ck+"-"+it.code:it.id);}
+function cmpTb(it){if(it.kind==="b") return BIENS.find(v=>v.id===it.id)||null; if(it.kind==="v"){const [ck,...r]=it.id.split("|"), a=findAd("v",ck,r.join("|")); return a?venteBien(ck,a):null;} return null;}
 function cmpResolve(it){
  if(it.kind==="c"){const c=C.find(v=>v.k===it.k); return {name:c.name,sub:"moyenne de la ville",x:calc(c),fg:fgOf(DPECITY[c.k]),vac:H.vacance};}
  if(it.kind==="q"){const z=IR[it.ck]; if(!z) return null; const t=z.list.find(v=>v.code===it.code); const x=t&&QX[t.ck+t.i]; if(!x) return null;
   return {name:t.name,sub:C.find(v=>v.k===it.ck).name,x,fg:fgPct(t.dpe),n:t.dpe.reduce((a,b)=>a+b,0),vac:H.vacQ?(demandOf(t)||{}).vac:H.vacance,go:()=>{SEL=it.ck;QSEL=t;render();flyTo(t.bb,3.2);}};}
- if(it.kind==="b"){const b=BIENS.find(v=>v.id===it.id); if(!b) return null; const r=calcBien(b); return {name:b.titre||"Bien sans nom",sub:C.find(v=>v.k===b.ville).name+(b.quartier?" · "+b.quartier:""),x:r.x,vac:r.vac,dpeL:b.dpe};}
+ if(it.kind==="b"||it.kind==="v"){const b=cmpTb(it); if(!b) return null; const r=calcBien(b); return {name:(it.kind==="b"?"★ ":"")+(b.titre||"Bien sans nom"),sub:C.find(v=>v.k===b.ville).name+(b.quartier?" · "+b.quartier:"")+(it.kind==="v"?" · annonce":""),x:r.x,vac:r.vac,dpeL:b.dpe,tb:b,go:it.kind==="v"?()=>{const [ck,...q]=it.id.split("|"); openAd("v",ck,q.join("|"));}:null};}
  return null;}
 function toggleCmp(it){const k=cmpKey(it), i=CMP.findIndex(v=>cmpKey(v)===k); if(i>=0) CMP.splice(i,1); else {CMP.push(it); if(CMP.length>3) CMP.shift();}
  renderCompare(); updateCmpButtons(); saveLocal();}
 const inCmp=it=>CMP.some(v=>cmpKey(v)===cmpKey(it));
 function cmpBtn(it){return `<button type="button" class="cmpb${inCmp(it)?" on":""}" data-cmp='${JSON.stringify(it)}'>${inCmp(it)?"Comparé ✓":"+ Comparer"}</button>`;}
 function updateCmpButtons(){document.querySelectorAll(".cmpb[data-cmp]").forEach(b=>{const it=JSON.parse(b.dataset.cmp); b.classList.toggle("on",inCmp(it)); b.textContent=inCmp(it)?"Comparé ✓":"+ Comparer";});
- document.getElementById("tab-cmp").textContent=`Comparer (${CMP.length})`;}
+ document.getElementById("tab-cmp").textContent=`Comparer (${CMP.length})`; const cg=document.getElementById("cmpGo"); if(cg){cg.hidden=CMP.length<2; cg.textContent=`Comparer les ${CMP.length} sélectionnés →`;}}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".cmpb[data-cmp]"); if(b){e.preventDefault(); toggleCmp(JSON.parse(b.dataset.cmp));}});
 function renderCompare(){const box=document.getElementById("cmpBox"); const items=CMP.map(cmpResolve).map((r,i)=>r&&Object.assign(r,{it:CMP[i],col:CMPCOL[i]})).filter(Boolean);
- if(!items.length){box.innerHTML=`<p class="sub">Ajoutez jusqu'à trois villes, quartiers ou biens avec le bouton « + Comparer » de leur fiche.</p>`; return;}
+ if(!items.length){box.innerHTML=`<p class="sub">Ajoutez jusqu'à trois villes, quartiers, biens ou annonces avec le bouton « + Comparer » de leur fiche.</p>`; return;}
  const rows=[["Budget tout compris",r=>keur(r.x.cost)],["Loyer hors charges",r=>eur(r.x.rentHC)],["Cash-flow à deux",r=>`<span class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</span>`],
   ["Rendement 15 ans",r=>`<b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b>`],["Banque",r=>{const [bc,bt]=bank(r.x.ratio);return `<span class="pill ${bc}">${bt} · ${pct(r.x.ratio*100,0)}</span>`;}],
-  ["Gain à 25 ans",r=>(r.x.gains[25]>=0?"+":"")+keur(r.x.gains[25])],["Mois vides par an",r=>r.vac==null?"—":fr(r.vac,1)],["DPE",r=>r.dpeL?`classe ${r.dpeL}`:r.fg==null?"—":`F-G ${fr(r.fg,0)} %${r.n!=null&&r.n<15?" (peu de DPE)":""}`]];
+  ...(items.some(r=>r.tb)?[["Prix affiché",r=>r.tb?keur(+r.tb.prix):"—"],["À viser : autofinancé",r=>{if(!r.tb) return "—"; const g=targetsFor(r.tb); return `${g.cf==null?"—":"≤ "+keur(g.cf)} ${tgtChip(g.cf,g.ref,1)}`;}],["À viser : 7 %/an",r=>{if(!r.tb) return "—"; const g=targetsFor(r.tb); return `${g.r7==null?"—":"≤ "+keur(g.r7)} ${tgtChip(g.r7,g.ref,1)}`;}]]:[]),["Gain à 25 ans",r=>(r.x.gains[25]>=0?"+":"")+keur(r.x.gains[25])],["Mois vides par an",r=>r.vac==null?"—":fr(r.vac,1)],["DPE",r=>r.dpeL?`classe ${r.dpeL}`:r.fg==null?"—":`F-G ${fr(r.fg,0)} %${r.n!=null&&r.n<15?" (peu de DPE)":""}`]];
  let h=`<div class="tablewrap"><table class="cmpt"><thead><tr><th></th>${items.map(r=>`<th><span class="dot" style="background:${r.col}"></span>${r.name}<div class="sub" style="margin:0;font-weight:500">${r.sub}</div><button type="button" class="lnk" data-rm="${CMP.indexOf(r.it)}">retirer</button>${r.go?` · <button type="button" class="lnk" data-go="${CMP.indexOf(r.it)}">voir sur la carte</button>`:""}</th>`).join("")}</tr></thead><tbody>`;
  rows.forEach(([l,f])=>{h+=`<tr><td>${l}</td>${items.map(r=>`<td class="mono">${f(r)}</td>`).join("")}</tr>`;});
  h+=`</tbody></table></div>`;
@@ -899,7 +964,7 @@ function fitVH(){const sec=document.getElementById("mapSec"), on=sec.classList.c
  if(VW===draw.vw&&VH===draw.vh&&draw.rows) return; draw.vw=VW; draw.vh=VH;
  V.k=V.k*(VW/WW)/f; V.x=VW/2-cx*V.k; V.y=VH/2-cy*V.k; clampV(); renderMap(draw.rows||all());}
 function setFull(on){const sec=document.getElementById("mapSec"); sec.classList.toggle("mapfull",on); document.body.classList.toggle("noscroll",on);
- const b=document.getElementById("zFull"); b.textContent=on?"Fermer":"Plein écran"; b.setAttribute("aria-pressed",on); fitVH();}
+ const b=document.getElementById("zFull"); b.setAttribute("aria-pressed",on); b.setAttribute("aria-label",on?"Quitter le plein écran":"Plein écran"); b.title=on?"Quitter le plein écran (Échap)":"Plein écran (F)"; fitVH();}
 let rsz=null; addEventListener("resize",()=>{clearTimeout(rsz); rsz=setTimeout(fitVH,150);});
 document.getElementById("zFull").addEventListener("click",()=>setFull(!document.getElementById("mapSec").classList.contains("mapfull")));
 addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("mapSec").classList.contains("mapfull")) setFull(false);});
@@ -921,14 +986,14 @@ function renderBiens(){const box=document.getElementById("biensList"), st=docume
  if(!BIENS.length){box.innerHTML=`<p class="sub">Aucun bien pour l'instant. Ajoutez une annonce de vente repérée : le calcul reprend vos réglages et le loyer du quartier.</p>`; return;}
  const rows=BIENS.map(b=>({b,r:calcBien(b)})).sort((a,b)=>(b.r.x.irr??-99)-(a.r.x.irr??-99));
  box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Bien</th><th class="r">Prix</th><th class="r">€/m²</th><th class="r">Loyer HC</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th>Banque</th><th>DPE</th><th></th></tr></thead><tbody>${rows.map(({b,r})=>{const [bc,bt]=bank(r.x.ratio), qp=r.t&&r.t.price, dif=qp?(r.pm2/(qp*(1+0))-1)*100:null, bad=/[FG]/.test(b.dpe||"");
-  return `<tr data-id="${esc(b.id)}" class="${b.statut==="écarté"?"off":""}"><td><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="Favori">${b.fav?"★":"☆"}</button> <b>${esc(b.titre||"Bien sans nom")}</b>${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<div class="sub" style="margin:0">${C.find(v=>v.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m²${b.par?" · par "+esc(b.par):""}${b.notes?" · "+esc(b.notes):""}</div><select class="stsel" data-statut="${b.id}" aria-label="Statut">${STATUTS.map(s=>`<option${(b.statut||"à voir")===s?" selected":""}>${s}</option>`).join("")}</select></td>
+  return `<tr data-id="${esc(b.id)}" class="${b.statut==="écarté"?"off":""}"><td><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="Favori">${b.fav?"★":"☆"}</button> <b>${esc(b.titre||"Bien sans nom")}</b>${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<div class="sub" style="margin:0">${C.find(v=>v.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m²${b.par?" · par "+esc(b.par):""}${b.notes?" · "+esc(b.notes):""}</div>${stPill(b)}</td>
    <td class="r mono">${eur(+b.prix)}</td><td class="r mono">${eur(r.pm2)}${dif!=null?`<div class="sub" style="margin:0">${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs quartier</div>`:""}</td><td class="r mono">${eur(r.x.rentHC)}${+b.loyer>0?"":"<sup>*</sup>"}</td>
    <td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}</td><td><span class="pill ${bc}">${bt}</span></td>
    <td>${b.dpe?`<span class="pill ${bad?"p-bad":"p-n"}">${b.dpe}${bad?" · interdit bientôt":""}</span>`:"—"}</td>
    <td style="white-space:nowrap">${cmpBtn({kind:"b",id:b.id})} <button type="button" class="lnk" data-del="${b.id}">supprimer</button></td></tr>`;}).join("")}</tbody></table></div>
   <p class="sub"><sup>*</sup> loyer estimé (médiane du quartier ou de la ville). Les prix d'annonce incluent en général les frais d'agence ; le notaire, les meubles et les petits travaux sont ajoutés comme pour la ville.</p>`;
- box.querySelectorAll("[data-del]").forEach(btn=>btn.addEventListener("click",async()=>{if(btn.dataset.armed!=="1"){btn.dataset.armed="1"; btn.textContent="confirmer ?"; setTimeout(()=>{btn.dataset.armed=""; btn.textContent="supprimer";},4000); return;}
-  try{await DB.collection("biens").doc(btn.dataset.del).delete();}catch(e){st.textContent="Suppression refusée : il faut un accès en modification à la page.";}}));}
+ box.querySelectorAll("[data-del]").forEach(btn=>btn.addEventListener("click",async()=>{const old=BIENS.find(x=>x.id===btn.dataset.del); if(!old) return; const {id,by,...keep}=old;
+  try{await DB.collection("biens").doc(btn.dataset.del).delete(); toast(`« ${old.titre||"Bien"} » supprimé.`,{label:"Annuler",fn:async()=>{try{await DB.collection("biens").add(keep); toast("Bien restauré.");}catch(_){toast("Restauration impossible.");}}});}catch(e){st.textContent="Suppression refusée : il faut un accès en modification à la page.";}}));}
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function fillQuartiers(){const v=document.getElementById("b-ville").value, sel=document.getElementById("b-quartier");
  sel.innerHTML=`<option value="">${IR[v]?"— quartier (facultatif) —":"pas de découpage pour cette ville"}</option>`+(IR[v]?IR[v].list.filter(t=>t.type==="H").map(t=>t.name).sort((a,b)=>a.localeCompare(b,"fr")).map(n=>`<option>${esc(n)}</option>`).join(""):"");
@@ -985,7 +1050,7 @@ function venteBien(ck,a){const t=venteIris(ck,a[1]); return {ville:ck,quartier:t
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.map(a=>({ck,a,r:venteCalc(ck,a)})));
 const isAdded=url=>BIENS.some(b=>b.url===url);
-function addBtn(ck,a){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">dans nos biens</span>`:`<button type="button" class="cmpb addv" data-addv="${ck}|${esc(a[3])}">+ Ajouter</button>`;}
+function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}">+ ${big?"Ajouter à nos biens":"Ajouter"}</button>`;}
 function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99));
  return `<div class="scrollbox"><table class="adt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
   return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td>${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono">${String(a[0]).replace(".",",")}</td><td class="r mono">${keur(a[2])}</td><td class="r mono hm">${eur(a[2]/a[0])}</td><td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td style="white-space:nowrap"><a href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
@@ -1003,8 +1068,10 @@ document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.c
  try{await DB.collection("biens").add(bien); b.outerHTML=`<span class="pill p-ok">ajouté</span>`; toast(`« ${vb.titre} » ajouté à nos biens.`);}catch(err){b.disabled=false; b.textContent="+ Ajouter"; toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}});
 
 /* ---------- petit message ---------- */
-function toast(t){let el=document.getElementById("toast"); if(!el){el=document.createElement("div"); el.id="toast"; el.setAttribute("role","status"); document.body.appendChild(el);}
- el.textContent=t; el.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("on"),3200);}
+function toast(t,act){let el=document.getElementById("toast"); if(!el){el=document.createElement("div"); el.id="toast"; el.setAttribute("role","status"); document.body.appendChild(el);}
+ el.innerHTML=""; const sp=document.createElement("span"); sp.textContent=t; el.appendChild(sp); el.classList.toggle("act",!!act);
+ if(act){const b=document.createElement("button"); b.type="button"; b.textContent=act.label; b.addEventListener("click",()=>{el.classList.remove("on"); clearTimeout(toast.t); act.fn();},{once:true}); el.appendChild(b);}
+ el.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("on"),act?6500:3200);}
 
 /* ---------- simuler un bien dans un quartier ---------- */
 function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) return; showTab("tab-biens");
@@ -1019,7 +1086,11 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 const STATUTS=["à voir","visité","offre faite","écarté"];
 function myName(){try{return localStorage.getItem("biens-nom")||"";}catch(_){return "";}}
 async function updBien(id,patch){try{await DB.collection("biens").doc(id).update(patch);}catch(err){toast("Modification refusée ("+(err&&err.code||"erreur")+").");}}
-document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("[data-statut]"); if(s) updBien(s.dataset.statut,{statut:s.value});});
+const STC={"à voir":"st0","visité":"st1","offre faite":"st2","écarté":"st3"};
+function stPill(b){const s=b.statut||"à voir"; return `<button type="button" class="stp ${STC[s]||"st0"}" data-stcycle="${b.id}" title="Changer le statut" aria-label="Statut : ${s}, toucher pour passer au suivant"><i></i>${s}</button>`;}
+document.addEventListener("click",e=>{const s=e.target.closest&&e.target.closest("[data-stcycle]"); if(!s) return; e.preventDefault(); const b=BIENS.find(x=>x.id===s.dataset.stcycle); if(!b) return;
+ const prev=b.statut||"à voir", nx=STATUTS[(STATUTS.indexOf(prev)+1)%STATUTS.length]; updBien(b.id,{statut:nx});
+ toast(`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})});});
 document.addEventListener("click",e=>{const f=e.target.closest&&e.target.closest("[data-fav]"); if(!f) return; e.preventDefault(); const b=BIENS.find(x=>x.id===f.dataset.fav); if(b) updBien(b.id,{fav:!b.fav});});
 
 /* ---------- shortlist et bonnes affaires ---------- */
@@ -1028,7 +1099,7 @@ function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v
   <div class="sub" style="margin:0">${c?c.name:""}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)}${b.par?` · ajouté par ${esc(b.par)}`:""}</div>
   <div class="bcn"><span><small>Cash-flow</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b></span><span><small>15 ans</small><b class="mono" style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></span><span><small>Banque</small><span class="pill ${bc}">${bt}</span></span></div>
   ${(()=>{const g=targetsFor(b); return `<div class="btg"><small>Prix à viser</small><span><i class="dot d1"></i>Autofinancé<b class="mono">${g.cf==null?"—":"≤ "+keur(g.cf)}</b>${tgtChip(g.cf,g.ref,1)}</span><span><i class="dot d2"></i>7 %/an<b class="mono">${g.r7==null?"—":"≤ "+keur(g.r7)}</b>${tgtChip(g.r7,g.ref,1)}</span></div>`;})()}
-  <div class="bcf"><select data-statut="${b.id}" aria-label="Statut">${STATUTS.map(s=>`<option${(b.statut||"à voir")===s?" selected":""}>${s}</option>`).join("")}</select>${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}${b.quartier&&IR[b.ville]?`<button type="button" class="lnk" data-gomap="${b.id}">carte</button>`:""}</div></div>`;}
+  <div class="bcf">${stPill(b)}${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}${b.quartier&&IR[b.ville]?`<button type="button" class="lnk" data-gomap="${b.id}">carte</button>`:""}${cmpBtn({kind:"b",id:b.id})}</div></div>`;}
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
  const mine=BIENS.filter(b=>b.statut!=="écarté").map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,6);
  sl.innerHTML=mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
@@ -1126,15 +1197,15 @@ function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p cla
   <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
   ${negoBlock(vb)}
-  <div class="adact">${addBtn(ad.ck,a)}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>
-  <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>`;}
+  <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
+  <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}
  const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);
  return `${a[5]?`<img class="adph" src="${esc(photoUrl(a[4],a[5],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">Studio ${String(a[0]).replace(".",",")} m²${a[3]?" meublé":""}</h3><span class="pill p-n">à louer</span></div>
   <p class="sub" style="margin:2px 0 10px">${c.name}${a[1]?" · secteur "+esc(a[1]):""}${a[1]==="Université"?" · probablement une résidence étudiante avec services":""}</p>
   <div class="big4"><div><span>Loyer charges comprises</span><b>${eur(a[2])}</b></div><div><span>Ramené à 22 m²</span><b>${eur(r22(a))}</b></div><div><span>Notre calcul (22 m²)</span><b>${eur(model)}</b></div><div><span>Écart</span><b class="${r22(a)>=model?"pos":"neg"}">${r22(a)>=model?"+":"−"}${fr(Math.abs(r22(a)/model-1)*100,0)} %</b></div></div>
   <p class="sub" style="margin:8px 0">Une location concurrente : elle montre ce qu'un locataire paie aujourd'hui pour un studio comparable dans ce secteur. Loyer demandé, pas forcément signé.</p>
-  <div class="adact"><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>`;}
+  <div class="adact">${adNav(ad)}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>`;}
 
 /* ---------- panneau de droite : ville / quartier / annonce ---------- */
 const wide=()=>matchMedia("(min-width:941px)").matches;
@@ -1174,6 +1245,78 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-openad]"); if(!b) return; e.preventDefault(); const [kind,ck,...r]=b.dataset.openad.split("|"); openAd(kind,ck,r.join("|"));
  const t=wide()?document.getElementById("side"):null; if(t) t.scrollIntoView({behavior:"smooth",block:"start"});});
+
+/* ---------- carte : pastilles de prix des ventes ---------- */
+const VST={k:null,m:{}};
+function vState(ck,a){const hk=JSON.stringify(H); if(VST.k!==hk){VST.k=hk; VST.m={};} const id=ck+a[3]; if(VST.m[id]) return VST.m[id];
+ const g=targetsFor(venteBien(ck,a)), best=Math.max(g.cf??-1e9,g.r7??-1e9), ref=g.ref;
+ return VST.m[id]={g,st:best>=ref?"ok":best>0&&(ref-best)/ref<=0.15?"warn":"bad"};}
+const VCOL={ok:"var(--ok)",warn:"var(--warn)",bad:"var(--bad)"};
+function ventePins(P,pinB,boxes){let s=""; const sel=AD&&AD.kind==="v"?AD.ck+AD.suf:null;
+ Object.keys(IR).forEach(ck=>{const A=ADS[ck]; if(!A||!A.ventes) return; const by={};
+  A.ventes.forEach(a=>{const t=venteIris(ck,a[1]); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
+  Object.values(by).forEach(({t,l})=>{const [x,y]=P(t.cx,t.cy); if(x<-40||x>VW+40||y<-40||y>VH+40) return;
+   l.sort((p,q)=>p[2]-q[2]).forEach(a=>{const v=vState(ck,a), lab=keur(a[2]), w=lab.length*6.3+14, on=sel===ck+a[3];
+    const hit=(x0,y0)=>pinB.some(b=>!(x0+w/2<b[0]||x0-w/2>b[2]||y0+18<b[1]||y0>b[3]));
+    let pos=null; for(const dy of [-28,-50,-6,16,-72,38]){for(const dx of [0,-(w+4),w+4]){if(!hit(x+dx,y+dy)){pos=[x+dx,y+dy]; break;}} if(pos) break;}
+    if(!pos) return; const [px,py]=pos; pinB.push([px-w/2-2,py-2,px+w/2+2,py+20]); boxes.push([px-w/2,py-1,px+w/2,py+19]);
+    s+=`<g class="vpin" data-vpin="v|${ck}|${esc(a[3])}" role="button" tabindex="0" aria-label="Studio ${a[0]} m² à ${lab}, voir l'annonce"><rect x="${px-w/2}" y="${py}" width="${w}" height="18" rx="9" fill="${VCOL[v.st]}" stroke="${on?"var(--fg)":"var(--surface)"}" stroke-width="${on?2.5:1.5}"/><text x="${px}" y="${py+12.5}" text-anchor="middle" font-size="10.5" font-weight="800" class="mono" fill="#fff">${lab}</text></g>`;});});});
+ return s;}
+
+/* ---------- aperçu au survol ---------- */
+function pinPreview(el){
+ if(el.dataset.vpin){const [kind,ck,...r]=el.dataset.vpin.split("|"), a=findAd(kind,ck,r.join("|")); if(!a) return ""; const vb=venteBien(ck,a), x=venteCalc(ck,a).x, v=vState(ck,a), best=Math.max(v.g.cf??0,v.g.r7??0);
+  return `${a[4]?`<img class="tph" src="${esc(photoUrl(a[3],a[4],460,220))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="tbd"><b>${esc(vb.titre)}</b><div class="trow"><span>Prix affiché</span><b class="mono">${keur(a[2])}</b></div><div class="trow"><span>Cash-flow · 15 ans</span><span class="mono"><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b> · <b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b></span></div><div class="trow"><span>À viser</span>${best?`<span class="mono">≤ ${keur(best)}</span>`:""}</div>${tgtChip(best||null,a[2])}<span class="sub" style="margin:2px 0 0">Cliquez pour la fiche</span></div>`;}
+ const b=BIENS.find(x=>x.id===el.dataset.bpin); if(!b) return ""; const x=calcBien(b).x;
+ return `<div class="tbd"><b>★ ${esc(b.titre||"Notre bien")}</b><div class="trow"><span>${keur(+b.prix)} · ${b.surface} m²</span><span class="pill p-n">${esc(b.statut||"à voir")}</span></div><div class="trow"><span>Cash-flow · 15 ans</span><span class="mono"><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b> · <b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b></span></div></div>`;}
+
+/* ---------- repère "où suis-je" ---------- */
+function renderWhere(qm){const back=document.getElementById("zAll"), here=document.getElementById("mwHere"), go=document.getElementById("zCity"); if(!back) return;
+ const sc=C.find(c=>c.k===SEL), qc=QC&&C.find(c=>c.k===QC);
+ back.hidden=V.k<1.05; here.hidden=!qm; here.textContent=qm?(qc?`Quartiers de ${qc.name}`:"Quartiers"):"";
+ go.hidden=!IR[SEL]||(qm&&QC===SEL); go.innerHTML=`Quartiers de ${sc.name} <span aria-hidden="true">→</span>`;
+ document.getElementById("zHome").disabled=V.k<1.05;}
+
+/* ---------- navigation entre annonces (boutons, clavier, glisser) ---------- */
+function adSeq(ad){const A=ADS[ad.ck]; if(!A) return [];
+ return ad.kind==="v"?(A.ventes||[]).map(a=>({a,r:venteCalc(ad.ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99)).map(o=>o.a[3]):(A.ads||[]).map(a=>a[4]);}
+function adNav(ad){const q=adSeq(ad), i=q.indexOf(ad.suf); if(q.length<2||i<0) return "";
+ return `<span class="adnav" role="group" aria-label="Autres annonces"><button type="button" class="btn ghost sm" data-adstep="-1" aria-label="Annonce précédente" title="Précédente (←)">‹</button><span class="mono">${i+1}/${q.length}</span><button type="button" class="btn ghost sm" data-adstep="1" aria-label="Annonce suivante" title="Suivante (→)">›</button></span>`;}
+function adStep(d){if(!AD) return; const q=adSeq(AD), i=q.indexOf(AD.suf); if(i<0||q.length<2) return; const n=q[(i+d+q.length)%q.length];
+ const body=document.getElementById("qDetailBody"); body.classList.remove("slide-l","slide-r"); void body.offsetWidth; openAd(AD.kind,AD.ck,n); body.classList.add(d>0?"slide-l":"slide-r");}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-adstep]"); if(!b) return; e.preventDefault(); adStep(+b.dataset.adstep);});
+document.getElementById("cmpGo").addEventListener("click",()=>{showTab("tab-cmp"); document.getElementById("p-cmp").scrollIntoView({behavior:"smooth",block:"start"});});
+
+/* ---------- feuille du bas (téléphone) : glisser ---------- */
+(function(){const sd=document.getElementById("qDetail"); if(!sd) return; let s=null;
+ const sheet=()=>getComputedStyle(sd).position==="fixed"&&!wide();
+ sd.addEventListener("touchstart",e=>{if(e.touches.length!==1||!sheet()) {s=null; return;} const t=e.touches[0], top=sd.getBoundingClientRect().top;
+  s={x:t.clientX,y:t.clientY,h:t.clientY-top<48,sc:sd.scrollTop,t:e.timeStamp};},{passive:true});
+ sd.addEventListener("touchmove",e=>{if(!s||!s.h) return; const dy=e.touches[0].clientY-s.y; if(dy>0&&!sd.classList.contains("full")) sd.style.transform=`translateY(${dy}px)`;},{passive:true});
+ sd.addEventListener("touchend",e=>{if(!s) return; const t=e.changedTouches[0], dx=t.clientX-s.x, dy=t.clientY-s.y; sd.style.transform="";
+  if(s.h&&Math.abs(dy)<8&&Math.abs(dx)<8){sd.classList.toggle("full");}
+  else if(s.h&&dy<-40){sd.classList.add("full");}
+  else if(s.h&&dy>50){if(sd.classList.contains("full")) sd.classList.remove("full"); else {sd.classList.remove("full"); if(AD) AD=null; else QSEL=null; draw(); renderQBox();}}
+  else if(AD&&Math.abs(dx)>60&&Math.abs(dx)>1.6*Math.abs(dy)&&!e.target.closest("input,select,.scrollbox,.tablewrap")) adStep(dx<0?1:-1);
+  s=null;});})();
+
+/* ---------- raccourcis clavier ---------- */
+addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey) return; const tg=e.target; if(tg&&(tg.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
+ const k=e.key, mid=[VW/2,VH/2];
+ if(k==="ArrowRight"&&AD){e.preventDefault(); adStep(1);}
+ else if(k==="ArrowLeft"&&AD){e.preventDefault(); adStep(-1);}
+ else if(k==="f"||k==="F"){setFull(!document.getElementById("mapSec").classList.contains("mapfull"));}
+ else if(k==="+"||k==="="){flyZoom(...mid,2);}
+ else if(k==="-"||k==="_"){flyZoom(...mid,.5);}
+ else if(k==="0"){QSEL=null; AD=null; flyTo([0,0,WW,MAP.H],1);}
+ else if((k==="a"||k==="A")&&AD){const b=document.querySelector("#qDetailBody [data-addv]"); if(b) b.click();}
+ else if((k==="c"||k==="C")&&AD&&AD.kind==="v"){toggleCmp({kind:"v",id:AD.ck+"|"+AD.suf});}
+ else if(k==="?"){toast("Raccourcis : ← → annonces · A ajouter · C comparer · F plein écran · + − zoom · 0 tout voir · Échap fermer");}});
+
+/* ---------- listes vides ---------- */
+function emptyNote(host,show,txt){if(!host) return; let p=host.querySelector(":scope > .empty"); if(!p){p=document.createElement("p"); p.className="empty"; host.appendChild(p);} p.textContent=txt; p.hidden=!show;}
+const _adFilter=adFilter; adFilter=function(w){_adFilter(w); const n=[...w.querySelectorAll("tbody tr")].filter(tr=>!tr.hidden).length; emptyNote(w,n===0,"Aucune annonce avec ces filtres. Essayez « Tout » ou un autre secteur.");};
+document.getElementById("qSearch").addEventListener("input",function(){const n=[...document.querySelectorAll("#zBody tr")].filter(tr=>!tr.hidden).length, q=document.getElementById("qSearch"); emptyNote(q.closest(".qall"),n===0,`Aucun quartier ne contient « ${q.value} ».`);});
 
 fitVH();
 loadLocal();
