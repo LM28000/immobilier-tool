@@ -257,6 +257,7 @@ footer ul{padding-left:18px;margin:6px 0 0}
 img.adph,img.dealph,img.thb,#tip .tph{background:linear-gradient(90deg,var(--sunk) 25%,var(--line) 50%,var(--sunk) 75%);background-size:200% 100%;animation:shim 1.3s linear infinite}
 @media (prefers-reduced-motion:reduce){img.adph,img.dealph,img.thb,#tip .tph{animation:none}}
 .empty{margin:10px 0 0;padding:14px;border:1px dashed var(--line);border-radius:10px;text-align:center;color:var(--muted);font-size:.84rem}
+.avg{margin:-2px 0 10px;font-size:.78rem;color:var(--muted);display:flex;gap:6px;align-items:baseline}.avg::before{content:"Ø";font-weight:800;color:var(--accent)}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
@@ -368,8 +369,9 @@ img.adph,img.dealph,img.thb,#tip .tph{background:linear-gradient(90deg,var(--sun
       <button type="button" role="tab" id="tab-biens" aria-controls="p-biens" aria-selected="false" tabindex="-1">Nos biens</button>
     </div>
     <div role="tabpanel" id="p-rank" aria-labelledby="tab-rank">
+      <p class="avg">Moyennes par ville (prix et loyers médians, tous quartiers confondus). Le détail par quartier est sur la carte pour Le Mans, Saint-Nazaire, Angers, Caen et Orléans.</p>
       <div class="tablewrap"><table>
-        <thead><tr><th>#</th><th>Ville</th><th class="r">Budget</th><th class="r">Loyer HC</th><th class="r">Brut</th><th class="r">Cash-flow à deux</th><th class="r">15 ans</th><th>Banque</th><th>Demande</th><th class="r">Étudiants</th><th class="r">Laval · Nantes · Paris</th><th class="r">DPE F-G</th><th class="r">Population</th><th class="r">Logements vides</th><th class="r">Chômage</th></tr></thead>
+        <thead><tr><th>#</th><th>Ville</th><th class="r" title="Moyenne de la ville">Budget moyen</th><th class="r" title="Loyer médian de la ville">Loyer HC moyen</th><th class="r">Brut</th><th class="r">Cash-flow à deux</th><th class="r">15 ans</th><th>Banque</th><th>Demande</th><th class="r">Étudiants</th><th class="r">Laval · Nantes · Paris</th><th class="r">DPE F-G</th><th class="r">Population</th><th class="r">Logements vides</th><th class="r">Chômage</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table></div>
     </div>
@@ -532,6 +534,7 @@ function renderDetail(rows){
  cv+=`<circle cx="${X(25)}" cy="${Y(G[25])}" r="4" fill="var(--accent)"/><text x="${X(25)-6}" y="${Y(G[25])-8}" text-anchor="end" font-size="11.5" font-weight="700" class="mono" fill="var(--fg)">${(G[25]>=0?"+":"")+keur(G[25])}</text></svg>`;
  const trips=["laval","nantes","paris"].map(o=>`${ORIG[o].name} ${hm(trip(c,o))}`).join(" · ");
  d.innerHTML=`<div class="dh"><h3>${c.name}</h3><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="pill ${bc}">Banque : ${bt} · ${pct(x.ratio*100,0)}</span>${cmpBtn({kind:"c",k:c.k})}${IR[c.k]?`<button type="button" class="cmpb" data-zq="${c.k}">Voir les quartiers</button>`:""}</span></div>
+  <p class="avg">Moyenne de la ville pour un studio de ${H.surface} m² : prix et loyers médians, tous quartiers confondus.${IR[c.k]?" Les quartiers peuvent être nettement au-dessus ou en dessous.":""}</p>
   <div class="big4">
    <div><span>Loyer HC</span><b>${eur(x.rentHC)}</b></div>
    <div><span>Budget</span><b>${keur(x.cost)}</b></div>
@@ -680,15 +683,15 @@ function draw(){
   const [x,y]=G(46.45,-2.75); s+=`<text x="${x}" y="${y}" font-size="12" font-style="italic" fill="var(--coast)">Océan Atlantique</text>`;
   const [x2,y2]=G(49.35,-1.9); s+=`<text x="${x2}" y="${y2}" font-size="12" font-style="italic" fill="var(--coast)">Manche</text>`;
  }
- document.getElementById("ov").innerHTML=s+pills; bindCities(svg);
- const nQC=qm?cityInView():null; if(nQC!==QC||qm!==draw.qm){QC=nQC; draw.qm=qm; if(QSEL&&QSEL.ck!==QC) QSEL=null; renderQBox(); renderLegend();}
+ document.getElementById("ov").innerHTML=s+`<g pointer-events="none">${pills}</g>`; bindCities(svg);
+ const nQC=qm?cityInView():(IR[SEL]?SEL:null); if(nQC!==QC||qm!==draw.qm){QC=nQC; draw.qm=qm; if(QSEL&&QSEL.ck!==QC) QSEL=null; renderQBox(); renderLegend();}
  renderWhere(qm);
  document.getElementById("zOut").disabled=V.k<=1.001; document.getElementById("zIn").disabled=V.k>=KMAX-0.01;
 }
 function renderLegend(){const qm=V.k>=KQ, sc=C.find(c=>c.k===SEL);
  document.getElementById("mapLegend").innerHTML=qm
   ?`<span>${CMODE==="cf"?"Cash-flow mensuel à deux":"Rendement 15 ans du quartier"} :</span>${CLS().map(k=>`<span><i style="background:${k.c};opacity:${Math.min(1,k.o+.25)}"></i>${k.t}</span>`).join("")}<span><i style="background:var(--sunk);border:1px dashed var(--muted)"></i>zone d'activité ou sans prix${BANKOK?", ou banque trop juste":""}</span><span><b>■</b> gare · <b>●</b> université · <b>◆</b> centre</span><span><i style="background:var(--accent)"></i>loyers des annonces Bien'ici</span><span>Prix des studios à vendre : <i style="background:var(--ok)"></i>bon prix <i style="background:var(--warn)"></i>à négocier (≤ 15 %) <i style="background:var(--bad)"></i>trop cher</span>`
-  :`${CMODE==="cf"?`<span>Cash-flow à deux :</span><span><i style="background:var(--ok)"></i>positif</span><span><i style="background:var(--warn)"></i>0 à −50 €</span><span><i style="background:var(--bad)"></i>moins de −50 €</span>`:`<span>Rendement 15 ans :</span><span><i style="background:var(--ok)"></i>5 % et plus</span><span><i style="background:var(--warn)"></i>2,5 à 5 %</span><span><i style="background:var(--bad)"></i>sous le LEP (2,5 %)</span>`}<span>Taille = étudiants</span><span><s></s>grandes lignes de train</span><span>Traits bleus : trajets de ${sc.name} vers Laval, Nantes et Paris (plein = moins de 1 h 30)</span><span><b>Zoomez</b> (molette, pincement ou +) pour voir les quartiers du Mans, de Saint-Nazaire, d'Angers, de Caen et d'Orléans</span>`;}
+  :`<span><b>Chiffres des villes = moyenne de la ville</b> (prix et loyers médians)</span>${CMODE==="cf"?`<span>Cash-flow à deux :</span><span><i style="background:var(--ok)"></i>positif</span><span><i style="background:var(--warn)"></i>0 à −50 €</span><span><i style="background:var(--bad)"></i>moins de −50 €</span>`:`<span>Rendement 15 ans :</span><span><i style="background:var(--ok)"></i>5 % et plus</span><span><i style="background:var(--warn)"></i>2,5 à 5 %</span><span><i style="background:var(--bad)"></i>sous le LEP (2,5 %)</span>`}<span>Taille = étudiants</span><span><s></s>grandes lignes de train</span><span>Traits bleus : trajets de ${sc.name} vers Laval, Nantes et Paris (plein = moins de 1 h 30)</span><span><b>Zoomez</b> (molette, pincement ou +) pour voir les quartiers du Mans, de Saint-Nazaire, d'Angers, de Caen et d'Orléans</span>`;}
 
 function qCard(t){const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe);
  if(!x) return `<div class="qcard"><div class="dh"><h3 style="font-size:1.15rem">${t.name}</h3><span class="pill p-n">${t.type==="H"?"pas de prix publié":"zone d'activité"}</span></div><p class="sub">Pas d'estimation de prix pour ce secteur IRIS. ${n?`${n} DPE de petits appartements.`:""}</p>${adsLine(t)}</div>`;
@@ -731,7 +734,7 @@ let QBOXK=null;
 function renderQBox(){renderSide(); const box=document.getElementById("qBox"); if(!QC){box.hidden=true;return;} box.hidden=false;
  const z=IR[QC], c=C.find(v=>v.k===QC);
  document.getElementById("qBox").classList.toggle("has",!!QSEL);
- if(QBOXK!==QC){QBOXK=QC; document.getElementById("qCard").innerHTML=`<h3 class="qbh">Annonces de ${c.name}</h3>`+adsCity(QC)+annoncesBlock(QC,null,true,false);}
+ if(QBOXK!==QC){QBOXK=QC; document.getElementById("qCard").innerHTML=ADS[QC]?`<h3 class="qbh">Annonces de ${c.name}</h3>`+adsCity(QC)+annoncesBlock(QC,null,true,false):`<h3 class="qbh">${c.name}</h3><p class="empty" style="margin:0">Pas encore d'annonces relevées ici : le relevé quotidien couvre Le Mans et Saint-Nazaire. Le détail des quartiers est juste en dessous.</p>`;}
  document.getElementById("qTitle").textContent=`Tous les quartiers de ${c.name}`;
  const tb=document.getElementById("zBody"); tb.innerHTML="";
  z.list.filter(t=>QX[t.ck+t.i]).sort((a,b)=>(QX[b.ck+b.i].irr??-9)-(QX[a.ck+a.i].irr??-9)).forEach(t=>{const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe), tr=document.createElement("tr");
@@ -1231,7 +1234,7 @@ addEventListener("resize",()=>{clearTimeout(renderSide.t); renderSide.t=setTimeo
 
 /* ---------- résumé de la ville sur la carte (téléphone) ---------- */
 function renderChip(){const ch=document.getElementById("mapChip"); if(!ch) return; const c=C.find(v=>v.k===SEL), x=calc(c);
- ch.innerHTML=`<b>${c.name}</b> <span class="mono" style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</span> · <span class="mono">${sgn(x.cf)}/m</span><span class="go">Fiche ↓</span>`;}
+ ch.innerHTML=`<b>${c.name}</b> <small style="color:var(--muted)">moy.</small> <span class="mono" style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</span> · <span class="mono">${sgn(x.cf)}/m</span><span class="go">Fiche ↓</span>`;}
 document.getElementById("mapChip").addEventListener("click",()=>document.getElementById("detail").scrollIntoView({behavior:"smooth",block:"start"}));
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-zq]"); if(!b) return; e.preventDefault(); const k=b.dataset.zq; if(SEL!==k){SEL=k; render();}
  if(IR[k]) flyTo(IR[k].bb); if(!wide()) document.getElementById("mapSec").scrollIntoView({behavior:"smooth",block:"start"});});
