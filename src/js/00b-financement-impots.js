@@ -31,7 +31,7 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
 
 function calc(c){
  const S=c._s||{}, pe=H.pess;
- const taux=H.taux+(pe?0.5:0)+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?1:0), px=pe?0:H.px, la=H.loyerAdj+(pe?-10:0)+(S.loyer?-5:0), HZ=S.hz||15;
+ const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?0.5:0), px=pe?Math.min(H.px,0.5):H.px, la=H.loyerAdj+(pe?-5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:c.pm2*(1+H.surcote/100)*SU, trav=(c.trav!=null?c.trav:H.travaux)+(S.trav?5000:0);
  const base=bien*(1+H.notaire/100)+H.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;

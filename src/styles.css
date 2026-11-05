@@ -354,6 +354,21 @@ td .btitle{white-space:normal}
 .vsum{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 tr.gsep td{background:var(--bg)!important;color:var(--muted);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:14px}
 .side .adact.many{flex-wrap:wrap} .adact.many .addv{flex:1 1 140px!important} .shortout{grid-column:1/-1}
+/* lignes défilantes (shortlist, ventes du jour) */
+.rowwrap{position:relative}
+.cards.row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,250px);grid-template-columns:none;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:2px 2px 8px;scrollbar-width:thin}
+.cards.row>*{scroll-snap-align:start}
+.cards.row{align-items:start} @media (max-width:560px){#shortPanel .h2n{display:none}}
+.cards.row .bcard>.sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cards.row>p{grid-column:auto;white-space:normal;min-width:240px}
+.rowbtn{position:absolute;top:50%;transform:translateY(-60%);width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);box-shadow:0 3px 10px rgb(0 0 0 / .15);cursor:pointer;font-size:1.1rem;z-index:2}
+.rowbtn.l{left:-10px} .rowbtn.r{right:-10px} .rowbtn[disabled]{opacity:0;pointer-events:none}
+@media (pointer:coarse){.rowbtn{display:none}}
+.cards.row .bcard{gap:5px;padding:9px 11px} .cards.row .bcn{gap:12px;flex-wrap:nowrap} .cards.row .bcf{gap:6px} .cards.row .bcf .pill{font-size:.68rem;padding:2px 7px}
+.cards.row .dealph{aspect-ratio:auto;height:96px}
+.cards.row .bph img{height:90px}
+details.bmore{font-size:.8rem} details.bmore summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.76rem}
+details.bmore[open] summary{margin-bottom:6px}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */

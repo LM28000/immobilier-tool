@@ -8,16 +8,17 @@
 
   <section class="panel" id="shortPanel">
     <h2>Notre shortlist</h2>
-    <div class="cards" id="shortList"></div>
+    <div class="rowwrap"><div class="cards row" id="shortList"></div></div>
+    <div id="shortOut"></div>
     <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
     <h2 style="margin-top:18px">Ventes du jour à regarder <span class="h2n">les meilleurs rendements parmi les studios à vendre que la banque accepterait</span></h2>
-    <div class="cards" id="dealsList"></div>
+    <div class="rowwrap"><div class="cards row" id="dealsList"></div></div>
   </section>
 
   <section class="panel" id="setPanel">
     <div class="toprow">
       <h2>Les réglages qui comptent le plus</h2>
-      <span style="display:flex;gap:8px;flex-wrap:wrap"><label class="switch" id="pessWrap" for="f-pess"><input type="checkbox" id="f-pess"> Scénario pessimiste</label>
+      <span style="display:flex;gap:8px;flex-wrap:wrap"><label class="switch" id="pessWrap" for="f-pess"><input type="checkbox" id="f-pess"> Scénario prudent</label>
       <label class="switch sw-ok on" id="vacWrap" for="f-vacq"><input type="checkbox" id="f-vacq" checked> Vacance selon l'emplacement</label></span>
     </div>
     <div class="sliders">
@@ -28,7 +29,7 @@
       <div class="sl"><label for="s-taux">Taux du crédit sur 25 ans <b id="v-taux"></b></label>
         <input type="range" id="s-taux" min="3" max="5.5" step="0.05"><small>4,07 % en novembre 2026 pour votre profil</small></div>
     </div>
-    <p class="sub" id="pessTxt" hidden>Scénario pessimiste actif : loyer −10 %, 2 mois vides par an, prix stables, crédit +0,5 point.</p>
+    <p class="sub" id="pessTxt" hidden>Scénario prudent actif : loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +1 %. Le taux ne change pas : il est fixé à la signature. Pour tester un cas plus dur, utilisez « Et si… » dans les fiches.</p>
     <details>
       <summary>Plus d'hypothèses</summary>
       <div class="fields" id="hypFields"></div>

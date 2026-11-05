@@ -52,3 +52,14 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  const host=b.parentElement.parentElement; host.querySelectorAll(`:scope > .ptabs [data-pt^="${id}|"]`).forEach(x=>x.setAttribute("aria-pressed",x===b)); host.querySelectorAll(`:scope > [data-ptp^="${id}|"]`).forEach(p=>p.hidden=p.dataset.ptp!==`${id}|${i}`);});
 
 document.querySelectorAll(".adsdate").forEach(e=>e.textContent=ADS.date||"");
+
+/* ---------- flèches des lignes défilantes (ordinateur) ---------- */
+function rowArrows(){document.querySelectorAll(".rowwrap").forEach(w=>{const r=w.querySelector(".cards.row"); if(!r) return;
+ let l=w.querySelector(".rowbtn.l"), g=w.querySelector(".rowbtn.r");
+ if(!l){l=document.createElement("button"); l.type="button"; l.className="rowbtn l"; l.setAttribute("aria-label","Défiler vers la gauche"); l.textContent="‹";
+  g=document.createElement("button"); g.type="button"; g.className="rowbtn r"; g.setAttribute("aria-label","Défiler vers la droite"); g.textContent="›";
+  w.append(l,g); const step=d=>r.scrollBy({left:d*Math.max(240,r.clientWidth*0.8),behavior:"smooth"});
+  l.addEventListener("click",()=>step(-1)); g.addEventListener("click",()=>step(1)); r.addEventListener("scroll",()=>rowArrows(),{passive:true});}
+ l.disabled=r.scrollLeft<4; g.disabled=r.scrollLeft+r.clientWidth>=r.scrollWidth-4;});}
+new MutationObserver(()=>requestAnimationFrame(rowArrows)).observe(document.getElementById("shortPanel"),{childList:true,subtree:true});
+addEventListener("resize",rowArrows); rowArrows();
