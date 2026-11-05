@@ -94,8 +94,23 @@ tr.clk{cursor:pointer} tr.clk:hover td,tr.clk:focus-visible td{background:var(--
 .annh .seg2 button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:6px 11px;cursor:pointer}
 .annh .seg2 button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
 .adph{display:block;width:100%;max-width:100%;aspect-ratio:12/7;object-fit:cover;border-radius:10px;margin:0 0 10px;background:var(--sunk)}
-.nego{background:var(--sunk);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
-.nego div{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.86rem}
+.nego{background:var(--sunk);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;margin:6px 0 12px}
+.ngh{display:flex;justify-content:space-between;align-items:baseline;gap:8px} .ngh .sub{margin:0;font-size:.8rem}
+.ngg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ngc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.ngc b{font-size:1.25rem;line-height:1.1} .ngc small{color:var(--muted);font-size:.74rem;line-height:1.35}
+.ngl{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none} .dot.d1{background:var(--c3)} .dot.d2{background:var(--accent)}
+.tchip{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tchip.ok{background:var(--ok-soft);color:var(--ok)} .tchip.warn{background:var(--warn-soft);color:var(--warn)} .tchip.bad{background:var(--bad-soft);color:var(--bad)}
+.ngr{padding:4px 4px 0} .ngbar{position:relative;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--ok-soft),var(--warn-soft))}
+.ngm{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--surface)}
+.ngm.d1{background:var(--c3)} .ngm.d2{background:var(--accent)} .ngm.ref{width:3px;height:18px;border-radius:2px;border:0;background:var(--fg)}
+.ngax{position:relative;display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:6px;height:1.1em}
+.ngref{position:absolute;transform:translateX(-50%);font-weight:700;color:var(--fg);white-space:nowrap}
+.btg{display:flex;flex-direction:column;gap:3px;font-size:.8rem;border-top:1px dashed var(--line);padding-top:6px}
+.btg small{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.btg span{display:flex;align-items:center;gap:6px} .btg span b{margin-left:auto}
 .adact{display:flex;gap:8px;flex-wrap:wrap;align-items:center} .adact .btn{text-decoration:none}
 .qbh{font-size:1rem;margin:0 0 6px}
 .dealph{display:block;width:calc(100% + 26px);margin:-11px -13px 4px;aspect-ratio:2/1;object-fit:cover;border-radius:10px 10px 0 0;background:var(--sunk);max-width:none}
@@ -1012,6 +1027,7 @@ function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v
  return `<div class="bcard${b.statut==="écarté"?" off":""}"><div class="bch"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button><b>${esc(b.titre||"Bien sans nom")}</b></div>
   <div class="sub" style="margin:0">${c?c.name:""}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)}${b.par?` · ajouté par ${esc(b.par)}`:""}</div>
   <div class="bcn"><span><small>Cash-flow</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b></span><span><small>15 ans</small><b class="mono" style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></span><span><small>Banque</small><span class="pill ${bc}">${bt}</span></span></div>
+  ${(()=>{const g=targetsFor(b); return `<div class="btg"><small>Prix à viser</small><span><i class="dot d1"></i>Autofinancé<b class="mono">${g.cf==null?"—":"≤ "+keur(g.cf)}</b>${tgtChip(g.cf,g.ref,1)}</span><span><i class="dot d2"></i>7 %/an<b class="mono">${g.r7==null?"—":"≤ "+keur(g.r7)}</b>${tgtChip(g.r7,g.ref,1)}</span></div>`;})()}
   <div class="bcf"><select data-statut="${b.id}" aria-label="Statut">${STATUTS.map(s=>`<option${(b.statut||"à voir")===s?" selected":""}>${s}</option>`).join("")}</select>${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}${b.quartier&&IR[b.ville]?`<button type="button" class="lnk" data-gomap="${b.id}">carte</button>`:""}</div></div>`;}
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
  const mine=BIENS.filter(b=>b.statut!=="écarté").map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,6);
@@ -1090,18 +1106,26 @@ function openAd(kind,ck,suf){const a=findAd(kind,ck,suf); if(!a) return; AD={kin
  if(!QSEL||QSEL.ck!==ck){const t=venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
 function priceFor(ck,a,test){let lo=5000, hi=Math.max(a[2]*1.8,30000); if(!test(lo)) return null; if(test(hi)) return hi;
  for(let i=0;i<26;i++){const m=(lo+hi)/2; if(test(m)) lo=m; else hi=m;} return Math.floor(lo/500)*500;}
+const TGC={};
+function targetsFor(b){const ref=+b.prix||60000, key=JSON.stringify([b.ville,b.quartier,b.surface,b.prix,b.loyer,b.copro,b.tf,H]); if(TGC[key]) return TGC[key];
+ const T=p=>calcBien(Object.assign({},b,{prix:p})).x, f=t=>priceFor(null,[0,0,ref],t);
+ return TGC[key]={ref,cf:f(p=>T(p).cf>=0),r7:f(p=>{const x=T(p); return x.irr!=null&&x.irr>=7;})};}
+function tgtChip(p,ref,short){if(p==null) return `<span class="tchip bad">${short?"hors d'atteinte":"hors d'atteinte même très bas"}</span>`; const d=p-ref;
+ return d>=0?`<span class="tchip ok">${short?"OK":"OK · marge "+keur(d)}</span>`:`<span class="tchip warn">${short?"−"+fr(-d/ref*100,0)+" %":"−"+keur(-d)+" à négocier (−"+fr(-d/ref*100,0)+" %)"}</span>`;}
+function negoBlock(b){const g=targetsFor(b), ref=g.ref, pts=[ref,g.cf,g.r7].filter(v=>v!=null), lo=Math.min(...pts)*0.92, hi=Math.max(...pts)*1.06, X=v=>((v-lo)/(hi-lo)*100).toFixed(1);
+ const card=(cls,lbl,p,txt)=>`<div class="ngc"><span class="ngl"><i class="dot ${cls}"></i>${lbl}</span><b class="mono">${p==null?"—":"≤ "+keur(p)}</b>${tgtChip(p,ref)}<small>${txt}</small></div>`;
+ const mk=(v,cls,t)=>v==null?"":`<i class="ngm ${cls}" style="left:${X(v)}%" title="${t}"></i>`;
+ return `<div class="nego"><div class="ngh"><b>Prix maximum à payer</b><span class="sub">affiché ${keur(ref)}</span></div>
+  <div class="ngg">${card("d1","Autofinancé",g.cf,"Le loyer couvre tout : rien à sortir chaque mois.")}${card("d2","7 % par an",g.r7,"Rendement moyen sur 15 ans, revente comprise.")}</div>
+  <div class="ngr" aria-hidden="true"><div class="ngbar">${mk(g.cf,"d1","Autofinancé")}${mk(g.r7,"d2","7 %/an")}<i class="ngm ref" style="left:${X(ref)}%"></i></div><div class="ngax"><span class="ngref" style="left:${Math.min(85,Math.max(15,X(ref)))}%">prix affiché</span></div></div></div>`;}
 function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p class="sub">Cette annonce n'est plus dans le relevé.</p>`; const c=C.find(v=>v.k===ad.ck);
  if(ad.kind==="v"){const r=venteCalc(ad.ck,a), vb=venteBien(ad.ck,a), [bc,bt]=bank(r.x.ratio), url=VTURL+a[3];
-  const T=p=>calcBien(Object.assign({},vb,{prix:p})).x, pCf=priceFor(ad.ck,a,p=>T(p).cf>=0), p7=priceFor(ad.ck,a,p=>{const x=T(p); return x.irr!=null&&x.irr>=7;});
-  const neg=p=>p==null?"impossible même très bas":p>=a[2]?`déjà atteint au prix affiché`:`${keur(p)}, soit −${fr((1-p/a[2])*100,0)} % sur le prix affiché`;
   return `${a[4]?`<img class="adph" src="${esc(photoUrl(a[3],a[4],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">${esc(vb.titre)}</h3><span class="pill p-n">à vendre</span></div>
   <p class="sub" style="margin:2px 0 10px">${c.name}${vb.quartier?" · quartier "+esc(vb.quartier):""} · ${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m²</p>
   <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
-  <div class="nego"><b>Prix à viser pour négocier</b>
-   <div><span>Rien à sortir chaque mois (cash-flow ≥ 0)</span><b class="mono">${neg(pCf)}</b></div>
-   <div><span>7 % par an sur 15 ans</span><b class="mono">${neg(p7)}</b></div></div>
+  ${negoBlock(vb)}
   <div class="adact">${addBtn(ad.ck,a)}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>
   <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>`;}
  const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);
