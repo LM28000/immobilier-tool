@@ -35,5 +35,6 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  lab();})();
 
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-openad]"); if(!b) return; e.preventDefault(); const [kind,ck,...r]=b.dataset.openad.split("|"); openAd(kind,ck,r.join("|"));
+ if(kind==="b"&&QSEL&&QSEL.ck===ck&&!document.getElementById("mapSec").classList.contains("mapfull")){flyTo(QSEL.bb,3.2); if(!wide()) document.getElementById("mapSec").scrollIntoView({behavior:"smooth",block:"start"});}
  const t=wide()?document.getElementById("side"):null; if(t) t.scrollIntoView({behavior:"smooth",block:"start"});});
 

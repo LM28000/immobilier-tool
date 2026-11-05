@@ -59,9 +59,9 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('fiche complète du bien'), await p.evaluate(() => AD && AD.kind === 'b' && !!document.querySelector('#qDetailBody .nego') && !!document.querySelector('#qDetailBody .b2n')));
     await p.evaluate(() => { AD = null; QSEL = null; draw(); renderQBox(); });
     await p.click('#shortList [data-unshort]'); await p.waitForTimeout(300);
-    ok(T('retirer de la shortlist'), await p.evaluate(() => BIENS[0].short === false && !document.querySelector('#shortList .bcard')));
+    ok(T('retirer de la shortlist'), await p.evaluate(() => BIENS[0].statut === 'écarté' && !document.querySelector('#shortList .bcard')));
     await p.click('#toast button'); await p.waitForTimeout(300);
-    ok(T('annuler le retrait'), await p.evaluate(() => BIENS[0].short === true && !!document.querySelector('#shortList .bcard')));
+    ok(T('annuler le retrait'), await p.evaluate(() => BIENS[0].statut === 'à voir' && !!document.querySelector('#shortList .bcard')));
     ok(T('prix à viser dans la shortlist'), await p.evaluate(() => !!document.querySelector('#shortList .btg')));
     await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
     await p.click('#biensList [data-del]'); await p.waitForTimeout(300);

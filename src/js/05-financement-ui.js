@@ -64,12 +64,12 @@ function renderFin(){const box=document.getElementById("finDetail"); if(!box) re
 /* scénarios « et si » */
 const SCN={taux:false,vac3:false,trav:false,loyer:false,hz:15}, SCNR={};
 const SCNL=[["taux","Taux +0,5 pt"],["vac3","3 mois vides/an"],["trav","5 k€ de travaux"],["loyer","Loyer −5 %"]];
-function scnActive(){return SCN.taux||SCN.vac3||SCN.trav||SCN.loyer||SCN.hz!==15;}
+function scnActive(){return SCN.taux||SCN.vac3||SCN.trav||SCN.loyer;}
 function scnInner(key){const R=SCNR[key]; if(!R) return ""; const b=R(null), s=R({...SCN});
  const [bb]=bank(b.ratio), [sb]=bank(s.ratio), row=(l,f)=>`<tr><td>${l}</td><td class="r mono">${f(b)}</td><td class="r mono">${scnActive()?f(s):"—"}</td></tr>`;
  return `<div class="scnchips">${SCNL.map(([k,l])=>`<button type="button" class="chip${SCN[k]?" on":""}" data-scnk="${k}" aria-pressed="${SCN[k]}">${l}</button>`).join("")}
   <span class="seg2 hz" role="group" aria-label="Revente">${[7,10,15,25].map(v=>`<button type="button" data-scnhz="${v}" aria-pressed="${SCN.hz===v}">${v} ans</button>`).join("")}</span></div>
-  <table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
+  ${scnActive()?"":`<p class="sub" style="margin:0 0 6px">Cochez une ou plusieurs hypothèses pour les comparer à la base. La durée de revente s'applique aux deux colonnes.</p>`}<table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
   ${row("Cash-flow / mois",x=>`<span class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</span>`)}
   ${row("Rendement, revente à "+SCN.hz+" ans",x=>x.irr==null?"n.d.":`<b style="color:${colIrr(x.irr)}">${pct(x.irr)}</b>`)}
   ${row("Banque",x=>{const [c,t]=bank(x.ratio); return `<span class="pill ${c}">${t}</span>`;})}

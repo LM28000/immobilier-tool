@@ -30,7 +30,7 @@ function renderWhere(qm){const back=document.getElementById("zAll"), here=docume
  document.getElementById("zHome").disabled=V.k<KMIN()*1.05;}
 
 /* ---------- navigation entre annonces (boutons, clavier, glisser) ---------- */
-function adSeq(ad){if(ad.kind==="b") return BIENS.filter(b=>b.statut!=="écarté"&&b.short!==false).concat(BIENS.filter(b=>!(b.statut!=="écarté"&&b.short!==false))).map(b=>b.id); const A=ADS[ad.ck]; if(!A) return [];
+function adSeq(ad){if(ad.kind==="b") return BIENS.filter(b=>!isOut(b)).concat(SHOWOUT||isOut(BIENS.find(b=>b.id===ad.suf)||{})?BIENS.filter(isOut):[]).map(b=>b.id); const A=ADS[ad.ck]; if(!A) return [];
  return ad.kind==="v"?(A.ventes||[]).map(a=>({a,r:venteCalc(ad.ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99)).map(o=>o.a[3]):(A.ads||[]).map(a=>a[4]);}
 function adNav(ad){const q=adSeq(ad), i=q.indexOf(ad.suf); if(q.length<2||i<0) return "";
  return `<span class="adnav" role="group" aria-label="Autres annonces"><button type="button" class="btn ghost sm" data-adstep="-1" aria-label="Annonce précédente" title="Précédente (←)">‹</button><span class="mono">${i+1}/${q.length}</span><button type="button" class="btn ghost sm" data-adstep="1" aria-label="Annonce suivante" title="Suivante (→)">›</button></span>`;}

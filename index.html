@@ -348,7 +348,7 @@ details.b2n .trow{display:flex;justify-content:space-between;gap:10px;padding:3p
 details.b2n .trow span{color:var(--muted)} details.b2n .tot span{color:var(--fg);font-weight:700}
 /* shortlist et fiche bien */
 .stwrap{position:relative;display:inline-flex}
-.stmenu{position:absolute;top:calc(100% + 4px);left:0;z-index:20;display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgb(0 0 0 / .18);min-width:140px}
+.stmenu{position:fixed;z-index:90;display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgb(0 0 0 / .18);min-width:140px}
 .stmenu .stp{justify-content:flex-start} .stmenu .stp[aria-checked="true"]{outline:2px solid currentColor;outline-offset:-2px}
 .btitle{font:inherit;font-weight:700;border:0;background:none;color:var(--fg);padding:0;cursor:pointer;text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .btitle:hover{color:var(--accent);text-decoration:underline}
@@ -420,7 +420,7 @@ details.bmore[open] summary{margin-bottom:6px}
   <section class="panel" id="setPanel">
     <div class="toprow">
       <h2>Les réglages qui comptent le plus</h2>
-      <span style="display:flex;gap:8px;flex-wrap:wrap"><label class="switch" id="pessWrap" for="f-pess"><input type="checkbox" id="f-pess"> Scénario prudent</label>
+      <span style="display:flex;gap:8px;flex-wrap:wrap"><label class="switch" id="pessWrap" for="f-pess"><input type="checkbox" id="f-pess"> Scénario pessimiste</label>
       <label class="switch sw-ok on" id="vacWrap" for="f-vacq"><input type="checkbox" id="f-vacq" checked> Vacance selon l'emplacement</label></span>
     </div>
     <div class="sliders">
@@ -431,7 +431,7 @@ details.bmore[open] summary{margin-bottom:6px}
       <div class="sl"><label for="s-taux">Taux du crédit sur 25 ans <b id="v-taux"></b></label>
         <input type="range" id="s-taux" min="3" max="5.5" step="0.05"><small>4,07 % en novembre 2026 pour votre profil</small></div>
     </div>
-    <p class="sub" id="pessTxt" hidden>Scénario prudent actif : loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +1 %. Le taux ne change pas : il est fixé à la signature. Pour tester un cas plus dur, utilisez « Et si… » dans les fiches.</p>
+    <p class="sub" id="pessTxt" hidden>Scénario pessimiste actif : loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +1 %. Le taux ne change pas : il est fixé à la signature. Pour tester un cas plus dur, utilisez « Et si… » dans les fiches.</p>
     <details>
       <summary>Plus d'hypothèses</summary>
       <div class="fields" id="hypFields"></div>
@@ -449,7 +449,7 @@ details.bmore[open] summary{margin-bottom:6px}
         <h2 style="margin:0">Carte</h2>
         <div class="ctl">
           <span class="seg2" id="cmode" role="group" aria-label="Couleur de la carte"><button type="button" data-m="irr" aria-pressed="true">Rendement</button><button type="button" data-m="cf" aria-pressed="false">Cash-flow</button></span>
-          <label class="chk"><input type="checkbox" id="f-bank"> Banque OK</label>
+          <label class="chk" title="Grise les villes et quartiers où le crédit dépasserait 35 % d'endettement"><input type="checkbox" id="f-bank"> Seulement si la banque suit</label>
         </div>
       </div>
       <div class="mapbox">
@@ -1129,12 +1129,12 @@ function renderFin(){const box=document.getElementById("finDetail"); if(!box) re
 /* scénarios « et si » */
 const SCN={taux:false,vac3:false,trav:false,loyer:false,hz:15}, SCNR={};
 const SCNL=[["taux","Taux +0,5 pt"],["vac3","3 mois vides/an"],["trav","5 k€ de travaux"],["loyer","Loyer −5 %"]];
-function scnActive(){return SCN.taux||SCN.vac3||SCN.trav||SCN.loyer||SCN.hz!==15;}
+function scnActive(){return SCN.taux||SCN.vac3||SCN.trav||SCN.loyer;}
 function scnInner(key){const R=SCNR[key]; if(!R) return ""; const b=R(null), s=R({...SCN});
  const [bb]=bank(b.ratio), [sb]=bank(s.ratio), row=(l,f)=>`<tr><td>${l}</td><td class="r mono">${f(b)}</td><td class="r mono">${scnActive()?f(s):"—"}</td></tr>`;
  return `<div class="scnchips">${SCNL.map(([k,l])=>`<button type="button" class="chip${SCN[k]?" on":""}" data-scnk="${k}" aria-pressed="${SCN[k]}">${l}</button>`).join("")}
   <span class="seg2 hz" role="group" aria-label="Revente">${[7,10,15,25].map(v=>`<button type="button" data-scnhz="${v}" aria-pressed="${SCN.hz===v}">${v} ans</button>`).join("")}</span></div>
-  <table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
+  ${scnActive()?"":`<p class="sub" style="margin:0 0 6px">Cochez une ou plusieurs hypothèses pour les comparer à la base. La durée de revente s'applique aux deux colonnes.</p>`}<table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
   ${row("Cash-flow / mois",x=>`<span class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</span>`)}
   ${row("Rendement, revente à "+SCN.hz+" ans",x=>x.irr==null?"n.d.":`<b style="color:${colIrr(x.irr)}">${pct(x.irr)}</b>`)}
   ${row("Banque",x=>{const [c,t]=bank(x.ratio); return `<span class="pill ${c}">${t}</span>`;})}
@@ -1284,14 +1284,14 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
  if(!BIENS.length){box.innerHTML=`<p class="sub">Aucun bien pour l'instant. Ajoutez une annonce de vente repérée : le calcul reprend vos réglages et le loyer du quartier.</p>`; return;}
- const grp=b=>b.statut==="écarté"?2:b.short===false?1:0, rows=BIENS.map(b=>({b,r:calcBien(b)})).sort((a,b)=>(grp(a.b)-grp(b.b))||((b.r.x.irr??-99)-(a.r.x.irr??-99))); let lastG=0;
- const GL=["","Retirés de la shortlist : toujours suivis, mais hors shortlist","Écartés : hors shortlist et hors carte, gardés pour mémoire (changez le statut pour les reprendre)"];
- box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Bien</th><th class="r">Prix</th><th class="r">€/m²</th><th class="r">Loyer HC</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th>Banque</th><th>DPE</th><th></th></tr></thead><tbody>${rows.map(({b,r})=>{const g=grp(b), sep=g!==lastG?`<tr class="gsep"><td colspan="9">${GL[g]}</td></tr>`:""; lastG=g; const [bc,bt]=bank(r.x.ratio), qp=r.t&&r.t.price, dif=qp?(r.pm2/(qp*(1+0))-1)*100:null, bad=/[FG]/.test(b.dpe||"");
-  return sep+`<tr data-id="${esc(b.id)}" class="${b.statut==="écarté"?"off":""}"><td><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="Favori">${b.fav?"★":"☆"}</button> <button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button>${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<div class="sub" style="margin:0">${C.find(v=>v.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m²${b.par?" · par "+esc(b.par):""}${b.notes?" · "+esc(b.notes):""}</div>${stPill(b)}</td>
+ const nOut=BIENS.filter(isOut).length, rows=BIENS.filter(b=>SHOWOUT||!isOut(b)).map(b=>({b,r:calcBien(b)})).sort((a,b)=>((isOut(a.b)?1:0)-(isOut(b.b)?1:0))||((b.r.x.irr??-99)-(a.r.x.irr??-99)));
+ box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Bien</th><th class="r">Prix</th><th class="r">€/m²</th><th class="r">Loyer HC</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th>Banque</th><th>DPE</th><th></th></tr></thead><tbody>${rows.map(({b,r})=>{const [bc,bt]=bank(r.x.ratio), qp=r.t&&r.t.price, dif=qp?(r.pm2/(qp*(1+0))-1)*100:null, bad=/[FG]/.test(b.dpe||"");
+  return `<tr data-id="${esc(b.id)}" class="${isOut(b)?"off":""}"><td><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="Favori">${b.fav?"★":"☆"}</button> <button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button>${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<div class="sub" style="margin:0">${C.find(v=>v.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m²${b.par?" · par "+esc(b.par):""}${b.notes?" · "+esc(b.notes):""}</div>${stPill(b)}</td>
    <td class="r mono">${eur(+b.prix)}</td><td class="r mono">${eur(r.pm2)}${dif!=null?`<div class="sub" style="margin:0">${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs quartier</div>`:""}</td><td class="r mono">${eur(r.x.rentHC)}${+b.loyer>0?"":"<sup>*</sup>"}</td>
    <td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}</td><td><span class="pill ${bc}">${bt}</span></td>
    <td>${b.dpe?`<span class="pill ${bad?"p-bad":"p-n"}">${b.dpe}${bad?" · interdit bientôt":""}</span>`:"—"}</td>
-   <td style="white-space:nowrap">${g===1?`<button type="button" class="btn ghost sm" data-reshort="${b.id}">↩ Shortlist</button> `:""}<button type="button" class="btn sm" data-visit="${b.id}">Visite${visitScore(b)!=null?" · "+fr(visitScore(b),1)+"/5":""}</button> <button type="button" class="btn ghost sm" data-fiche="${b.id}" title="Fiche imprimable pour la visite">À emporter</button> ${cmpBtn({kind:"b",id:b.id})} <button type="button" class="lnk" data-del="${b.id}">supprimer</button></td></tr>`;}).join("")}</tbody></table></div>
+   <td style="white-space:nowrap">${isOut(b)?`<button type="button" class="btn ghost sm" data-reshort="${b.id}">↩ Shortlist</button> `:""}<button type="button" class="btn sm" data-visit="${b.id}">Visite${visitScore(b)!=null?" · "+fr(visitScore(b),1)+"/5":""}</button> <button type="button" class="btn ghost sm" data-fiche="${b.id}" title="Fiche imprimable pour la visite">À emporter</button> ${cmpBtn({kind:"b",id:b.id})} <button type="button" class="lnk" data-del="${b.id}">supprimer</button></td></tr>`;}).join("")}</tbody></table></div>
+  ${nOut?`<p style="margin:8px 0"><button type="button" class="btn ghost sm" data-showout>${SHOWOUT?"Masquer les écartés":`Voir les écartés (${nOut})`}</button></p>`:""}
   <p class="sub"><sup>*</sup> loyer estimé (médiane du quartier ou de la ville). Les prix d'annonce incluent en général les frais d'agence ; le notaire, les meubles et les petits travaux sont ajoutés comme pour la ville.</p>`;
  box.querySelectorAll("[data-del]").forEach(btn=>btn.addEventListener("click",async()=>{const old=BIENS.find(x=>x.id===btn.dataset.del); if(!old) return; const {id,by,...keep}=old;
   try{await DB.collection("biens").doc(btn.dataset.del).delete(); toast(`« ${old.titre||"Bien"} » supprimé.`,{label:"Annuler",fn:async()=>{try{await DB.collection("biens").add(keep); toast("Bien restauré.");}catch(_){toast("Restauration impossible.");}}});}catch(e){st.textContent="Suppression refusée : il faut un accès en modification à la page.";}}));}
@@ -1390,13 +1390,14 @@ function myName(){try{return localStorage.getItem("biens-nom")||"";}catch(_){ret
 async function updBien(id,patch){try{await DB.collection("biens").doc(id).update(patch);}catch(err){toast("Modification refusée ("+(err&&err.code||"erreur")+").");}}
 const STC={"à voir":"st0","visité":"st1","offre faite":"st2","écarté":"st3"};
 function stPill(b){const s=b.statut||"à voir"; return `<span class="stwrap"><button type="button" class="stp ${STC[s]||"st0"}" data-stmenu="${b.id}" aria-haspopup="true" aria-expanded="false" title="Changer le statut"><i></i>${s} <span aria-hidden="true">▾</span></button></span>`;}
-function closeStMenus(){document.querySelectorAll(".stmenu").forEach(m=>{m.previousElementSibling&&m.previousElementSibling.setAttribute("aria-expanded","false"); m.remove();});}
+function closeStMenus(){document.querySelectorAll(".stmenu").forEach(m=>m.remove()); document.querySelectorAll("[data-stmenu][aria-expanded=true]").forEach(b=>b.setAttribute("aria-expanded","false"));}
+let STY=0; addEventListener("scroll",e=>{if(!document.querySelector(".stmenu")) return; if(e.target!==document&&e.target.classList&&e.target.classList.contains("row")){closeStMenus(); return;} if(Math.abs(scrollY-STY)>40) closeStMenus();},{passive:true,capture:true}); addEventListener("resize",()=>closeStMenus());
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-stmenu],[data-stset]");
  if(!t){closeStMenus(); return;} e.preventDefault();
- if(t.dataset.stmenu){const open=t.nextElementSibling&&t.nextElementSibling.classList.contains("stmenu"); closeStMenus(); if(open) return; const b=BIENS.find(x=>x.id===t.dataset.stmenu); if(!b) return;
+ if(t.dataset.stmenu){const open=t.getAttribute("aria-expanded")==="true"; closeStMenus(); if(open) return; const b=BIENS.find(x=>x.id===t.dataset.stmenu); if(!b) return;
   const m=document.createElement("span"); m.className="stmenu"; m.setAttribute("role","menu");
   m.innerHTML=STATUTS.map(s=>`<button type="button" role="menuitemradio" aria-checked="${(b.statut||"à voir")===s}" class="stp ${STC[s]}" data-stset="${b.id}|${s}"><i></i>${s}</button>`).join("");
-  t.after(m); t.setAttribute("aria-expanded","true"); return;}
+  document.body.appendChild(m); const r=t.getBoundingClientRect(), mh=m.offsetHeight, mw=m.offsetWidth; m.style.left=Math.max(8,Math.min(r.left,innerWidth-mw-8))+"px"; m.style.top=(r.bottom+mh+8>innerHeight?r.top-mh-4:r.bottom+4)+"px"; STY=scrollY; t.setAttribute("aria-expanded","true"); return;}
  const [id,nx]=t.dataset.stset.split("|"), b=BIENS.find(x=>x.id===id); closeStMenus(); if(!b) return; const prev=b.statut||"à voir"; if(prev===nx) return;
  updBien(id,{statut:nx}); toast(nx==="écarté"?"Bien écarté : il quitte la shortlist et la carte, et reste dans « Nos biens ».":`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
 addEventListener("keydown",e=>{if(e.key==="Escape") closeStMenus();});
@@ -1405,15 +1406,15 @@ document.addEventListener("click",e=>{const f=e.target.closest&&e.target.closest
 
 /* ---------- shortlist et bonnes affaires ---------- */
 function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v.k===b.ville);
- const ph=bienPhoto(b,480,240); return `<div class="bcard${b.statut==="écarté"?" off":""}">${ph?`<button type="button" class="bph" data-openad="b|${b.ville}|${b.id}" aria-label="Ouvrir la fiche"><img src="${esc(ph)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()"></button>`:""}<div class="bch"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button><button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button><button type="button" class="unshort" data-unshort="${b.id}" aria-label="Retirer de la shortlist" title="Retirer de la shortlist">×</button></div>
+ const ph=bienPhoto(b,480,240); return `<div class="bcard${b.statut==="écarté"?" off":""}">${ph?`<button type="button" class="bph" data-openad="b|${b.ville}|${b.id}" aria-label="Ouvrir la fiche"><img src="${esc(ph)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()"></button>`:""}<div class="bch"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button><button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button><button type="button" class="unshort" data-unshort="${b.id}" aria-label="Écarter ce bien" title="Écarter (retirer de la shortlist)">×</button></div>
   <div class="sub" style="margin:0">${c?c.name:""}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)}${b.par?` · ajouté par ${esc(b.par)}`:""}</div>
   <div class="bcn"><span><small>Cash-flow ${mlab()}</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b>${altCf(r.x,1)}</span><span><small>15 ans ${mlab()}</small><b class="mono" style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b>${altIrr(r.x,1)}</span></div>
   <div class="bcf"><button type="button" class="btn sm" data-openad="b|${b.ville}|${b.id}">Détail</button>${stPill(b)}<span class="pill ${bc}" title="Avis probable de la banque">${bt}</span></div>
   <details class="bmore"><summary>Prix à viser et actions</summary>${(()=>{const g=targetsFor(b); return `<div class="btg"><span><i class="dot d1"></i>Autofinancé<b class="mono">${g.cf==null?"—":"≤ "+keur(g.cf)}</b>${tgtChip(g.cf,g.ref,1)}</span><span><i class="dot d2"></i>7 %/an<b class="mono">${g.r7==null?"—":"≤ "+keur(g.r7)}</b>${tgtChip(g.r7,g.ref,1)}</span></div>`;})()}
-  <div class="bcf">${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}${b.quartier&&IR[b.ville]?`<button type="button" class="lnk" data-gomap="${b.id}">carte</button>`:""}<button type="button" class="lnk" data-visit="${b.id}">visite${visitScore(b)!=null?" "+fr(visitScore(b),1)+"/5":""}</button>${cmpBtn({kind:"b",id:b.id})}</div></details></div>`;}
+  <div class="bcf">${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<button type="button" class="lnk" data-visit="${b.id}">visite${visitScore(b)!=null?" "+fr(visitScore(b),1)+"/5":""}</button>${cmpBtn({kind:"b",id:b.id})}</div></details></div>`;}
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
- const inShort=b=>b.statut!=="écarté"&&b.short!==false, out=BIENS.filter(b=>!inShort(b)).length, mine=BIENS.filter(inShort).map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,12);
- sl.innerHTML=(mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien dans la shortlist.</p>`); document.getElementById("shortOut").innerHTML=out?`<p class="sub shortout" style="margin:6px 0 0"><button type="button" class="lnk" data-gotab="tab-biens">${out} bien${out>1?"s":""} hors shortlist (retirés ou écartés) dans « Nos biens » →</button></p>`:""; if(!BIENS.length) sl.innerHTML=`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
+ const inShort=b=>!isOut(b), out=BIENS.filter(b=>!inShort(b)).length, mine=BIENS.filter(inShort).map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,12);
+ sl.innerHTML=(mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien dans la shortlist.</p>`); document.getElementById("shortOut").innerHTML=out?`<p class="sub shortout" style="margin:6px 0 0"><button type="button" class="lnk" data-gotab="tab-biens">${out} bien${out>1?"s":""} écarté${out>1?"s":""}, gardé${out>1?"s":""} dans « Nos biens » →</button></p>`:""; if(!BIENS.length) sl.innerHTML=`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
  const deals=allVentes().filter(v=>v.r.x.irr!=null&&v.r.x.ratio<=0.35&&!isAdded(VTURL+v.a[3])).sort((x,y)=>y.r.x.irr-x.r.x.irr).slice(0,6);
  dl.innerHTML=deals.length?deals.map(({ck,a,r})=>`<div class="bcard deal">${a[4]?`<img class="dealph" src="${esc(photoUrl(a[3],a[4],480,260))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="bch"><b>Studio ${String(a[0]).replace(".",",")} m²</b><span class="pill p-n">${C.find(c=>c.k===ck).name}</span></div>
   <div class="sub" style="margin:0">${esc(a[1]||"secteur non précisé")} · ${keur(a[2])} · ${eur(a[2]/a[0])}/m²</div>
@@ -1589,6 +1590,7 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  lab();})();
 
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-openad]"); if(!b) return; e.preventDefault(); const [kind,ck,...r]=b.dataset.openad.split("|"); openAd(kind,ck,r.join("|"));
+ if(kind==="b"&&QSEL&&QSEL.ck===ck&&!document.getElementById("mapSec").classList.contains("mapfull")){flyTo(QSEL.bb,3.2); if(!wide()) document.getElementById("mapSec").scrollIntoView({behavior:"smooth",block:"start"});}
  const t=wide()?document.getElementById("side"):null; if(t) t.scrollIntoView({behavior:"smooth",block:"start"});});
 
 
@@ -1689,12 +1691,12 @@ function bienSuf(b){return (b.url||"").startsWith(VTURL)?b.url.slice(VTURL.lengt
 function bienPhoto(b,w,h){const s=bienSuf(b); if(!s) return ""; const a=findAd("v",b.ville,s); const p=a?a[4]:(HIST[b.ville]&&HIST[b.ville].v&&HIST[b.ville].v[s]?HIST[b.ville].v[s].m[2]:""); return p?photoUrl(s,p,w,h):"";}
 function bienFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class="sub">Ce bien n'est plus dans la liste.</p>`;
  const c=C.find(v=>v.k===b.ville), r=calcBien(b), x=r.x, [bc,bt]=bank(x.ratio), s=bienSuf(b), v=s?vu("v",b.ville,s):null, sc=visitScore(b), ph=bienPhoto(b,720,420);
- const V=b.visite||{}, av=V.avis||{}, coms=Object.entries(av).filter(([,a])=>a.com), out=b.statut==="écarté"?"écarté":b.short===false?"retiré":null;
+ const V=b.visite||{}, av=V.avis||{}, coms=Object.entries(av).filter(([,a])=>a.com), out=isOut(b)?"écarté":null;
  const real=[b.dpe?`DPE ${esc(b.dpe)}`:"", +b.copro?`copro ${eur(+b.copro)}/mois`:"", +b.tf?`taxe foncière ${eur(+b.tf)}/an`:"", +b.travaux?`travaux ${eur(+b.travaux)}`:"", V.votes?`votés : ${esc(V.votes)}`:""].filter(Boolean);
  return `${ph?`<img class="adph" src="${esc(ph)}" alt="Photo de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
  <div class="dh"><h3 style="font-size:1.15rem;margin:0;display:flex;gap:6px;align-items:center"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button>${esc(b.titre||"Bien sans nom")}</h3>${stPill(b)}</div>
  <p class="sub" style="margin:2px 0 10px">${c.name}${b.quartier?" · quartier "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché · ${eur(r.pm2)}/m²${b.par?` · ajouté par ${esc(b.par)}`:""} ${s?vuBadges("v",b.ville,s):""}${v&&v.gone?` <span class="hb old">annonce retirée le ${dm(v.gone)}</span>`:""}</p>
- ${out?`<p class="outline">${out==="écarté"?"Bien écarté : hors shortlist et hors carte. Changez le statut pour le reprendre.":"Retiré de la shortlist : il reste ici et dans « Nos biens »."} <button type="button" class="lnk" data-reshort="${b.id}">Remettre dans la shortlist</button></p>`:""}
+ ${out?`<p class="outline">Bien écarté : hors shortlist et hors carte, gardé dans « Nos biens ». <button type="button" class="lnk" data-reshort="${b.id}">Le remettre dans la shortlist</button></p>`:""}
  <div class="big4"><div><span>Budget tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer ${+b.loyer>0?"visé":"estimé"} HC</span><b>${eur(x.rentHC)}</b></div>
   <div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b>${altCf(x)}</div><div><span>15 ans ${mlab()}</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b>${altIrr(x)}</div></div>
  <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
@@ -1705,14 +1707,18 @@ function bienFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class
  ${sc!=null||real.length||coms.length?`<div class="vsum">${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}${real.length?`<span class="sub" style="margin:0">${real.join(" · ")}</span>`:""}</div>${coms.map(([n,a])=>`<p class="vcom"><b>${esc(n)} :</b> ${esc(a.com)}</p>`).join("")}`:`<p class="sub" style="margin:0">Pas encore visité. Le bouton « Visite » permet de saisir les chiffres réels et vos notes.</p>`}
  ${b.notes?`<p class="vcom"><b>Notes :</b> ${esc(b.notes)}</p>`:""}
  <h2 class="psec">Et si…</h2>${scnBox("bien",scnBien(b))}
- <div class="adact many">${adNav({kind:"b",ck:b.ville,suf:b.id})}<button type="button" class="btn addv" data-visit="${b.id}">Visite${sc!=null?" · "+fr(sc,1)+"/5":""}</button><button type="button" class="btn ghost sm" data-fiche="${b.id}">Fiche à emporter</button>${cmpBtn({kind:"b",id:b.id})}${b.url?`<a class="btn ghost sm" href="${esc(b.url)}" target="_blank" rel="noopener">Annonce ↗</a>`:""}${out?"":`<button type="button" class="btn ghost sm" data-unshort="${b.id}">Retirer</button>`}</div>`;}
+ <div class="adact many">${adNav({kind:"b",ck:b.ville,suf:b.id})}<button type="button" class="btn addv" data-visit="${b.id}">Visite${sc!=null?" · "+fr(sc,1)+"/5":""}</button><button type="button" class="btn ghost sm" data-fiche="${b.id}">Fiche à emporter</button>${cmpBtn({kind:"b",id:b.id})}${b.url?`<a class="btn ghost sm" href="${esc(b.url)}" target="_blank" rel="noopener">Annonce ↗</a>`:""}${out?"":`<button type="button" class="btn ghost sm" data-unshort="${b.id}">Écarter</button>`}</div>`;}
 
 /* retirer / remettre dans la shortlist (sans changer le statut) */
 document.addEventListener("click",e=>{const u=e.target.closest&&e.target.closest("[data-unshort],[data-reshort],[data-gotab]"); if(!u) return; e.preventDefault();
  if(u.dataset.gotab){showTab(u.dataset.gotab); document.getElementById("p-biens").scrollIntoView({behavior:"smooth",block:"start"}); return;}
  const id=u.dataset.unshort||u.dataset.reshort, b=BIENS.find(x=>x.id===id); if(!b) return;
- if(u.dataset.unshort){updBien(id,{short:false}); toast(`« ${b.titre||"Bien"} » retiré de la shortlist (toujours dans « Nos biens »).`,{label:"Annuler",fn:()=>updBien(id,{short:true})});}
- else {const p={short:true}; if(b.statut==="écarté") p.statut="à voir"; updBien(id,p); toast("Remis dans la shortlist.");}});
+ const prev=b.statut||"à voir";
+ if(u.dataset.unshort){updBien(id,{statut:"écarté",short:true}); toast(`« ${b.titre||"Bien"} » écarté : retiré de la shortlist, gardé dans « Nos biens ».`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});}
+ else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Remis dans la shortlist.");}});
+const isOut=b=>b.statut==="écarté"||b.short===false;
+let SHOWOUT=false;
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-showout]"); if(!t) return; e.preventDefault(); SHOWOUT=!SHOWOUT; renderBiens();});
 
 /* ---------- carte : pastilles de prix des ventes ---------- */
 const VST={k:null,m:{}};
@@ -1746,7 +1752,7 @@ function renderWhere(qm){const back=document.getElementById("zAll"), here=docume
  document.getElementById("zHome").disabled=V.k<KMIN()*1.05;}
 
 /* ---------- navigation entre annonces (boutons, clavier, glisser) ---------- */
-function adSeq(ad){if(ad.kind==="b") return BIENS.filter(b=>b.statut!=="écarté"&&b.short!==false).concat(BIENS.filter(b=>!(b.statut!=="écarté"&&b.short!==false))).map(b=>b.id); const A=ADS[ad.ck]; if(!A) return [];
+function adSeq(ad){if(ad.kind==="b") return BIENS.filter(b=>!isOut(b)).concat(SHOWOUT||isOut(BIENS.find(b=>b.id===ad.suf)||{})?BIENS.filter(isOut):[]).map(b=>b.id); const A=ADS[ad.ck]; if(!A) return [];
  return ad.kind==="v"?(A.ventes||[]).map(a=>({a,r:venteCalc(ad.ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99)).map(o=>o.a[3]):(A.ads||[]).map(a=>a[4]);}
 function adNav(ad){const q=adSeq(ad), i=q.indexOf(ad.suf); if(q.length<2||i<0) return "";
  return `<span class="adnav" role="group" aria-label="Autres annonces"><button type="button" class="btn ghost sm" data-adstep="-1" aria-label="Annonce précédente" title="Précédente (←)">‹</button><span class="mono">${i+1}/${q.length}</span><button type="button" class="btn ghost sm" data-adstep="1" aria-label="Annonce suivante" title="Suivante (→)">›</button></span>`;}
