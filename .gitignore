@@ -1,2 +1,4 @@
 sync.log
 .DS_Store
+dist/
+node_modules/
