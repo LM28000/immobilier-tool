@@ -271,6 +271,17 @@ html{scroll-padding-top:12px} @media (prefers-reduced-motion:no-preference){html
 .wheelhint{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;background:rgb(0 0 0 / .45);color:#fff;font-weight:700;font-size:.95rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:4}
 .wheelhint.on{opacity:1}
 @media (max-width:940px){.qdetail .adact{margin:12px max(-14px,calc(-1 * env(safe-area-inset-left,0px) - 14px)) calc(-16px - env(safe-area-inset-bottom,0px));padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}}
+
+/* onglets dans le panneau */
+.ptabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:12px 0 10px;overflow-x:auto;scrollbar-width:none}
+.ptabs button{font:inherit;font-size:.8rem;font-weight:700;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent;padding:7px 10px;margin-bottom:-1px;cursor:pointer;white-space:nowrap}
+.ptabs button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent)} .ptabs button:hover{color:var(--fg)}
+.ptab[hidden]{display:none}
+@media (min-width:941px){.side .adph{aspect-ratio:auto;height:140px}
+ .side .adact{flex-wrap:nowrap} .side .adact .addv{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;justify-content:center} .side .adact>a.btn{margin-left:0}
+ .side .big4 span{font-size:.62rem} .side .big4 b{font-size:1.02rem}}
+@media (min-width:941px) and (max-height:820px){.side .adph{height:92px}.side .big4>div{padding:7px 9px}.side .nego{gap:7px;padding:10px}.side .ngc small{display:none}}
+details.mini{margin:8px 0 0;font-size:.78rem;color:var(--muted)} details.mini summary{cursor:pointer;font-weight:700;color:var(--accent)}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
@@ -548,23 +559,21 @@ function renderDetail(rows){
  cv+=`<circle cx="${X(25)}" cy="${Y(G[25])}" r="4" fill="var(--accent)"/><text x="${X(25)-6}" y="${Y(G[25])-8}" text-anchor="end" font-size="11.5" font-weight="700" class="mono" fill="var(--fg)">${(G[25]>=0?"+":"")+keur(G[25])}</text></svg>`;
  const trips=["laval","nantes","paris"].map(o=>`${ORIG[o].name} ${hm(trip(c,o))}`).join(" · ");
  d.innerHTML=`<div class="dh"><h3>${c.name}</h3><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="pill ${bc}">Banque : ${bt} · ${pct(x.ratio*100,0)}</span>${cmpBtn({kind:"c",k:c.k})}${IR[c.k]?`<button type="button" class="cmpb" data-zq="${c.k}">Voir les quartiers</button>`:""}</span></div>
-  <p class="avg">Moyenne de la ville pour un studio de ${H.surface} m² : prix et loyers médians, tous quartiers confondus.${IR[c.k]?" Les quartiers peuvent être nettement au-dessus ou en dessous.":""}</p>
+  <p class="avg" title="Prix et loyers médians, tous quartiers confondus.${IR[c.k]?" Les quartiers peuvent être nettement au-dessus ou en dessous.":""}">Moyenne de la ville · studio de ${H.surface} m²${IR[c.k]?" · les quartiers varient":""}</p>
   <div class="big4">
    <div><span>Loyer HC</span><b>${eur(x.rentHC)}</b></div>
    <div><span>Budget</span><b>${keur(x.cost)}</b></div>
    <div><span>Cash-flow</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b></div>
    <div><span>15 ans</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b></div></div>
-  <h2 style="margin:6px 0 4px">Le mois type, à deux</h2>${bar}
-  <h2 style="margin:12px 0 4px">Gain ou perte à deux si on revend</h2>${cv}
-  <p class="sub">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
+  ${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["Ville et risques",`<p class="sub" style="margin-top:0">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
   <p class="sub">Trajets : ${trips}</p>
   <h2 style="margin:14px 0 6px">Risques à long terme</h2>
   <div style="display:flex;flex-wrap:wrap;gap:6px">${riskPills(c)}</div>
-  <div style="margin-top:10px">${dpeBar(DPECITY[c.k],420)}</div>
+  <div style="margin-top:10px">${dpeBar(DPECITY[c.k],360)}</div>
   <p class="sub" style="margin-top:4px">DPE des ${DPECITY[c.k].reduce((a,b)=>a+b,0).toLocaleString("fr-FR")} appartements de 30 m² ou moins diagnostiqués depuis 2021 (ADEME). F : location interdite en 2028, G : déjà interdite.</p>
   <p class="sub" style="margin-top:6px">Population qui baisse ou beaucoup de logements vides = moins de locataires demain et une revente plus lente. Le chômage pèse sur la solvabilité des candidats.</p>
   ${c.note?`<div class="note">${c.note}</div>`:""}
-  <div class="srcs">Sources : <a href="${c.src[0]}" target="_blank" rel="noopener">Prix</a> · <a href="${c.src[1]}" target="_blank" rel="noopener">Loyer</a> · <a href="${c.src[2]}" target="_blank" rel="noopener">Taxe foncière</a></div>`;
+  <div class="srcs">Sources : <a href="${c.src[0]}" target="_blank" rel="noopener">Prix</a> · <a href="${c.src[1]}" target="_blank" rel="noopener">Loyer</a> · <a href="${c.src[2]}" target="_blank" rel="noopener">Taxe foncière</a></div>`]])}`;
 }
 
 /* ---------- risques ---------- */
@@ -712,12 +721,11 @@ function qCard(t){const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t
  const [bc,bt]=bank(x.ratio), rr=rentRatio(t.ck,t);
  return `<div class="qcard"><div class="dh"><h3 style="font-size:1.15rem">${t.name}</h3><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="pill" style="background:${QCLS[qCls(x.irr)].c};color:var(--surface)">${x.irr==null?"n.d.":pct(x.irr)} sur 15 ans</span>${cmpBtn({kind:"q",ck:t.ck,code:t.code})}<button type="button" class="cmpb" data-sim="${t.ck}|${t.code}">Simuler un bien ici</button></span></div>
   <div class="big4"><div><span>Prix appartements</span><b>${eur(t.price)}/m²</b></div><div><span>Studio tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer hors charges</span><b>${eur(x.rentHC)}</b></div><div><span>Cash-flow</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b></div></div>
-  <p class="sub" style="margin:0 0 6px">Loyer : loyer médian des studios de la ville${Math.abs(rr-1)<0.005?"":` ${rr>=1?"+":"−"}${fr(Math.abs(rr-1)*100,0)} %`}, ${t.ra?`d'après l'écart RealAdvisor du quartier (${fr(t.ra/12,1)} €/m²/mois contre ${fr(IR[t.ck].raCity/12,1)} en ville)`:(IRIS[t.ck].ra.fit[1]?"estimé à partir du prix du quartier (pas de loyer publié)":"pas de loyer publié pour ce quartier")}. Banque : <span class="pill ${bc}">${bt}</span></p>
+  ${(()=>{const det=`<p class="sub" style="margin:0 0 6px">Loyer : loyer médian des studios de la ville${Math.abs(rr-1)<0.005?"":` ${rr>=1?"+":"−"}${fr(Math.abs(rr-1)*100,0)} %`}, ${t.ra?`d'après l'écart RealAdvisor du quartier (${fr(t.ra/12,1)} €/m²/mois contre ${fr(IR[t.ck].raCity/12,1)} en ville)`:(IRIS[t.ck].ra.fit[1]?"estimé à partir du prix du quartier (pas de loyer publié)":"pas de loyer publié pour ce quartier")}. Banque : <span class="pill ${bc}">${bt}</span></p>
   ${demLine(t)}
-  ${adsLine(t)}
-  ${sectorOf(t)?annoncesBlock(t.ck,sectorOf(t),false,OPENADS===sectorOf(t)):""}
   ${x.irr!=null&&x.irr>=9?`<p class="sub" style="margin:0 0 6px;color:var(--warn)">Rendement très élevé sur le papier parce que le prix est bas. Vérifiez sur place la demande et le risque d'impayés : le calcul ne les voit qu'à travers la distance aux pôles étudiants.</p>`:""}
-  <div>${n?dpeBar(t.dpe,220):""} <span class="sub">${n?`${n} DPE de petits appartements${n>=15?` · F-G ${fr(fg,0)} %`:" · trop peu pour conclure"}`:"aucun DPE de petit appartement"}</span></div></div>`;}
+  <div>${n?dpeBar(t.dpe,220):""} <span class="sub">${n?`${n} DPE de petits appartements${n>=15?` · F-G ${fr(fg,0)} %`:" · trop peu pour conclure"}`:"aucun DPE de petit appartement"}</span></div>`, sec=sectorOf(t), A=sec&&ADS[t.ck], nv=A?(A.ventes||[]).filter(a=>a[1]===sec).length+A.ads.filter(a=>a[1]===sec).length:0;
+   return sec?ptabs("q",[[`Annonces (${nv})`,adsLine(t)+annoncesBlock(t.ck,sec,false,OPENADS===sec)],["Détails du quartier",det]]):det;})()}</div>`;}
 
 const r22=a=>a[2]*Math.pow(22/a[0],0.6);
 const ADURL="https://www.bienici.com/annonce/location/";
@@ -1215,7 +1223,7 @@ function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p cla
   <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
   ${negoBlock(vb)}
-  <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
+  <details class="mini"><summary>Comment c'est calculé</summary>Notaire, meubles, petits travaux, loyer et vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</details>
   <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}
  const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);
  return `${a[5]?`<img class="adph" src="${esc(photoUrl(a[4],a[5],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
@@ -1339,16 +1347,23 @@ document.getElementById("qSearch").addEventListener("input",function(){const n=[
 /* ---------- défilement : molette sur la carte, listes repliées ---------- */
 function wheelHint(){const w=document.getElementById("wheelHint"); if(!w) return; w.classList.add("on"); clearTimeout(wheelHint.t); wheelHint.t=setTimeout(()=>w.classList.remove("on"),1100);}
 const CLIPN=8;
-function clipBox(sb){const rows=[...sb.querySelectorAll("tbody tr")], vis=rows.filter(tr=>!tr.hidden), open=sb.dataset.open==="1";
- vis.forEach((tr,i)=>{const m=!open&&i>=CLIPN&&!tr.classList.contains("sel"); if(tr.classList.contains("more")!==m) tr.classList.toggle("more",m);});
+function clipBox(sb){const N=sb.closest("#side")?(innerHeight<760?3:5):CLIPN, rows=[...sb.querySelectorAll("tbody tr")], vis=rows.filter(tr=>!tr.hidden), open=sb.dataset.open==="1";
+ vis.forEach((tr,i)=>{const m=!open&&i>=N&&!tr.classList.contains("sel"); if(tr.classList.contains("more")!==m) tr.classList.toggle("more",m);});
  rows.filter(tr=>tr.hidden&&tr.classList.contains("more")).forEach(tr=>tr.classList.remove("more"));
  let b=sb.nextElementSibling; if(!b||!b.classList.contains("morebtn")){b=document.createElement("button"); b.type="button"; b.className="morebtn"; sb.after(b);
   b.addEventListener("click",()=>{const was=sb.dataset.open==="1"; sb.dataset.open=was?"":"1"; clipBox(sb); if(was) sb.scrollIntoView({block:"nearest"});});}
- const extra=vis.length-CLIPN, txt=open?"Replier la liste":`Afficher les ${extra} autres`, hide=extra<=0;
+ const extra=vis.length-N, txt=open?"Replier la liste":`Afficher les ${extra} autres`, hide=extra<=0;
  if(b.textContent!==txt) b.textContent=txt; if(b.hidden!==hide) b.hidden=hide;}
 let clipQ=false; const clipAll=()=>{clipQ=false; document.querySelectorAll(".scrollbox").forEach(clipBox);};
 new MutationObserver(()=>{if(!clipQ){clipQ=true; requestAnimationFrame(clipAll);}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
 clipAll();
+
+/* ---------- onglets du panneau ---------- */
+const PT={};
+function ptabs(id,list){const cur=Math.min(PT[id]||0,list.length-1);
+ return `<div class="ptabs" role="group">${list.map(([l],i)=>`<button type="button" aria-pressed="${i===cur}" data-pt="${id}|${i}">${l}</button>`).join("")}</div>${list.map(([,c],i)=>`<div class="ptab" data-ptp="${id}|${i}"${i===cur?"":" hidden"}>${c}</div>`).join("")}`;}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pt]"); if(!b) return; e.preventDefault(); const [id,i]=b.dataset.pt.split("|"); PT[id]=+i;
+ const host=b.parentElement.parentElement; host.querySelectorAll(`:scope > .ptabs [data-pt^="${id}|"]`).forEach(x=>x.setAttribute("aria-pressed",x===b)); host.querySelectorAll(`:scope > [data-ptp^="${id}|"]`).forEach(p=>p.hidden=p.dataset.ptp!==`${id}|${i}`);});
 
 fitVH();
 loadLocal();
