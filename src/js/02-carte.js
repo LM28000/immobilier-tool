@@ -21,7 +21,7 @@ const nrm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^
 })();
 const clampR=v=>Math.min(1.15,Math.max(0.85,v));
 const rentRatio=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
-function calcIris(t){const c=C.find(v=>v.k===t.ck), dm=H.vacQ?demandOf(t):null; return calc(Object.assign({},c,{pm2:c.pm2*t.price/IR[t.ck].med,rent:c.rent*rentRatio(t.ck,t),vac:dm?dm.vac:undefined}));}
+function calcIris(t){const c=C.find(v=>v.k===t.ck), dm=H.vacQ?demandOf(t):null; return calc(Object.assign({},c,{spm2:studioPm2(t.ck,t),rent:c.rent*rentRatio(t.ck,t),vac:dm?dm.vac:undefined}));}
 const QCLS=[{t:"sous 2,5 %",c:"var(--bad)",o:.55},{t:"2,5 à 5 %",c:"var(--warn)",o:.5},{t:"5 à 7 %",c:"var(--ok)",o:.2},{t:"7 à 9 %",c:"var(--ok)",o:.42},{t:"9 % et plus",c:"var(--ok)",o:.68}];
 const qCls=irr=>irr==null||irr<2.5?0:irr<5?1:irr<7?2:irr<9?3:4;
 const fgPct=d=>{const n=d.reduce((a,b)=>a+b,0);return n?(d[5]+d[6])/n*100:null;};
@@ -124,9 +124,10 @@ function qCard(t){const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t
  if(!x) return `<div class="qcard"><div class="dh"><h3 style="font-size:1.15rem">${t.name}</h3><span class="pill p-n">${t.type==="H"?"pas de prix publié":"zone d'activité"}</span></div><p class="sub">Pas d'estimation de prix pour ce secteur IRIS. ${n?`${n} DPE de petits appartements.`:""}</p>${adsLine(t)}</div>`;
  const [bc,bt]=bank(x.ratio), rr=rentRatio(t.ck,t);
  return `<div class="qcard"><div class="dh"><h3 style="font-size:1.15rem">${t.name}</h3><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="pill" style="background:${QCLS[qCls(x.irr)].c};color:var(--surface)">${x.irr==null?"n.d.":pct(x.irr)} sur 15 ans</span>${cmpBtn({kind:"q",ck:t.ck,code:t.code})}<button type="button" class="cmpb" data-sim="${t.ck}|${t.code}">Simuler un bien ici</button></span></div>
-  <div class="big4"><div><span>Prix appartements</span><b>${eur(t.price)}/m²</b></div><div><span>Studio tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer hors charges</span><b>${eur(x.rentHC)}</b></div><div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b>${altCf(x)}</div></div>
+  <div class="big4"><div><span>${hasDVF(t.ck)?"Prix d'un studio":"Prix appartements"}</span><b>${eur(hasDVF(t.ck)?studioPm2(t.ck,t):t.price)}/m²</b></div><div><span>Studio tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer hors charges</span><b>${eur(x.rentHC)}</b></div><div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b>${altCf(x)}</div></div>
   ${(()=>{const det=`<p class="sub" style="margin:0 0 6px">Loyer : loyer médian des studios de la ville${Math.abs(rr-1)<0.005?"":` ${rr>=1?"+":"−"}${fr(Math.abs(rr-1)*100,0)} %`}, ${t.ra?`d'après l'écart RealAdvisor du quartier (${fr(t.ra/12,1)} €/m²/mois contre ${fr(IR[t.ck].raCity/12,1)} en ville)`:(IRIS[t.ck].ra.fit[1]?"estimé à partir du prix du quartier (pas de loyer publié)":"pas de loyer publié pour ce quartier")}. Banque : <span class="pill ${bc}">${bt}</span></p>
   ${demLine(t)}
+  ${quartierReal(t)}
   ${x.irr!=null&&x.irr>=9?`<p class="sub" style="margin:0 0 6px;color:var(--warn)">Rendement très élevé sur le papier parce que le prix est bas. Vérifiez sur place la demande et le risque d'impayés : le calcul ne les voit qu'à travers la distance aux pôles étudiants.</p>`:""}
   <div>${n?dpeBar(t.dpe,220):""} <span class="sub">${n?`${n} DPE de petits appartements${n>=15?` · F-G ${fr(fg,0)} %`:" · trop peu pour conclure"}`:"aucun DPE de petit appartement"}</span></div>`, sec=sectorOf(t), A=sec&&ADS[t.ck], nv=A?(A.ventes||[]).filter(a=>a[1]===sec).length+A.ads.filter(a=>a[1]===sec).length:0;
    return sec?ptabs("q",[[`Annonces (${nv})`,adsLine(t)+annoncesBlock(t.ck,sec,false,OPENADS===sec)],["Détails du quartier",det]]):det;})()}</div>`;}
@@ -152,7 +153,7 @@ function adsCity(ck){const A=ADS[ck]; if(!A) return ""; const c=C.find(v=>v.k===
  const model=c.rent*Math.pow(H.surface/c.rentM2,0.6);
  return `<p class="sub" style="margin:0">Contrôle sur les annonces en ligne (Bien'ici, ${ADS.date}) : ${all.n} studios de 16 à 32 m² à ${c.name}, loyer médian ramené à 22 m² <b class="mono">${eur(all.med)}</b> charges comprises, <b class="mono">${eur(meu.med)}</b> pour les meublés${ck==="lemans"?" hors résidences étudiantes":""}. Le calcul retient <b class="mono">${eur(model)}</b> : ${meu.med>=model?"il est plutôt prudent":"il est un peu optimiste"}. Ce sont des loyers demandés, pas signés.</p>${ventesCity(ck)}`;}
 function demLine(t){const d=demandOf(t); if(!d) return "";
- return `<p class="sub" style="margin:0 0 6px">Emplacement : à ${fr(d.d,1)} km de la gare, de l'université ou du centre le plus proche → ${H.vacQ?`${fr(d.vac,1)} mois vide${d.vac>=2?"s":""} par an retenu${d.vac>=2?"s":""}`:`vacance fixe (${fr(H.vacance,1)} mois), ajustement désactivé`}.</p>`;}
+ return `<p class="sub" style="margin:0 0 6px">Emplacement : ${d.real?`${minTxt(d.min)} à pied de ${MKFULL[d.mk]} (${fr(d.d,1)} km par les rues, ${minTxt(d.bike)} à vélo)`:`à ${fr(d.d,1)} km de la gare, de l'université ou du centre le plus proche`} → ${H.vacQ?`${fr(d.vac,1)} mois vide${d.vac>=2?"s":""} par an retenu${d.vac>=2?"s":""}`:`vacance fixe (${fr(H.vacance,1)} mois), ajustement désactivé`}.</p>`;}
 function qFilter(){const q=nrm(document.getElementById("qSearch").value||""); let n=0, t=0;
  document.querySelectorAll("#zBody tr").forEach(tr=>{t++; const ok=!q||nrm(tr.cells[0].textContent).includes(q); tr.hidden=!ok; if(ok) n++;});
  document.getElementById("qCount").textContent=q?`${n} sur ${t}`:`${t} quartiers, du meilleur au moins bon rendement`;}

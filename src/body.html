@@ -19,11 +19,12 @@
     <div class="toprow">
       <h2>Les réglages qui comptent le plus</h2>
       <span style="display:flex;gap:8px;flex-wrap:wrap"><label class="switch" id="pessWrap" for="f-pess"><input type="checkbox" id="f-pess"> Scénario pessimiste</label>
-      <label class="switch sw-ok on" id="vacWrap" for="f-vacq"><input type="checkbox" id="f-vacq" checked> Vacance selon l'emplacement</label></span>
+      <label class="switch sw-ok on" id="vacWrap" for="f-vacq"><input type="checkbox" id="f-vacq" checked> Vacance selon l'emplacement</label>
+      <label class="switch sw-ok on" id="dvfWrap" for="f-dvf"><input type="checkbox" id="f-dvf" checked> Prix des studios réellement vendus</label></span>
     </div>
     <div class="sliders">
       <div class="sl"><label for="s-surcote">Prix payé vs prix moyen des studios <b id="v-surcote"></b></label>
-        <input type="range" id="s-surcote" min="-10" max="40" step="5"><small>Surcote pour un studio bien placé et en bon état</small></div>
+        <input type="range" id="s-surcote" min="-10" max="40" step="5"><small id="n-surcote">Surcote pour un studio bien placé et en bon état</small></div>
       <div class="sl"><label for="s-loyer">Loyer obtenu vs loyer médian <b id="v-loyer"></b></label>
         <input type="range" id="s-loyer" min="-20" max="20" step="5"><small>Négatif = studio moins bien placé ou loué plus bas</small></div>
       <div class="sl"><label for="s-taux">Taux du crédit sur 25 ans <b id="v-taux"></b></label>
@@ -160,9 +161,10 @@
     <details class="fdet">
       <summary>Comment c'est calculé</summary>
       <dl class="fmeth">
-        <dt>Prix</dt><dd>Prix moyen des studios vendus dans la ville (DVF) × surcote petite surface × surface, ou prix affiché de l'annonce. On ajoute le notaire, les meubles, les petits travaux et la garantie du prêt : c'est le « budget tout compris ».</dd>
+        <dt>Prix</dt><dd>Au Mans, à Saint-Nazaire, Angers, Caen et Orléans : médiane des studios (12 à 35 m²) réellement vendus dans le quartier en 2023-2025 (DVF), tirée vers la tendance RealAdvisor du quartier quand il y a peu de ventes. Ailleurs : prix moyen des appartements vendus × surcote petite surface. Ou prix affiché de l'annonce. On ajoute le notaire, les meubles, les petits travaux et la garantie du prêt : c'est le « budget tout compris ».</dd>
         <dt>Loyer</dt><dd>Loyer médian des studios, ramené à la surface du bien (loyer × (surface ÷ surface de référence)^0,6 : les grands studios se louent moins cher au m²), ajusté selon le quartier (écart RealAdvisor plafonné à ±15 %), moins les charges payées par le locataire.</dd>
-        <dt>Mois vides</dt><dd>0,5 mois par an à moins de 600 m de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus (désactivable).</dd>
+        <dt>Mois vides</dt><dd>Selon le temps de marche réel par les rues (OpenStreetMap) jusqu'à la gare, l'université ou le centre le plus proche : 0,5 mois par an à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus (désactivable). Hors des cinq villes détaillées : distance à vol d'oiseau.</dd>
+        <dt>Risques</dt><dd>Géorisques au centre du quartier : territoire à risque important d'inondation, retrait-gonflement des argiles, secteurs de sols pollués et sites Seveso à proximité. À vérifier à l'adresse exacte dans l'état des risques fourni par le vendeur.</dd>
         <dt>Charges</dt><dd>Copropriété (part propriétaire), assurance PNO et entretien, taxe foncière au taux 2025 de la ville (hors ordures ménagères, payées par le locataire).</dd>
         <dt>Impôts</dt><dd>Régime le plus avantageux entre micro-BIC (50 % des loyers imposés) et réel (charges, intérêts et amortissements déduits), selon la tranche de chacun et les prélèvements sociaux de 18,6 %. CFE et comptable (au réel) comptés. À la revente : impôt sur la plus-value avec abattements pour durée de détention, amortissements réintégrés.</dd>
         <dt>Rendement 15 ans</dt><dd>Rendement annuel de l'apport, revente comprise (taux de rendement interne). Brut : avant impôts et frais fiscaux ; net : après. Avant frais de vente.</dd>

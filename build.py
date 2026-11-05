@@ -13,8 +13,10 @@ js = sorted(glob.glob(os.path.join(R, "src/js/*.js")))
 names = [os.path.basename(p) for p in js]
 before = [p for p, n in zip(js, names) if n < "02"]   # villes, calcul, fiche
 after = [p for p, n in zip(js, names) if n >= "02"]   # carte et la suite
+jd = lambda n, f: "const %s=%s;" % (n, rd(f) if os.path.exists(os.path.join(R, f)) else "{}")
 code = "\n".join([
     rd("data/mapdata.js"),
+    jd("DVFQ", "data/dvf-quartiers.json"), jd("TTQ", "data/temps-trajets.json"), jd("RISQ", "data/risques-quartiers.json"),
     "const CITYMAP=" + rd("data/citymaps.json") + ";",
     *[open(p, encoding="utf-8").read() for p in before],
     rd("data/irisdata.js"),

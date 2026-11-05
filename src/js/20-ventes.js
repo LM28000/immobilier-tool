@@ -17,7 +17,7 @@ function ventesLine(t){const A=ADS[t.ck]; if(!A||!A.ventes) return ""; const d=O
  const best=l.map(a=>venteCalc(t.ck,a)).reduce((m,r)=>r.x.irr!=null&&(m==null||r.x.irr>m)?r.x.irr:m,null);
  return `<details class="ads"${OPENADS===d?" open":""}><summary>${l.length} studio${l.length>1?"s":""} à vendre dans le secteur « ${esc(d)} »${best!=null?` · jusqu'à ${pct(best)} sur 15 ans`:""}</summary>${ventesTable(t.ck,l,false)}</details>`;}
 function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) return ""; const c=C.find(v=>v.k===ck), pm=median(A.ventes.map(a=>a[2]/a[0]));
- return `<p class="sub" style="margin:8px 0 0">Prix demandés : ${A.ventes.length} studios à vendre à ${c.name}, <b class="mono">${eur(pm)}/m²</b> en médiane, contre <b class="mono">${eur(c.pm2*(1+H.surcote/100))}/m²</b> dans le calcul de la ville (ventes réelles DVF + surcote). Les prix affichés incluent en général les frais d'agence et une marge de négociation.</p>`;}
+ return `<p class="sub" style="margin:8px 0 0">Prix demandés : ${A.ventes.length} studios à vendre à ${c.name}, <b class="mono">${eur(pm)}/m²</b> en médiane, contre <b class="mono">${eur(studioPm2(ck))}/m²</b> dans le calcul de la ville (${hasDVF(ck)?"studios réellement vendus, DVF 2023-2025":"ventes DVF tous appartements + surcote"}). Les prix affichés incluent en général les frais d'agence et une marge de négociation.</p>`;}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,dpe:"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
@@ -33,7 +33,7 @@ function toast(t,act){let el=document.getElementById("toast"); if(!el){el=docume
 /* ---------- simuler un bien dans un quartier ---------- */
 function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) return; showTab("tab-biens");
  const f=document.getElementById("biensForm"); f.reset(); document.getElementById("b-ville").value=ck; fillQuartiers(); document.getElementById("b-quartier").value=t.name;
- const c=C.find(v=>v.k===ck), p=Math.round(c.pm2*(1+H.surcote/100)*t.price/IR[ck].med*22/500)*500;
+ const c=C.find(v=>v.k===ck), p=Math.round(studioPm2(ck,t)*22/500)*500;
  f.elements.titre.value=`Studio type · ${t.name}`; f.elements.surface.value=22; f.elements.prix.value=p;
  document.getElementById("p-biens").scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(()=>f.elements.prix.focus({preventScroll:true}),400);
  toast("Formulaire prérempli : corrigez le prix et la surface puis ajoutez.");}

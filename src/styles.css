@@ -436,3 +436,16 @@ details.bmore[open] summary{margin-bottom:6px}
 #tip .tbd{padding:8px 10px;display:flex;flex-direction:column;gap:3px;font-size:.78rem}
 #tip .tbd b{font-size:.86rem}
 #tip .trow{display:flex;justify-content:space-between;gap:8px}
+
+/* données réelles du quartier */
+.qreal{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--sunk)}
+.qreal h4{margin:4px 0 0;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qreal h4:first-child{margin-top:0}
+.dvft{width:100%;min-width:0;font-size:.82rem;margin:2px 0 4px}
+.dvft td,.dvft th{padding:3px 6px}
+.trajb,.risqb{display:flex;flex-wrap:wrap;gap:6px}
+.traj{font-size:.84rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.traj b{font-weight:600;margin-right:4px}
+.risqb .pill{cursor:default}
+.sl.dim input[type=range]{opacity:.45}
+.fbox .risqb{justify-content:flex-end}

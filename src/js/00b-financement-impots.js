@@ -32,7 +32,7 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
 function calc(c){
  const S=c._s||{}, pe=H.pess;
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?0.5:0), px=pe?Math.min(H.px,0.5):H.px, la=H.loyerAdj+(pe?-5:0)+(S.loyer?-5:0), HZ=S.hz||15;
- const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:c.pm2*(1+H.surcote/100)*SU, trav=(c.trav!=null?c.trav:H.travaux)+(S.trav?5000:0);
+ const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k))*SU, trav=(c.trav!=null?c.trav:H.travaux)+(S.trav?5000:0);
  const base=bien*(1+H.notaire/100)+H.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  const rentHC=Math.max(c.rent*Math.pow(SU/c.rentM2,0.6)*(1+la/100)-H.chLoc,0);
@@ -66,3 +66,13 @@ function calc(c){
  return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
+
+/* ---------- prix d'un studio : ventes réelles (DVF) quand on les a ---------- */
+// Villes avec relevé DVF des studios : médiane des ventes de 12 à 35 m² (2023-2025), sans surcote.
+// Quartier : la médiane du quartier, tirée vers la tendance RealAdvisor quand il y a peu de ventes (poids de 8 ventes fictives).
+const hasDVF=ck=>!!(H.dvf&&typeof DVFQ!=="undefined"&&DVFQ[ck]&&DVFQ[ck].med);
+function studioPm2(ck,t){const c=C.find(v=>v.k===ck); if(!c) return 0;
+ const ir=typeof IR!=="undefined"&&IR[ck], ratio=t&&t.price&&ir&&ir.med?t.price/ir.med:1;
+ if(!hasDVF(ck)) return c.pm2*(1+H.surcote/100)*ratio;
+ const D=DVFQ[ck], prior=D.med*ratio, q=t&&D.q[t.code]; if(!q||!q.n) return prior;
+ return (q.n*q.med+8*prior)/(q.n+8);}

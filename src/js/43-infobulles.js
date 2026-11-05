@@ -5,7 +5,7 @@ const TIPS={
  cf:()=>`Ce qui reste (ou manque) chaque mois à vous deux : loyer encaissé, mois vides déduits − mensualité et assurance du prêt − charges (copro, taxe foncière, assurance PNO, entretien).${H.net?" En net : aussi les impôts sur les loyers, la CFE et le comptable.":" En brut : avant impôts et frais fiscaux."}`,
  irr:()=>`Rendement annuel de votre apport sur 15 ans, revente comprise : il compte tout ce que vous mettez et récupérez, comme un taux d'épargne. ${H.net?"Net : après impôts sur les loyers, CFE, comptable et impôt sur la plus-value.":"Brut : avant impôts et frais fiscaux."} Repères : livret A 1,7 %, LEP 2,5 %.`,
  banque:()=>`Taux d'endettement estimé : (mensualité + prêt étudiant de ${eur(H.pretEtud)}) ÷ (salaires de ${eur(H.salaires)} + 70 % du loyer). Les banques vont en général jusqu'à 35 %. Passe ≤ 33 %, Limite entre 33 et 35 %, Trop haut au-delà.`,
- vac:()=>`Mois sans locataire par an retenus dans le calcul. Avec « Vacance selon l'emplacement » : 0,5 mois près de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 3 km et plus.`,
+ vac:()=>`Mois sans locataire par an retenus dans le calcul. Avec « Vacance selon l'emplacement » : 0,5 mois à 10 min à pied ou moins de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 50 min et plus.`,
  autof:()=>`Prix d'achat maximum pour que le loyer paie tout chaque mois (cash-flow ${H.net?"net":"brut"} ≥ 0 €), avec vos réglages actuels.`,
  r7:()=>`Prix d'achat maximum pour que votre apport rapporte 7 % par an sur 15 ans, revente comprise (${H.net?"après impôts":"avant impôts"}).`,
  prixmax:()=>`Les deux prix à ne pas dépasser selon votre objectif : « autofinancé » (rien à sortir chaque mois) ou « 7 % par an ». La différence avec le prix affiché, c'est la marge à négocier.`,
@@ -14,7 +14,8 @@ const TIPS={
  pm2:()=>`Prix affiché divisé par la surface. Pour un studio, le prix au m² est en général 10 à 20 % plus élevé que la moyenne des appartements du quartier.`,
  etsi:()=>`Testez une hypothèse sans toucher à vos réglages : la colonne « Et si… » se remplit dès qu'une case est cochée. La durée de revente s'applique aux deux colonnes.`,
  pess:()=>`Loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +${fr(H.px,1)} %. Le taux ne change pas : il est fixé à la signature.`,
- vacq:()=>`Ajuste les mois vides selon la distance du quartier à la gare, à l'université ou au centre (0,5 à 2,5 mois par an). Décoché : ${fr(H.vacance,1)} mois partout.`,
+ vacq:()=>`Ajuste les mois vides selon le temps de marche réel (par les rues, OpenStreetMap) jusqu'à la gare, l'université ou le centre : 0,5 mois à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus. Décoché : ${fr(H.vacance,1)} mois partout.`,
+ dvf:()=>`Au Mans, à Saint-Nazaire, Angers, Caen et Orléans, le prix d'achat vient des studios (12 à 35 m²) réellement vendus en 2023-2025 dans le quartier (DVF), complétés par la tendance du quartier quand il y a peu de ventes. Décoché : prix moyen des appartements + surcote.`,
  surcote:()=>`Écart entre le prix que vous paierez et le prix moyen des studios vendus dans la ville (DVF). Un studio bien placé et en bon état se vend souvent 10 à 20 % plus cher.`,
  loyerAdj:()=>`Ajuste le loyer médian : positif pour un studio très bien placé ou bien meublé, négatif pour un bien moins attractif.`,
  taux:()=>`Taux nominal du crédit, hors assurance. Il est fixé à la signature de l'offre de prêt.`,
@@ -33,7 +34,7 @@ const TIPS={
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];
-const TIPID={"f-pess":"pess","f-vacq":"vacq","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro"};
+const TIPID={"f-pess":"pess","f-vacq":"vacq","f-dvf":"dvf","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro"};
 const tipBtn=k=>`<button type="button" class="tipb" data-tip="${k}" aria-label="Explication">?</button>`;
 let TIPBUSY=false;
 function addTips(root){if(TIPBUSY) return; TIPBUSY=true;
