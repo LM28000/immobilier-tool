@@ -112,7 +112,8 @@ tr.clk{cursor:pointer} tr.clk:hover td,tr.clk:focus-visible td{background:var(--
 .mapchip{position:absolute;left:8px;bottom:8px;display:none;align-items:center;gap:6px;font:inherit;font-size:.8rem;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:6px 10px;box-shadow:0 3px 10px rgb(0 0 0 / .15);cursor:pointer;max-width:calc(100% - 16px)}
 .mapchip .go{color:var(--accent);font-weight:700;margin-left:4px}
 @media (max-width:940px){.mapchip{display:flex;position:static;width:100%;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;justify-content:flex-start;padding:9px 12px}.mapchip .go{margin-left:auto}} section.mapfull .mapchip{display:none!important}
-.hctl{display:flex;gap:8px;align-items:center}
+.hctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:560px){.hctl .modeseg button{padding:6px 9px;font-size:.76rem}}
 .themeb{font:inherit;font-size:.82rem;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:6px 11px;cursor:pointer}
 .hrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .modeseg button{font:inherit;font-size:.82rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:7px 12px;cursor:pointer}
@@ -331,6 +332,28 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
 /* fraîcheur */
 .fresh{min-width:0;font-size:.8rem} .fresh td,.fresh th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
 .freshpill{font-size:.72rem;font-weight:700;background:var(--warn-soft);color:var(--warn);border-radius:999px;padding:3px 9px;text-decoration:none;align-self:center}
+/* brut / net */
+.big4 small.alt,.bcn small.alt{display:block;font-size:.68rem;font-weight:600;color:var(--muted);margin-top:2px;text-transform:none;letter-spacing:0}
+.bcn small.alt{font-family:inherit}
+details.b2n{margin:8px 0 0;background:var(--sunk);border-radius:9px;padding:7px 10px;font-size:.8rem}
+details.b2n summary{display:flex;justify-content:space-between;gap:8px;cursor:pointer;font-weight:700;color:var(--muted)}
+details.b2n .trow{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dotted var(--line)} details.b2n .trow:first-of-type{margin-top:6px}
+details.b2n .trow span{color:var(--muted)} details.b2n .tot span{color:var(--fg);font-weight:700}
+/* shortlist et fiche bien */
+.stwrap{position:relative;display:inline-flex}
+.stmenu{position:absolute;top:calc(100% + 4px);left:0;z-index:20;display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgb(0 0 0 / .18);min-width:140px}
+.stmenu .stp{justify-content:flex-start} .stmenu .stp[aria-checked="true"]{outline:2px solid currentColor;outline-offset:-2px}
+.btitle{font:inherit;font-weight:700;border:0;background:none;color:var(--fg);padding:0;cursor:pointer;text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btitle:hover{color:var(--accent);text-decoration:underline}
+td .btitle{white-space:normal}
+.unshort{font:inherit;font-size:1.1rem;line-height:1;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px 4px;border-radius:6px}
+.unshort:hover{background:var(--sunk);color:var(--bad)}
+.bph{display:block;border:0;padding:0;margin:-11px -13px 4px;background:var(--sunk);cursor:pointer;border-radius:10px 10px 0 0;overflow:hidden}
+.bph img{display:block;width:100%;height:120px;object-fit:cover}
+.outline{background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:.82rem;margin:0 0 10px}
+.vsum{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+tr.gsep td{background:var(--bg)!important;color:var(--muted);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:14px}
+.side .adact.many{flex-wrap:wrap} .adact.many .addv{flex:1 1 140px!important} .shortout{grid-column:1/-1}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */

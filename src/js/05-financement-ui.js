@@ -85,4 +85,21 @@ function scnBien(b){const f=s=>{const sc=s||{hz:SCN.hz}, x=calcBien(b,sc).x, pr=
   const pmax=priceFor(null,[0,0,pr],p=>calcBien(Object.assign({},b,{prix:p}),sc).x.cf>=0); return Object.assign({},x,{pmax});}; f.price=true; return f;}
 
 /* ligne « après impôts » des fiches */
-function taxLine(x){return `<p class="avg tax" style="margin:8px 0 0">Après impôts et frais (${REG[x.regime]}) : ${eur((x.imp1+x.fees1)/12)}/mois à deux · avant impôts ${sgn(x.cfBrut)}/mois</p>`;}
+const mlab=()=>H.net?"net":"brut";
+function altCf(x,short){const o=x.net?x.cfBrut:x.cfNet; return `<small class="alt">${short?"":x.net?"avant impôts ":"après impôts "}${short?(x.net?"brut ":"net "):""}${sgn(o)}</small>`;}
+function altIrr(x,short){const o=x.net?x.irrBrut:x.irrNet; return `<small class="alt">${short?"":x.net?"avant impôts ":"après impôts "}${short?(x.net?"brut ":"net "):""}${o==null?"n.d.":pct(o)}</small>`;}
+function taxLine(x){const cfe=x.fees1-(x.regime==="reel"?H.compta:0), comp=x.regime==="reel"?H.compta:0, m=v=>eur(v/12);
+ return `<details class="b2n"><summary><span>Du brut au net</span><span class="mono"><span class="${x.cfBrut>=0?"pos":"neg"}">${sgn(x.cfBrut)}</span> → <span class="${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}</span>/mois</span></summary>
+  <div class="trow"><span>Cash-flow avant impôts</span><b class="mono">${sgn(x.cfBrut)}/mois</b></div>
+  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, TMI ${H.tmiA} % et ${H.tmiB} % + prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
+  <div class="trow"><span>CFE${cfe?"":" (exonérée sous 5 000 € de recettes)"}</span><b class="mono">−${m(cfe)}</b></div>
+  ${comp?`<div class="trow"><span>Comptable (régime réel)</span><b class="mono">−${m(comp)}</b></div>`:""}
+  <div class="trow tot"><span>Cash-flow net</span><b class="mono ${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}/mois</b></div>
+  <div class="trow"><span>Impôt sur la plus-value si revente à ${x.hz} ans</span><b class="mono">−${eur(x.pv15)}</b></div>
+  <div class="trow"><span>Rendement de la mise sur ${x.hz} ans</span><b class="mono">${x.irrBrut==null?"n.d.":pct(x.irrBrut)} brut → ${x.irrNet==null?"n.d.":pct(x.irrNet)} net</b></div>
+  <div class="trow"><span>Rendement locatif brut (loyers ÷ prix tout compris)</span><b class="mono">${pct(x.brut)}</b></div></details>`;}
+
+/* sélecteur chiffres nets / bruts */
+function syncNet(){document.querySelectorAll("#netSeg [data-net]").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.net==="1")===H.net)));}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#netSeg [data-net]"); if(!b) return; H.net=b.dataset.net==="1"; try{localStorage.setItem("chiffres",H.net?"net":"brut");}catch(_){} syncNet(); render(); toast(H.net?"Chiffres nets : après impôts, CFE, comptable et impôt sur la plus-value.":"Chiffres bruts : avant impôts et frais fiscaux.");});
+syncNet();

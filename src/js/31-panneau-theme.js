@@ -6,7 +6,7 @@ function renderSide(){const sd=document.getElementById("qDetail"), det=document.
  const c=C.find(v=>v.k===SEL);
  const cr=[`<button type="button" class="lnk" data-crumb="city">← ${c.name}</button>`];
  if(showQ) cr.push(AD?`<button type="button" class="lnk" data-crumb="q">${esc(QSEL.name)}</button>`:`<b>${esc(QSEL.name)}</b>`);
- if(AD) cr.push(`<b>${AD.kind==="v"?"Studio à vendre":"Studio à louer"}</b>`);
+ if(AD) cr.push(`<b>${AD.kind==="v"?"Studio à vendre":AD.kind==="b"?"Notre bien":"Studio à louer"}</b>`);
  document.getElementById("crumbs").innerHTML=cr.join('<span class="sep">›</span>')+`<button type="button" class="sheetx" data-crumb="${AD?"q":"city"}" aria-label="Fermer">×</button>`;
  document.getElementById("qDetailBody").innerHTML=AD?adFiche(AD):qCard(QSEL);
  sd.hidden=false; det.hidden=wide(); document.body.classList.toggle("sheet-on",!wide()||document.getElementById("mapSec").classList.contains("mapfull"));

@@ -43,15 +43,25 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.click('[data-adstep="1"]'); await p.waitForTimeout(400);
     ok(T('annonce suivante'), await p.evaluate(s => AD && AD.suf !== s, s0));
     ok(T('pas de débordement avec la fiche ouverte'), await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
-    ok(T('scénarios et impôts dans la fiche'), await p.evaluate(() => !!document.querySelector('#qDetail .scnt') && !!document.querySelector('#qDetail .avg.tax')));
+    ok(T('scénarios et impôts dans la fiche'), await p.evaluate(() => !!document.querySelector('#qDetail .scnt') && !!document.querySelector('#qDetail .b2n')));
     ok(T('panneau sans défilement interne'), await p.evaluate(() => { const s = document.getElementById('side'); return s.scrollHeight <= s.clientHeight + 2; }));
     // biens : statut, annuler, suppression
     await p.evaluate(() => { AD = null; QSEL = null; draw(); renderQBox(); });
     await p.evaluate(async () => { await DB.collection('biens').add(Object.assign(venteBien('lemans', ADS.lemans.ventes[1]), {statut: 'à voir', fav: false, ts: Date.now()})); }); await p.waitForTimeout(400);
-    await p.click('#shortList [data-stcycle]'); await p.waitForTimeout(300);
+    await p.click('#shortList [data-stmenu]'); await p.click('.stmenu [data-stset$="|visité"]'); await p.waitForTimeout(300);
     ok(T('statut suivant'), await p.evaluate(() => BIENS[0].statut === 'visité'));
     await p.click('#toast button'); await p.waitForTimeout(300);
     ok(T('annuler le statut'), await p.evaluate(() => BIENS[0].statut === 'à voir'));
+    await p.click('#shortList [data-stmenu]'); await p.click('.stmenu [data-stset$="|offre faite"]'); await p.waitForTimeout(300);
+    await p.click('#shortList [data-stmenu]'); await p.click('.stmenu [data-stset$="|à voir"]'); await p.waitForTimeout(300);
+    ok(T('statut dans les deux sens'), await p.evaluate(() => BIENS[0].statut === 'à voir'));
+    await p.click('#shortList .btitle'); await p.waitForTimeout(400);
+    ok(T('fiche complète du bien'), await p.evaluate(() => AD && AD.kind === 'b' && !!document.querySelector('#qDetailBody .nego') && !!document.querySelector('#qDetailBody .b2n')));
+    await p.evaluate(() => { AD = null; QSEL = null; draw(); renderQBox(); });
+    await p.click('#shortList [data-unshort]'); await p.waitForTimeout(300);
+    ok(T('retirer de la shortlist'), await p.evaluate(() => BIENS[0].short === false && !document.querySelector('#shortList .bcard')));
+    await p.click('#toast button'); await p.waitForTimeout(300);
+    ok(T('annuler le retrait'), await p.evaluate(() => BIENS[0].short === true && !!document.querySelector('#shortList .bcard')));
     ok(T('prix à viser dans la shortlist'), await p.evaluate(() => !!document.querySelector('#shortList .btg')));
     await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
     await p.click('#biensList [data-del]'); await p.waitForTimeout(300);

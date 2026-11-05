@@ -44,9 +44,16 @@ const STATUTS=["à voir","visité","offre faite","écarté"];
 function myName(){try{return localStorage.getItem("biens-nom")||"";}catch(_){return "";}}
 async function updBien(id,patch){try{await DB.collection("biens").doc(id).update(patch);}catch(err){toast("Modification refusée ("+(err&&err.code||"erreur")+").");}}
 const STC={"à voir":"st0","visité":"st1","offre faite":"st2","écarté":"st3"};
-function stPill(b){const s=b.statut||"à voir"; return `<button type="button" class="stp ${STC[s]||"st0"}" data-stcycle="${b.id}" title="Changer le statut" aria-label="Statut : ${s}, toucher pour passer au suivant"><i></i>${s}</button>`;}
-document.addEventListener("click",e=>{const s=e.target.closest&&e.target.closest("[data-stcycle]"); if(!s) return; e.preventDefault(); const b=BIENS.find(x=>x.id===s.dataset.stcycle); if(!b) return;
- const prev=b.statut||"à voir", nx=STATUTS[(STATUTS.indexOf(prev)+1)%STATUTS.length]; updBien(b.id,{statut:nx});
- toast(`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})});});
+function stPill(b){const s=b.statut||"à voir"; return `<span class="stwrap"><button type="button" class="stp ${STC[s]||"st0"}" data-stmenu="${b.id}" aria-haspopup="true" aria-expanded="false" title="Changer le statut"><i></i>${s} <span aria-hidden="true">▾</span></button></span>`;}
+function closeStMenus(){document.querySelectorAll(".stmenu").forEach(m=>{m.previousElementSibling&&m.previousElementSibling.setAttribute("aria-expanded","false"); m.remove();});}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-stmenu],[data-stset]");
+ if(!t){closeStMenus(); return;} e.preventDefault();
+ if(t.dataset.stmenu){const open=t.nextElementSibling&&t.nextElementSibling.classList.contains("stmenu"); closeStMenus(); if(open) return; const b=BIENS.find(x=>x.id===t.dataset.stmenu); if(!b) return;
+  const m=document.createElement("span"); m.className="stmenu"; m.setAttribute("role","menu");
+  m.innerHTML=STATUTS.map(s=>`<button type="button" role="menuitemradio" aria-checked="${(b.statut||"à voir")===s}" class="stp ${STC[s]}" data-stset="${b.id}|${s}"><i></i>${s}</button>`).join("");
+  t.after(m); t.setAttribute("aria-expanded","true"); return;}
+ const [id,nx]=t.dataset.stset.split("|"), b=BIENS.find(x=>x.id===id); closeStMenus(); if(!b) return; const prev=b.statut||"à voir"; if(prev===nx) return;
+ updBien(id,{statut:nx}); toast(nx==="écarté"?"Bien écarté : il quitte la shortlist et la carte, et reste dans « Nos biens ».":`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
+addEventListener("keydown",e=>{if(e.key==="Escape") closeStMenus();});
 document.addEventListener("click",e=>{const f=e.target.closest&&e.target.closest("[data-fav]"); if(!f) return; e.preventDefault(); const b=BIENS.find(x=>x.id===f.dataset.fav); if(b) updBien(b.id,{fav:!b.fav});});
 

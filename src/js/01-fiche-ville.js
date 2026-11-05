@@ -36,8 +36,8 @@ function renderDetail(rows){
   <div class="big4">
    <div><span>Loyer HC</span><b>${eur(x.rentHC)}</b></div>
    <div><span>Budget</span><b>${keur(x.cost)}</b></div>
-   <div><span>Cash-flow</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b></div>
-   <div><span>15 ans</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b></div></div>
+   <div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b>${altCf(x)}</div>
+   <div><span>15 ans ${mlab()}</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b>${altIrr(x)}</div></div>
   ${taxLine(x)}
   ${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["Et si…",scnBox("city",scnCity(c))],["La ville",`<p class="sub" style="margin-top:0">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
   <p class="sub">Trajets : ${trips}</p>

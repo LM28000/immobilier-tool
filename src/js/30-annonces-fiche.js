@@ -17,9 +17,10 @@ const sectorOf=t=>{const A=ADS[t.ck]; return A?Object.keys(A.map).find(k=>A.map[
 let AD=null;
 document.addEventListener("click",e=>{const tr=e.target.closest&&e.target.closest("[data-ad]"); if(!tr||e.target.closest("a,button,select,input")) return; const [kind,ck,...r]=tr.dataset.ad.split("|"); openAd(kind,ck,r.join("|"));});
 document.addEventListener("keydown",e=>{if(e.key!=="Enter") return; const tr=e.target.closest&&e.target.closest("[data-ad]"); if(!tr||e.target!==tr) return; e.preventDefault(); const [kind,ck,...r]=tr.dataset.ad.split("|"); openAd(kind,ck,r.join("|"));});
-function findAd(kind,ck,suf){const A=ADS[ck]; if(!A) return null; return kind==="v"?(A.ventes||[]).find(a=>a[3]===suf):(A.ads||[]).find(a=>a[4]===suf);}
+function findAd(kind,ck,suf){if(kind==="b") return BIENS.find(b=>b.id===suf)||null; const A=ADS[ck]; if(!A) return null; return kind==="v"?(A.ventes||[]).find(a=>a[3]===suf):(A.ads||[]).find(a=>a[4]===suf);}
 function openAd(kind,ck,suf){const a=findAd(kind,ck,suf); if(!a) return; AD={kind,ck,suf};
- if(!QSEL||QSEL.ck!==ck){const t=venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
+ if(kind==="b"){const t=a.quartier&&IR[ck]?IR[ck].list.find(v=>v.name===a.quartier):null; if(t) QSEL=t;}
+ else if(!QSEL||QSEL.ck!==ck){const t=venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
 function priceFor(ck,a,test){let lo=5000, hi=Math.max(a[2]*1.8,30000); if(!test(lo)) return null; if(test(hi)) return hi;
  for(let i=0;i<26;i++){const m=(lo+hi)/2; if(test(m)) lo=m; else hi=m;} return Math.floor(lo/500)*500;}
 const TGC={};
@@ -34,12 +35,12 @@ function negoBlock(b){const g=targetsFor(b), ref=g.ref, pts=[ref,g.cf,g.r7].filt
  return `<div class="nego"><div class="ngh"><b>Prix maximum à payer</b><span class="sub">affiché ${keur(ref)}</span></div>
   <div class="ngg">${card("d1","Autofinancé",g.cf,"Le loyer couvre tout : rien à sortir chaque mois.")}${card("d2","7 % par an",g.r7,"Rendement moyen sur 15 ans, revente comprise.")}</div>
   <div class="ngr" aria-hidden="true"><div class="ngbar">${mk(g.cf,"d1","Autofinancé")}${mk(g.r7,"d2","7 %/an")}<i class="ngm ref" style="left:${X(ref)}%"></i></div><div class="ngax"><span class="ngref" style="left:${Math.min(85,Math.max(15,X(ref)))}%">prix affiché</span></div></div></div>`;}
-function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p class="sub">Cette annonce n'est plus dans le relevé.</p>`; const c=C.find(v=>v.k===ad.ck);
+function adFiche(ad){if(ad.kind==="b") return bienFiche(ad.suf); const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p class="sub">Cette annonce n'est plus dans le relevé.</p>`; const c=C.find(v=>v.k===ad.ck);
  if(ad.kind==="v"){const r=venteCalc(ad.ck,a), vb=venteBien(ad.ck,a), [bc,bt]=bank(r.x.ratio), url=VTURL+a[3];
   return `${a[4]?`<img class="adph" src="${esc(photoUrl(a[3],a[4],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">${esc(vb.titre)}</h3><span class="pill p-n">à vendre</span></div>
   <p class="sub" style="margin:2px 0 10px">${c.name}${vb.quartier?" · quartier "+esc(vb.quartier):""} · ${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m² ${vuBadges("v",ad.ck,ad.suf)}</p>
-  <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
+  <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow ${mlab()}</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b>${altCf(r.x)}</div><div><span>15 ans ${mlab()}</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b>${altIrr(r.x)}</div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
   ${taxLine(r.x)}
   ${negoBlock(vb)}
