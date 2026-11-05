@@ -26,9 +26,9 @@ const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]]
  [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
  [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
 const H={surface:22,surcote:15,loyerAdj:0,apport:14000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2307,pretEtud:486,pess:false,vacQ:true};
-const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["assur","Assurance","%/an",0.05],["notaire","Notaire","%",0.5],
+const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
- ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance, entretien, comptable","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5]];
+ ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5]];
 let SEL="lemans";
 
 const eur=v=>Math.round(v).toLocaleString("fr-FR")+" €";
@@ -41,23 +41,7 @@ function trip(c,o){if(o==="paris") return c.paris; const g=ORIG[o]; if(c.k===o) 
 
 function irrMonthly(f){let lo=-0.05,hi=0.1;const npv=r=>f.reduce((s,v,i)=>s+v/Math.pow(1+r,i),0);
  if(npv(lo)*npv(hi)>0) return null; for(let i=0;i<90;i++){const m=(lo+hi)/2; if(npv(m)>0) lo=m; else hi=m;} return (Math.pow(1+(lo+hi)/2,12)-1)*100;}
-function calc(c){
- const pe=H.pess, taux=H.taux+(pe?0.5:0), vac=(c.vac!=null?c.vac:H.vacance)+(pe?1:0), px=pe?0:H.px, la=H.loyerAdj+(pe?-10:0);
- const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:c.pm2*(1+H.surcote/100)*SU, cost=bien*(1+H.notaire/100)+H.meubles+H.travaux;
- const P=Math.max(cost-H.apport,0), r=taux/1200, n=H.duree*12;
- const M0=r>0?P*r/(1-Math.pow(1+r,-n)):P/n, mens=M0+P*H.assur/1200;
- const rentHC=Math.max(c.rent*Math.pow(SU/c.rentM2,0.6)*(1+la/100)-H.chLoc,0);
- const tf=c.tfM!=null?c.tfM:H.tfMans*c.tf/47.80*(SU/22), charges=(c.copro!=null?c.copro:H.copro)+H.autres+tf;
- const rentEff=rentHC*(12-vac)/12, cf=rentEff-mens-charges, brut=rentHC*12/cost*100;
- const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
- const gains=[bien-P-H.apport], f=[-H.apport]; let crd=P, cum=0;
- for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
-  const v=rentEff*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0);
-  if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=180) f.push(v);
-  if(m===180) f[f.length-1]+=bien*Math.pow(1+px/100,15)-Math.max(crd,0);
-  if(m%12===0) gains.push(bien*Math.pow(1+px/100,m/12)-Math.max(crd,0)-(H.apport-cum));}
- return {bien,cost,P,mens,rentHC,rentEff,tf,charges,cf,brut,ratio,irr:irrMonthly(f),gains};
-}
+// calc(c) : voir 00b-financement-impots.js
 function all(){
  const rows=C.map(c=>({c,x:calc(c)}));
  return rows;

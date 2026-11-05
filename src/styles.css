@@ -278,6 +278,21 @@ html{scroll-padding-top:12px} @media (prefers-reduced-motion:no-preference){html
  .side .big4 span{font-size:.62rem} .side .big4 b{font-size:1.02rem}}
 
 details.mini{margin:8px 0 0;font-size:.78rem;color:var(--muted)} details.mini summary{cursor:pointer;font-weight:700;color:var(--accent)}
+/* financement et scénarios */
+.avg.tax::before{content:"€"}
+.inp select{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:.9rem;color:var(--fg);padding:7px 8px}
+.fingrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:6px 0 8px}
+.fincard{background:var(--sunk);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0;font-size:.84rem}
+.fincard h3{margin:0 0 4px;font-size:.9rem}
+.fincard .trow{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;align-items:baseline}
+.fincard .trow:not(:has(> :nth-child(3))){grid-template-columns:1fr auto}
+.finres{background:var(--ok-soft);color:var(--ok);border-radius:8px;padding:8px 10px;font-size:.86rem;margin:8px 0}
+.scnchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 8px}
+.chip{font:inherit;font-size:.76rem;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip.on{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.scnchips .seg2 button{font:inherit;font-size:.74rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:4px 9px;cursor:pointer}
+.scnchips .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.scnt{width:100%;min-width:0;font-size:.82rem;border-collapse:collapse} .scnt td,.scnt th{padding:5px 6px;border-bottom:1px solid var(--line)} .scnt th{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */

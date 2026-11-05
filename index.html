@@ -283,6 +283,21 @@ html{scroll-padding-top:12px} @media (prefers-reduced-motion:no-preference){html
  .side .big4 span{font-size:.62rem} .side .big4 b{font-size:1.02rem}}
 
 details.mini{margin:8px 0 0;font-size:.78rem;color:var(--muted)} details.mini summary{cursor:pointer;font-weight:700;color:var(--accent)}
+/* financement et scénarios */
+.avg.tax::before{content:"€"}
+.inp select{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:.9rem;color:var(--fg);padding:7px 8px}
+.fingrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:6px 0 8px}
+.fincard{background:var(--sunk);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0;font-size:.84rem}
+.fincard h3{margin:0 0 4px;font-size:.9rem}
+.fincard .trow{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;align-items:baseline}
+.fincard .trow:not(:has(> :nth-child(3))){grid-template-columns:1fr auto}
+.finres{background:var(--ok-soft);color:var(--ok);border-radius:8px;padding:8px 10px;font-size:.86rem;margin:8px 0}
+.scnchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 8px}
+.chip{font:inherit;font-size:.76rem;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip.on{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.scnchips .seg2 button{font:inherit;font-size:.74rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:4px 9px;cursor:pointer}
+.scnchips .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.scnt{width:100%;min-width:0;font-size:.82rem;border-collapse:collapse} .scnt td,.scnt th{padding:5px 6px;border-bottom:1px solid var(--line)} .scnt th{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */
@@ -341,6 +356,11 @@ details.mini{margin:8px 0 0;font-size:.78rem;color:var(--muted)} details.mini su
     <details>
       <summary>Plus d'hypothèses</summary>
       <div class="fields" id="hypFields"></div>
+    </details>
+    <details id="finBox">
+      <summary>Financement et impôts en détail</summary>
+      <div class="fields" id="finFields"></div>
+      <div id="finDetail"></div>
     </details>
   </section>
 
@@ -486,9 +506,9 @@ const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]]
  [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
  [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
 const H={surface:22,surcote:15,loyerAdj:0,apport:14000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2307,pretEtud:486,pess:false,vacQ:true};
-const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["assur","Assurance","%/an",0.05],["notaire","Notaire","%",0.5],
+const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
- ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance, entretien, comptable","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5]];
+ ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5]];
 let SEL="lemans";
 
 const eur=v=>Math.round(v).toLocaleString("fr-FR")+" €";
@@ -501,23 +521,7 @@ function trip(c,o){if(o==="paris") return c.paris; const g=ORIG[o]; if(c.k===o) 
 
 function irrMonthly(f){let lo=-0.05,hi=0.1;const npv=r=>f.reduce((s,v,i)=>s+v/Math.pow(1+r,i),0);
  if(npv(lo)*npv(hi)>0) return null; for(let i=0;i<90;i++){const m=(lo+hi)/2; if(npv(m)>0) lo=m; else hi=m;} return (Math.pow(1+(lo+hi)/2,12)-1)*100;}
-function calc(c){
- const pe=H.pess, taux=H.taux+(pe?0.5:0), vac=(c.vac!=null?c.vac:H.vacance)+(pe?1:0), px=pe?0:H.px, la=H.loyerAdj+(pe?-10:0);
- const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:c.pm2*(1+H.surcote/100)*SU, cost=bien*(1+H.notaire/100)+H.meubles+H.travaux;
- const P=Math.max(cost-H.apport,0), r=taux/1200, n=H.duree*12;
- const M0=r>0?P*r/(1-Math.pow(1+r,-n)):P/n, mens=M0+P*H.assur/1200;
- const rentHC=Math.max(c.rent*Math.pow(SU/c.rentM2,0.6)*(1+la/100)-H.chLoc,0);
- const tf=c.tfM!=null?c.tfM:H.tfMans*c.tf/47.80*(SU/22), charges=(c.copro!=null?c.copro:H.copro)+H.autres+tf;
- const rentEff=rentHC*(12-vac)/12, cf=rentEff-mens-charges, brut=rentHC*12/cost*100;
- const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
- const gains=[bien-P-H.apport], f=[-H.apport]; let crd=P, cum=0;
- for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
-  const v=rentEff*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0);
-  if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=180) f.push(v);
-  if(m===180) f[f.length-1]+=bien*Math.pow(1+px/100,15)-Math.max(crd,0);
-  if(m%12===0) gains.push(bien*Math.pow(1+px/100,m/12)-Math.max(crd,0)-(H.apport-cum));}
- return {bien,cost,P,mens,rentHC,rentEff,tf,charges,cf,brut,ratio,irr:irrMonthly(f),gains};
-}
+// calc(c) : voir 00b-financement-impots.js
 function all(){
  const rows=C.map(c=>({c,x:calc(c)}));
  return rows;
@@ -526,6 +530,70 @@ const bank=x=>x<=0.33?["p-ok","Passe"]:x<=0.35?["p-warn","Limite"]:["p-bad","Tro
 const colIrr=irr=>irr==null||irr<2.5?"var(--bad)":irr<5?"var(--warn)":"var(--ok)";
 const colOf=r=>colCity(r.x);
 
+
+/* ---------- financement détaillé et impôts (LMNP) ----------
+   Ordres de grandeur, pas un conseil fiscal. Règles retenues (2026) :
+   - micro-BIC location meublée longue durée : abattement 50 % des recettes ;
+   - réel : charges, intérêts, assurance, CFE et comptable déduits ; amortissement du bâti
+     (hors terrain), des meubles et des travaux, sans créer de déficit (report du surplus) ;
+   - prélèvements sociaux sur les revenus LMNP : 18,6 % (LFSS 2026) ;
+   - revente : plus-value des particuliers, 19 % + 17,2 %, abattements pour durée de détention ;
+     depuis 2025, les amortissements du bâti déduits au réel sont réintégrés dans la plus-value. */
+const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5};
+Object.assign(H,{garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:11, regime:"auto", cfe:200, compta:300, partA:50});
+(function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s) ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});}catch(_){}})();
+function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta}));}catch(_){}}
+const insRate=()=>(H.assurA*H.quotA+H.assurB*H.quotB)/100;          // % du capital par an
+const taxRate=()=>((H.tmiA+FISC.ps)*H.partA+(H.tmiB+FISC.ps)*(100-H.partA))/1e4; // taux moyen du foyer « à deux »
+
+// abattements pour durée de détention (plus-value des particuliers)
+function abatPV(y){const ir=y<6?0:y>=22?1:0.06*(y-5); let ps=y<6?0:y<=21?0.0165*(y-5):y===22?0.0165*16+0.016:Math.min(1,0.0165*16+0.016+0.09*(y-22)); return [Math.min(ir,1),Math.min(ps,1)];}
+function pvTax(bien,sale,y,trav,amortBati){const acq=bien*(1+Math.max(H.notaire,FISC.fraisForfait)/100), tr=y>5?Math.max(0.15*bien,trav):trav;
+ const pv=Math.max(0,sale-acq-tr+amortBati); if(!pv) return 0; const [ai,ap]=abatPV(y); return pv*(1-ai)*FISC.pvIR/100+pv*(1-ap)*FISC.pvPS/100;}
+
+// tableau d'amortissement annuel du prêt (mensualités constantes, remboursement anticipé optionnel)
+function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/(1-Math.pow(1+r,-n)):P/n, Y=[]; let crd=P, m=0;
+ while(crd>0.01&&m<600){const y=Math.floor(m/12); Y[y]=Y[y]||{int:0,cap:0,ins:0,crd:0};
+  const it=crd*r, cp=Math.min(crd,M-it); crd-=cp; Y[y].int+=it; Y[y].cap+=cp; Y[y].ins+=ins; m++;
+  if(extra&&m===extra.y*12&&crd>0){const a=Math.min(crd,extra.amt); crd-=a; Y[y].cap+=a; Y[y].extra=a;}
+  Y[y].crd=crd;}
+ return {M,Y,months:m};}
+
+function calc(c){
+ const S=c._s||{}, pe=H.pess;
+ const taux=H.taux+(pe?0.5:0)+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?1:0), px=pe?0:H.px, la=H.loyerAdj+(pe?-10:0)+(S.loyer?-5:0), HZ=S.hz||15;
+ const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:c.pm2*(1+H.surcote/100)*SU, trav=H.travaux+(S.trav?5000:0);
+ const base=bien*(1+H.notaire/100)+H.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
+ const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
+ const rentHC=Math.max(c.rent*Math.pow(SU/c.rentM2,0.6)*(1+la/100)-H.chLoc,0);
+ const tf=c.tfM!=null?c.tfM:H.tfMans*c.tf/47.80*(SU/22), charges=(c.copro!=null?c.copro:H.copro)+H.autres+tf;
+ const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
+ const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
+ const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
+ // impôt année par année pour un régime
+ function sim(reg){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
+  for(let y=0;y<25;y++){const rent=rentEff*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
+   let fees=(rent+H.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
+   if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
+   else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
+    if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d;
+    stock+=amBati+(y<FISC.ansMeubles?H.meubles/FISC.ansMeubles:0)+(y<FISC.ansTravaux?trav/FISC.ansTravaux:0);
+    const u=Math.min(res,stock); stock-=u; res-=u; cumAB+=Math.min(u,amBati*(y+1)-cumAB); taxable=res;}
+   T.push(taxable*taxRate()); F.push(fees); AB.push(reg==="reel"?cumAB:0);}
+  const f=[-H.apport], gains=[bien-P-H.apport]; let crd=P, cum=0, r=taux/1200;
+  for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
+   const v=rentEff*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
+   if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=HZ*12) f.push(v);
+   const sale=k=>bien*Math.pow(1+px/100,k);
+   if(m===HZ*12) f[f.length-1]+=sale(HZ)-Math.max(crd,0)-pvTax(bien,sale(HZ),HZ,trav,AB[HZ-1]);
+   if(m%12===0){const k=m/12; gains.push(sale(k)-Math.max(crd,0)-(H.apport-cum)-pvTax(bien,sale(k),k,trav,AB[k-1]));}}
+  return {reg,T,F,AB,f,gains,irr:irrMonthly(f)};}
+ let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
+ const imp1=R.T[0], fees1=R.F[0], cfBrut=rentEff-mens-charges, cf=cfBrut-(imp1+fees1)/12;
+ const wA=(H.tmiA+FISC.ps)*H.partA, wB=(H.tmiB+FISC.ps)*(100-H.partA), impA=imp1*wA/(wA+wB||1);
+ return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf,cfBrut,imp1,fees1,impA,impB:imp1-impA,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
+  brut,ratio,irr:R.irr,gains:R.gains,hz:HZ,loan:L,taux};
+}
 
 /* ---------- carte ---------- */
 const MP={lon0:-2.9,lat1:49.45,k:Math.cos(47.7*Math.PI/180)};
@@ -540,13 +608,13 @@ function bindCities(svg){svg.querySelectorAll(".city").forEach(g=>{g.addEventLis
 /* ---------- fiche ---------- */
 function renderDetail(rows){
  const r=rows.find(z=>z.c.k===SEL), c=r.c, x=r.x, [bc,bt]=bank(x.ratio), d=document.getElementById("detail");
- const W=460, out=x.mens+x.charges, maxv=Math.max(x.rentEff,out)*1.05, sc=v=>v/maxv*(W-200);
- const bar=`<svg viewBox="0 0 ${W} 92" role="img" aria-label="Le mois type"><text x="0" y="20" font-size="12" fill="var(--muted)">Ce qui rentre</text>
+ const W=460, imp=(x.imp1+x.fees1)/12, out=x.mens+x.charges+imp, maxv=Math.max(x.rentEff,out)*1.05, sc=v=>v/maxv*(W-200);
+ const bar=`<svg viewBox="0 0 ${W} 108" role="img" aria-label="Le mois type"><text x="0" y="20" font-size="12" fill="var(--muted)">Ce qui rentre</text>
   <rect x="110" y="8" width="${sc(x.rentEff)}" height="18" rx="4" fill="var(--ok)" fill-opacity=".8"/><text x="${116+sc(x.rentEff)}" y="21" font-size="12" class="mono" fill="var(--fg)">${eur(x.rentEff)}</text>
   <text x="0" y="52" font-size="12" fill="var(--muted)">Ce qui sort</text>
-  <rect x="110" y="40" width="${sc(x.mens)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".85"/><rect x="${110+sc(x.mens)}" y="40" width="${sc(x.charges)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".4"/>
+  <rect x="110" y="40" width="${sc(x.mens)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".85"/><rect x="${110+sc(x.mens)}" y="40" width="${sc(x.charges)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".4"/><rect x="${110+sc(x.mens+x.charges)}" y="40" width="${sc(imp)}" height="18" rx="4" fill="var(--warn)" fill-opacity=".55"/>
   <text x="${116+sc(out)}" y="53" font-size="12" class="mono" fill="var(--fg)">${eur(out)}</text>
-  <text x="110" y="78" font-size="11" fill="var(--muted)">crédit ${eur(x.mens)} · charges ${eur(x.charges)} (dont taxe foncière ${eur(x.tf)})</text></svg>`;
+  <text x="110" y="78" font-size="11" fill="var(--muted)">crédit ${eur(x.mens)} · charges ${eur(x.charges)} (dont taxe foncière ${eur(x.tf)})</text><text x="110" y="96" font-size="11" fill="var(--muted)">impôts et frais ${eur(imp)} (${REG[x.regime]})</text></svg>`;
  const G=x.gains, gw=460, gh=150, L=46, B=22, lo=Math.min(0,...G), hi=Math.max(0,...G);
  const X=i=>L+(gw-L-28)*i/25, Y=v=>8+(gh-8-B)*(hi-v)/((hi-lo)||1);
  const st=(hi-lo)>60000?20000:(hi-lo)>30000?10000:5000;
@@ -567,7 +635,8 @@ function renderDetail(rows){
    <div><span>Budget</span><b>${keur(x.cost)}</b></div>
    <div><span>Cash-flow</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b></div>
    <div><span>15 ans</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b></div></div>
-  ${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["La ville",`<p class="sub" style="margin-top:0">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
+  ${taxLine(x)}
+  ${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["Et si…",scnBox("city",scnCity(c))],["La ville",`<p class="sub" style="margin-top:0">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
   <p class="sub">Trajets : ${trips}</p>
   <h2 style="margin:14px 0 6px">Risques à long terme</h2>
   <div style="display:flex;flex-wrap:wrap;gap:6px">${riskPills(c)}</div>
@@ -892,7 +961,7 @@ function render(){
  document.getElementById("v-taux").textContent=pct(H.taux,2);
  document.getElementById("pessTxt").hidden=!H.pess; document.getElementById("pessWrap").classList.toggle("on",H.pess);
  document.getElementById("vacWrap").classList.toggle("on",H.vacQ); QBOXK=null;
- const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); setHash();
+ const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); renderFin(); setHash();
 }
 [["s-surcote","surcote"],["s-loyer","loyerAdj"],["s-taux","taux"]].forEach(([id,k])=>{const el=document.getElementById(id); el.value=H[k];
  el.addEventListener("input",()=>{H[k]=parseFloat(el.value);render();});});
@@ -901,6 +970,95 @@ hypDefs.forEach(([k,l,u,st])=>{const id="f-"+k, lab=document.createElement("labe
  lab.innerHTML=`${l}<span class="inp"><input id="${id}" type="number" inputmode="decimal" step="${st}" value="${H[k]}"><span>${u}</span></span>`;
  lab.querySelector("input").addEventListener("input",e=>{const v=parseFloat(e.target.value); if(!isNaN(v)){H[k]=v;render();}}); hf.appendChild(lab);});
 document.getElementById("f-pess").addEventListener("change",e=>{H.pess=e.target.checked;render();});
+
+/* ---------- financement : réglages, détail du prêt, part de chacun, scénarios ---------- */
+Object.assign(H,{nomA:"Louis-Marie", nomB:"Associée"});
+(function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){if(s.nomA) H.nomA=s.nomA; if(s.nomB) H.nomB=s.nomB;}}catch(_){}})();
+const _saveFin=saveFin; saveFin=function(){_saveFin(); try{const s=JSON.parse(localStorage.getItem("fin")||"{}"); s.nomA=H.nomA; s.nomB=H.nomB; localStorage.setItem("fin",JSON.stringify(s));}catch(_){}};
+const REG={auto:"le plus avantageux",micro:"micro-BIC",reel:"réel"};
+const TMIS=[0,11,30,41,45];
+
+/* réglages */
+function initFin(){const box=document.getElementById("finFields"); if(!box) return;
+ const num=(k,l,u,st)=>`<label class="f" for="fin-${k}">${l}<span class="inp"><input id="fin-${k}" data-fk="${k}" type="number" inputmode="decimal" step="${st}" value="${H[k]}"><span>${u}</span></span></label>`;
+ const txt=(k,l)=>`<label class="f" for="fin-${k}">${l}<span class="inp"><input id="fin-${k}" data-fk="${k}" data-txt="1" type="text" value="${esc(H[k])}"></span></label>`;
+ const sel=(k,l,opts)=>`<label class="f" for="fin-${k}">${l}<span class="inp"><select id="fin-${k}" data-fk="${k}">${opts.map(([v,t])=>`<option value="${v}"${String(H[k])===String(v)?" selected":""}>${t}</option>`).join("")}</select></span></label>`;
+ box.innerHTML=txt("nomA","Prénom 1")+txt("nomB","Prénom 2")
+  +sel("tmiA",`Tranche d'impôt (TMI) 1`,TMIS.map(v=>[v,v+" %"]))+sel("tmiB",`Tranche d'impôt (TMI) 2`,TMIS.map(v=>[v,v+" %"]))
+  +sel("regime","Régime fiscal",[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]])
+  +num("assurA","Assurance prêt 1","%/an",0.01)+num("quotA","Quotité 1","%",10)+num("assurB","Assurance prêt 2","%/an",0.01)+num("quotB","Quotité 2","%",10)
+  +num("garantie","Garantie du prêt","% du prêt",0.1)+num("cfe","CFE","€/an",50)+num("compta","Comptable (réel)","€/an",50);
+ box.addEventListener("input",e=>{const el=e.target.closest("[data-fk]"); if(!el) return; const k=el.dataset.fk;
+  if(el.dataset.txt) H[k]=el.value.trim()||H[k]; else if(k==="regime") H[k]=el.value; else {const v=parseFloat(el.value); if(isNaN(v)) return; H[k]=v;}
+  saveFin(); render();});
+ box.addEventListener("change",e=>{if(e.target.tagName==="SELECT") e.target.dispatchEvent(new Event("input",{bubbles:true}));});}
+
+/* détail du prêt pour la ville sélectionnée */
+let EXTRA={amt:0,y:5};
+function renderFin(){const box=document.getElementById("finDetail"); if(!box) return; const c=C.find(v=>v.k===SEL), x=calc(c);
+ const L=x.loan, tot=L.Y.reduce((s,y)=>s+y.int,0), totIns=L.Y.reduce((s,y)=>s+y.ins,0);
+ const A=micro=>{const s=H.regime; H.regime=micro; const r=calc(c); H.regime=s; return r;}, xm=A("micro"), xr=A("reel");
+ let ex=""; if(EXTRA.amt>0){const L2=loanYears(x.P,x.taux,H.duree,x.ins,EXTRA), t2=L2.Y.reduce((s,y)=>s+y.int,0), gain=L.months-L2.months;
+  ex=`<p class="finres">Prêt fini <b>${Math.floor(gain/12)} an${gain>=24?"s":""}${gain%12?` et ${gain%12} mois`:""} plus tôt</b>, <b>${eur(tot-t2)}</b> d'intérêts en moins (mensualité inchangée).</p>`;}
+ const half=v=>v*H.partA/100, other=v=>v*(100-H.partA)/100;
+ box.innerHTML=`<p class="sub" style="margin:8px 0">Pour un studio moyen à <b>${c.name}</b> (${keur(x.bien)}), avec vos réglages. Ordres de grandeur : ce n'est pas un conseil fiscal ni bancaire.</p>
+ <div class="fingrid">
+  <div class="fincard"><h3>Le prêt</h3>
+   <div class="trow"><span>Emprunté</span><b class="mono">${eur(x.P)}</b></div>
+   <div class="trow"><span>Mensualité crédit</span><b class="mono">${eur(x.M0)}</b></div>
+   <div class="trow"><span>Assurance (vous deux)</span><b class="mono">${eur(x.ins)}/mois</b></div>
+   <div class="trow"><span>Garantie (payée au départ)</span><b class="mono">${eur(x.gar)}</b></div>
+   <div class="trow"><span>Coût total du crédit</span><b class="mono">${eur(tot+totIns+x.gar)}</b></div></div>
+  <div class="fincard"><h3>Pour chacun (${H.partA}/${100-H.partA})</h3>
+   <div class="trow"><span></span><b>${esc(H.nomA)}</b><b>${esc(H.nomB)}</b></div>
+   <div class="trow"><span>Apport</span><b class="mono">${eur(half(H.apport))}</b><b class="mono">${eur(other(H.apport))}</b></div>
+   <div class="trow"><span>Mensualité</span><b class="mono">${eur(half(x.mens))}</b><b class="mono">${eur(other(x.mens))}</b></div>
+   <div class="trow"><span>Cash-flow / mois</span><b class="mono ${x.cf>=0?"pos":"neg"}">${sgn(half(x.cf))}</b><b class="mono ${x.cf>=0?"pos":"neg"}">${sgn(other(x.cf))}</b></div>
+   <div class="trow"><span>Impôts année 1</span><b class="mono">${eur(x.impA)}</b><b class="mono">${eur(x.impB)}</b></div>
+   <p class="sub" style="margin:4px 0 0">Les impôts diffèrent selon la tranche de chacun (${H.tmiA} % et ${H.tmiB} %) ; les prélèvements sociaux (${fr(FISC.ps)} %) s'appliquent à tous les deux.</p></div>
+  <div class="fincard"><h3>Impôts : micro-BIC ou réel ?</h3>
+   <div class="trow"><span></span><b>Micro-BIC</b><b>Réel</b></div>
+   <div class="trow"><span>Impôts à deux, année 1</span><b class="mono">${eur(xm.imp1)}</b><b class="mono">${eur(xr.imp1)}</b></div>
+   <div class="trow"><span>Moyenne sur 10 ans</span><b class="mono">${eur(xm.imp10)}/an</b><b class="mono">${eur(xr.imp10)}/an</b></div>
+   <div class="trow"><span>Frais (CFE, comptable)</span><b class="mono">${eur(xm.fees1)}/an</b><b class="mono">${eur(xr.fees1)}/an</b></div>
+   <div class="trow"><span>Rendement 15 ans, revente comprise</span><b class="mono">${xm.irr==null?"n.d.":pct(xm.irr)}</b><b class="mono">${xr.irr==null?"n.d.":pct(xr.irr)}</b></div>
+   <p class="sub" style="margin:4px 0 0">Régime retenu : <b>${REG[x.regime]}</b>${H.regime==="auto"?" (choisi automatiquement)":""}. Au réel, l'amortissement efface l'impôt pendant des années, mais depuis 2025 il est réintégré dans la plus-value à la revente, et il faut un comptable.</p></div>
+ </div>
+ <h3 class="psec">Remboursement anticipé</h3>
+ <div class="fields" style="margin-top:4px"><label class="f" for="ex-amt">Montant<span class="inp"><input id="ex-amt" type="number" step="1000" value="${EXTRA.amt||""}" placeholder="ex. 10000"><span>€</span></span></label>
+  <label class="f" for="ex-y">Au bout de<span class="inp"><input id="ex-y" type="number" step="1" min="1" max="${H.duree-1}" value="${EXTRA.y}"><span>ans</span></span></label></div>${ex}
+ <h3 class="psec">Tableau d'amortissement</h3>
+ <div class="scrollbox"><table class="adt"><thead><tr><th class="r">Année</th><th class="r">Intérêts</th><th class="r">Capital</th><th class="r hm">Assurance</th><th class="r">Reste dû</th></tr></thead><tbody>
+ ${(EXTRA.amt>0?loanYears(x.P,x.taux,H.duree,x.ins,EXTRA):L).Y.map((y,i)=>`<tr><td class="r mono">${i+1}</td><td class="r mono">${eur(y.int)}</td><td class="r mono">${eur(y.cap)}${y.extra?" *":""}</td><td class="r mono hm">${eur(y.ins)}</td><td class="r mono">${eur(y.crd)}</td></tr>`).join("")}
+ </tbody></table></div>`;
+ const bind=(id,k)=>{const el=document.getElementById(id); el.addEventListener("change",()=>{const v=parseFloat(el.value); EXTRA[k]=isNaN(v)?0:v; renderFin();});};
+ bind("ex-amt","amt"); bind("ex-y","y");}
+
+/* scénarios « et si » */
+const SCN={taux:false,vac3:false,trav:false,loyer:false,hz:15}, SCNR={};
+const SCNL=[["taux","Taux +0,5 pt"],["vac3","3 mois vides/an"],["trav","5 k€ de travaux"],["loyer","Loyer −5 %"]];
+function scnActive(){return SCN.taux||SCN.vac3||SCN.trav||SCN.loyer||SCN.hz!==15;}
+function scnInner(key){const R=SCNR[key]; if(!R) return ""; const b=R(null), s=R({...SCN});
+ const [bb]=bank(b.ratio), [sb]=bank(s.ratio), row=(l,f)=>`<tr><td>${l}</td><td class="r mono">${f(b)}</td><td class="r mono">${scnActive()?f(s):"—"}</td></tr>`;
+ return `<div class="scnchips">${SCNL.map(([k,l])=>`<button type="button" class="chip${SCN[k]?" on":""}" data-scnk="${k}" aria-pressed="${SCN[k]}">${l}</button>`).join("")}
+  <span class="seg2 hz" role="group" aria-label="Revente">${[7,10,15].map(v=>`<button type="button" data-scnhz="${v}" aria-pressed="${SCN.hz===v}">${v} ans</button>`).join("")}</span></div>
+  <table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
+  ${row("Cash-flow / mois",x=>`<span class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</span>`)}
+  ${row("Rendement, revente à "+SCN.hz+" ans",x=>x.irr==null?"n.d.":`<b style="color:${colIrr(x.irr)}">${pct(x.irr)}</b>`)}
+  ${row("Banque",x=>{const [c,t]=bank(x.ratio); return `<span class="pill ${c}">${t}</span>`;})}
+  ${R.price?row("Prix max. autofinancé",x=>x.pmax==null?"—":"≤ "+keur(x.pmax)):""}
+  </tbody></table>`;}
+function scnBox(key,fn){SCNR[key]=fn; return `<div class="scnbox" data-scnbox="${key}">${scnInner(key)}</div>`;}
+function scnRefresh(){document.querySelectorAll("[data-scnbox]").forEach(el=>{const k=el.dataset.scnbox; el.innerHTML=scnInner(k);});}
+document.addEventListener("click",e=>{const k=e.target.closest&&e.target.closest("[data-scnk]"), h=e.target.closest&&e.target.closest("[data-scnhz]"); if(!k&&!h) return; e.preventDefault();
+ if(k) SCN[k.dataset.scnk]=!SCN[k.dataset.scnk]; else SCN.hz=+h.dataset.scnhz; scnRefresh();});
+// ville : calcul « base » avec la même revente que le scénario pour comparer à durée égale
+function scnCity(c){return s=>calc(Object.assign({},c,{_s:s||{hz:SCN.hz}}));}
+function scnBien(b){const f=s=>{const sc=s||{hz:SCN.hz}, x=calcBien(b,sc).x, pr=+b.prix||60000;
+  const pmax=priceFor(null,[0,0,pr],p=>calcBien(Object.assign({},b,{prix:p}),sc).x.cf>=0); return Object.assign({},x,{pmax});}; f.price=true; return f;}
+
+/* ligne « après impôts » des fiches */
+function taxLine(x){return `<p class="avg tax" style="margin:8px 0 0">Après impôts et frais (${REG[x.regime]}) : ${eur((x.imp1+x.fees1)/12)}/mois à deux · avant impôts ${sgn(x.cfBrut)}/mois</p>`;}
 
 /* ---------- repères, demande locative, annonces ---------- */
 const MARK={
@@ -1008,11 +1166,11 @@ document.getElementById("f-vacq").addEventListener("change",e=>{H.vacQ=e.target.
 
 /* ---------- nos biens (liste partagée) ---------- */
 let BIENS=[], DB=null, USER=null;
-function calcBien(b){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
+function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac});
  if(+b.loyer>0){o.rent=+b.loyer; o.rentM2=S;} else o.rent=c.rent*rr;
- if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12;
+ if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
@@ -1232,7 +1390,9 @@ function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p cla
   <p class="sub" style="margin:2px 0 10px">${c.name}${vb.quartier?" · quartier "+esc(vb.quartier):""} · ${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m²</p>
   <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
+  ${taxLine(r.x)}
   ${negoBlock(vb)}
+  <h2 class="psec">Et si…</h2>${scnBox("ad",scnBien(vb))}
   <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
   <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}
  const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);
@@ -1380,6 +1540,7 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  const host=b.parentElement.parentElement; host.querySelectorAll(`:scope > .ptabs [data-pt^="${id}|"]`).forEach(x=>x.setAttribute("aria-pressed",x===b)); host.querySelectorAll(`:scope > [data-ptp^="${id}|"]`).forEach(p=>p.hidden=p.dataset.ptp!==`${id}|${i}`);});
 
 
+initFin();
 fitVH();
 loadLocal();
 if(!readHash()) render();

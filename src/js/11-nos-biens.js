@@ -1,10 +1,10 @@
 /* ---------- nos biens (liste partagée) ---------- */
 let BIENS=[], DB=null, USER=null;
-function calcBien(b){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
+function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac});
  if(+b.loyer>0){o.rent=+b.loyer; o.rentM2=S;} else o.rent=c.rent*rr;
- if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12;
+ if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}

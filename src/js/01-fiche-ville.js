@@ -11,13 +11,13 @@ function bindCities(svg){svg.querySelectorAll(".city").forEach(g=>{g.addEventLis
 /* ---------- fiche ---------- */
 function renderDetail(rows){
  const r=rows.find(z=>z.c.k===SEL), c=r.c, x=r.x, [bc,bt]=bank(x.ratio), d=document.getElementById("detail");
- const W=460, out=x.mens+x.charges, maxv=Math.max(x.rentEff,out)*1.05, sc=v=>v/maxv*(W-200);
- const bar=`<svg viewBox="0 0 ${W} 92" role="img" aria-label="Le mois type"><text x="0" y="20" font-size="12" fill="var(--muted)">Ce qui rentre</text>
+ const W=460, imp=(x.imp1+x.fees1)/12, out=x.mens+x.charges+imp, maxv=Math.max(x.rentEff,out)*1.05, sc=v=>v/maxv*(W-200);
+ const bar=`<svg viewBox="0 0 ${W} 108" role="img" aria-label="Le mois type"><text x="0" y="20" font-size="12" fill="var(--muted)">Ce qui rentre</text>
   <rect x="110" y="8" width="${sc(x.rentEff)}" height="18" rx="4" fill="var(--ok)" fill-opacity=".8"/><text x="${116+sc(x.rentEff)}" y="21" font-size="12" class="mono" fill="var(--fg)">${eur(x.rentEff)}</text>
   <text x="0" y="52" font-size="12" fill="var(--muted)">Ce qui sort</text>
-  <rect x="110" y="40" width="${sc(x.mens)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".85"/><rect x="${110+sc(x.mens)}" y="40" width="${sc(x.charges)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".4"/>
+  <rect x="110" y="40" width="${sc(x.mens)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".85"/><rect x="${110+sc(x.mens)}" y="40" width="${sc(x.charges)}" height="18" rx="4" fill="var(--accent)" fill-opacity=".4"/><rect x="${110+sc(x.mens+x.charges)}" y="40" width="${sc(imp)}" height="18" rx="4" fill="var(--warn)" fill-opacity=".55"/>
   <text x="${116+sc(out)}" y="53" font-size="12" class="mono" fill="var(--fg)">${eur(out)}</text>
-  <text x="110" y="78" font-size="11" fill="var(--muted)">crédit ${eur(x.mens)} · charges ${eur(x.charges)} (dont taxe foncière ${eur(x.tf)})</text></svg>`;
+  <text x="110" y="78" font-size="11" fill="var(--muted)">crédit ${eur(x.mens)} · charges ${eur(x.charges)} (dont taxe foncière ${eur(x.tf)})</text><text x="110" y="96" font-size="11" fill="var(--muted)">impôts et frais ${eur(imp)} (${REG[x.regime]})</text></svg>`;
  const G=x.gains, gw=460, gh=150, L=46, B=22, lo=Math.min(0,...G), hi=Math.max(0,...G);
  const X=i=>L+(gw-L-28)*i/25, Y=v=>8+(gh-8-B)*(hi-v)/((hi-lo)||1);
  const st=(hi-lo)>60000?20000:(hi-lo)>30000?10000:5000;
@@ -38,7 +38,8 @@ function renderDetail(rows){
    <div><span>Budget</span><b>${keur(x.cost)}</b></div>
    <div><span>Cash-flow</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</b></div>
    <div><span>15 ans</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b></div></div>
-  ${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["La ville",`<p class="sub" style="margin-top:0">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
+  ${taxLine(x)}
+  ${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["Et si…",scnBox("city",scnCity(c))],["La ville",`<p class="sub" style="margin-top:0">Demande locative <b>${c.tensionTxt.toLowerCase()}</b> · ${c.students.toLocaleString("fr-FR")} étudiants · loyer hors charges ${eur(x.rentHC)} · studios vendus ${c.pm2.toLocaleString("fr-FR")} €/m²${c.evol!=null?` (${c.evol>0?"+":""}${String(c.evol).replace(".",",")} % sur un an)`:""} · taxe foncière ${String(c.tf).replace(".",",")} %</p>
   <p class="sub">Trajets : ${trips}</p>
   <h2 style="margin:14px 0 6px">Risques à long terme</h2>
   <div style="display:flex;flex-wrap:wrap;gap:6px">${riskPills(c)}</div>

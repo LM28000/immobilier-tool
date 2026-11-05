@@ -42,6 +42,8 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     const s0 = await p.evaluate(() => AD.suf);
     await p.click('[data-adstep="1"]'); await p.waitForTimeout(400);
     ok(T('annonce suivante'), await p.evaluate(s => AD && AD.suf !== s, s0));
+    ok(T('pas de débordement avec la fiche ouverte'), await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+    ok(T('scénarios et impôts dans la fiche'), await p.evaluate(() => !!document.querySelector('#qDetail .scnt') && !!document.querySelector('#qDetail .avg.tax')));
     ok(T('panneau sans défilement interne'), await p.evaluate(() => { const s = document.getElementById('side'); return s.scrollHeight <= s.clientHeight + 2; }));
     // biens : statut, annuler, suppression
     await p.evaluate(() => { AD = null; QSEL = null; draw(); renderQBox(); });

@@ -41,7 +41,9 @@ function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p cla
   <p class="sub" style="margin:2px 0 10px">${c.name}${vb.quartier?" · quartier "+esc(vb.quartier):""} · ${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m²</p>
   <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
+  ${taxLine(r.x)}
   ${negoBlock(vb)}
+  <h2 class="psec">Et si…</h2>${scnBox("ad",scnBien(vb))}
   <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
   <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}
  const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);

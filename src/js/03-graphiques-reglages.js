@@ -46,7 +46,7 @@ function render(){
  document.getElementById("v-taux").textContent=pct(H.taux,2);
  document.getElementById("pessTxt").hidden=!H.pess; document.getElementById("pessWrap").classList.toggle("on",H.pess);
  document.getElementById("vacWrap").classList.toggle("on",H.vacQ); QBOXK=null;
- const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); setHash();
+ const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); renderFin(); setHash();
 }
 [["s-surcote","surcote"],["s-loyer","loyerAdj"],["s-taux","taux"]].forEach(([id,k])=>{const el=document.getElementById(id); el.value=H[k];
  el.addEventListener("input",()=>{H[k]=parseFloat(el.value);render();});});
