@@ -8,7 +8,7 @@ function ventePins(P,pinB,boxes){let s=""; const sel=AD&&AD.kind==="v"?AD.ck+AD.
  Object.keys(IR).forEach(ck=>{const A=ADS[ck]; if(!A||!A.ventes) return; const by={};
   A.ventes.forEach(a=>{const t=venteIris(ck,a[1]); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
   Object.values(by).forEach(({t,l})=>{const [x,y]=P(t.cx,t.cy); if(x<-40||x>VW+40||y<-40||y>VH+40) return;
-   l.sort((p,q)=>p[2]-q[2]).forEach(a=>{const v=vState(ck,a), lab=keur(a[2]), w=lab.length*6.3+14, on=sel===ck+a[3];
+   l.sort((p,q)=>p[2]-q[2]).forEach(a=>{const v=vState(ck,a), hv=vu("v",ck,a[3]), lab=(hv&&hv.last?"↓":"")+keur(a[2]), w=lab.length*6.3+14, on=sel===ck+a[3];
     const hit=(x0,y0)=>pinB.some(b=>!(x0+w/2<b[0]||x0-w/2>b[2]||y0+18<b[1]||y0>b[3]));
     let pos=null; for(const dy of [-28,-50,-6,16,-72,38]){for(const dx of [0,-(w+4),w+4]){if(!hit(x+dx,y+dy)){pos=[x+dx,y+dy]; break;}} if(pos) break;}
     if(!pos) return; const [px,py]=pos; pinB.push([px-w/2-2,py-2,px+w/2+2,py+20]); boxes.push([px-w/2,py-1,px+w/2,py+19]);

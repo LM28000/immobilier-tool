@@ -322,6 +322,12 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
 .fsrc{font-size:.74rem;color:#5b6575;margin:8px 0 0}
 @media (max-width:560px){.fcheck{columns:1}.fiche{padding:18px}}
 @media print{body.fiche-on>*:not(#fichePanel){display:none!important} body.fiche-on #fichePanel{position:static;padding:0;background:#fff} .fbar{display:none} .fiche{box-shadow:none;max-width:none;padding:0}}
+/* historique des annonces */
+.hbs{display:flex;gap:3px;justify-content:flex-end;flex-wrap:wrap;margin-top:2px}
+.hb{display:inline-block;font-family:inherit;font-size:.66rem;font-weight:700;border-radius:999px;padding:1px 6px;white-space:nowrap;vertical-align:middle}
+.hb.drop{background:var(--ok-soft);color:var(--ok)} .hb.new{background:var(--accent-soft);color:var(--accent)} .hb.old{background:var(--sunk);color:var(--muted)}
+.annh .chip[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.pcurve svg{width:100%;max-width:420px}
 [hidden]{display:none!important}
 .mwhere svg,.mtools svg{width:16px;height:16px;flex:none}
 /* --- carte : barre d'outils, repère, pastilles de vente --- */

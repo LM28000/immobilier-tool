@@ -65,7 +65,7 @@ function negoArgs(b,x,g,t){const A=[], pm2=+b.prix/(+b.surface||22);
  if(b.vu&&b.vu.days>=45) A.push(`Annonce en ligne depuis <b>${b.vu.days} jours</b> : le vendeur peut être ouvert à la négociation.`);
  if(b.vu&&b.vu.drops) A.push(`Le prix a déjà baissé ${b.vu.drops} fois.`);
  return A.slice(0,4);}
-function openFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return; const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville);
+function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const sf=(b0.url||"").startsWith(VTURL)?b0.url.slice(VTURL.length):null, b=Object.assign({},b0,{vu:sf?vu("v",b0.ville,sf):null}); const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville);
  const el=document.getElementById("ficheBody");
  el.innerHTML=`<header class="fh"><div><h1>${esc(b.titre||"Bien")}</h1><p>${c.name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché (${eur(+b.prix/(+b.surface||22))}/m²)${b.dpe?" · DPE "+b.dpe:""}</p></div><p class="fdate">Fiche du ${new Date().toLocaleDateString("fr-FR")}</p></header>
  <div class="fgrid">

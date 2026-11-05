@@ -51,3 +51,4 @@ function ptabsTabs(id,list){const cur=Math.min(PT[id]||0,list.length-1);
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-pt]"); if(!b) return; e.preventDefault(); const [id,i]=b.dataset.pt.split("|"); PT[id]=+i;
  const host=b.parentElement.parentElement; host.querySelectorAll(`:scope > .ptabs [data-pt^="${id}|"]`).forEach(x=>x.setAttribute("aria-pressed",x===b)); host.querySelectorAll(`:scope > [data-ptp^="${id}|"]`).forEach(p=>p.hidden=p.dataset.ptp!==`${id}|${i}`);});
 
+document.querySelectorAll(".adsdate").forEach(e=>e.textContent=ADS.date||"");

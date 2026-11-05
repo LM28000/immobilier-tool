@@ -5,10 +5,10 @@ const thumbHtml=(suf,p)=>p?`<img class="thb" src="${esc(photoUrl(suf,p,160,120))
 /* ---------- une seule liste d'annonces : à vendre / à louer ---------- */
 let ABID=0;
 function annoncesBlock(ck,sector,showSector,openLoc){const A=ADS[ck]; if(!A) return "";
- const V=(A.ventes||[]).filter(a=>sector==null||a[1]===sector), L=(A.ads||[]).filter(a=>sector==null||a[1]===sector); if(!V.length&&!L.length) return "";
+ const V=(A.ventes||[]).filter(a=>sector==null||a[1]===sector), L=(A.ads||[]).filter(a=>sector==null||a[1]===sector), S=soldList(ck,sector), nd=V.filter(a=>{const v=vu("v",ck,a[3]); return v&&v.last;}).length; if(!V.length&&!L.length&&!S.length) return "";
  const first=openLoc||!V.length?"l":"v", id="ab"+(++ABID);
- return `<div class="annb" id="${id}"><div class="annh"><span class="seg2" role="group" aria-label="Type d'annonces">${V.length?`<button type="button" data-ab="v" aria-pressed="${first==="v"}">À vendre (${V.length})</button>`:""}${L.length?`<button type="button" data-ab="l" aria-pressed="${first==="l"}">À louer (${L.length})</button>`:""}</span><span class="sub" style="margin:0">Touchez une annonce pour son détail</span></div>
-  ${V.length?`<div data-abp="v"${first==="v"?"":" hidden"}>${ventesTable(ck,V,showSector)}</div>`:""}${L.length?`<div data-abp="l"${first==="l"?"":" hidden"}>${adsTable(L,showSector,ck)}</div>`:""}</div>`;}
+ return `<div class="annb" id="${id}"><div class="annh"><span class="seg2" role="group" aria-label="Type d'annonces">${V.length?`<button type="button" data-ab="v" aria-pressed="${first==="v"}">À vendre (${V.length})</button>`:""}${L.length?`<button type="button" data-ab="l" aria-pressed="${first==="l"}">À louer (${L.length})</button>`:""}${S.length?`<button type="button" data-ab="s" aria-pressed="false">Vendues (${S.length})</button>`:""}</span>${nd?`<button type="button" class="chip" data-abdrop aria-pressed="false">↓ Baisses de prix (${nd})</button>`:""}<span class="sub" style="margin:0">Touchez une annonce pour son détail</span></div>
+  ${V.length?`<div data-abp="v"${first==="v"?"":" hidden"}>${ventesTable(ck,V,showSector)}</div>`:""}${L.length?`<div data-abp="l"${first==="l"?"":" hidden"}>${adsTable(L,showSector,ck)}</div>`:""}${S.length?`<div data-abp="s" hidden>${soldTable(ck,S)}</div>`:""}</div>`;}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-ab]"); if(!b) return; const box=b.closest(".annb");
  box.querySelectorAll("[data-ab]").forEach(x=>x.setAttribute("aria-pressed",x===b)); box.querySelectorAll("[data-abp]").forEach(p=>p.hidden=p.dataset.abp!==b.dataset.ab);});
 const sectorOf=t=>{const A=ADS[t.ck]; return A?Object.keys(A.map).find(k=>A.map[k].includes(t.code)):null;};
@@ -38,11 +38,12 @@ function adFiche(ad){const a=findAd(ad.kind,ad.ck,ad.suf); if(!a) return `<p cla
  if(ad.kind==="v"){const r=venteCalc(ad.ck,a), vb=venteBien(ad.ck,a), [bc,bt]=bank(r.x.ratio), url=VTURL+a[3];
   return `${a[4]?`<img class="adph" src="${esc(photoUrl(a[3],a[4],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">${esc(vb.titre)}</h3><span class="pill p-n">à vendre</span></div>
-  <p class="sub" style="margin:2px 0 10px">${c.name}${vb.quartier?" · quartier "+esc(vb.quartier):""} · ${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m²</p>
+  <p class="sub" style="margin:2px 0 10px">${c.name}${vb.quartier?" · quartier "+esc(vb.quartier):""} · ${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m² ${vuBadges("v",ad.ck,ad.suf)}</p>
   <div class="big4"><div><span>Budget tout compris</span><b>${keur(r.x.cost)}</b></div><div><span>Loyer estimé HC</span><b>${eur(r.x.rentHC)}</b></div><div><span>Cash-flow à deux</span><b class="${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}/mois</b></div><div><span>15 ans</span><b style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b></div></div>
   <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(r.x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
   ${taxLine(r.x)}
   ${negoBlock(vb)}
+  ${priceCurve(vu("v",ad.ck,ad.suf))}
   <h2 class="psec">Et si…</h2>${scnBox("ad",scnBien(vb))}
   <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
   <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}

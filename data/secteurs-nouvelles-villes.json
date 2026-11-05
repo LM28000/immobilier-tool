@@ -1,0 +1,242 @@
+{
+ "angers": {
+  "Centre-ville - La Fayette": [
+   "0101",
+   "0102",
+   "0103",
+   "0104",
+   "0105",
+   "0106",
+   "0107",
+   "0108",
+   "0109",
+   "0110",
+   "0401",
+   "0402",
+   "0403",
+   "0404",
+   "0405",
+   "0406",
+   "0407"
+  ],
+  "Doutre - Saint-Jacques": [
+   "0601",
+   "0602",
+   "0603",
+   "0605"
+  ],
+  "Belle - Beille": [
+   "0501",
+   "0502",
+   "0503",
+   "0504"
+  ],
+  "Les Hauts de Saint-Aubin": [
+   "0701",
+   "0703",
+   "0704",
+   "0707"
+  ],
+  "Saint-Serge - Ney - Chalouère": [
+   "0202",
+   "0203",
+   "0204"
+  ],
+  "Monplaisir": [
+   "0802",
+   "0803",
+   "0804",
+   "0805",
+   "0806"
+  ],
+  "Deux-Croix - Banchais - Grand Pigeon": [
+   "0901",
+   "0902",
+   "0903",
+   "0904"
+  ],
+  "Madeleine - Saint-Léonard - Justices": [
+   "0301",
+   "0302",
+   "0303",
+   "0304",
+   "1001",
+   "1002",
+   "1003"
+  ],
+  "Roseraie": [
+   "1103",
+   "1104",
+   "1105",
+   "1106",
+   "1107",
+   "1111",
+   "1113"
+  ],
+  "Lac de Maine": [
+   "1201",
+   "1202",
+   "1203"
+  ]
+ },
+ "caen": {
+  "Centre ancien": [
+   "0101",
+   "0102"
+  ],
+  "Saint-Jean": [
+   "0202",
+   "0201"
+  ],
+  "Vaucelles": [
+   "0301",
+   "0302",
+   "0303"
+  ],
+  "Sainte-Thérèse - Demi-Lune": [
+   "1704",
+   "1701",
+   "1702",
+   "1703"
+  ],
+  "Grâce de Dieu": [
+   "1901",
+   "1902",
+   "1903"
+  ],
+  "Folie Couvrechef": [
+   "2002",
+   "2004",
+   "2006",
+   "2007"
+  ],
+  "Pierre Heuzé": [
+   "1401",
+   "1402",
+   "1403"
+  ],
+  "Saint-Jean Etudes - Saint-Gilles": [
+   "1501",
+   "1502",
+   "1503"
+  ],
+  "Saint-Jean Eudes - Saint-Gilles": [
+   "1501",
+   "1502",
+   "1503"
+  ],
+  "Haie Vigné": [
+   "0601"
+  ],
+  "Saint-Ouen": [
+   "0501",
+   "0502"
+  ],
+  "Beaulieu - Maladerie - Saint-Paul": [
+   "0701",
+   "0702",
+   "0801",
+   "0802",
+   "0803",
+   "0804"
+  ],
+  "Université": [
+   "1201",
+   "1202"
+  ],
+  "Calvaire Saint-Pierre": [
+   "1301"
+  ],
+  "Hastings": [
+   "0901",
+   "0902",
+   "0904",
+   "0903"
+  ],
+  "Venoix": [
+   "0401"
+  ],
+  "Guérinière": [
+   "1801",
+   "1802"
+  ],
+  "Jardin des Plantes": [
+   "1101",
+   "1102"
+  ]
+ },
+ "orleans": {
+  "Bourgogne - Saint-Euverte": [
+   "0101",
+   "0102"
+  ],
+  "Châtelet": [
+   "0103"
+  ],
+  "Cathédrale - Jeanne d'Arc": [
+   "0201"
+  ],
+  "Carmes": [
+   "0301",
+   "0401"
+  ],
+  "Bannier - République": [
+   "1102",
+   "1103"
+  ],
+  "Dunois - Châteaudun": [
+   "1104"
+  ],
+  "Faubourg Saint-Jean": [
+   "1101",
+   "1203"
+  ],
+  "La Madeleine - Saint-Laurent": [
+   "1201",
+   "1202"
+  ],
+  "Soleil Levant - Champ de Mars": [
+   "1204"
+  ],
+  "Saint-Vincent - Pasteur": [
+   "0801",
+   "0802",
+   "0803"
+  ],
+  "Saint-Marc - Faubourg Bourgogne": [
+   "0501"
+  ],
+  "Barrière Saint-Marc": [
+   "0701",
+   "0702"
+  ],
+  "Les Murlins": [
+   "1002",
+   "1001"
+  ],
+  "La Croix Saint-Marceau - La Mouillère - Pré Pinson": [
+   "1401",
+   "1601",
+   "1301"
+  ],
+  "La Cigogne": [
+   "1501",
+   "1502"
+  ],
+  "La Bolière - Campus": [
+   "2103",
+   "2002",
+   "2101"
+  ],
+  "Les Blossières": [
+   "0901"
+  ],
+  "Argonne": [
+   "0601",
+   "0602",
+   "0603",
+   "0604",
+   "0502"
+  ]
+ }
+}

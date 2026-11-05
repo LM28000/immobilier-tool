@@ -19,6 +19,7 @@ code = "\n".join([
     *[open(p, encoding="utf-8").read() for p in before],
     rd("data/irisdata.js"),
     rd("data/annoncesdata.js"),
+    rd("data/historique.js") if os.path.exists(os.path.join(R, "data/historique.js")) else "const HIST={};",
     *[open(p, encoding="utf-8").read() for p in after],
 ])
 page = rd("src/head.html") + "<style>\n" + rd("src/styles.css") + "</style>\n" + rd("src/body.html") + "<script>\n" + code + "</script>\n"
