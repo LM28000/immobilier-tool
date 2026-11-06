@@ -13,12 +13,18 @@ function gtfsTransit(files,origins,targets,opts){opts=opts||{};
  const sid=new Map(); stops.forEach((s,i)=>{s.lat=+s.stop_lat; s.lon=+s.stop_lon; sid.set(s.stop_id,i);});
  // jour de service : le mardi choisi (opts.date, AAAAMMJJ) ou le prochain mardi couvert par le calendrier
  const cal=files["calendar.txt"]?gtfsCSV(files["calendar.txt"]):[], cd=files["calendar_dates.txt"]?gtfsCSV(files["calendar_dates.txt"]):[];
- let date=opts.date; if(!date){const ds=cal.map(c=>c.start_date).concat(cd.map(c=>c.date)).sort(); const today=opts.today||"20261110";
-  let d=new Date(+today.slice(0,4),+today.slice(4,6)-1,+today.slice(6,8)); for(let k=0;k<120;k++){const s=d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); if(d.getDay()===2&&(cal.some(c=>c.tuesday==="1"&&c.start_date<=s&&c.end_date>=s)||cd.some(c=>c.date===s&&c.exception_type==="1"))){date=s; break;} d.setDate(d.getDate()+1);} if(!date) date=ds[0];}
+ // jour de service : un mardi ; celui qui a le plus de trajets (période scolaire), en préférant les mardis à venir
+ const tripsAll=gtfsCSV(files["trips.txt"]), perSvc=new Map(); tripsAll.forEach(t=>perSvc.set(t.service_id,(perSvc.get(t.service_id)||0)+1));
+ const ymd=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+ const actOn=s=>{const dw=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8)).getDay()];
+  const a=new Set(cal.filter(c=>c[dw]==="1"&&c.start_date<=s&&c.end_date>=s).map(c=>c.service_id)); cd.filter(c=>c.date===s).forEach(c=>{if(c.exception_type==="1") a.add(c.service_id); else a.delete(c.service_id);}); return a;};
+ let date=opts.date; if(!date){const all=cal.flatMap(c=>[c.start_date,c.end_date]).concat(cd.map(c=>c.date)).filter(Boolean).sort(); const today=opts.today||ymd(new Date());
+  let d=new Date(+all[0].slice(0,4),+all[0].slice(4,6)-1,+all[0].slice(6,8)), end=all[all.length-1], best=null, bestN=-1, bestF=null, bestFN=-1;
+  for(let k=0;k<400&&ymd(d)<=end;k++,d.setDate(d.getDate()+1)){if(d.getDay()!==2) continue; const s=ymd(d); let n=0; actOn(s).forEach(v=>n+=perSvc.get(v)||0); if(n>bestN){bestN=n; best=s;} if(s>=today&&n>bestFN*1.02){bestFN=n; bestF=s;}}
+  date=(bestF&&bestFN>=bestN*0.8)?bestF:best;}
  const dow=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date(+date.slice(0,4),+date.slice(4,6)-1,+date.slice(6,8)).getDay()];
- const active=new Set(cal.filter(c=>c[dow]==="1"&&c.start_date<=date&&c.end_date>=date).map(c=>c.service_id));
- cd.filter(c=>c.date===date).forEach(c=>{if(c.exception_type==="1") active.add(c.service_id); else active.delete(c.service_id);});
- const trips=gtfsCSV(files["trips.txt"]), tripOk=new Map(); trips.forEach(t=>{if(active.has(t.service_id)) tripOk.set(t.trip_id,tripOk.size);});
+ const active=actOn(date);
+ const tripOk=new Map(); tripsAll.forEach(t=>{if(active.has(t.service_id)) tripOk.set(t.trip_id,tripOk.size);});
  const T0=7*3600+30*60, T1=10*3600;
  // connexions entre arrêts successifs d'un même trajet
  const st=gtfsCSV(files["stop_times.txt"]).filter(r=>tripOk.has(r.trip_id)); const byTrip=new Map();
