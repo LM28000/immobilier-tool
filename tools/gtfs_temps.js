@@ -20,8 +20,8 @@ function gtfsTransit(files,origins,targets,opts){opts=opts||{};
   const a=new Set(cal.filter(c=>c[dw]==="1"&&c.start_date<=s&&c.end_date>=s).map(c=>c.service_id)); cd.filter(c=>c.date===s).forEach(c=>{if(c.exception_type==="1") a.add(c.service_id); else a.delete(c.service_id);}); return a;};
  let date=opts.date; if(!date){const all=cal.flatMap(c=>[c.start_date,c.end_date]).concat(cd.map(c=>c.date)).filter(Boolean).sort(); const today=opts.today||ymd(new Date());
   let d=new Date(+all[0].slice(0,4),+all[0].slice(4,6)-1,+all[0].slice(6,8)), end=all[all.length-1], best=null, bestN=-1, bestF=null, bestFN=-1;
-  for(let k=0;k<400&&ymd(d)<=end;k++,d.setDate(d.getDate()+1)){if(d.getDay()!==2) continue; const s=ymd(d); let n=0; actOn(s).forEach(v=>n+=perSvc.get(v)||0); if(n>bestN){bestN=n; best=s;} if(s>=today&&n>bestFN*1.02){bestFN=n; bestF=s;}}
-  date=(bestF&&bestFN>=bestN*0.8)?bestF:best;}
+  const L=[]; for(let k=0;k<400&&ymd(d)<=end;k++,d.setDate(d.getDate()+1)){if(d.getDay()!==2) continue; const s=ymd(d); let n=0; actOn(s).forEach(v=>n+=perSvc.get(v)||0); L.push([s,n]); if(n>bestN){bestN=n; best=s;}}
+  const fut=L.find(([s,n])=>s>=today&&n>=bestN*0.93); date=fut?fut[0]:best;}   // le premier mardi à venir avec une offre normale
  const dow=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date(+date.slice(0,4),+date.slice(4,6)-1,+date.slice(6,8)).getDay()];
  const active=actOn(date);
  const tripOk=new Map(); tripsAll.forEach(t=>{if(active.has(t.service_id)) tripOk.set(t.trip_id,tripOk.size);});

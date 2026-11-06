@@ -3,3 +3,4 @@ sync.log
 dist/
 node_modules/
 data/releve-du-jour.json
+data/gtfs/
