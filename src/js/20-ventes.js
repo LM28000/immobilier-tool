@@ -1,9 +1,9 @@
-/* ---------- ventes (studios à vendre) ---------- */
+/* ---------- ventes du type choisi (studios, T2, T3 à vendre) ---------- */
 const VTURL="https://www.bienici.com/annonce/vente/";
 const VC=new Map();
 function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[sector]) return null;
  const ts=z.list.filter(t=>A.map[sector].includes(t.code)&&t.price); return ts.sort((a,b)=>b.dpe.reduce((x,y)=>x+y,0)-a.dpe.reduce((x,y)=>x+y,0))[0]||null;}
-function venteBien(ck,a){const t=venteIris(ck,a[1]); return {type:"studio",ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],url:VTURL+a[3],titre:`Studio ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
+function venteBien(ck,a){const t=venteIris(ck,a[1]); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.map(a=>({ck,a,r:venteCalc(ck,a)})));
 const isAdded=url=>BIENS.some(b=>b.url===url);
@@ -13,11 +13,11 @@ function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a
   const hv=vu("v",ck,a[3]); return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"${hv&&hv.last?' data-drop="1"':""}><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td class="c-sec">${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono c-m2">${String(a[0]).replace(".",",")}</td><td class="r mono c-px">${keur(a[2])}${vuBadges("v",ck,a[3])?`<div class="hbs">${vuBadges("v",ck,a[3])}</div>`:""}</td><td class="r mono hm c-pm">${eur(a[2]/a[0])}</td><td class="r mono c-cf ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono c-irr" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td class="c-act" style="white-space:nowrap"><a class="hm" href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
  <p class="sub" style="margin:4px 0 0">Prix affichés (frais d'agence en général inclus), relevé du ${ADS.date||"5 novembre 2026"}. Calcul avec notaire, meubles, petits travaux et le loyer du quartier. ⚠ = banque trop juste.</p>`;}
 function ventesLine(t){const A=ADS[t.ck]; if(!A||!A.ventes) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
- const l=A.ventes.filter(a=>a[1]===d); if(!l.length) return `<p class="sub" style="margin:0 0 6px">Aucun studio à vendre en ce moment dans le secteur « ${esc(d)} » sur Bien'ici.</p>`;
+ const l=A.ventes.filter(a=>a[1]===d); if(!l.length) return `<p class="sub" style="margin:0 0 6px">Aucun ${tyLow()} à vendre en ce moment dans le secteur « ${esc(d)} » sur Bien'ici.</p>`;
  const best=l.map(a=>venteCalc(t.ck,a)).reduce((m,r)=>r.x.irr!=null&&(m==null||r.x.irr>m)?r.x.irr:m,null);
- return `<details class="ads"${OPENADS===d?" open":""}><summary>${l.length} studio${l.length>1?"s":""} à vendre dans le secteur « ${esc(d)} »${best!=null?` · jusqu'à ${pct(best)} sur 15 ans`:""}</summary>${ventesTable(t.ck,l,false)}</details>`;}
+ return `<details class="ads"${OPENADS===d?" open":""}><summary>${tyN(l.length)} à vendre dans le secteur « ${esc(d)} »${best!=null?` · jusqu'à ${pct(best)} sur 15 ans`:""}</summary>${ventesTable(t.ck,l,false)}</details>`;}
 function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) return ""; const c=C.find(v=>v.k===ck), pm=median(A.ventes.map(a=>a[2]/a[0]));
- return fRows([["À vendre en ligne",`${A.ventes.length} studios · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
+ return fRows([["À vendre en ligne",`${tyN(A.ventes.length)} · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,dpe:"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};

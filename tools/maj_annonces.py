@@ -3,20 +3,26 @@
 
 Usage : python3 tools/maj_annonces.py releve.json [--date AAAA-MM-JJ]
 
-releve.json = {"date": "AAAA-MM-JJ", "villes": {"lemans": {"ads": [...], "ventes": [...]}, ...}}
+releve.json = {"date": "AAAA-MM-JJ", "villes": {"lemans": {"ads": [...], "ventes": [...], "t2": {"ads": [...], "ventes": [...]}, "t3": {...}}, ...}}
+  ads / ventes au premier niveau : studios ; "t2" / "t3" : mêmes listes pour les T2 et les T3 (facultatives).
   ads    : [surface, secteur, loyer CC, meublé 0/1, lien après /annonce/location/, photo]
   ventes : [surface, secteur, prix, lien après /annonce/vente/, photo]
-Une ville absente du relevé (page en échec) garde ses listes de la veille.
+Une liste absente du relevé (page en échec) garde celle de la veille.
 
 Fichiers modifiés : data/annoncesdata.js (const ADS) et data/historique.js (const HIST).
+ADS[ville] = {ads, ventes (studios), map, t: {t2: {ads, ventes}, t3: {ads, ventes}}}.
 HIST[ville]["v" ventes | "l" locations][lien] = {f: 1re vue, s: dernière vue, p: [[date, prix], ...],
-  m: [surface, secteur, photo], g: date de disparition (absente 2 jours de suite)}.
+  m: [surface, secteur, photo(, type si ce n'est pas un studio)], g: date de disparition (absente 2 jours de suite)}.
+Règle « affaire » (vente nouvelle) : prix au m² au moins 20 % sous la médiane des annonces du même type de la ville (5 annonces au moins),
+et pour un studio aussi : 18 à 30 m² et 65 000 € au plus. Location (studio) : meublé de 18 à 26 m² à 470 € CC au plus.
 """
 import json, os, sys, datetime, statistics as st
 
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 P_ADS, P_HIST, P_SEC = (os.path.join(R, "data", f) for f in ("annoncesdata.js", "historique.js", "secteurs-nouvelles-villes.json"))
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+TYPES = ("studio", "t2", "t3")
+SURF = {"studio": 22, "t2": 42, "t3": 62}   # surfaces de référence de l'app (src/js/00a-types-bien.js)
 
 def load_js(path, name):
     if not os.path.exists(path): return {}
@@ -26,7 +32,7 @@ def load_js(path, name):
 def save_js(path, name, obj):
     open(path, "w", encoding="utf-8").write(f"const {name}=" + json.dumps(obj, ensure_ascii=False, separators=(",", ":")) + ";\n")
 
-def r22(a): return a[2] * (22 / a[0]) ** 0.6
+def rref(a, ty): return a[2] * (SURF[ty] / a[0]) ** 0.6
 def med(v): return round(st.median(v)) if v else None
 
 def main():
@@ -38,41 +44,53 @@ def main():
     SEC = json.load(open(P_SEC, encoding="utf-8")) if os.path.exists(P_SEC) else {}
     out = {"date": today, "villes": {}, "baisses": [], "affaires": [], "echecs": []}
     for ck, new in rel.get("villes", {}).items():
-        if not new or (not new.get("ads") and not new.get("ventes")):
+        if not new or not any((new if ty == "studio" else new.get(ty) or {}).get(k) for ty in TYPES for k in ("ads", "ventes")):
             out["echecs"].append(ck); continue
         A = ADS.setdefault(ck, {"ads": [], "ventes": [], "map": SEC.get(ck, {})})
         if ck in SEC:  # complète la carte des secteurs sans écraser l'existant
             for k, v in SEC[ck].items(): A["map"].setdefault(k, v)
-        old_v = {a[3] for a in A.get("ventes", [])}; old_l = {a[4] for a in A.get("ads", [])}
-        A["ads"] = new.get("ads", A.get("ads", [])); A["ventes"] = new.get("ventes", A.get("ventes", []))
         H = HIST.setdefault(ck, {"v": {}, "l": {}})
-        for kind, lst, ip, il, meta in (("v", A["ventes"], 2, 3, lambda a: [a[0], a[1], a[4]]), ("l", A["ads"], 2, 4, lambda a: [a[0], a[1], a[5]])):
-            seen = set()
-            for a in lst:
-                k = a[il]; seen.add(k); e = H[kind].get(k)
-                if not e:
-                    H[kind][k] = {"f": today, "s": today, "p": [[today, a[ip]]], "m": meta(a)}
-                else:
-                    if e["p"][-1][1] != a[ip]:
-                        if kind == "v" and a[ip] < e["p"][-1][1]:
-                            out["baisses"].append({"ville": ck, "lien": "https://www.bienici.com/annonce/vente/" + k, "avant": e["p"][-1][1], "apres": a[ip], "secteur": a[1]})
-                        e["p"].append([today, a[ip]])
-                    e["s"] = today; e["m"] = meta(a); e.pop("g", None)
-            for k, e in H[kind].items():
-                if k not in seen and "g" not in e and (d - datetime.date.fromisoformat(e["s"])).days >= 2:
-                    e["g"] = today
-        nv = [a for a in A["ventes"] if a[3] not in old_v]; nl = [a for a in A["ads"] if a[4] not in old_l]
-        for a in nv:
-            if 18 <= a[0] <= 30 and a[2] <= 65000:
-                out["affaires"].append({"type": "vente", "ville": ck, "lien": "https://www.bienici.com/annonce/vente/" + a[3], "secteur": a[1], "prix": a[2], "m2": a[0], "prix_m2": round(a[2] / a[0])})
-        for a in nl:
-            if a[3] and 18 <= a[0] <= 26 and a[2] <= 470:
-                out["affaires"].append({"type": "location", "ville": ck, "lien": "https://www.bienici.com/annonce/location/" + a[4], "secteur": a[1], "loyer": a[2], "m2": a[0]})
-        meu = [r22(a) for a in A["ads"] if a[3] and not (ck == "lemans" and a[1] == "Université")]
-        out["villes"][ck] = {"n": len(A["ads"]), "medianeRamenee22m2": med([r22(a) for a in A["ads"]]), "medianeMeubles": med(meu),
-            "nouvelles": len(nl), "disparues": len(old_l - {a[4] for a in A["ads"]}), "ventes": len(A["ventes"]),
-            "prixM2Median": med([a[2] / a[0] for a in A["ventes"]]), "ventesNouvelles": len(nv),
-            "vendues": sum(1 for e in H["v"].values() if e.get("g") == today)}
+        stats = {}
+        for ty in TYPES:
+            N = new if ty == "studio" else new.get(ty)
+            if not N or (not N.get("ads") and not N.get("ventes")): continue
+            B = A if ty == "studio" else A.setdefault("t", {}).setdefault(ty, {"ads": [], "ventes": []})
+            old_v = {a[3] for a in B.get("ventes", [])}; old_l = {a[4] for a in B.get("ads", [])}
+            if N.get("ads"): B["ads"] = N["ads"]
+            if N.get("ventes"): B["ventes"] = N["ventes"]
+            tag = [] if ty == "studio" else [ty]
+            for kind, lst, ip, il, meta in (("v", B["ventes"], 2, 3, lambda a: [a[0], a[1], a[4]] + tag), ("l", B["ads"], 2, 4, lambda a: [a[0], a[1], a[5]] + tag)):
+                seen = set()
+                for a in lst:
+                    k = a[il]; seen.add(k); e = H[kind].get(k)
+                    if not e:
+                        H[kind][k] = {"f": today, "s": today, "p": [[today, a[ip]]], "m": meta(a)}
+                    else:
+                        if e["p"][-1][1] != a[ip]:
+                            if kind == "v" and a[ip] < e["p"][-1][1]:
+                                out["baisses"].append({"type": ty, "ville": ck, "lien": "https://www.bienici.com/annonce/vente/" + k, "avant": e["p"][-1][1], "apres": a[ip], "secteur": a[1]})
+                            e["p"].append([today, a[ip]])
+                        e["s"] = today; e["m"] = meta(a); e.pop("g", None)
+                for k, e in H[kind].items():
+                    if (e["m"][3] if len(e["m"]) > 3 else "studio") != ty: continue
+                    if k not in seen and "g" not in e and (d - datetime.date.fromisoformat(e["s"])).days >= 2:
+                        e["g"] = today
+            nv = [a for a in B["ventes"] if a[3] not in old_v]; nl = [a for a in B["ads"] if a[4] not in old_l]
+            pm = [a[2] / a[0] for a in B["ventes"]]; pmed = st.median(pm) if len(pm) >= 5 else None
+            for a in nv:
+                cheap = pmed and a[2] / a[0] <= 0.8 * pmed
+                if (ty == "studio" and 18 <= a[0] <= 30 and a[2] <= 65000) or (ty != "studio" and cheap):
+                    out["affaires"].append({"type": ty, "ville": ck, "lien": "https://www.bienici.com/annonce/vente/" + a[3], "secteur": a[1], "prix": a[2], "m2": a[0], "prix_m2": round(a[2] / a[0])})
+            if ty == "studio":
+                for a in nl:
+                    if a[3] and 18 <= a[0] <= 26 and a[2] <= 470:
+                        out["affaires"].append({"type": "studio", "ville": ck, "lien": "https://www.bienici.com/annonce/location/" + a[4], "secteur": a[1], "loyer": a[2], "m2": a[0], "location": True})
+            meu = [rref(a, ty) for a in B["ads"] if a[3]]
+            stats[ty] = {"n": len(B["ads"]), "medianeLoyerRamene": med([rref(a, ty) for a in B["ads"]]), "medianeMeubles": med(meu),
+                "nouvelles": len(nl), "disparues": len(old_l - {a[4] for a in B["ads"]}), "ventes": len(B["ventes"]),
+                "prixM2Median": med(pm), "ventesNouvelles": len(nv),
+                "vendues": sum(1 for e in H["v"].values() if e.get("g") == today and (e["m"][3] if len(e["m"]) > 3 else "studio") == ty)}
+        out["villes"][ck] = stats
     ADS["date"] = f"{d.day}{'er' if d.day == 1 else ''} {MOIS[d.month - 1]} {d.year}"; ADS["iso"] = today
     save_js(P_ADS, "ADS", ADS); save_js(P_HIST, "HIST", HIST)
     print(json.dumps(out, ensure_ascii=False, indent=1))

@@ -1,7 +1,7 @@
 /* ---------- fraîcheur des données ---------- */
 // relevé = date à laquelle la donnée a été récupérée ; age = âge maximal avant de la signaler (jours)
 const FRESH=[
- ["Annonces de location et de vente","<a href=\"https://www.bienici.com/\" target=\"_blank\" rel=\"noopener\">Bien'ici</a>, relevé quotidien","chaque jour",()=>ADS.iso||"2026-11-05",2],
+ ["Annonces de location et de vente","<a href=\"https://www.bienici.com/\" target=\"_blank\" rel=\"noopener\">Bien'ici</a>, relevé quotidien des studios, T2 et T3","chaque jour",()=>ADS.iso||"2026-11-05",2],
  ["Taux du crédit","Offres bancaires, profil emprunteur","novembre 2026","2026-11-05",60],
  ["Ventes réelles (DVF)","<a href=\"https://www.data.gouv.fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/\" target=\"_blank\" rel=\"noopener\">DVF</a> : appartements vendus seuls, par nombre de pièces (studio, T2, T3), par ville et par quartier","2023 à 2025",()=>DVFALL.date,180],
  ["Temps de trajet à pied et à vélo","<a href=\"https://routing.openstreetmap.de/\" target=\"_blank\" rel=\"noopener\">OSRM sur OpenStreetMap</a>, jusqu'aux repères (gare la plus fréquentée, campus, mairie), depuis le centre de chaque quartier","réseau actuel","2026-11-06",365],

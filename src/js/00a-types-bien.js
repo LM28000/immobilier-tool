@@ -13,4 +13,6 @@ function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+15
 function typeFor(surface,pieces){pieces=+pieces||0; if(pieces) return pieces>=3?"t3":pieces===2?"t2":"studio"; const s=+surface||22; return s<=30?"studio":s<=50?"t2":"t3";}
 /* libellés : « studio », « T2 »… et le pluriel avec majuscule */
 const tyLow=k=>{const T=tyOf(k||H.type); return T.p===1?"studio":T.lab;};
+/* « 3 studios », « 1 T2 » */
+const tyN=n=>n+" "+(n>1?(TY().p===1?"studios":TY().pl):tyLow());
 const tyPl=k=>{const s=tyOf(k||H.type).pl; return s.charAt(0).toUpperCase()+s.slice(1);};

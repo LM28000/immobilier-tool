@@ -5,7 +5,7 @@ function setType(k,quiet){if(!TYPES[k]) k="studio"; Object.assign(H,{type:k},typ
  try{localStorage.setItem("type",k);}catch(_){}
  if(typeof RBL!=="undefined") RBL.clear(); if(typeof VC!=="undefined") VC.clear(); if(typeof QBOXK!=="undefined") QBOXK=null;
  document.querySelectorAll("[data-type]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.type===k)));
- const n=document.getElementById("typeNote"); if(n) n.textContent=`${TYPES[k].un[0].toUpperCase()+TYPES[k].un.slice(1)} · ${H.surface} m² · meubles ${eur(H.meubles)} · travaux ${eur(H.travaux)} · copro ${eur(H.copro)}/mois. Les annonces relevées sont des studios.`;
+ const n=document.getElementById("typeNote"); if(n) n.textContent=`${TYPES[k].un[0].toUpperCase()+TYPES[k].un.slice(1)} · ${H.surface} m² · meubles ${eur(H.meubles)} · travaux ${eur(H.travaux)} · copro ${eur(H.copro)}/mois.`;
  const ht=document.getElementById("heroTxt"); if(ht) ht.textContent=`Le même ${tyLow(k)} meublé de ${H.surface} m², ${eur(H.apport)} d'apport et le même crédit, simulé dans ${C.length} villes de l'Ouest avec leurs prix de vente réels, leurs loyers et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour.`;
  if(!quiet) render();}
 (function(){const row=document.querySelector("header .hrow"); if(row) row.insertAdjacentHTML("afterend",`<div class="typerow"><span class="lab">Type de bien</span>${typeSeg()}<small id="typeNote" class="sub"></small></div>`);

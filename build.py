@@ -20,7 +20,8 @@ code = "\n".join([
     "const CITYMAP=" + rd("data/citymaps.json") + ";",
     *[open(p, encoding="utf-8").read() for p in before],
     rd("data/irisdata.js"),
-    rd("data/annoncesdata.js"),
+    rd("data/annoncesdata.js").replace("const ADS=", "const ADSRAW=", 1),
+    rd("src/ads-vue.js"),
     rd("data/historique.js") if os.path.exists(os.path.join(R, "data/historique.js")) else "const HIST={};",
     *[open(p, encoding="utf-8").read() for p in after],
 ])

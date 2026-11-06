@@ -92,7 +92,7 @@ function mSheetRender(){if(!MOBON) return; const box=document.getElementById("mS
  if(t){const x=QX[t.ck+t.i], sec=sectorOf(t), A=ADS[t.ck], nv=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec).length:0, ta=sec?topAds(t.ck,sec,6):[];
   box.innerHTML=`<div class="msh"><div><h2>${mEsc(t.name)}</h2><p>Quartier · ${mEsc(c.name)}</p></div><button type="button" class="mx" data-mqclose aria-label="Revenir à la ville">×</button></div>
    ${x?`<div class="mkrow">${kp("15 ans "+mlab(),irrTxt(x),"",x.irr!=null?"":"")}${kp("Cash-flow",sgn(x.cf),mcfc(x.cf),"par mois")}${kp("Budget",keur(x.cost),"","tout compris")}</div>`:`<p class="msub">Pas d'estimation de prix pour ce secteur.</p>`}
-   ${ta.length?`<div class="mhs"><h3>À vendre ici</h3>${nv>ta.length?`<button type="button" class="mlink" data-mfeed="${t.ck}|${mEsc(sec)}">Voir les ${nv} ›</button>`:""}</div><div class="mminis">${ta.map(miniAd).join("")}</div>`:sec?`<p class="msub">Aucun studio à vendre en ce moment dans ce secteur.</p>`:""}
+   ${ta.length?`<div class="mhs"><h3>À vendre ici</h3>${nv>ta.length?`<button type="button" class="mlink" data-mfeed="${t.ck}|${mEsc(sec)}">Voir les ${nv} ›</button>`:""}</div><div class="mminis">${ta.map(miniAd).join("")}</div>`:sec?`<p class="msub">Aucun ${tyLow()} à vendre en ce moment dans ce secteur.</p>`:""}
    <div class="mfs">${quartierFiche(t,true)}</div>
    ${x?`<div class="mgroup"><button type="button" class="mrow" data-msim="${t.ck}|${t.code}">Simuler un bien ici${chev}</button></div>`:""}`;}
  else{const x=calc(c), A=ADS[c.k], nv=A&&A.ventes?A.ventes.length:0, ta=topAds(c.k,"",6), [bc,bt]=bank(x.ratio);
@@ -140,7 +140,7 @@ function mFeedRender(){if(!MOBON) return; const all=feedList(), L=feedSorted(all
  const cities=Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ventes);
  document.getElementById("mACity").innerHTML=[`<button type="button" class="mchip${!MF.ck?" on":""}" data-mfc="">Toutes <small>${cities.reduce((s,k)=>s+ADS[k].ventes.length,0)}</small></button>`,...cities.map(k=>`<button type="button" class="mchip${MF.ck===k?" on":""}" data-mfc="${k}">${mEsc(cityName(k))} <small>${ADS[k].ventes.length}</small></button>`)].join("");
  document.getElementById("mAFil").innerHTML=`<button type="button" class="mchip sel" data-mfsort>Tri : ${SORTS.find(s=>s[0]===MF.sort)[1]} ▾</button>${MF.sec?`<button type="button" class="mchip on" data-mfsec>${mEsc(MF.sec)} ×</button>`:""}<button type="button" class="mchip${MF.nw?" on":""}" data-mff="nw">Nouvelles <small>${nNew}</small></button><button type="button" class="mchip${MF.drop?" on":""}" data-mff="drop">↓ Baisses <small>${nDrop}</small></button><button type="button" class="mchip${MF.bank?" on":""}" data-mff="bank">Banque OK</button>`;
- document.getElementById("mACount").textContent=`${L.length} studio${L.length>1?"s":""} à vendre${MSEEN&&nNew?` · ${nNew} nouveau${nNew>1?"x":""} depuis le ${dm(MSEEN)}`:""}`;
+ document.getElementById("mACount").textContent=`${tyN(L.length)} à vendre${MSEEN&&nNew?` · ${nNew} nouveau${nNew>1?"x":""} depuis le ${dm(MSEEN)}`:""}`;
  document.getElementById("mFeed").innerHTML=L.length?L.slice(0,MF.n).map((o,i)=>adCard(o,i+1)).join("")+(L.length>MF.n?`<button type="button" class="mmorebtn" data-mfmore>Afficher ${Math.min(20,L.length-MF.n)} de plus</button>`:""):`<div class="mempty">Aucune annonce avec ces filtres.</div>`;}
 
 /* ---------- fiche plein écran ---------- */
