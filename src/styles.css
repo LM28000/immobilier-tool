@@ -709,3 +709,35 @@ table.annt{min-width:760px}
 .adrbox{margin:8px 0}
 .mpadl{padding:10px 14px}
 .poib{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+/* fiches : même structure pour ville, quartier, bien */
+.fcrumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.84rem;margin:0 0 6px;color:var(--muted)}
+.fcrumb b{color:var(--fg)}
+.fhead{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
+.fhead>div{background:var(--sunk);border-radius:10px;padding:8px 10px;min-width:0}
+.fhead span{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.fhead b{display:block;font-family:var(--f-num);font-size:1.12rem;white-space:nowrap}
+.fhead b small{font-size:.7rem;color:var(--muted);font-weight:500}
+.fhead b .pill{font-size:.72rem;font-family:var(--f-ui)}
+.fhead em{display:block;font-style:normal;font-size:.72rem;color:var(--muted)}
+.fhead em.fd.up{color:var(--ok)} .fhead em.fd.down{color:var(--bad)}
+@media (max-width:620px){.fhead{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fattn{border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--warn-soft);font-size:.86rem}
+.fattn.ok{background:var(--ok-soft)}
+.fattn ul{margin:4px 0 0;padding-left:18px}
+.fattn li{margin:2px 0} .fattn li.bad{color:var(--bad);font-weight:600} .fattn li.ok{color:var(--ok)}
+details.fsec{border-top:1px solid var(--line)}
+details.fsec>summary{display:flex;align-items:baseline;gap:10px;padding:10px 2px;cursor:pointer;list-style:none}
+details.fsec>summary::-webkit-details-marker{display:none}
+details.fsec>summary::before{content:"›";display:inline-block;width:12px;color:var(--muted);transition:transform .15s;flex:0 0 auto}
+details.fsec[open]>summary::before{transform:rotate(90deg)}
+.fst{font-weight:700;font-size:.95rem}
+.fss{margin-left:auto;color:var(--muted);font-size:.84rem;text-align:right;font-family:var(--f-num)}
+.fsb{padding:0 0 12px 22px}
+.fh4{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 0 6px}
+/* téléphone */
+.mfs{background:var(--surface);border-radius:14px;padding:4px 14px;margin:12px 0}
+.mfs .fcrumb{margin:10px 0 4px}
+.mfs details.fsec:first-of-type{border-top:0}
+.mfs .fsb{padding-left:0}
+.mfs .tablewrap,.mfs .scrollbox{max-width:100%}
+.msheetin .fattn{margin:6px 0}

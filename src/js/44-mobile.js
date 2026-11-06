@@ -93,7 +93,7 @@ function mSheetRender(){if(!MOBON) return; const box=document.getElementById("mS
   box.innerHTML=`<div class="msh"><div><h2>${mEsc(t.name)}</h2><p>Quartier · ${mEsc(c.name)}</p></div><button type="button" class="mx" data-mqclose aria-label="Revenir à la ville">×</button></div>
    ${x?`<div class="mkrow">${kp("15 ans "+mlab(),irrTxt(x),"",x.irr!=null?"":"")}${kp("Cash-flow",sgn(x.cf),mcfc(x.cf),"par mois")}${kp("Studio",keur(x.cost),"","tout compris")}</div>`:`<p class="msub">Pas d'estimation de prix pour ce secteur.</p>`}
    ${ta.length?`<div class="mhs"><h3>À vendre ici</h3>${nv>ta.length?`<button type="button" class="mlink" data-mfeed="${t.ck}|${mEsc(sec)}">Voir les ${nv} ›</button>`:""}</div><div class="mminis">${ta.map(miniAd).join("")}</div>`:sec?`<p class="msub">Aucun studio à vendre en ce moment dans ce secteur.</p>`:""}
-   ${quartierReal(t)}
+   <div class="mfs">${quartierFiche(t,true)}</div>
    ${x?`<div class="mgroup"><button type="button" class="mrow" data-msim="${t.ck}|${t.code}">Simuler un bien ici${chev}</button></div>`:""}`;}
  else{const x=calc(c), A=ADS[c.k], nv=A&&A.ventes?A.ventes.length:0, ta=topAds(c.k,"",6), [bc,bt]=bank(x.ratio);
   box.innerHTML=`<div class="msh"><div><h2>${mEsc(c.name)}</h2><p>Moyenne de la ville · studio de ${H.surface} m²</p></div></div>
@@ -177,11 +177,7 @@ function mBienHtml(b){const r=calcBien(b), x=r.x, s=bienSuf(b), v=s?vu("v",b.vil
  return `${heroHtml(bienPhoto(b,900,640),`data-mfav="${b.id}"`,b.fav)}
  <div class="mdc"><div class="mdh"><div class="mdp">${eur(+b.prix)}</div><div class="mds">${mEsc(b.titre||"Bien")} · ${mEsc(cityName(b.ville))}${b.quartier?" · "+mEsc(b.quartier):""}</div><div class="mdbs">${stPill(b)}${s?vuBadges("v",b.ville,s):""}${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}</div></div>
  <div class="mtiles">${kp("15 ans "+mlab(),irrTxt(x),"",(H.net?"brut ":"net ")+(H.net?(x.irrBrut==null?"n.d.":pct(x.irrBrut)):(x.irrNet==null?"n.d.":pct(x.irrNet))))}${kp("Cash-flow "+mlab(),sgn(x.cf),mcfc(x.cf),"par mois à deux")}</div>
- <h3 class="msec">Adresse</h3><div class="mlist mpadl">${adrBlock(b)}</div>
  <div class="mlazy" data-lazy="b|${b.ville}|${b.id}"><div class="mskel"></div><div class="mskel"></div></div>
- ${Object.keys(av).length?`<h3 class="msec">Visite</h3><div class="mlist">${Object.entries(av).map(([n,z])=>`<div class="mli"><span>${mEsc(n)}</span><span>${z.verdict?VERD[z.verdict][0]:"—"}${z.com?" · "+mEsc(z.com):""}</span></div>`).join("")}</div>`:""}
- ${b.notes?`<h3 class="msec">Notes</h3><div class="mlist"><div class="mli"><span>${mEsc(b.notes)}</span></div></div>`:""}
- ${quartierList(r.t)}
  <div class="mgroup">${cmpBtn({kind:"b",id:b.id}).replace('class="cmpb','class="mrow cmprow cmpb')}<button type="button" class="mrow" data-fiche="${b.id}">Fiche à emporter${chev}</button>${b.url?`<a class="mrow" href="${mEsc(b.url)}" target="_blank" rel="noopener">Voir l'annonce<span class="mchev">↗</span></a>`:""}${isOut(b)?`<button type="button" class="mrow" data-reshort="${b.id}">Remettre dans la shortlist${chev}</button>`:`<button type="button" class="mrow red" data-unshort="${b.id}">Écarter ce bien</button>`}</div></div>`;}
 function mBienHeavy(b){const r=calcBien(b), x=r.x, s=bienSuf(b), v=s?vu("v",b.ville,s):null;
  return `<h3 class="msec">Négocier</h3>${mLevels(b)}<div class="mnego">${negoBlock(b)}</div>
@@ -329,7 +325,7 @@ addEventListener("keydown",e=>{if(MOBON&&e.key==="Escape"&&STACK.length) mPop();
 (function(){const rs=history.replaceState.bind(history); history.replaceState=function(st,t,u){return rs(st==null?history.state:st,t,u);};})();
 const _openAd=openAd; openAd=function(kind,ck,suf){_openAd(kind,ck,suf); if(MOBON&&!(STACK.length&&STACK[STACK.length-1].s.dataset.ad===`${kind}|${ck}|${suf}`)) mDetail(kind,ck,suf);};
 let MHK=""; const inStack=id=>{const el=document.getElementById(id); return !!(el&&el.closest("#mStack"));};
-[["renderScatter","p-sc"],["renderTable","p-rank"],["renderCompare","p-cmp"],["renderBiens","biensList"],["renderDetail","detail"]].forEach(([fn,id])=>{const orig=window[fn]; if(typeof orig!=="function") return; window[fn]=function(){if(MOBON&&!inStack(id)){window[fn].dirty=arguments; return;} return orig.apply(this,arguments);}; window[fn].orig=orig;});
+[["renderScatter","p-sc"],["renderTable","p-rank"],["renderCompare","p-cmp"],["renderBiens","biensList"],["renderDetail","detail"]].forEach(([fn,id])=>{const orig=window[fn]; if(typeof orig!=="function") return; window[fn]=function(){if(MOBON&&!inStack(id)){window[fn].dirty=arguments; return;} return window[fn].orig.apply(this,arguments);}; window[fn].orig=orig;});
 function mDraw(fn){const f=window[fn]; f.orig&&f.orig.apply(null,fn==="renderBiens"||fn==="renderCompare"?[]:[all()]);}
 const _render2=render; render=function(){_render2.apply(this,arguments); if(!MOBON) return; const hk=JSON.stringify(H); if(hk!==MHK){VC.clear(); MHK=hk;} mBadges(); if(MS==="carte") mSheetRender(); if(MS==="annonces") mFeedRender(); if(MS==="budget") mBudgetRender(); if(MS==="short") mShortRender(); mRefreshTop();};
 

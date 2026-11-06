@@ -28,7 +28,7 @@ page = rd("src/head.html") + "<style>\n" + rd("src/styles.css") + "</style>\n" +
 os.makedirs(os.path.join(R, "dist"), exist_ok=True)
 w = lambda p, s: open(os.path.join(R, p), "w", encoding="utf-8").write(s)
 w("dist/artifact.html", page)
-w("dist/test.html", '<meta name="viewport" content="width=device-width,initial-scale=1">' + page)
+w("dist/test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + page)
 head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         '<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>'

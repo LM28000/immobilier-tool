@@ -37,7 +37,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     const ip = await p.evaluate(() => { const t = IR.lemans.list.find(x => x.code === '0202'); const r = document.querySelector(`[data-iris="lemans:${t.i}"]`).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
     await tap(p, n, ...ip); await p.waitForTimeout(700);
     ok(T('tap quartier ouvre la fiche'), await p.evaluate(() => !!QSEL && !document.getElementById('qDetail').hidden));
-    ok(T('données réelles du quartier (DVF, trajets)'), await p.evaluate(() => { const q = document.querySelector('.qreal'); return !!q && /studios? vendus?/.test(q.innerText) && /à pied/.test(q.innerText); }));
+    ok(T('données réelles du quartier (DVF, trajets)'), await p.evaluate(() => { const a = document.querySelector('.qcard .fsec[data-sec=prix]'), b = document.querySelector('.qcard .fsec[data-sec=traj]'); return !!a && !!b && /studios? vendus?/.test(a.textContent) && /à pied/.test(b.textContent); }));
     ok(T('option ventes réelles DVF'), await p.evaluate(() => { const t = QSEL, a = calcIris(t).cost; H.dvf = false; const b = calcIris(t).cost; H.dvf = true; return a !== b; }));
     ok(T('pastilles de vente sur la carte'), await p.evaluate(() => document.querySelectorAll('.vpin').length > 5));
     // fiche annonce
@@ -85,7 +85,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await go('carte');
       ok(T('carte plein écran avec feuille'), await p.evaluate(() => { const r = document.querySelector('#mMap .mapbox').getBoundingClientRect(); return r.height > innerHeight * 0.7 && /Le Mans|Saint|Angers|Caen|Orléans|Laval|Rennes|Nantes|Tours/.test(document.getElementById('mSheetIn').innerText); }));
       await p.evaluate(() => { SEL = 'lemans'; const t = IR.lemans.list.find(x => x.code === '0202'); QSEL = t; render(); flyTo(t.bb, 3.2); }); await p.waitForTimeout(900);
-      ok(T('quartier dans la feuille'), await p.evaluate(() => /Gare/.test(document.querySelector('#mSheetIn h2').textContent) && !!document.querySelector('#mSheetIn .qreal')));
+      ok(T('quartier dans la feuille'), await p.evaluate(() => /Gare/.test(document.querySelector('#mSheetIn h2').textContent) && !!document.querySelector('#mSheetIn .fsec[data-sec=prix]')));
       await p.click('#mSheetIn .mmini'); await p.waitForTimeout(500);
       ok(T('fiche plein écran depuis la carte'), await p.evaluate(() => !!document.querySelector('.mpush.in .mdp') && !!document.querySelector('.mpush.in .mcta')));
       await p.waitForTimeout(400);
