@@ -9,10 +9,10 @@ const MARKTXT={gare:"Gare",univ:"Université",univ2:"Université",centre:"Centre
 const unproj=(x,y)=>[MP.lat1-y/MAP.S, x/(MP.k*MAP.S)+MP.lon0];
 function demandOf(t){const m=MARK[t.ck]; if(!m) return null;
  const T=typeof TTQ!=="undefined"&&TTQ[t.ck], f=T&&T.foot[t.code];
- if(f){const tr=typeof trajOf==="function"?trajOf(t):null, e=tr?tr.map(o=>o.best):f, i=e.indexOf(Math.min(...e)), mn=e[i], sc=Math.min(1,Math.max(0,1-(mn-10)/40)); return {d:T.dist[t.code][i],min:mn,foot:f[i],bike:T.bike[t.code][i],mk:T.marks[i],mode:tr?tr[i].mode:"foot",real:true,sc,vac:0.5+2*(1-sc)};}
+ if(f){const tr=typeof trajOf==="function"?trajOf(t):null, e=tr?tr.map(o=>o.best):f, i=e.indexOf(Math.min(...e)), mn=e[i], sc=Math.min(1,Math.max(0,1-(mn-10)/40)); return {d:T.dist[t.code][i],min:mn,foot:f[i],bike:T.bike[t.code][i],mk:T.marks[i],mode:tr?tr[i].mode:"foot",real:true,sc,vac:1+1.5*(1-sc)};}
  const [la,lo]=unproj(t.cx,t.cy);
  const d=Math.min(...Object.values(m).map(p=>hav(la,lo,p[0],p[1]))); const sc=Math.min(1,Math.max(0,1-(d-0.6)/2.4));
- return {d,sc,vac:0.5+2*(1-sc)};}
+ return {d,sc,vac:1+1.5*(1-sc)};}
 function adsPins(ck){const A=ADS[ck], z=IR[ck]; if(!A||!z) return [];
  return Object.entries(A.map).map(([d,codes])=>{const ts=z.list.filter(t=>codes.includes(t.code)); if(!ts.length) return null;
   const st=adsStats(A.ads.filter(a=>a[1]===d)); if(!st) return null;

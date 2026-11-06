@@ -41,3 +41,14 @@ function adrUrbaFill(b){if(!b||!b.id||!b.adresse||b.lat==null||URBTRY.has(b.id))
  adrUrba(b.lat,b.lon).then(o=>{if((o.urba||o.cad)&&typeof updBien==="function") updBien(b.id,{geo:Object.assign({},g,o)});}).catch(()=>{});}
 function adrUrbaBlock(b){const g=b.geo||{}; if(!g.urba&&!g.cad) return "";
  return fRows([g.urba&&["Zone du PLU à l'adresse",`<b>${esc(g.urba[0])}</b> · ${ZTYPE[g.urba[1]]||g.urba[1]}${zProjet(g.urba)?" · <b>secteur de projet</b>":""}`,esc(g.urba[2])],g.cad&&["Parcelle cadastrale",`<b>${esc(g.cad[0])} ${esc(g.cad[1])}</b>`,`${g.cad[2]?(+g.cad[2]).toLocaleString("fr-FR")+" m², tout l'immeuble · ":""}à citer pour les documents d'urbanisme`]]);}
+
+/* habitants (Insee : recensement 2022 par quartier IRIS, revenus Filosofi 2021) */
+const hasHAB=ck=>typeof HABQ!=="undefined"&&!!HABQ&&!!HABQ.q[ck];
+function habOf(t){if(!t||!hasHAB(t.ck)) return null; const h=HABQ.q[t.ck][t.code]; if(!h||h[0]<150) return null; const [pop,a,s,y,med,tp]=h; return {pop,p1824:a/pop*100,scol:s/pop*100,p2539:y/pop*100,med,tp};}
+const habCity=ck=>{const c=hasHAB(ck)&&HABQ.city[ck]; return c?{pop:c[0],p1824:c[1],scol:c[2],p2539:c[3],med:c[4],tp:c[5]}:null;};
+const pp=v=>fr(v,0)+" %";
+function habBlock(t){const h=habOf(t), c=habCity(t.ck); if(!h) return "";
+ return `${fRows([["Habitants",h.pop.toLocaleString("fr-FR")],["Étudiants",`<b>${pp(h.scol)}</b> des habitants`,`18-24 ans encore en études · ville : ${pp(c.scol)}`],["25-39 ans",pp(h.p2539),`jeunes actifs · ville : ${pp(c.p2539)}`],h.med&&["Revenu médian",`${eur(h.med)} par an`,`par unité de consommation · ville : environ ${eur(c.med)}`],h.tp!=null&&["Taux de pauvreté",`${pp(h.tp)}`,`ville : ${pp(c.tp)}`]])}${fNote("Insee : recensement 2022, revenus 2021. Les petits quartiers n'ont pas tous leurs revenus publiés.")}`;}
+const habSum=t=>{const h=habOf(t); return h?`${pp(h.scol)} d'étudiants`:"";};
+function habAttn(t){const h=habOf(t), c=h&&habCity(t.ck); if(!h) return [];
+ return [h.tp!=null&&h.tp>=35&&["warn",`Taux de pauvreté élevé (${pp(h.tp)}, ville ${pp(c.tp)}) : risque d'impayés et revente plus lente.`],h.scol>=c.scol*1.5&&h.scol>=10&&["ok",`Beaucoup d'étudiants : ${pp(h.scol)} des habitants (ville ${pp(c.scol)}).`]];}

@@ -70,11 +70,19 @@ function calc(c){
 /* ---------- prix d'un studio : ventes réelles (DVF) quand on les a ---------- */
 // Villes avec relevé DVF des studios : médiane des ventes de 12 à 35 m² (2023-2025), sans surcote.
 // Quartier : la médiane du quartier, tirée vers la tendance RealAdvisor quand il y a peu de ventes (poids de 8 ventes fictives).
-const hasDVF=ck=>!!(H.dvf&&typeof DVFQ!=="undefined"&&DVFQ[ck]&&DVFQ[ck].med);
+const dvfC=ck=>typeof DVFQ!=="undefined"&&DVFQ[ck]&&DVFQ[ck].med?DVFQ[ck]:(typeof DVFC!=="undefined"&&DVFC.c[ck]?{med:DVFC.c[ck].med,n:DVFC.c[ck].n,q:{},city:true}:null);
+const hasDVF=ck=>!!(H.dvf&&dvfC(ck));
+/* l'écart de prix des quartiers (RealAdvisor, tous appartements) se transmet mal aux studios :
+   on le cale ville par ville sur les studios réellement vendus (exposant β entre 0 et 1) */
+const RABETA={};
+function raBeta(ck){if(RABETA[ck]!=null) return RABETA[ck]; const D=typeof DVFQ!=="undefined"&&DVFQ[ck], ir=typeof IR!=="undefined"&&IR[ck]; let b=1;
+ if(D&&ir){let sxy=0,sxx=0,m=0; ir.list.forEach(t=>{const q=D.q[t.code]; if(!q||q.n<5||!t.price) return; const x=Math.log(t.price/ir.med), y=Math.log(q.med/D.med); sxy+=q.n*x*y; sxx+=q.n*x*x; m++;});
+  b=m>=5&&sxx>0?Math.min(1,Math.max(0,sxy/sxx)):0.5;}
+ return RABETA[ck]=b;}
 function studioPm2(ck,t){const c=C.find(v=>v.k===ck); if(!c) return 0;
- const ir=typeof IR!=="undefined"&&IR[ck], ratio=t&&t.price&&ir&&ir.med?t.price/ir.med:1;
- if(!hasDVF(ck)) return c.pm2*(1+H.surcote/100)*ratio;
- const D=DVFQ[ck], prior=D.med*ratio, q=t&&D.q[t.code]; if(!q||!q.n) return prior;
+ const ir=typeof IR!=="undefined"&&IR[ck], raw=t&&t.price&&ir&&ir.med?t.price/ir.med:1;
+ if(!hasDVF(ck)) return c.pm2*(1+H.surcote/100)*raw;
+ const D=dvfC(ck), prior=D.med*Math.pow(raw,raBeta(ck)), q=t&&D.q[t.code]; if(!q||!q.n) return prior;
  return (q.n*q.med+8*prior)/(q.n+8);}
 
 /* ---------- mémoire des calculs : même ville, même bien, mêmes réglages → même résultat ---------- */

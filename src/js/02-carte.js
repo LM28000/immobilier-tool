@@ -20,7 +20,13 @@ const nrm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^
  });
 })();
 const clampR=v=>Math.min(1.15,Math.max(0.85,v));
-const rentRatio=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
+/* loyer du quartier : modèle, mélangé aux loyers demandés du secteur Bien'ici dès 4 annonces */
+const RBL=new Map();
+function rentBlend(ck,t){const k=ck+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
+ if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec&&!/universit/i.test(sec)){const v=A.ads.filter(a=>a[1]===sec).map(r22); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(22/c.rentM2,0.6), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
+ RBL.set(k,o); return o;}
+const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
+const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
 function calcIris(t){const c=C.find(v=>v.k===t.ck), dm=H.vacQ?demandOf(t):null; return calc(Object.assign({},c,{spm2:studioPm2(t.ck,t),rent:c.rent*rentRatio(t.ck,t),vac:dm?dm.vac:undefined}));}
 const QCLS=[{t:"sous 2,5 %",c:"var(--bad)",o:.55},{t:"2,5 à 5 %",c:"var(--warn)",o:.5},{t:"5 à 7 %",c:"var(--ok)",o:.2},{t:"7 à 9 %",c:"var(--ok)",o:.42},{t:"9 % et plus",c:"var(--ok)",o:.68}];
 const qCls=irr=>irr==null||irr<2.5?0:irr<5?1:irr<7?2:irr<9?3:4;
