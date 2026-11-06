@@ -76,3 +76,7 @@ function studioPm2(ck,t){const c=C.find(v=>v.k===ck); if(!c) return 0;
  if(!hasDVF(ck)) return c.pm2*(1+H.surcote/100)*ratio;
  const D=DVFQ[ck], prior=D.med*ratio, q=t&&D.q[t.code]; if(!q||!q.n) return prior;
  return (q.n*q.med+8*prior)/(q.n+8);}
+
+/* ---------- mémoire des calculs : même ville, même bien, mêmes réglages → même résultat ---------- */
+const CALCC=new Map();
+const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};

@@ -88,6 +88,11 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       ok(T('quartier dans la feuille'), await p.evaluate(() => /Gare/.test(document.querySelector('#mSheetIn h2').textContent) && !!document.querySelector('#mSheetIn .qreal')));
       await p.click('#mSheetIn .mmini'); await p.waitForTimeout(500);
       ok(T('fiche plein écran depuis la carte'), await p.evaluate(() => !!document.querySelector('.mpush.in .mdp') && !!document.querySelector('.mpush.in .mcta')));
+      await p.waitForTimeout(400);
+      ok(T('fiche complète dans le même écran'), await p.evaluate(() => !!document.querySelector('.mpush.in .scnbox') && !!document.querySelector('.mpush.in .nego') && !!document.querySelector('.mpush.in .b2n')));
+      await p.goBack(); await p.waitForTimeout(500);
+      ok(T('bouton retour du téléphone ferme la fiche'), await p.evaluate(() => STACK.length === 0));
+      ok(T('dézoom plus large sur la carte'), await p.evaluate(() => KMIN() < Math.max(VW / WW, VH / MAP.H)));
       await go('annonces');
       ok(T('classement de toutes les annonces'), await p.evaluate(() => { const n = Object.values(ADS).reduce((s, A) => s + ((A && A.ventes) || []).length, 0); return document.querySelectorAll('#mFeed .mcard').length === Math.min(20, n) && /studios? à vendre/.test(document.getElementById('mACount').textContent); }));
       const irr = await p.evaluate(() => [...document.querySelectorAll('#mFeed .mci')].slice(0, 5).map(e => parseFloat(e.textContent.replace(',', '.'))));
