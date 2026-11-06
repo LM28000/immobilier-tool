@@ -761,3 +761,9 @@ details.fsec>summary{flex-wrap:wrap;row-gap:0}
 .qall{margin-top:4px}
 details.qmeth{margin-top:10px}
 details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
+
+.typerow{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:4px 0 12px}
+.typerow .lab{font-weight:700;font-size:.86rem}
+.typeseg button{font:inherit;font-size:.84rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:7px 12px;cursor:pointer}
+.typeseg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.typerow small{flex-basis:100%;margin:0}

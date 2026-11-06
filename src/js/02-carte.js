@@ -22,7 +22,7 @@ const nrm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^
 const clampR=v=>Math.min(1.15,Math.max(0.85,v));
 /* loyer du quartier : modèle, mélangé aux loyers demandés du secteur Bien'ici dès 4 annonces */
 const RBL=new Map();
-function rentBlend(ck,t){const k=ck+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
+function rentBlend(ck,t){if(TY().p!==1) return null; /* les annonces relevées sont des studios : elles ne servent que pour un studio */ const k=ck+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
  if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(r22); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(22/c.rentM2,0.6), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
  RBL.set(k,o); return o;}
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
@@ -174,7 +174,7 @@ function renderQBox(){renderSide(); const box=document.getElementById("qBox"); i
  const key=QC+"|"+(qs?qs.code:"");
  if(QBOXK!==key){QBOXK=key; const card=document.getElementById("qCard");
   if(qs){const sec=sectorOf(qs), ab=sec?annoncesBlock(QC,sec,false,OPENADS===sec):"", others=sec&&ADS[QC]?IR[QC].list.filter(v=>v!==qs&&ADS[QC].map[sec].includes(v.code)).map(v=>v.name):[];
-   card.innerHTML=`<div class="qbhead"><h3 class="qbh">Annonces · ${esc(qs.name)}</h3><button type="button" class="lnk" data-crumb="city">← Tous les quartiers de ${esc(c.name)}</button></div>${ab?`${others.length?fNote(`Secteur Bien'ici « ${esc(sec)} », qui couvre aussi ${others.slice(0,4).map(esc).join(", ")}${others.length>4?"…":""}.`):""}${ab}`:`<p class="empty" style="margin:0">${ADS[QC]?"Aucune annonce relevée dans ce quartier en ce moment.":`Pas d'annonces relevées à ${esc(c.name)} : le relevé quotidien couvre ${cityNames(Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ads))}.`}</p>`}`;}
+   card.innerHTML=`<div class="qbhead"><h3 class="qbh">Annonces · ${esc(qs.name)}</h3><button type="button" class="lnk" data-crumb="city">← Tous les quartiers de ${esc(c.name)}</button></div>${TY().p!==1?fNote(`Le relevé quotidien ne couvre que les studios pour l'instant : ces annonces ne sont pas des ${TY().pl}.`):""}${ab?`${others.length?fNote(`Secteur Bien'ici « ${esc(sec)} », qui couvre aussi ${others.slice(0,4).map(esc).join(", ")}${others.length>4?"…":""}.`):""}${ab}`:`<p class="empty" style="margin:0">${ADS[QC]?"Aucune annonce relevée dans ce quartier en ce moment.":`Pas d'annonces relevées à ${esc(c.name)} : le relevé quotidien couvre ${cityNames(Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ads))}.`}</p>`}`;}
   else card.innerHTML="";}
  document.getElementById("qTitle").textContent=`Les ${z.list.filter(t=>QX[t.ck+t.i]).length} quartiers de ${c.name}`;
  const tb=document.getElementById("zBody"); tb.innerHTML="";

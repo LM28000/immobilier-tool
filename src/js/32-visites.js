@@ -108,7 +108,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&VISIT){e.stopImmediatePropag
 /* ---------- fiche à emporter (imprimable) ---------- */
 function negoArgs(b,x,g,t){const A=[], pm2=+b.prix/(+b.surface||22);
  if(g.cf!=null&&g.cf<+b.prix) A.push(`À <b>${keur(g.cf)}</b>, le loyer paie tout : crédit, charges${H.net?", impôts":""}. Au-delà, il faut remettre de l'argent chaque mois.`);
- if(t&&t.price){const qs=studioPm2(b.ville,t), d=(pm2/qs-1)*100; if(d>3) A.push(`Le prix demandé (${eur(pm2)}/m²) est <b>${fr(d,0)} % au-dessus</b> du prix d'un studio comparable dans le quartier (${eur(qs)}/m², ${hasDVF(b.ville)?"d'après les ventes réelles":"surcote petite surface comprise"}).`);}
+ if(t&&t.price){const qs=studioPm2(b.ville,t,b.type||typeFor(b.surface,b.pieces)), d=(pm2/qs-1)*100; if(d>3) A.push(`Le prix demandé (${eur(pm2)}/m²) est <b>${fr(d,0)} % au-dessus</b> du prix d'un studio comparable dans le quartier (${eur(qs)}/m², ${hasDVF(b.ville)?"d'après les ventes réelles":"surcote petite surface comprise"}).`);}
  if(/[EFG]/.test(b.dpe||"")) A.push(`DPE <b>${b.dpe}</b> : ${b.dpe==="E"?"location interdite en 2034":b.dpe==="F"?"location interdite en 2028":"location déjà interdite"} sans rénovation. Le coût des travaux est à déduire du prix.`);
  if(+b.travaux>H.travaux) A.push(`<b>${eur(+b.travaux)}</b> de travaux à prévoir d'après la visite.`);
  if(b.visite&&b.visite.votes) A.push(`Travaux votés en copropriété : ${esc(b.visite.votes)}.`);
@@ -124,7 +124,7 @@ function quartierMap(b,t){if(!t||!IR[b.ville]) return ""; const bb=t.bb, w=bb[2]
 function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const sf=bienSuf(b0), b=Object.assign({},b0,{vu:sf?vu("v",b0.ville,sf):null}); const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville), t=r.t, lv=priceLevels(b), ph=bienPhoto(b,720,400), V=b.visite||{}, ck=V.check||{};
  const A=ADS[b.ville], sec=t?sectorOf(t):(sf&&findAd("v",b.ville,sf)||[])[1], d=t?demandOf(t):null;
  const rents=A&&sec?A.ads.filter(a=>a[1]===sec).sort((p,q)=>r22(p)-r22(q)).slice(0,5):[], sales=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec&&a[3]!==sf).sort((p,q)=>p[2]/p[0]-q[2]/q[0]).slice(0,5):[], sold=sec?soldList(b.ville,sec).slice(0,3):[];
- const qp=t&&t.price?studioPm2(b.ville,t):null, fg=t?fgPct(t.dpe):null, nd=t?t.dpe.reduce((a,z)=>a+z,0):0;
+ const qp=t&&t.price?studioPm2(b.ville,t,b.type||typeFor(b.surface,b.pieces)):null, fg=t?fgPct(t.dpe):null, nd=t?t.dpe.reduce((a,z)=>a+z,0):0;
  const el=document.getElementById("ficheBody");
  el.innerHTML=`<header class="fh">${ph?`<img class="fph" src="${esc(ph)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="fht"><h1>${esc(b.titre||"Bien")}</h1><p>${c.name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché (${eur(r.pm2)}/m²)${b.dpe?" · DPE "+b.dpe:""}</p><p class="fdate">Fiche du ${new Date().toLocaleDateString("fr-FR")}${b.vu?` · annonce vue pour la première fois le ${new Date(HIST[b.ville].v[sf].f+"T12:00:00").toLocaleDateString("fr-FR")}`:""}</p></div></header>
  <div class="fgrid">
@@ -141,7 +141,7 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const 
  </div>
  <div class="fbox"><h2>Arguments pour négocier</h2>${(()=>{const a=negoArgs(b,x,g,t); return a.length?`<ol>${a.map(s=>`<li>${s}</li>`).join("")}</ol>`:`<p>Le prix affiché est déjà cohérent avec nos objectifs.</p>`;})()}</div>
  <div class="fbox fq"><h2>Le quartier${t?" : "+esc(t.name):""}</h2><div class="fqgrid">${quartierMap(b,t)}<div>
-   ${qp?`<div class="trow"><span>Prix d'un studio du quartier</span><b>${eur(qp)}/m²</b></div><div class="trow"><span>Ce bien</span><b>${eur(r.pm2)}/m² (${r.pm2>=qp?"+":"−"}${fr(Math.abs(r.pm2/qp-1)*100,0)} %)</b></div>`:""}
+   ${qp?`<div class="trow"><span>Prix d'un ${tyLow(b.type||typeFor(b.surface,b.pieces))} du quartier</span><b>${eur(qp)}/m²</b></div><div class="trow"><span>Ce bien</span><b>${eur(r.pm2)}/m² (${r.pm2>=qp?"+":"−"}${fr(Math.abs(r.pm2/qp-1)*100,0)} %)</b></div>`:""}
    ${t&&trajOf(t)?trajOf(t).map(o=>`<div class="trow"><span>${MARKTXT[o.k]} (${fr(o.km,1)} km)</span><b>${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?" · "+minTxt(o.tc)+" bus/tram":""}</b></div>`).join(""):d?`<div class="trow"><span>Distance gare, université ou centre</span><b>${fr(d.d,1)} km</b></div>`:""}
    <div class="trow"><span>Mois vides par an retenus</span><b>${fr(r.vac,1)}</b></div>
    ${fg!=null&&nd>=15?`<div class="trow"><span>Petits appartements en DPE F ou G</span><b>${fr(fg,0)} %</b></div>`:""}

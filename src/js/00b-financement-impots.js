@@ -32,11 +32,14 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
 function calc(c){
  const S=c._s||{}, pe=H.pess;
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?0.5:0), px=pe?Math.min(H.px,0.5):H.px, la=H.loyerAdj+(pe?-5:0)+(S.loyer?-5:0), HZ=S.hz||15;
- const SU=c.surf||H.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k))*SU, trav=(c.trav!=null?c.trav:H.travaux)+(S.trav?5000:0);
- const base=bien*(1+H.notaire/100)+H.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
+ const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
+ const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU, trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
+ const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
- const rentHC=Math.max(c.rent*Math.pow(SU/c.rentM2,0.6)*(1+la/100)-H.chLoc,0);
- const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:H.copro)+H.autres+tf;
+ /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface ; en colocation, un loyer par chambre (H.colocPct % d'un studio) */
+ const rentCC=c.rentFixed?c.rent:T.coloc?T.rooms*c.rent*Math.pow(TYPES.studio.surf/c.rentM2,rentExp(c.k))*H.colocPct/100:c.rent*Math.pow(SU/c.rentM2,rentExp(c.k));
+ const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc*(c.rentFixed?1:T.rooms),0);
+ const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
@@ -67,26 +70,27 @@ function calc(c){
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
 
-/* ---------- prix d'un studio : ventes réelles (DVF) quand on les a ---------- */
-// Villes avec relevé DVF des studios : médiane des ventes de 12 à 35 m² (2023-2025), sans surcote.
-// Quartier : la médiane du quartier, tirée vers la tendance RealAdvisor quand il y a peu de ventes (poids de 8 ventes fictives).
+/* ---------- prix au m² du type de bien choisi : ventes réelles (DVF) ----------
+   Ville : médiane des ventes du type (pièces et surface, voir TYPES). Quartier : ses ventes, mélangées à la ville (poids de 8 ventes),
+   la ville étant ajustée par l'écart RealAdvisor du quartier à la puissance β (β mesuré sur les ventes réelles de la ville, pour ce type). */
 /* taxe foncière : un avis réel de référence (40 €/mois pour 22 m² à un taux de 47,8 %), proportionnel au taux de la commune et à la surface */
 const TFREF={mois:H.tfMans,taux:47.80,m2:22};
-/* ventes réelles : un seul fichier, même règle pour toutes les villes (tools/collecte/dvf.js) */
-const DVFQ=typeof DVFALL!=="undefined"&&DVFALL?DVFALL.c:{};
-const dvfC=ck=>DVFQ[ck]&&DVFQ[ck].med?DVFQ[ck]:null;
-const hasDVF=ck=>!!(H.dvf&&dvfC(ck));
-/* l'écart de prix des quartiers (RealAdvisor, tous appartements) se transmet mal aux studios :
-   on le cale ville par ville sur les studios réellement vendus (exposant β entre 0 et 1) */
+/* loyer selon la surface : loyer ∝ surface^e, e mesuré pour chaque ville sur la carte des loyers de l'État
+   (1-2 pièces autour de 37 m², 3 pièces et plus autour de 72 m²) ; 0,6 si la ville n'y est pas */
+const rentExp=ck=>{const L=typeof LOYQ!=="undefined"&&LOYQ&&LOYQ.c3&&LOYQ.c[ck]&&LOYQ.c3[ck]; if(!L) return 0.6; const s=LOYQ.sref||[37,72]; return Math.min(0.9,Math.max(0.4,1+Math.log(LOYQ.c3[ck]/LOYQ.c[ck][0])/Math.log(s[1]/s[0])));};
+/* ventes réelles : un seul fichier, même règle pour toutes les villes et tous les types (tools/collecte/dvf.js) */
+const DVFT=typeof DVFALL!=="undefined"&&DVFALL?(DVFALL.t||{studio:DVFALL.c}):{};
+const dvfC=(ck,tk)=>{const d=(DVFT[tyKey(tk||H.type)]||{})[ck]; return d&&d.med?d:null;};
+const hasDVF=(ck,tk)=>!!(H.dvf&&dvfC(ck,tk));
 const RABETA={};
-function raBeta(ck){if(RABETA[ck]!=null) return RABETA[ck]; const D=typeof DVFQ!=="undefined"&&DVFQ[ck], ir=typeof IR!=="undefined"&&IR[ck]; let b=1;
+function raBeta(ck,tk){const key=ck+"|"+tyKey(tk||H.type); if(RABETA[key]!=null) return RABETA[key]; const D=dvfC(ck,tk), ir=typeof IR!=="undefined"&&IR[ck]; let b=1;
  if(D&&ir){let sxy=0,sxx=0,m=0; ir.list.forEach(t=>{const q=D.q[t.code]; if(!q||q.n<5||!t.price) return; const x=Math.log(t.price/ir.med), y=Math.log(q.med/D.med); sxy+=q.n*x*y; sxx+=q.n*x*x; m++;});
   b=m>=5&&sxx>0?Math.min(1,Math.max(0,sxy/sxx)):0.5;}
- return RABETA[ck]=b;}
-function studioPm2(ck,t){const c=C.find(v=>v.k===ck); if(!c) return 0;
+ return RABETA[key]=b;}
+function studioPm2(ck,t,tk){const c=C.find(v=>v.k===ck); if(!c) return 0; tk=tk||H.type;
  const ir=typeof IR!=="undefined"&&IR[ck], raw=t&&t.price&&ir&&ir.med?t.price/ir.med:1;
- if(!hasDVF(ck)) return c.pm2*(1+H.surcote/100)*raw;
- const D=dvfC(ck), prior=D.med*Math.pow(raw,raBeta(ck)), q=t&&D.q[t.code]; if(!q||!q.n) return prior;
+ if(!hasDVF(ck,tk)) return c.pm2*(1+(tyOf(tk).p===1?H.surcote:0)/100)*raw;
+ const D=dvfC(ck,tk), prior=D.med*Math.pow(raw,raBeta(ck,tk)), q=t&&D.q[t.code]; if(!q||!q.n) return prior;
  return (q.n*q.med+8*prior)/(q.n+8);}
 
 /* ---------- mémoire des calculs : même ville, même bien, mêmes réglages → même résultat ---------- */

@@ -47,7 +47,7 @@ function render(){
  document.getElementById("pessTxt").hidden=!H.pess; document.getElementById("pessWrap").classList.toggle("on",H.pess);
  document.getElementById("vacWrap").classList.toggle("on",H.vacQ); QBOXK=null;
  document.getElementById("dvfWrap").classList.toggle("on",H.dvf); const sd=hasDVF(SEL);
- document.getElementById("n-surcote").textContent=sd?`${C.find(c=>c.k===SEL).name} : prix des studios réellement vendus (DVF), la surcote ne s'applique pas. Elle sert pour les autres villes.`:"Surcote pour un studio bien placé et en bon état";
+ document.getElementById("n-surcote").textContent=sd?`${C.find(c=>c.k===SEL).name} : prix des ${TY().pl} réellement vendus (DVF), la surcote ne s'applique pas. Elle sert pour les autres villes.`:"Surcote pour un studio bien placé et en bon état";
  document.getElementById("s-surcote").closest(".sl").classList.toggle("dim",sd);
  const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); renderFin(); setHash();
 }

@@ -3,7 +3,7 @@ const VTURL="https://www.bienici.com/annonce/vente/";
 const VC=new Map();
 function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[sector]) return null;
  const ts=z.list.filter(t=>A.map[sector].includes(t.code)&&t.price); return ts.sort((a,b)=>b.dpe.reduce((x,y)=>x+y,0)-a.dpe.reduce((x,y)=>x+y,0))[0]||null;}
-function venteBien(ck,a){const t=venteIris(ck,a[1]); return {ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],url:VTURL+a[3],titre:`Studio ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
+function venteBien(ck,a){const t=venteIris(ck,a[1]); return {type:"studio",ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],url:VTURL+a[3],titre:`Studio ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.map(a=>({ck,a,r:venteCalc(ck,a)})));
 const isAdded=url=>BIENS.some(b=>b.url===url);
@@ -17,7 +17,7 @@ function ventesLine(t){const A=ADS[t.ck]; if(!A||!A.ventes) return ""; const d=O
  const best=l.map(a=>venteCalc(t.ck,a)).reduce((m,r)=>r.x.irr!=null&&(m==null||r.x.irr>m)?r.x.irr:m,null);
  return `<details class="ads"${OPENADS===d?" open":""}><summary>${l.length} studio${l.length>1?"s":""} à vendre dans le secteur « ${esc(d)} »${best!=null?` · jusqu'à ${pct(best)} sur 15 ans`:""}</summary>${ventesTable(t.ck,l,false)}</details>`;}
 function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) return ""; const c=C.find(v=>v.k===ck), pm=median(A.ventes.map(a=>a[2]/a[0]));
- return fRows([["À vendre en ligne",`${A.ventes.length} studios · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck),"calcul")} · frais d'agence et marge de négociation compris`]]);}
+ return fRows([["À vendre en ligne",`${A.ventes.length} studios · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,dpe:"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
@@ -33,8 +33,8 @@ function toast(t,act){let el=document.getElementById("toast"); if(!el){el=docume
 /* ---------- simuler un bien dans un quartier ---------- */
 function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) return; showTab("tab-biens");
  const f=document.getElementById("biensForm"); f.reset(); document.getElementById("b-ville").value=ck; fillQuartiers(); document.getElementById("b-quartier").value=t.name;
- const c=C.find(v=>v.k===ck), p=Math.round(studioPm2(ck,t)*22/500)*500;
- f.elements.titre.value=`Studio type · ${t.name}`; f.elements.surface.value=22; f.elements.prix.value=p;
+ const c=C.find(v=>v.k===ck), p=Math.round(studioPm2(ck,t)*H.surface/500)*500;
+ f.elements.titre.value=`${TY().lab} type · ${t.name}`; f.elements.surface.value=H.surface; f.elements.prix.value=p;
  document.getElementById("p-biens").scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(()=>f.elements.prix.focus({preventScroll:true}),400);
  toast("Formulaire prérempli : corrigez le prix et la surface puis ajoutez.");}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-sim]"); if(!b) return; e.preventDefault(); const [ck,code]=b.dataset.sim.split("|"); simHere(ck,code);});

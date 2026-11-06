@@ -68,7 +68,8 @@ const TAG={gare:["Près de la gare","var(--accent)"],centre:["Centre-ville","var
 function median(a){const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2;}
 
 /* loyer de référence de l'État (Carte des loyers), en contrôle du loyer retenu */
-function loyEtat(c,x){const L=typeof LOYQ!=="undefined"&&LOYQ.c&&LOYQ.c[c.k]; if(!L) return "";
- const per=v=>{const y=calc(v); return (y.rentHC+H.chLoc)/H.surface;}, ours=per(c), rs=C.filter(v=>LOYQ.c[v.k]).map(v=>per(v)/LOYQ.c[v.k][0]).sort((a,b)=>a-b), med=rs[Math.floor(rs.length/2)], r=ours/L[0], d=(r/med-1)*100;
- const verdict=d>7?`plutôt <b>optimiste</b> (+${fr(d,0)} %)`:d<-7?`plutôt <b>prudent</b> (−${fr(-d,0)} %)`:"dans la norme";
- return fRows([["Référence de l'État",`<b class="mono">${fr(L[0],1)} €/m²</b> CC`,`1-2 pièces, ${fr(L[1],1)} à ${fr(L[2],1)} €/m², ${L[3].toLocaleString("fr-FR")} annonces (2025)`],["Notre studio",`<b class="mono">${fr(ours,1)} €/m²</b> CC · ×${fr(r,2)}`,`un petit meublé se loue plus cher : ×${fr(med,2)} en moyenne sur les ${rs.length} villes`],["Verdict",verdict]]);}
+function loyEtat(c,x){const T=TY(), big=T.p>=3, src=big?LOYQ&&LOYQ.c3:LOYQ&&LOYQ.c; if(typeof LOYQ==="undefined"||!src||!src[c.k]) return "";
+ const s=(LOYQ.sref||[37,72])[big?1:0], et=v=>{const a=big?LOYQ.c3[v.k]:LOYQ.c[v.k][0]; return a*Math.pow(H.surface/s,rentExp(v.k)-1);};
+ const per=v=>{const y=calc(v); return (y.rentHC+H.chLoc*T.rooms)/H.surface;}, ours=per(c), rs=C.filter(v=>(big?LOYQ.c3:LOYQ.c)[v.k]).map(v=>per(v)/et(v)).sort((a,b)=>a-b), med=rs[Math.floor(rs.length/2)], r=ours/et(c), d=(r/med-1)*100;
+ const verdict=d>7?`plutôt <b>optimiste</b> (+${fr(d,0)} %)`:d<-7?`plutôt <b>prudent</b> (−${fr(-d,0)} %)`:"dans la norme", L=LOYQ.c[c.k];
+ return fRows([["Référence de l'État",`<b class="mono">${fr(et(c),1)} €/m²</b> CC`,`${big?"3 pièces et plus":"1-2 pièces"}, ramené à ${H.surface} m² (carte des loyers 2025${big?"":`, ${L[3].toLocaleString("fr-FR")} annonces`})`],["Notre calcul",`<b class="mono">${fr(ours,1)} €/m²</b> CC · ×${fr(r,2)}`,`${T.coloc?"loué à la chambre":"meublé"} : ×${fr(med,2)} en moyenne sur les ${rs.length} villes`],["Verdict",verdict]]);}
