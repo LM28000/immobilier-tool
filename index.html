@@ -700,6 +700,11 @@ body.mob .mrow:active,body.mob .mchip:active,body.mob .mtab button:active,body.m
 .annf .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
 .annf .chip[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
 table.annt{min-width:760px}
+
+/* quartiers : la couleur se mélange au fond de carte pour garder les noms de rues lisibles */
+.mapbox.leaf .leaflet-overlay-pane{mix-blend-mode:multiply}
+.mapbox.leaf.ldark .leaflet-overlay-pane{mix-blend-mode:screen;opacity:.75}
+.mapbox.leaf .leaflet-marker-pane{will-change:transform}
 </style>
 
 <div class="wrap">
@@ -2772,7 +2777,7 @@ function leafCities(){const g=LEAF.city; g.clearLayers(); const maxS=Math.max(..
 function leafCity(k){SEL=k; QSEL=null; AD=null; render(); if(IR[k]){svgJump(IR[k].bb); leafFly(IR[k].bb);} else {const c=C.find(v=>v.k===k); LEAF.map.flyTo([c.lat,c.lon],11,{duration:.6});} if(MOBON&&SNAP===0) setSnap(1);}
 function leafIris(){const g=LEAF.iris; g.clearLayers(); LEAF.poly={};
  Object.keys(IR).forEach(ck=>{const ll=irisLL(ck); IR[ck].list.forEach(t=>{const x=QX[t.ck+t.i], on=QSEL===t;
-  let st; if(x){const k=clsFor(x), dim=bankFail(x); st={fillColor:dim?cssv("--muted"):colv(k.c),fillOpacity:dim?.08:Math.min(.5,k.o+.04),color:on?cssv("--fg"):"#fff",weight:on?3:1,opacity:on?1:.8};}
+  let st; if(x){const k=clsFor(x), dim=bankFail(x); st={fillColor:dim?cssv("--muted"):colv(k.c),fillOpacity:dim?.06:Math.min(.55,k.o+.1),color:on?cssv("--fg"):"#fff",weight:on?3:1,opacity:on?1:.8};}
   else st={fillColor:cssv("--sunk"),fillOpacity:.35,color:cssv("--line"),weight:1,dashArray:"3 3"};
   const p=L.polygon(ll[t.i],st).addTo(g); LEAF.poly[t.ck+t.i]=p;
   p.on("click",e=>{L.DomEvent.stopPropagation(e); SEL=t.ck; QSEL=t; AD=null; svgJump(IR[t.ck].bb); render(); if(MOBON&&SNAP===0) setSnap(1);});});});}
@@ -2791,7 +2796,8 @@ function leafZoomLayers(){if(!LEAF.on) return; const z=LEAF.map.getZoom(), M=LEA
  const want=(g,on)=>{if(on&&!M.hasLayer(g)) g.addTo(M); if(!on&&M.hasLayer(g)) M.removeLayer(g);};
  want(LEAF.city,z<11); want(LEAF.iris,z>=10); want(LEAF.marks,z>=12); want(LEAF.pins,z>=12);
  LEAF.host.classList.toggle("lq",z>=10);}
-function leafRefresh(){if(!LEAF.on) return; LEAF.dark=isDark(); LEAF.host.classList.toggle("ldark",LEAF.dark);
+function leafSig(){return JSON.stringify(H)+CMODE+BANKOK+SEL+(QSEL?QSEL.ck+QSEL.i:"")+(AD?AD.ck+AD.suf:"")+BIENS.map(b=>b.id+b.statut+b.quartier).join()+(ADS.iso||"");}
+function leafRefresh(force){if(!LEAF.on) return; const sg=leafSig(); if(!force&&sg===LEAF.sig){leafZoomLayers(); return;} LEAF.sig=sg; LEAF.dark=isDark(); LEAF.host.classList.toggle("ldark",LEAF.dark);
  leafCities(); leafIris(); leafPins(); leafZoomLayers();}
 /* quelle ville est au centre de l'écran (pour la feuille du bas quand on se promène) */
 function leafCenterCity(){if(!LEAF.on||LEAF.map.getZoom()<10) return; const c=LEAF.map.getCenter(); let best=null,bd=1e9;
@@ -2800,7 +2806,7 @@ function leafCenterCity(){if(!LEAF.on||LEAF.map.getZoom()<10) return; const c=LE
 
 function leafInit(){if(LEAF.on||!window.L) return; const host=document.querySelector(".mapbox"); if(!host) return; LEAF.host=host;
  const el=document.createElement("div"); el.id="mLeaf"; host.appendChild(el);
- const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.25,worldCopyJump:false,scrollWheelZoom:true,wheelPxPerZoomLevel:36,wheelDebounceTime:16,zoomDelta:1});
+ const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.5,zoomDelta:1,worldCopyJump:false,scrollWheelZoom:true,wheelPxPerZoomLevel:50,wheelDebounceTime:30,preferCanvas:true,renderer:L.canvas({padding:.5,tolerance:4})});
  M.setView([47.7,0],7); LEAF.map=M; LEAF.tiles=L.tileLayer(TILEURL(),{maxZoom:19,crossOrigin:true}).addTo(M);
  L.control.attribution({position:"bottomleft",prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>').addTo(M);
  LEAF.city=L.layerGroup(); LEAF.iris=L.layerGroup(); LEAF.pins=L.layerGroup(); LEAF.marks=L.layerGroup();
@@ -2816,14 +2822,14 @@ function leafInit(){if(LEAF.on||!window.L) return; const host=document.querySele
 const _flyToL=flyTo; flyTo=function(bb,pad){if(LEAF.on){svgJump(bb,pad||1.15); leafFly(bb); return;} return _flyToL(bb,pad);};
 const _mHome=mHome; mHome=function(){if(LEAF.on) leafHome(); else _mHome();};
 const _renderL=render; render=function(){_renderL.apply(this,arguments); if(LEAF.on) leafRefresh();};
-const _renderSideL=renderSide; renderSide=function(){_renderSideL.apply(this,arguments); if(LEAF.on){leafIris(); leafPins(); leafZoomLayers();}};
+const _renderSideL=renderSide; renderSide=function(){_renderSideL.apply(this,arguments); if(LEAF.on) leafRefresh();};
 const _mShowL=mShowNow; mShowNow=function(k,o){_mShowL(k,o); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
 function leafSetFull(){if(LEAF.on) setTimeout(()=>LEAF.map.invalidateSize(),80);}
 document.addEventListener("click",e=>{if(!LEAF.on) return; const h=e.target.closest&&e.target.closest("#zHome,#zAll,#zIn,#zOut,#zFull"); if(!h) return;
  if(h.id==="zFull"){leafSetFull(); return;} e.preventDefault(); e.stopImmediatePropagation();
  if(h.id==="zIn") LEAF.map.zoomIn(); else if(h.id==="zOut") LEAF.map.zoomOut(); else leafHome();},true);
 addEventListener("keydown",e=>{if(LEAF.on&&(e.key==="Escape"||e.key==="f"||e.key==="F")) leafSetFull();});
-new MutationObserver(()=>{if(LEAF.on&&LEAF.dark!==isDark()) leafRefresh();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+new MutationObserver(()=>{if(LEAF.on&&LEAF.dark!==isDark()) leafRefresh(true);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
 /* on n'essaie la vraie carte que si un fond de carte se charge (refusé dans l'artifact Claude et hors ligne) */
 function leafTry(){if(LEAF.on||LEAF.trying) return; LEAF.trying=true;

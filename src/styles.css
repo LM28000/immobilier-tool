@@ -693,3 +693,8 @@ body.mob .mrow:active,body.mob .mchip:active,body.mob .mtab button:active,body.m
 .annf .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
 .annf .chip[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
 table.annt{min-width:760px}
+
+/* quartiers : la couleur se mélange au fond de carte pour garder les noms de rues lisibles */
+.mapbox.leaf .leaflet-overlay-pane{mix-blend-mode:multiply}
+.mapbox.leaf.ldark .leaflet-overlay-pane{mix-blend-mode:screen;opacity:.75}
+.mapbox.leaf .leaflet-marker-pane{will-change:transform}

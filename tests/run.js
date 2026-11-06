@@ -151,7 +151,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.goto(URL); await p.waitForTimeout(2500);
     ok('tel · vraie carte chargée', await p.evaluate(() => LEAF.on && document.querySelectorAll('#mLeaf .leaflet-tile').length > 0));
     await p.evaluate(() => leafCity('lemans')); await p.waitForTimeout(1400);
-    ok('tel · quartiers sur la vraie carte', await p.evaluate(() => Object.keys(LEAF.poly).length > 200 && document.querySelectorAll('#mLeaf path').length > 50));
+    ok('tel · quartiers sur la vraie carte', await p.evaluate(() => Object.keys(LEAF.poly).length > 200 && !!document.querySelector('#mLeaf canvas')));
     await p.evaluate(() => { const t = IR.lemans.list.find(x => x.code === '0202'); LEAF.map.setView(unproj(t.cx, t.cy), 14.5, {animate: false}); }); await p.waitForTimeout(600);
     await p.evaluate(() => document.querySelector('.lpin').dispatchEvent(new MouseEvent('click', {bubbles: true}))); await p.waitForTimeout(600);
     ok('tel · pastille de prix ouvre la fiche', await p.evaluate(() => STACK.length === 1 && !!document.querySelector('.mpush.in .mdp')));
