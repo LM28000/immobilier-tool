@@ -449,3 +449,112 @@ details.bmore[open] summary{margin-bottom:6px}
 .risqb .pill{cursor:default}
 .sl.dim input[type=range]{opacity:.45}
 .fbox .risqb{justify-content:flex-end}
+
+/* ================= version téléphone (body.mob, ≤ 760 px) ================= */
+.mnav{display:none}
+body.mob{--navh:58px;padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 12px)}
+body.mob .wrap{gap:12px}
+body.mob header{position:sticky;top:0;z-index:40;background:var(--bg);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0;padding:calc(8px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+body.mob header>p{display:none}
+body.mob header h1{font-size:1.08rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+body.mob .hrow{flex-wrap:nowrap;gap:8px}
+body.mob .hctl{flex-wrap:nowrap;gap:6px}
+body.mob .hctl .modeseg:not(#netSeg){display:none}
+body.mob .hctl #netSeg button{padding:5px 8px;font-size:.72rem}
+body.mob.simple[data-ms="fin"] #setPanel{display:block!important}
+body.mob.simple #tab-rank,body.mob.simple #tab-sc{display:inline-flex!important}
+body.mob.simple #p-rank:not([hidden]),body.mob.simple #p-sc:not([hidden]){display:block!important}
+body.mob.mnoq #qDetail{display:none!important}
+body.mob .hctl button{font-size:.74rem}
+body.mob #installBtn{display:none}
+/* un seul écran visible */
+body.mob .wrap>section.panel,body.mob #mapSec,body.mob footer.foot{display:none}
+body.mob[data-ms="carte"] #mapSec,body.mob[data-ms="annonces"] #mAnn,body.mob[data-ms="short"] #shortPanel,body.mob[data-ms="fin"] #setPanel,body.mob[data-ms="plus"] #tabsSec,body.mob[data-ms="plus"] footer.foot{display:block}
+body.mob .main{display:block}
+body.mob .panel{padding:14px;border-radius:12px}
+.mh{margin:0 0 10px}
+/* barre d'onglets */
+body.mob .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:62;background:var(--surface);border-top:1px solid var(--line);
+ padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);box-shadow:0 -4px 16px rgb(0 0 0 / .06)}
+.mnav button{position:relative;height:var(--navh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:var(--muted);font:inherit;font-size:.66rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mnav button[aria-current="page"]{color:var(--accent)}
+.mnav button[aria-current="page"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.mbadge{position:absolute;top:6px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--accent);color:var(--surface);font-size:.62rem;line-height:16px;text-align:center;padding:0 4px}
+/* écran carte : la carte remplit l'espace entre l'en-tête et la barre */
+body.mob.mcarte{overflow:hidden}
+body.mob.mcarte #mapSec{position:fixed;left:0;right:0;top:var(--mtop,52px);bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;margin:0;border:0;border-radius:0;padding:8px max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));background:var(--bg)}
+body.mob.mcarte #mapSec .maphead{margin-bottom:6px}
+body.mob.mcarte #mapSec .maphead h2{display:none}
+body.mob.mcarte .mapbox{flex:1;min-height:0;border-radius:12px;display:flex;flex-direction:column;margin-bottom:8px}
+body.mob.mcarte #map{flex:1;min-height:0;height:auto;width:100%;touch-action:none}
+body.mob.mcarte #mapLegend,body.mob.mcarte .maphint,body.mob #zFull{display:none!important}
+body.mob.mcarte .mapchip{flex:0 0 auto}
+/* feuille du bas au-dessus de la barre d'onglets */
+body.mob .qdetail{bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px));padding-bottom:12px;max-height:58dvh}
+body.mob .qdetail.full{max-height:calc(100dvh - var(--navh) - env(safe-area-inset-bottom,0px) - var(--mtop,52px))}
+body.mob .qdetail .adact{margin-bottom:-12px;padding-bottom:10px}
+/* fiche de la ville en plein écran */
+.mdet{position:fixed;left:0;right:0;top:0;bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px));z-index:61;background:var(--bg);display:flex;flex-direction:column}
+.mdetbar{display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--surface)}
+.mback{display:inline-flex;align-items:center;gap:4px;border:0;background:var(--sunk);color:var(--fg);font:inherit;font-weight:700;font-size:.84rem;border-radius:999px;padding:6px 12px 6px 8px;cursor:pointer}
+.mdetin{flex:1;overflow:auto;overscroll-behavior:contain;padding:12px max(12px,env(safe-area-inset-right,0px)) 16px max(12px,env(safe-area-inset-left,0px))}
+.mdetin #detail{display:block!important;margin:0}
+body.mdet-on{overflow:hidden}
+/* écran annonces */
+.mcities{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;margin:0 -2px;scrollbar-width:none}
+.mcities::-webkit-scrollbar{display:none}
+.mcities .chip{flex:0 0 auto;font-size:.84rem;padding:7px 13px;display:inline-flex;gap:6px;align-items:baseline}
+.mcities .chip small{font-family:var(--f-num);font-size:.72rem;color:var(--muted)}
+.mcities .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.mcities .chip[aria-pressed="true"] small{color:var(--surface);opacity:.8}
+.mcrumb{margin:0 0 8px;font-size:.88rem}
+#mAnn #dealsH{font-size:1rem;margin:4px 0 6px}
+#mAnn #dealsH .h2n{display:none}
+#mAnn #qBox{margin-top:10px}
+#mAnn .qcard{padding:12px}
+/* annonces de vente en cartes */
+body.mob table.vt,body.mob table.vt tbody{display:block;min-width:0;width:100%}
+body.mob table.vt thead{display:none}
+body.mob table.vt tr{display:grid;grid-template-columns:64px auto auto minmax(0,1fr) auto;grid-template-areas:"th sec sec sec irr" "th m2 px pm pm" "th cf cf act act";column-gap:8px;row-gap:2px;align-items:baseline;
+ padding:10px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+body.mob table.vt tr[hidden]{display:none}
+body.mob table.vt td{padding:0!important;border:0!important;background:none!important;font-size:.84rem;text-align:left;white-space:nowrap}
+body.mob table.vt td.tcell{grid-area:th;align-self:start;width:auto}
+body.mob table.vt .thb{width:64px;height:56px;border-radius:7px}
+body.mob table.vt .c-sec{grid-area:sec;font-weight:700;font-size:.9rem;white-space:normal}
+body.mob table.vt .c-m2{grid-area:m2}
+body.mob table.vt .c-m2::after{content:" m²"}
+body.mob table.vt .c-px{grid-area:px;font-weight:700}
+body.mob table.vt .c-px .hbs{display:inline-flex;margin-left:4px}
+body.mob table.vt .c-pm{grid-area:pm;display:block!important;color:var(--muted);font-size:.76rem}
+body.mob table.vt .c-pm::after{content:"/m²"}
+body.mob table.vt .c-cf{grid-area:cf;font-size:.82rem;align-self:center}
+body.mob table.vt .c-cf::after{content:"/mois";font-size:.7rem;color:var(--muted);font-weight:400}
+body.mob table.vt .c-irr{grid-area:irr;text-align:right;font-size:.98rem}
+body.mob table.vt .c-irr::after{content:" 15 ans";font-size:.68rem;color:var(--muted);font-weight:400}
+body.mob table.vt .c-act{grid-area:act;justify-self:end;margin-top:4px}
+body.mob table.vt .c-act a.hm{display:inline!important;margin-right:8px;font-size:.82rem}
+body.mob table.vt tr.clk:active{background:var(--accent-soft)}
+body.mob .scrollbox:has(table.vt){border-radius:10px;border:1px solid var(--line);overflow:hidden}
+/* shortlist : cartes empilées */
+body.mob #shortList.cards.row{display:flex;flex-direction:column;overflow:visible;gap:10px;padding:0}
+body.mob #shortList .bcard{width:auto}
+body.mob #shortList .bcard>.sub{white-space:normal}
+body.mob #shortPanel .rowbtn{display:none}
+.mmore{margin-top:14px}
+.mmore .btn{width:100%}
+/* écran plus : onglets défilants */
+body.mob #tabsSec .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+body.mob #tabsSec .tabs::-webkit-scrollbar{display:none}
+body.mob #tabsSec .tabs [role=tab]{flex:0 0 auto}
+body.mob footer.foot{margin-top:0}
+/* réglages : champs en une colonne */
+body.mob .sliders{grid-template-columns:1fr}
+body.mob #setPanel .toprow{flex-direction:column;align-items:flex-start;gap:8px}
+body.mob #themeBtn{font-size:0;width:34px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+body.mob #themeBtn::before{content:"☾";font-size:1rem}
+:root[data-theme="dark"] body.mob #themeBtn::before{content:"☀"}
+body.mob #netSeg button{white-space:nowrap}
+body.mob header h1{font-size:1.02rem}
+body.mob #toast{bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 10px);z-index:70}
+body.mob #shortList .bph,body.mob #shortList .bph img{width:100%}

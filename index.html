@@ -456,6 +456,115 @@ details.bmore[open] summary{margin-bottom:6px}
 .risqb .pill{cursor:default}
 .sl.dim input[type=range]{opacity:.45}
 .fbox .risqb{justify-content:flex-end}
+
+/* ================= version téléphone (body.mob, ≤ 760 px) ================= */
+.mnav{display:none}
+body.mob{--navh:58px;padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 12px)}
+body.mob .wrap{gap:12px}
+body.mob header{position:sticky;top:0;z-index:40;background:var(--bg);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0;padding:calc(8px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+body.mob header>p{display:none}
+body.mob header h1{font-size:1.08rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+body.mob .hrow{flex-wrap:nowrap;gap:8px}
+body.mob .hctl{flex-wrap:nowrap;gap:6px}
+body.mob .hctl .modeseg:not(#netSeg){display:none}
+body.mob .hctl #netSeg button{padding:5px 8px;font-size:.72rem}
+body.mob.simple[data-ms="fin"] #setPanel{display:block!important}
+body.mob.simple #tab-rank,body.mob.simple #tab-sc{display:inline-flex!important}
+body.mob.simple #p-rank:not([hidden]),body.mob.simple #p-sc:not([hidden]){display:block!important}
+body.mob.mnoq #qDetail{display:none!important}
+body.mob .hctl button{font-size:.74rem}
+body.mob #installBtn{display:none}
+/* un seul écran visible */
+body.mob .wrap>section.panel,body.mob #mapSec,body.mob footer.foot{display:none}
+body.mob[data-ms="carte"] #mapSec,body.mob[data-ms="annonces"] #mAnn,body.mob[data-ms="short"] #shortPanel,body.mob[data-ms="fin"] #setPanel,body.mob[data-ms="plus"] #tabsSec,body.mob[data-ms="plus"] footer.foot{display:block}
+body.mob .main{display:block}
+body.mob .panel{padding:14px;border-radius:12px}
+.mh{margin:0 0 10px}
+/* barre d'onglets */
+body.mob .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:62;background:var(--surface);border-top:1px solid var(--line);
+ padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);box-shadow:0 -4px 16px rgb(0 0 0 / .06)}
+.mnav button{position:relative;height:var(--navh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:var(--muted);font:inherit;font-size:.66rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mnav button[aria-current="page"]{color:var(--accent)}
+.mnav button[aria-current="page"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.mbadge{position:absolute;top:6px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--accent);color:var(--surface);font-size:.62rem;line-height:16px;text-align:center;padding:0 4px}
+/* écran carte : la carte remplit l'espace entre l'en-tête et la barre */
+body.mob.mcarte{overflow:hidden}
+body.mob.mcarte #mapSec{position:fixed;left:0;right:0;top:var(--mtop,52px);bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;margin:0;border:0;border-radius:0;padding:8px max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));background:var(--bg)}
+body.mob.mcarte #mapSec .maphead{margin-bottom:6px}
+body.mob.mcarte #mapSec .maphead h2{display:none}
+body.mob.mcarte .mapbox{flex:1;min-height:0;border-radius:12px;display:flex;flex-direction:column;margin-bottom:8px}
+body.mob.mcarte #map{flex:1;min-height:0;height:auto;width:100%;touch-action:none}
+body.mob.mcarte #mapLegend,body.mob.mcarte .maphint,body.mob #zFull{display:none!important}
+body.mob.mcarte .mapchip{flex:0 0 auto}
+/* feuille du bas au-dessus de la barre d'onglets */
+body.mob .qdetail{bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px));padding-bottom:12px;max-height:58dvh}
+body.mob .qdetail.full{max-height:calc(100dvh - var(--navh) - env(safe-area-inset-bottom,0px) - var(--mtop,52px))}
+body.mob .qdetail .adact{margin-bottom:-12px;padding-bottom:10px}
+/* fiche de la ville en plein écran */
+.mdet{position:fixed;left:0;right:0;top:0;bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px));z-index:61;background:var(--bg);display:flex;flex-direction:column}
+.mdetbar{display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--surface)}
+.mback{display:inline-flex;align-items:center;gap:4px;border:0;background:var(--sunk);color:var(--fg);font:inherit;font-weight:700;font-size:.84rem;border-radius:999px;padding:6px 12px 6px 8px;cursor:pointer}
+.mdetin{flex:1;overflow:auto;overscroll-behavior:contain;padding:12px max(12px,env(safe-area-inset-right,0px)) 16px max(12px,env(safe-area-inset-left,0px))}
+.mdetin #detail{display:block!important;margin:0}
+body.mdet-on{overflow:hidden}
+/* écran annonces */
+.mcities{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;margin:0 -2px;scrollbar-width:none}
+.mcities::-webkit-scrollbar{display:none}
+.mcities .chip{flex:0 0 auto;font-size:.84rem;padding:7px 13px;display:inline-flex;gap:6px;align-items:baseline}
+.mcities .chip small{font-family:var(--f-num);font-size:.72rem;color:var(--muted)}
+.mcities .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.mcities .chip[aria-pressed="true"] small{color:var(--surface);opacity:.8}
+.mcrumb{margin:0 0 8px;font-size:.88rem}
+#mAnn #dealsH{font-size:1rem;margin:4px 0 6px}
+#mAnn #dealsH .h2n{display:none}
+#mAnn #qBox{margin-top:10px}
+#mAnn .qcard{padding:12px}
+/* annonces de vente en cartes */
+body.mob table.vt,body.mob table.vt tbody{display:block;min-width:0;width:100%}
+body.mob table.vt thead{display:none}
+body.mob table.vt tr{display:grid;grid-template-columns:64px auto auto minmax(0,1fr) auto;grid-template-areas:"th sec sec sec irr" "th m2 px pm pm" "th cf cf act act";column-gap:8px;row-gap:2px;align-items:baseline;
+ padding:10px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+body.mob table.vt tr[hidden]{display:none}
+body.mob table.vt td{padding:0!important;border:0!important;background:none!important;font-size:.84rem;text-align:left;white-space:nowrap}
+body.mob table.vt td.tcell{grid-area:th;align-self:start;width:auto}
+body.mob table.vt .thb{width:64px;height:56px;border-radius:7px}
+body.mob table.vt .c-sec{grid-area:sec;font-weight:700;font-size:.9rem;white-space:normal}
+body.mob table.vt .c-m2{grid-area:m2}
+body.mob table.vt .c-m2::after{content:" m²"}
+body.mob table.vt .c-px{grid-area:px;font-weight:700}
+body.mob table.vt .c-px .hbs{display:inline-flex;margin-left:4px}
+body.mob table.vt .c-pm{grid-area:pm;display:block!important;color:var(--muted);font-size:.76rem}
+body.mob table.vt .c-pm::after{content:"/m²"}
+body.mob table.vt .c-cf{grid-area:cf;font-size:.82rem;align-self:center}
+body.mob table.vt .c-cf::after{content:"/mois";font-size:.7rem;color:var(--muted);font-weight:400}
+body.mob table.vt .c-irr{grid-area:irr;text-align:right;font-size:.98rem}
+body.mob table.vt .c-irr::after{content:" 15 ans";font-size:.68rem;color:var(--muted);font-weight:400}
+body.mob table.vt .c-act{grid-area:act;justify-self:end;margin-top:4px}
+body.mob table.vt .c-act a.hm{display:inline!important;margin-right:8px;font-size:.82rem}
+body.mob table.vt tr.clk:active{background:var(--accent-soft)}
+body.mob .scrollbox:has(table.vt){border-radius:10px;border:1px solid var(--line);overflow:hidden}
+/* shortlist : cartes empilées */
+body.mob #shortList.cards.row{display:flex;flex-direction:column;overflow:visible;gap:10px;padding:0}
+body.mob #shortList .bcard{width:auto}
+body.mob #shortList .bcard>.sub{white-space:normal}
+body.mob #shortPanel .rowbtn{display:none}
+.mmore{margin-top:14px}
+.mmore .btn{width:100%}
+/* écran plus : onglets défilants */
+body.mob #tabsSec .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+body.mob #tabsSec .tabs::-webkit-scrollbar{display:none}
+body.mob #tabsSec .tabs [role=tab]{flex:0 0 auto}
+body.mob footer.foot{margin-top:0}
+/* réglages : champs en une colonne */
+body.mob .sliders{grid-template-columns:1fr}
+body.mob #setPanel .toprow{flex-direction:column;align-items:flex-start;gap:8px}
+body.mob #themeBtn{font-size:0;width:34px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+body.mob #themeBtn::before{content:"☾";font-size:1rem}
+:root[data-theme="dark"] body.mob #themeBtn::before{content:"☀"}
+body.mob #netSeg button{white-space:nowrap}
+body.mob header h1{font-size:1.02rem}
+body.mob #toast{bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 10px);z-index:70}
+body.mob #shortList .bph,body.mob #shortList .bph img{width:100%}
 </style>
 
 <div class="wrap">
@@ -470,8 +579,8 @@ details.bmore[open] summary{margin-bottom:6px}
     <div class="rowwrap"><div class="cards row" id="shortList"></div></div>
     <div id="shortOut"></div>
     <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
-    <h2 style="margin-top:18px">Ventes du jour à regarder <span class="h2n">les meilleurs rendements parmi les studios à vendre que la banque accepterait</span></h2>
-    <div class="rowwrap"><div class="cards row" id="dealsList"></div></div>
+    <h2 style="margin-top:18px" id="dealsH">Ventes du jour à regarder <span class="h2n">les meilleurs rendements parmi les studios à vendre que la banque accepterait</span></h2>
+    <div class="rowwrap" id="dealsWrap"><div class="cards row" id="dealsList"></div></div>
   </section>
 
   <section class="panel" id="setPanel">
@@ -544,7 +653,7 @@ details.bmore[open] summary{margin-bottom:6px}
     </div>
   </div>
 
-  <section class="panel">
+  <section class="panel" id="tabsSec">
     <div class="tabs" role="tablist" aria-label="Vues de comparaison">
       <button type="button" role="tab" id="tab-rank" aria-controls="p-rank" aria-selected="true">Classement</button>
       <button type="button" role="tab" id="tab-sc" aria-controls="p-sc" aria-selected="false" tabindex="-1">Prix contre loyer</button>
@@ -1367,7 +1476,7 @@ function readHash(){const h=location.hash.slice(1); if(!h) return false; const [
 addEventListener("hashchange",()=>{if(location.hash.slice(1)!==SEL+(QSEL?"-"+QSEL.code:"")) readHash();});
 
 /* ---------- plein écran ---------- */
-function fitVH(){const sec=document.getElementById("mapSec"), on=sec.classList.contains("mapfull"), cx=(VW/2-V.x)/V.k, cy=(VH/2-V.y)/V.k;
+function fitVH(){const sec=document.getElementById("mapSec"), on=sec.classList.contains("mapfull")||document.body.classList.contains("mcarte"), cx=(VW/2-V.x)/V.k, cy=(VH/2-V.y)/V.k;
  cancelAnimationFrame(anim); const f=VW/WW;
  const r=sec.querySelector(".mapbox").getBoundingClientRect();
  if(on){VW=Math.max(300,Math.round(r.width)); VH=Math.max(200,Math.round(r.height));}
@@ -1466,8 +1575,8 @@ const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([c
 const isAdded=url=>BIENS.some(b=>b.url===url);
 function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}" aria-label="Ajouter à nos biens">+${big?" Ajouter à nos biens":`<span class="lbl"> Ajouter</span>`}</button>`;}
 function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99));
- return `<div class="scrollbox"><table class="adt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
-  const hv=vu("v",ck,a[3]); return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"${hv&&hv.last?' data-drop="1"':""}><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td>${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono">${String(a[0]).replace(".",",")}</td><td class="r mono">${keur(a[2])}${vuBadges("v",ck,a[3])?`<div class="hbs">${vuBadges("v",ck,a[3])}</div>`:""}</td><td class="r mono hm">${eur(a[2]/a[0])}</td><td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td style="white-space:nowrap"><a class="hm" href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
+ return `<div class="scrollbox"><table class="adt vt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
+  const hv=vu("v",ck,a[3]); return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"${hv&&hv.last?' data-drop="1"':""}><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td class="c-sec">${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono c-m2">${String(a[0]).replace(".",",")}</td><td class="r mono c-px">${keur(a[2])}${vuBadges("v",ck,a[3])?`<div class="hbs">${vuBadges("v",ck,a[3])}</div>`:""}</td><td class="r mono hm c-pm">${eur(a[2]/a[0])}</td><td class="r mono c-cf ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono c-irr" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td class="c-act" style="white-space:nowrap"><a class="hm" href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
  <p class="sub" style="margin:4px 0 0">Prix affichés (frais d'agence en général inclus), relevé du ${ADS.date||"5 novembre 2026"}. Calcul avec notaire, meubles, petits travaux et le loyer du quartier. ⚠ = banque trop juste.</p>`;}
 function ventesLine(t){const A=ADS[t.ck]; if(!A||!A.ventes) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
  const l=A.ventes.filter(a=>a[1]===d); if(!l.length) return `<p class="sub" style="margin:0 0 6px">Aucun studio à vendre en ce moment dans le secteur « ${esc(d)} » sur Bien'ici.</p>`;
@@ -2143,6 +2252,92 @@ addEventListener("scroll",()=>{if(TIPCUR) hideTip();},{passive:true,capture:true
 addEventListener("keydown",e=>{if(e.key==="Escape"&&TIPCUR) hideTip();});
 let TIPT=null; new MutationObserver(ms=>{if(TIPBUSY||ms.every(m=>m.target.closest&&m.target.closest("svg"))) return; clearTimeout(TIPT); TIPT=setTimeout(()=>addTips(document),150);}).observe(document.body,{childList:true,subtree:true});
 addTips(document);
+
+/* ---------- version téléphone : 5 écrans et une barre d'onglets en bas ---------- */
+const MOBQ=matchMedia("(max-width:760px)");
+const MICO={
+ carte:'<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z M9 4v13.5 M15 6.5V20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+ annonces:'<path d="M4 5h16M4 10h16M4 15h10M4 20h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+ short:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+ fin:'<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+ plus:'<circle cx="5.5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor"/>'};
+const MSCR=[["carte","Carte"],["annonces","Annonces"],["short","Shortlist"],["fin","Financement"],["plus","Plus"]];
+let MS="carte", MOBON=false;
+const MPLACE={}; // emplacement d'origine des blocs déplacés
+function mMove(el,to,before){if(!el) return; if(!MPLACE[el.id]){const c=document.createComment("m:"+el.id); el.before(c); MPLACE[el.id]=c;} before?to.insertBefore(el,before):to.appendChild(el);}
+function mBack(){Object.entries(MPLACE).forEach(([id,c])=>{const el=document.getElementById(id); if(el) c.after(el);});}
+
+/* éléments créés une fois */
+const mNav=document.createElement("nav"); mNav.className="mnav"; mNav.setAttribute("aria-label","Écrans");
+mNav.innerHTML=MSCR.map(([k,l])=>`<button type="button" data-ms="${k}" aria-current="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${MICO[k]}</svg><span>${l}</span><b class="mbadge" hidden></b></button>`).join("");
+const mAnn=document.createElement("section"); mAnn.className="panel mscreen"; mAnn.id="mAnn";
+mAnn.innerHTML=`<h2 class="mh">Annonces</h2><div class="mcities" id="mCities" role="group" aria-label="Ville"></div><div id="mAnnTop"></div><div id="mAnnBody"></div>`;
+const mDet=document.createElement("div"); mDet.className="mdet"; mDet.id="mDet"; mDet.hidden=true;
+mDet.innerHTML=`<div class="mdetbar"><button type="button" class="mback" data-mdetclose><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Carte</button><b id="mDetT"></b></div><div class="mdetin" id="mDetIn"></div>`;
+const mPlusNav=document.createElement("div"); mPlusNav.id="mShortMore"; mPlusNav.className="mmore";
+mPlusNav.innerHTML=`<button type="button" class="btn ghost" data-mgo="tab-biens">Tous nos biens · ajouter un bien</button>`;
+
+function mCities(){const box=document.getElementById("mCities"); if(!box) return;
+ const ks=C.filter(c=>ADS[c.k]).map(c=>c.k);
+ box.innerHTML=ks.map(k=>{const c=C.find(v=>v.k===k), n=(ADS[k].ventes||[]).length; return `<button type="button" class="chip" data-mcity="${k}" aria-pressed="${SEL===k}">${c.name}<small>${n}</small></button>`;}).join("");
+ const top=document.getElementById("mAnnTop");
+ top.innerHTML=QSEL&&QSEL.ck===SEL?`<p class="mcrumb"><button type="button" class="lnk" data-mcity="${SEL}">← Tout ${esc(C.find(c=>c.k===SEL).name)}</button> · quartier ${esc(QSEL.name)}</p>`:IR[SEL]?"":`<p class="sub">Pas d'annonces suivies pour ${esc(C.find(c=>c.k===SEL).name)} : choisissez une des villes ci-dessus.</p>`;}
+
+function mBadges(){const n=BIENS?BIENS.filter(b=>!isOut(b)).length:0, b=mNav.querySelector('[data-ms="short"] .mbadge'); b.hidden=!n; b.textContent=n;}
+
+function mShow(k,opt){opt=opt||{}; MS=k; try{localStorage.setItem("mscreen",k);}catch(_){}
+ document.body.dataset.ms=k; document.body.classList.toggle("mcarte",k==="carte");
+ mNav.querySelectorAll("[data-ms]").forEach(b=>b.setAttribute("aria-current",b.dataset.ms===k?"page":"false"));
+ if(k!=="carte") mDetClose();
+ if(k==="annonces") mCities();
+ if(k==="fin"){const f=document.getElementById("finBox"); if(f) f.open=true;}
+ if(!opt.keep) scrollTo({top:0,behavior:"instant"});
+ mSheet(); mTop(); requestAnimationFrame(()=>{mTop(); draw.vw=0; fitVH(); rowArrows&&rowArrows();});}
+function mTop(){const h=document.querySelector(".wrap>header"); if(h) document.documentElement.style.setProperty("--mtop",Math.round(h.getBoundingClientRect().bottom)+"px");}
+function mSheet(){document.body.classList.toggle("mnoq",MOBON&&MS!=="carte"&&!AD);}
+addEventListener("resize",()=>{if(MOBON) mTop();});
+
+function mApply(on){if(on===MOBON) return; MOBON=on; document.body.classList.toggle("mob",on);
+ document.querySelectorAll("#netSeg button").forEach(b=>{if(!b.dataset.full) b.dataset.full=b.textContent; b.textContent=on?(b.dataset.net==="1"?"Net":"Brut"):b.dataset.full;});
+ if(on){
+  document.body.appendChild(mNav);
+  const wrap=document.querySelector(".wrap"), main=document.querySelector(".main");
+  main.before(mAnn);
+  mMove(document.getElementById("dealsH"),document.getElementById("mAnnTop").parentNode,document.getElementById("mAnnBody"));
+  mMove(document.getElementById("dealsWrap"),mAnn,document.getElementById("mAnnBody"));
+  mMove(document.getElementById("qBox"),document.getElementById("mAnnBody"));
+  document.getElementById("shortPanel").appendChild(mPlusNav);
+  document.body.appendChild(mDet); mMove(document.getElementById("detail"),document.getElementById("mDetIn"));
+  let k="carte"; try{k=localStorage.getItem("mscreen")||"carte";}catch(_){} if(!MSCR.some(s=>s[0]===k)) k="carte";
+  mShow(k,{keep:true});
+ } else {
+  mBack(); mNav.remove(); mAnn.remove(); mDet.remove(); mPlusNav.remove();
+  delete document.body.dataset.ms; document.body.classList.remove("mcarte","mdet-on");
+  requestAnimationFrame(()=>{draw.vw=0; fitVH();});}}
+
+/* fiche de la ville en plein écran (depuis la pastille sous la carte) */
+function mDetOpen(){mDet.hidden=false; document.body.classList.add("mdet-on"); const c=C.find(v=>v.k===SEL); document.getElementById("mDetT").textContent=c?c.name:""; document.getElementById("mDetIn").scrollTop=0;}
+function mDetClose(){if(mDet.hidden) return; mDet.hidden=true; document.body.classList.remove("mdet-on");}
+
+document.addEventListener("click",e=>{if(!MOBON) return;
+ const t=e.target.closest&&e.target.closest("[data-ms],[data-mcity],[data-mdetclose],[data-mgo],#mapChip,[data-gotab],#cmpGo,[data-sim]");
+ if(!t) return;
+ if(t.matches("#mapChip")){e.stopImmediatePropagation(); mDetOpen(); return;}
+ if(t.dataset.mdetclose!==undefined){mDetClose(); return;}
+ if(t.dataset.ms&&t.closest(".mnav")){if(t.dataset.ms===MS) scrollTo({top:0,behavior:"smooth"}); else mShow(t.dataset.ms); return;}
+ if(t.dataset.mcity){const k=t.dataset.mcity; SEL=k; QSEL=null; render(); if(IR[k]) flyTo(IR[k].bb); mCities(); return;}
+ if(t.dataset.mgo){showTab(t.dataset.mgo); mShow("plus"); return;}
+ // actions qui menaient à un autre endroit de la page : on change d'écran d'abord
+ if(t.dataset.gotab||t.id==="cmpGo"||t.dataset.sim) mShow("plus",{keep:true});},true);
+
+/* un clic sur la carte qui sélectionne une ville ou un quartier garde l'écran Carte ; les annonces suivent */
+const _render=render; render=function(){_render.apply(this,arguments); if(MOBON){mBadges(); if(MS==="annonces") mCities(); const c=C.find(v=>v.k===SEL); if(c&&!mDet.hidden) document.getElementById("mDetT").textContent=c.name;}};
+const _showTab=showTab; showTab=function(id){_showTab(id); if(MOBON&&MS!=="plus"&&LASTUSER&&Date.now()-LASTUSER<1500) mShow("plus",{keep:true});};
+addEventListener("keydown",e=>{if(e.key==="Escape"&&MOBON&&!mDet.hidden) mDetClose();});
+const _renderSide=renderSide; renderSide=function(){_renderSide.apply(this,arguments); if(MOBON) mSheet();};
+
+MOBQ.addEventListener?MOBQ.addEventListener("change",e=>mApply(e.matches)):MOBQ.addListener(e=>mApply(e.matches));
+mApply(MOBQ.matches);
 
 initFin();
 fitVH();

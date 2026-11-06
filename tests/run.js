@@ -18,6 +18,8 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
   for (const [n, o] of VIEWS) {
     const {c, p, errs} = await page(b, o);
     const T = s => `${n} · ${s}`;
+    const scr = async k => { if (n === 'tel') { await p.evaluate(k => mShow(k), k); await p.waitForTimeout(300); } };
+    await scr('carte');
     // pas de défilement horizontal
     ok(T('pas de débordement horizontal'), await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
     // clic sur une ville : sélection sans zoom, annonces en dessous
@@ -49,6 +51,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('panneau sans défilement interne'), await p.evaluate(() => { const s = document.getElementById('side'); return s.scrollHeight <= s.clientHeight + 2; }));
     // biens : statut, annuler, suppression
     await p.evaluate(() => { AD = null; QSEL = null; draw(); renderQBox(); });
+    await scr('short');
     await p.evaluate(async () => { await DB.collection('biens').add(Object.assign(venteBien('lemans', ADS.lemans.ventes[1]), {statut: 'à voir', fav: false, ts: Date.now()})); }); await p.waitForTimeout(400);
     await p.click('#shortList [data-stmenu]'); await p.click('.stmenu [data-stset$="|visité"]'); await p.waitForTimeout(300);
     ok(T('statut suivant'), await p.evaluate(() => BIENS[0].statut === 'visité'));
@@ -65,12 +68,29 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.click('#toast button'); await p.waitForTimeout(300);
     ok(T('annuler le retrait'), await p.evaluate(() => BIENS[0].statut === 'à voir' && !!document.querySelector('#shortList .bcard')));
     ok(T('prix à viser dans la shortlist'), await p.evaluate(() => !!document.querySelector('#shortList .btg')));
-    await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
+    await scr('plus'); await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
     await p.click('#biensList [data-del]'); await p.waitForTimeout(300);
     const d0 = await p.evaluate(() => BIENS.length); await p.click('#toast button'); await p.waitForTimeout(400);
     ok(T('supprimer puis annuler'), d0 === 0 && await p.evaluate(() => BIENS.length === 1));
     // listes repliées
     ok(T('listes repliées à 8'), await p.evaluate(() => [...document.querySelectorAll('.scrollbox')].every(s => [...s.querySelectorAll('tbody tr')].filter(t => !t.hidden && !t.classList.contains('more')).length <= 9)));
+    if (n === 'tel') {
+      ok(T('barre d\'onglets à 5 écrans'), await p.evaluate(() => document.querySelectorAll('.mnav [data-ms]').length === 5 && getComputedStyle(document.querySelector('.mnav')).display !== 'none'));
+      let over = [];
+      for (const k of ['carte', 'annonces', 'short', 'fin', 'plus']) { await scr(k); if (!(await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1))) over.push(k); }
+      ok(T('aucun écran ne déborde'), !over.length, over.join(','));
+      await scr('carte');
+      ok(T('carte plein écran'), await p.evaluate(() => { const r = document.querySelector('.mapbox').getBoundingClientRect(), nav = document.querySelector('.mnav').getBoundingClientRect(); return r.height > innerHeight * 0.55 && r.bottom <= nav.top + 1; }));
+      await p.click('#mapChip'); await p.waitForTimeout(300);
+      ok(T('fiche de la ville en plein écran'), await p.evaluate(() => !document.getElementById('mDet').hidden && document.getElementById('detail').offsetHeight > 200));
+      await p.click('[data-mdetclose]');
+      await scr('annonces');
+      ok(T('annonces en cartes'), await p.evaluate(() => { const tr = document.querySelector('#mAnn table.vt tbody tr'); return !!tr && getComputedStyle(tr).display === 'grid'; }));
+      await p.click('#mCities [data-mcity="stnazaire"]'); await p.waitForTimeout(400);
+      ok(T('choix de la ville dans Annonces'), await p.evaluate(() => SEL === 'stnazaire' && /Saint-Nazaire/.test(document.getElementById('qBox').innerText)));
+      await scr('fin');
+      ok(T('écran financement visible'), await p.evaluate(() => document.getElementById('setPanel').offsetHeight > 300));
+    }
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();
   }

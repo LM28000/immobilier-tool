@@ -11,8 +11,8 @@
     <div class="rowwrap"><div class="cards row" id="shortList"></div></div>
     <div id="shortOut"></div>
     <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
-    <h2 style="margin-top:18px">Ventes du jour à regarder <span class="h2n">les meilleurs rendements parmi les studios à vendre que la banque accepterait</span></h2>
-    <div class="rowwrap"><div class="cards row" id="dealsList"></div></div>
+    <h2 style="margin-top:18px" id="dealsH">Ventes du jour à regarder <span class="h2n">les meilleurs rendements parmi les studios à vendre que la banque accepterait</span></h2>
+    <div class="rowwrap" id="dealsWrap"><div class="cards row" id="dealsList"></div></div>
   </section>
 
   <section class="panel" id="setPanel">
@@ -85,7 +85,7 @@
     </div>
   </div>
 
-  <section class="panel">
+  <section class="panel" id="tabsSec">
     <div class="tabs" role="tablist" aria-label="Vues de comparaison">
       <button type="button" role="tab" id="tab-rank" aria-controls="p-rank" aria-selected="true">Classement</button>
       <button type="button" role="tab" id="tab-sc" aria-controls="p-sc" aria-selected="false" tabindex="-1">Prix contre loyer</button>

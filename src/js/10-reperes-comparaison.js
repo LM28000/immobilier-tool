@@ -87,7 +87,7 @@ function readHash(){const h=location.hash.slice(1); if(!h) return false; const [
 addEventListener("hashchange",()=>{if(location.hash.slice(1)!==SEL+(QSEL?"-"+QSEL.code:"")) readHash();});
 
 /* ---------- plein écran ---------- */
-function fitVH(){const sec=document.getElementById("mapSec"), on=sec.classList.contains("mapfull"), cx=(VW/2-V.x)/V.k, cy=(VH/2-V.y)/V.k;
+function fitVH(){const sec=document.getElementById("mapSec"), on=sec.classList.contains("mapfull")||document.body.classList.contains("mcarte"), cx=(VW/2-V.x)/V.k, cy=(VH/2-V.y)/V.k;
  cancelAnimationFrame(anim); const f=VW/WW;
  const r=sec.querySelector(".mapbox").getBoundingClientRect();
  if(on){VW=Math.max(300,Math.round(r.width)); VH=Math.max(200,Math.round(r.height));}
