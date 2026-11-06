@@ -2,9 +2,7 @@
    Chargée seulement si les fonds de carte s'affichent (page GitHub) ; sinon la carte dessinée reste (artifact Claude, hors ligne). */
 const LEAF={on:false,map:null,tiles:null,city:null,iris:null,pins:null,marks:null,poly:{},dark:null};
 // fond gris clair d'Esri (sans clé), et les noms de rues dans un calque à part, posé AU-DESSUS des quartiers colorés
-const ESRI="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_";
-const TILEURL=dark=>`${ESRI}${dark?"Dark":"Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
-const LABURL=dark=>`${ESRI}${dark?"Dark":"Light"}_Gray_Reference/MapServer/tile/{z}/{y}/{x}`;
+const TILEURL=()=>"https://tile.openstreetmap.org/{z}/{x}/{y}.png";   // fonds OpenStreetMap, sans clé
 const LEAFJS="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#888";
 const colv=c=>c&&c.startsWith("var(")?cssv(c.slice(4,-1)):c;
@@ -36,8 +34,8 @@ function leafCities(){const g=LEAF.city; g.clearLayers(); const maxS=Math.max(..
 function leafCity(k){SEL=k; QSEL=null; AD=null; render(); if(IR[k]){svgJump(IR[k].bb); leafFly(IR[k].bb);} else {const c=C.find(v=>v.k===k); LEAF.map.flyTo([c.lat,c.lon],11,{duration:.6});} if(MOBON&&SNAP===0) setSnap(1);}
 function leafIris(){const g=LEAF.iris; g.clearLayers(); LEAF.poly={};
  Object.keys(IR).forEach(ck=>{const ll=irisLL(ck); IR[ck].list.forEach(t=>{const x=QX[t.ck+t.i], on=QSEL===t;
-  let st; if(x){const k=clsFor(x), dim=bankFail(x); st={fillColor:dim?cssv("--muted"):colv(k.c),fillOpacity:dim?.06:Math.min(.6,k.o+.12),color:on?cssv("--fg"):"#fff",weight:on?3:1,opacity:on?1:.8};}
-  else st={fillColor:cssv("--sunk"),fillOpacity:.35,color:cssv("--line"),weight:1,dashArray:"3 3"};
+  let st; if(x){const k=clsFor(x), dim=bankFail(x); st={fillColor:dim?cssv("--muted"):colv(k.c),fillOpacity:dim?.04:(on?.38:Math.min(.28,k.o*.45+.06)),color:on?cssv("--fg"):colv(k.c),weight:on?3:1.2,opacity:on?1:.55};}
+  else st={fillColor:cssv("--sunk"),fillOpacity:.12,color:cssv("--line"),weight:1,dashArray:"3 3"};
   const p=L.polygon(ll[t.i],st).addTo(g); LEAF.poly[t.ck+t.i]=p;
   p.on("click",e=>{L.DomEvent.stopPropagation(e); SEL=t.ck; QSEL=t; AD=null; svgJump(IR[t.ck].bb); render(); if(MOBON&&SNAP===0) setSnap(1);});});});}
 function leafPins(){const g=LEAF.pins; g.clearLayers(); const sel=AD&&AD.kind==="v"?AD.ck+AD.suf:null;
@@ -56,7 +54,7 @@ function leafZoomLayers(){if(!LEAF.on) return; const z=LEAF.map.getZoom(), M=LEA
  want(LEAF.city,z<11); want(LEAF.iris,z>=10); want(LEAF.marks,z>=12); want(LEAF.pins,z>=12);
  LEAF.host.classList.toggle("lq",z>=10);}
 function leafSig(){return JSON.stringify(H)+CMODE+BANKOK+SEL+(QSEL?QSEL.ck+QSEL.i:"")+(AD?AD.ck+AD.suf:"")+BIENS.map(b=>b.id+b.statut+b.quartier).join()+(ADS.iso||"");}
-function leafRefresh(force){if(!LEAF.on) return; if(LEAF.dark!==isDark()){LEAF.dark=isDark(); LEAF.tiles.setUrl(TILEURL(LEAF.dark)); LEAF.labels.setUrl(LABURL(LEAF.dark)); force=true;} LEAF.host.classList.toggle("ldark",LEAF.dark); const sg=leafSig(); if(!force&&sg===LEAF.sig){leafZoomLayers(); return;} LEAF.sig=sg;
+function leafRefresh(force){if(!LEAF.on) return; if(LEAF.dark!==isDark()){LEAF.dark=isDark(); force=true;} LEAF.host.classList.toggle("ldark",LEAF.dark); const sg=leafSig(); if(!force&&sg===LEAF.sig){leafZoomLayers(); return;} LEAF.sig=sg;
  leafCities(); leafIris(); leafPins(); leafZoomLayers();}
 /* quelle ville est au centre de l'écran (pour la feuille du bas quand on se promène) */
 function leafCenterCity(){if(!LEAF.on||LEAF.map.getZoom()<10) return; const c=LEAF.map.getCenter(); let best=null,bd=1e9;
@@ -67,10 +65,8 @@ function leafInit(){if(LEAF.on||!window.L) return; const host=document.querySele
  const el=document.createElement("div"); el.id="mLeaf"; host.appendChild(el);
  const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.5,zoomDelta:1,worldCopyJump:false,scrollWheelZoom:true,wheelPxPerZoomLevel:50,wheelDebounceTime:30,preferCanvas:true,renderer:L.canvas({padding:.5,tolerance:4})});
  M.setView([47.7,0],7); LEAF.map=M; LEAF.dark=isDark();
- M.createPane("labels"); const lp=M.getPane("labels"); lp.style.zIndex=450; lp.style.pointerEvents="none";
- LEAF.tiles=L.tileLayer(TILEURL(LEAF.dark),{maxZoom:19,maxNativeZoom:16}).addTo(M);
- LEAF.labels=L.tileLayer(LABURL(LEAF.dark),{maxZoom:19,maxNativeZoom:16,pane:"labels"}).addTo(M);
- L.control.attribution({position:"bottomleft",prefix:false}).addAttribution('Fond © <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>').addTo(M);
+ LEAF.tiles=L.tileLayer(TILEURL(),{maxZoom:19}).addTo(M);
+ L.control.attribution({position:"bottomleft",prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>').addTo(M);
  LEAF.city=L.layerGroup(); LEAF.iris=L.layerGroup(); LEAF.pins=L.layerGroup(); LEAF.marks=L.layerGroup();
  LEAF.on=true; host.classList.add("leaf");
  M.on("zoomend",leafZoomLayers); M.on("moveend",leafCenterCity);
@@ -100,5 +96,5 @@ function leafTry(){if(LEAF.on||LEAF.trying) return; LEAF.trying=true;
  img.onload=()=>{if(done) return; done=true; clearTimeout(t);
   if(window.L){leafInit(); return;} const s=document.createElement("script"); s.src=LEAFJS; s.crossOrigin="anonymous"; s.onload=leafInit; s.onerror=()=>{LEAF.trying=false;}; document.head.appendChild(s);};
  img.onerror=()=>{clearTimeout(t); fail();};
- img.src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/6/22/31";}
+ img.src="https://tile.openstreetmap.org/6/31/22.png";}
 leafTry(); MOBQ.addEventListener&&MOBQ.addEventListener("change",()=>{if(LEAF.on){LEAF.map.invalidateSize(); leafRefresh();}});

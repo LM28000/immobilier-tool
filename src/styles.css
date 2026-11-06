@@ -694,7 +694,7 @@ body.mob .mrow:active,body.mob .mchip:active,body.mob .mtab button:active,body.m
 table.annt{min-width:760px}
 
 /* quartiers : la couleur se mélange au fond de carte pour garder les noms de rues lisibles */
-.mapbox.leaf:not(.ldark) .leaflet-labels-pane img{filter:drop-shadow(0 0 1px rgb(255 255 255/.9))}
+.mapbox.leaf.ldark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)}
 .mapbox.leaf .leaflet-marker-pane{will-change:transform}
 
 .traj .tc{color:var(--accent)}

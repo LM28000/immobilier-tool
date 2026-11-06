@@ -146,7 +146,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
   if (LJ && require('fs').existsSync(LJ)) {
     const fs = require('fs'); const c = await b.newContext({...devices['iPhone 13']}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
-    await p.route('**/server.arcgisonline.com/**', r => r.fulfill({body: png, contentType: 'image/png'}));
+    await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
     await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => r.fulfill({body: fs.readFileSync(LJ), contentType: 'application/javascript'}));
     await p.goto(URL); await p.waitForTimeout(2500);
     ok('tel · vraie carte chargée', await p.evaluate(() => LEAF.on && document.querySelectorAll('#mLeaf .leaflet-tile').length > 0));
@@ -159,7 +159,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await c.close();
     // ordinateur
     { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-      await p.route('**/server.arcgisonline.com/**', r => r.fulfill({body: png, contentType: 'image/png'}));
+      await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
       await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => r.fulfill({body: fs.readFileSync(LJ), contentType: 'application/javascript'}));
       await p.goto(URL); await p.waitForTimeout(2500);
       ok('ordi · vraie carte chargée', await p.evaluate(() => LEAF.on && document.querySelector('#mapSec .mapbox #mLeaf') && document.querySelector('#mLeaf').offsetHeight > 300));
