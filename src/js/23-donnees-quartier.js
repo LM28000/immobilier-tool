@@ -10,18 +10,19 @@ function trajOf(t){const T=typeof TTQ!=="undefined"&&TTQ[t.ck]; if(!T||!T.foot[t
 const stopOf=t=>{const X=typeof TCQ!=="undefined"&&TCQ[t.ck]; return X&&X.stop?X.stop[t.code]:null;};
 const hasTC=ck=>typeof TCQ!=="undefined"&&!!TCQ[ck];
 
+/* lignes « libellé → valeur » : garder les chiffres précis sans paragraphes */
+function fRows(rows){const R=rows.filter(Boolean); return R.length?`<dl class="frows">${R.map(([k,v,n])=>`<div><dt>${k}</dt><dd>${v}${n?`<small>${n}</small>`:""}</dd></div>`).join("")}</dl>`:"";}
+function fNote(t){return t?`<p class="fnote">${t}</p>`:"";}
+const fPct=(a,b,ref)=>{const d=(a/b-1)*100; return Math.abs(d)<0.5?`= ${ref}`:`${d>=0?"+":"−"}${fr(Math.abs(d),0)} % vs ${ref}`;};
 /* ventes réelles de studios (12-35 m²) dans le quartier */
 function dvfBlock(t,compact){const D=typeof DVFQ!=="undefined"&&DVFQ[t.ck]; if(!D) return "";
- const q=dvfOf(t), est=studioPm2(t.ck,t), city=C.find(v=>v.k===t.ck).name;
- if(!q||!q.n) return `<p class="sub" style="margin:0 0 6px">Ventes réelles : aucun studio vendu dans ce quartier entre 2023 et 2025 (DVF). Prix retenu : ${eur(est)}/m², d'après la médiane de ${city} (${eur(D.med)}/m²) ajustée au niveau de prix du quartier.</p>`;
- const few=q.n<5;
- return `<div class="dvfb"><p class="sub" style="margin:0 0 4px"><b>${q.n} studio${q.n>1?"s":""} vendu${q.n>1?"s":""}</b> dans le quartier en 2023-2025, médiane <b class="mono">${eur(q.med)}/m²</b> (ville : ${eur(D.med)}/m²)${few?" · peu de ventes, à prendre avec prudence":""}. Prix retenu dans le calcul : <b class="mono">${eur(est)}/m²</b>${H.dvf?"":" (option ventes réelles désactivée)"}.</p>
+ const q=dvfOf(t), est=studioPm2(t.ck,t), city=C.find(v=>v.k===t.ck).name, dv=fPct(est,studioPm2(t.ck),"ville");
+ if(!q||!q.n) return fRows([["Ventes réelles","aucun studio vendu en 2023-2025"],["Prix retenu",`<b class="mono">${eur(est)}/m²</b>`,`médiane de ${city} (${eur(D.med)}/m²) ajustée au quartier · ${dv}`]]);
+ return `<div class="dvfb">${fRows([["Studios vendus",`<b>${q.n}</b> en 2023-2025 · médiane <b class="mono">${eur(q.med)}/m²</b>`,q.n<5?"peu de ventes : à prendre avec prudence":""],["Ville",`${eur(D.med)}/m²`],["Retenu dans le calcul",`<b class="mono">${eur(est)}/m²</b>`,dv+(H.dvf?"":" · option ventes réelles désactivée")]])}
   ${compact?"":`<table class="ftab dvft"><thead><tr><th>Vendu</th><th class="r">Surface</th><th class="r">Prix</th><th class="r">€/m²</th></tr></thead><tbody>${q.last.map(([m,p,s])=>`<tr><td>${mois(m)}</td><td class="r mono">${s} m²</td><td class="r mono">${keur(p)}</td><td class="r mono">${eur(p/s)}</td></tr>`).join("")}</tbody></table>`}</div>`;}
-
 /* temps de trajet réels (OpenStreetMap, à pied et à vélo) */
 function trajBlock(t){const r=trajOf(t); if(!r) return ""; const sp=stopOf(t);
- return `<div class="trajb">${r.map(o=>`<span class="traj"><b>${MARKTXT[o.k]}</b> ${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?` · <b class="tc">${minTxt(o.tc)} en bus/tram</b>`:hasTC(t.ck)?" · bus pas plus rapide":""}</span>`).join("")}</div>${sp!=null?`<p class="sub" style="margin:4px 0 0">Arrêt de bus ou tram le plus proche à ${sp<1000?Math.round(sp/10)*10+" m":fr(sp/1000,1)+" km"}. Transports : un mardi matin vers 8 h, attente comprise.</p>`:""}`;}
-
+ return `<div class="trajb">${r.map(o=>`<span class="traj"><b>${MARKTXT[o.k]}</b> ${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?` · <b class="tc">${minTxt(o.tc)} en bus/tram</b>`:hasTC(t.ck)?" · bus pas plus rapide":""}</span>`).join("")}</div>${fNote(`${sp!=null?`Arrêt le plus proche à ${sp<1000?Math.round(sp/10)*10+" m":fr(sp/1000,1)+" km"}. `:""}${hasTC(t.ck)?"Bus et tram : un mardi vers 8 h, attente comprise.":""}`)}`;}
 /* risques (Géorisques) */
 const ARG=["","faible","moyen","fort"];
 function risqPills(t){return risqPillsR(risqOf(t));}

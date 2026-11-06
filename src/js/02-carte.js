@@ -147,22 +147,26 @@ function adFilter(w){const f=w.querySelector('.adf [aria-pressed="true"]').datas
 function adsStats(list){const v=list.map(r22); return v.length?{n:v.length,med:median(v)}:null;}
 function adsLine(t){const A=ADS[t.ck]; if(!A) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
  const st=adsStats(A.ads.filter(a=>a[1]===d)), x=QX[t.ck+t.i]; if(!st) return "";
- const model=x?x.rentHC+H.chLoc:null;
- return `<p class="sub" style="margin:0 0 6px">Annonces Bien'ici du secteur « ${d} » : ${st.n} studio${st.n>1?"s":""} de 16 à 32 m², loyer médian ramené à 22 m² <b class="mono">${eur(st.med)}</b> charges comprises${model?` (calcul : ${eur(model)})`:""}${st.n<3?" · trop peu pour conclure":""}.</p>`;}
+ return fRows([["Annonces de location",`${st.n} studio${st.n>1?"s":""} · <b class="mono">${eur(st.med)}</b> CC à 22 m²`,`secteur Bien'ici « ${esc(d)} »${x?` · calcul : ${eur(x.rentHC+H.chLoc)} CC`:""}${st.n<3?" · trop peu pour conclure":""}`]]);}
 function adsCity(ck){const A=ADS[ck]; if(!A) return ""; const c=C.find(v=>v.k===ck), all=adsStats(A.ads), meu=adsStats(A.ads.filter(a=>a[3]&&a[1]!=="Université"));
  const model=c.rent*Math.pow(H.surface/c.rentM2,0.6);
- return `<p class="sub" style="margin:0">Contrôle sur les annonces en ligne (Bien'ici, ${ADS.date}) : ${all.n} studios de 16 à 32 m² à ${c.name}, loyer médian ramené à 22 m² <b class="mono">${eur(all.med)}</b> charges comprises, <b class="mono">${eur(meu.med)}</b> pour les meublés${ck==="lemans"?" hors résidences étudiantes":""}. Le calcul retient <b class="mono">${eur(model)}</b> : ${meu.med>=model?"il est plutôt prudent":"il est un peu optimiste"}. Ce sont des loyers demandés, pas signés.</p>${ventesCity(ck)}`;}
+ return fRows([["Annonces de location",`${all.n} studios · <b class="mono">${eur(all.med)}</b> CC à 22 m²`,`Bien'ici, ${ADS.date} · loyers demandés, pas signés`],meu&&["Dont meublés",`<b class="mono">${eur(meu.med)}</b>`,ck==="lemans"?"hors résidences étudiantes":""],["Notre calcul",`<b class="mono">${eur(model)}</b> CC`,meu&&meu.med>=model?"plutôt prudent":"un peu optimiste"]]);}
 function demLine(t){const d=demandOf(t); if(!d) return "";
- return `<p class="sub" style="margin:0 0 6px">Emplacement : ${d.real?(d.mode==="tc"?`${minTxt(d.min)} en bus ou tram jusqu'à ${MKFULL[d.mk]} (${minTxt(d.foot)} à pied, ${minTxt(d.bike)} à vélo)`:`${minTxt(d.min)} à pied de ${MKFULL[d.mk]} (${fr(d.d,1)} km par les rues, ${minTxt(d.bike)} à vélo)`):`à ${fr(d.d,1)} km de la gare, de l'université ou du centre le plus proche`} → ${H.vacQ?`${fr(d.vac,1)} mois vide${d.vac>=2?"s":""} par an retenu${d.vac>=2?"s":""}`:`vacance fixe (${fr(H.vacance,1)} mois), ajustement désactivé`}.</p>`;}
+ return fRows([["Emplacement",d.real?`<b>${minTxt(d.min)}</b> ${d.mode==="tc"?"en bus ou tram":"à pied"} ${({gare:"de la gare",univ:"de la fac",univ2:"de la fac",centre:"du centre"})[d.mk]}`:`à ${fr(d.d,1)} km du repère le plus proche`,d.real?`${minTxt(d.foot)} à pied (${fr(d.d,1)} km) · ${minTxt(d.bike)} à vélo`:""]]);}
 function qFilter(){const q=nrm(document.getElementById("qSearch").value||""); let n=0, t=0;
  document.querySelectorAll("#zBody tr").forEach(tr=>{t++; const ok=!q||nrm(tr.cells[0].textContent).includes(q); tr.hidden=!ok; if(ok) n++;});
  document.getElementById("qCount").textContent=q?`${n} sur ${t}`:`${t} quartiers, du meilleur au moins bon rendement`;}
 let QBOXK=null;
 function renderQBox(){renderSide(); const box=document.getElementById("qBox"); if(!QC){box.hidden=true;return;} box.hidden=false;
  const z=IR[QC], c=C.find(v=>v.k===QC);
- document.getElementById("qBox").classList.toggle("has",!!QSEL);
- if(QBOXK!==QC){QBOXK=QC; document.getElementById("qCard").innerHTML=ADS[QC]?`<h3 class="qbh">Annonces de ${c.name}</h3>`+adsCity(QC)+annoncesBlock(QC,null,true,false):`<h3 class="qbh">${c.name}</h3><p class="empty" style="margin:0">Pas encore d'annonces relevées ici : le relevé quotidien couvre Le Mans et Saint-Nazaire. Le détail des quartiers est juste en dessous.</p>`;}
- document.getElementById("qTitle").textContent=`Tous les quartiers de ${c.name}`;
+ const qs=QSEL&&QSEL.ck===QC?QSEL:null;
+ box.classList.toggle("has",!!qs); document.getElementById("qAll").hidden=!!qs;
+ const key=QC+"|"+(qs?qs.code:"");
+ if(QBOXK!==key){QBOXK=key; const card=document.getElementById("qCard");
+  if(qs){const sec=sectorOf(qs), ab=sec?annoncesBlock(QC,sec,false,OPENADS===sec):"", others=sec&&ADS[QC]?IR[QC].list.filter(v=>v!==qs&&ADS[QC].map[sec].includes(v.code)).map(v=>v.name):[];
+   card.innerHTML=`<div class="qbhead"><h3 class="qbh">Annonces · ${esc(qs.name)}</h3><button type="button" class="lnk" data-crumb="city">← Tous les quartiers de ${esc(c.name)}</button></div>${ab?`${others.length?fNote(`Secteur Bien'ici « ${esc(sec)} », qui couvre aussi ${others.slice(0,4).map(esc).join(", ")}${others.length>4?"…":""}.`):""}${ab}`:`<p class="empty" style="margin:0">${ADS[QC]?"Aucune annonce relevée dans ce quartier en ce moment.":`Pas d'annonces relevées à ${esc(c.name)} : le relevé quotidien couvre Le Mans et Saint-Nazaire.`}</p>`}`;}
+  else card.innerHTML="";}
+ document.getElementById("qTitle").textContent=`Les ${z.list.filter(t=>QX[t.ck+t.i]).length} quartiers de ${c.name}`;
  const tb=document.getElementById("zBody"); tb.innerHTML="";
  z.list.filter(t=>QX[t.ck+t.i]).sort((a,b)=>(QX[b.ck+b.i].irr??-9)-(QX[a.ck+a.i].irr??-9)).forEach(t=>{const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe), tr=document.createElement("tr");
   tr.tabIndex=0; tr.className=QSEL===t?"sel":"";

@@ -12,7 +12,7 @@ function bienFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class
  <div class="big4"><div><span>Budget tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer ${+b.loyer>0?"visé":"estimé"} HC</span><b>${eur(x.rentHC)}</b></div>
   <div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b>${altCf(x)}</div><div><span>15 ans ${mlab()}</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b>${altIrr(x)}</div></div>
  <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
- ${adrBlock(b)}
+ ${adrBlock(b)}${b.geo&&b.geo.risq?`<div class="risqb">${risqPillsR(b.geo.risq)}</div>`:""}
  ${taxLine(x)}
  ${negoBlock(b)}
  ${priceCurve(v)}

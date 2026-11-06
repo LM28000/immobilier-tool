@@ -25,7 +25,7 @@ function pinPreview(el){
 /* ---------- repère "où suis-je" ---------- */
 function renderWhere(qm){const back=document.getElementById("zAll"), here=document.getElementById("mwHere"), go=document.getElementById("zCity"); if(!back) return;
  const sc=C.find(c=>c.k===SEL), qc=QC&&C.find(c=>c.k===QC);
- back.hidden=V.k<KMIN()*1.05; here.hidden=!qm; here.textContent=qm?(qc?`Quartiers de ${qc.name}`:"Quartiers"):"";
+ back.hidden=V.k<KMIN()*1.05; here.hidden=true;
  go.hidden=!IR[SEL]||(qm&&QC===SEL); go.innerHTML=`Quartiers de ${sc.name} <span aria-hidden="true">→</span>`;
  document.getElementById("zHome").disabled=V.k<KMIN()*1.05;}
 

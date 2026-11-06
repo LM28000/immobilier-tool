@@ -55,7 +55,7 @@
       <div class="mapbox">
         <svg id="map" role="img" aria-label="Carte des villes comparées, zoomable jusqu'aux quartiers"></svg>
         <div id="tip" hidden></div>
-        <div class="mwhere" id="mWhere"><button type="button" class="mw-back" id="zAll" title="Revenir à toute la carte"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tout l'Ouest</span></button><span class="mw-here" id="mwHere"></span><button type="button" class="mw-go" id="zCity"></button></div>
+        <div class="mwhere" id="mWhere"><button type="button" class="mw-back" id="zAll" title="Revenir à toute la carte"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tout l'Ouest</span></button><span class="mw-here" id="mwHere" hidden></span><button type="button" class="mw-go" id="zCity"></button></div>
         <div class="mtools" role="toolbar" aria-label="Outils de la carte">
           <button type="button" id="zIn" class="mt-zoom" aria-label="Zoomer" title="Zoomer (+)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button type="button" id="zOut" class="mt-zoom" aria-label="Dézoomer" title="Dézoomer (−)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -69,15 +69,15 @@
       <div class="legend" id="mapLegend"></div>
       <div id="qBox" hidden>
         <div id="qCard"></div>
-        <details class="qall">
-          <summary id="qTitle"></summary>
+        <div class="qall" id="qAll">
+          <h3 class="qbh" id="qTitle"></h3>
           <div class="adf" style="margin-top:10px"><input type="search" id="qSearch" placeholder="Chercher un quartier" aria-label="Chercher un quartier"><span class="sub" id="qCount" style="margin:0"></span></div>
           <div class="scrollbox tall"><table class="qt">
             <thead><tr><th>Quartier</th><th class="r hm">Prix appart.</th><th class="r hm">Loyer HC</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th class="r hm">F-G (DPE)</th></tr></thead>
             <tbody id="zBody"></tbody></table></div>
-          <p class="sub"><sup>*</sup> pas de loyer publié pour ce quartier : au Mans, estimé à partir de son prix (les loyers RealAdvisor y varient environ quatre fois moins que les prix) ; à Saint-Nazaire, loyer médian de la ville.</p>
-        </details>
-        <p class="sub">Contours : quartiers IRIS de l'INSEE (IGN, 2025). Prix : estimation RealAdvisor du quartier (octobre 2026) rapportée au prix moyen des studios vendus dans la ville, avec la même surcote que pour la ville. Loyer : loyer médian des studios de la ville, ajusté de l'écart du quartier selon RealAdvisor (plafonné à ±15 %). Les quartiers les moins chers sortent en tête sur le papier : vérifiez sur place la demande locative avant d'y croire. DPE : diagnostics ADEME depuis juillet 2021 des appartements de 30 m² ou moins, placés dans leur quartier par leur adresse.</p>
+          <p class="fnote"><sup>*</sup> pas de loyer publié pour ce quartier : estimé à partir de son prix, ou loyer médian de la ville.</p>
+        </div>
+        <details class="qmeth"><summary>Comment les quartiers sont estimés</summary><p class="sub">Contours : quartiers IRIS de l'INSEE (IGN, 2025). Prix : estimation RealAdvisor du quartier (octobre 2026) rapportée au prix moyen des studios vendus dans la ville, avec la même surcote que pour la ville. Loyer : loyer médian des studios de la ville, ajusté de l'écart du quartier selon RealAdvisor (plafonné à ±15 %). Les quartiers les moins chers sortent en tête sur le papier : vérifiez sur place la demande locative avant d'y croire. DPE : diagnostics ADEME depuis juillet 2021 des appartements de 30 m² ou moins, placés dans leur quartier par leur adresse.</p></details>
       </div>
     </section>
     <div class="side" id="side">

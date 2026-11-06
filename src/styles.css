@@ -746,3 +746,18 @@ details.fsec>summary{flex-wrap:wrap;row-gap:0}
 .mfs .fsb{padding-left:0}
 .mfs .tablewrap,.mfs .scrollbox{max-width:100%}
 .msheetin .fattn{margin:6px 0}
+
+/* lignes libellé → valeur */
+.frows{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:5px 14px;margin:0 0 8px;font-size:.86rem;line-height:1.35}
+.frows>div{display:contents}
+.frows dt{color:var(--muted);max-width:15em}
+.frows dd{margin:0;font-variant-numeric:tabular-nums;min-width:0}
+.frows dd small{display:block;color:var(--muted);font-size:.76rem;margin-top:1px}
+.fnote{color:var(--muted);font-size:.76rem;line-height:1.4;margin:4px 0 0}
+.fsb .frows+.trajb,.fsb .frows+.poib,.fsb .frows+.risqb{margin-top:2px}
+@media (max-width:420px){.frows{grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:5px 10px}.frows dt{font-size:.8rem}}
+.qbhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.qbhead .qbh{margin:0}
+.qall{margin-top:4px}
+details.qmeth{margin-top:10px}
+details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}

@@ -40,5 +40,4 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 function adrBlock(b){if(!b.adresse) return `<div class="adrbox"><button type="button" class="lnk" data-adredit="${b.id}">📍 Ajouter l'adresse exacte</button></div>`;
  const g=b.geo||{}, R=g.risq;
  return `<div class="adrbox"><p class="sub" style="margin:0 0 4px">📍 <b>${esc(b.adresse)}</b> <button type="button" class="lnk" data-adredit="${b.id}">modifier</button></p>
-  ${g.foot?`<div class="trajb">${g.marks.map((k,i)=>`<span class="traj"><b>${MARKTXT[k]}</b> ${minTxt(g.foot[i])} à pied (${fr(g.km[i],1)} km)</span>`).join("")}</div>`:""}
-  ${R?`<div class="risqb" style="margin-top:6px">${risqPillsR(R)}</div><p class="sub" style="margin:4px 0 0">Trajets et risques calculés à l'adresse (OpenStreetMap, Géorisques). Vérifiez l'état des risques du vendeur.</p>`:""}</div>`;}
+  ${g.foot?`<div class="trajb">${g.marks.map((k,i)=>`<span class="traj"><b>${MARKTXT[k]}</b> ${minTxt(g.foot[i])} à pied (${fr(g.km[i],1)} km)</span>`).join("")}</div>`:""}</div>`;}

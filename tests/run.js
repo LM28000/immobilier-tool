@@ -37,9 +37,10 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     const ip = await p.evaluate(() => { const t = IR.lemans.list.find(x => x.code === '0202'); const r = document.querySelector(`[data-iris="lemans:${t.i}"]`).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
     await tap(p, n, ...ip); await p.waitForTimeout(700);
     ok(T('tap quartier ouvre la fiche'), await p.evaluate(() => !!QSEL && !document.getElementById('qDetail').hidden));
-    ok(T('données réelles du quartier (DVF, trajets)'), await p.evaluate(() => { const a = document.querySelector('.qcard .fsec[data-sec=prix]'), b = document.querySelector('.qcard .fsec[data-sec=traj]'); return !!a && !!b && /studios? vendus?/.test(a.textContent) && /à pied/.test(b.textContent); }));
+    ok(T('données réelles du quartier (DVF, trajets)'), await p.evaluate(() => { const a = document.querySelector('.qcard .fsec[data-sec=prix]'), b = document.querySelector('.qcard .fsec[data-sec=traj]'); return !!a && !!b && /studios? vendus?/i.test(a.textContent) && /à pied/.test(b.textContent); }));
     ok(T('rubriques écoles et urbanisme du quartier'), await p.evaluate(() => { const e = document.querySelector('.qcard .fsec[data-sec=ecoles]'), u = document.querySelector('.qcard .fsec[data-sec=urba]'); return !!e && !!u && /supérieur/.test(e.textContent) && /PLU/.test(u.textContent); }));
     ok(T('un seul fil d\'Ariane'), await p.evaluate(() => document.querySelectorAll('.fcrumb').length === 0 && !!document.querySelector('#crumbs [data-crumb=city]')));
+    ok(T('sous la carte : annonces du quartier seulement'), await p.evaluate(() => document.getElementById('qAll').hidden && /Annonces · /.test(document.getElementById('qCard').textContent)));
     ok(T('option ventes réelles DVF'), await p.evaluate(() => { const t = QSEL, a = calcIris(t).cost; H.dvf = false; const b = calcIris(t).cost; H.dvf = true; return a !== b; }));
     ok(T('pastilles de vente sur la carte'), await p.evaluate(() => document.querySelectorAll('.vpin').length > 5));
     // fiche annonce
@@ -181,7 +182,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.goto(URL); await p.waitForTimeout(2500);
       ok('ordi · vraie carte chargée', await p.evaluate(() => LEAF.on && document.querySelector('#mapSec .mapbox #mLeaf') && document.querySelector('#mLeaf').offsetHeight > 300));
       await p.evaluate(() => leafCity('stnazaire')); await p.waitForTimeout(1300);
-      ok('ordi · ville choisie, annonces sous la carte', await p.evaluate(() => SEL === 'stnazaire' && !document.getElementById('qBox').hidden));
+      ok('ordi · ville choisie, quartiers sous la carte', await p.evaluate(() => SEL === 'stnazaire' && !document.getElementById('qBox').hidden && !document.getElementById('qAll').hidden && document.querySelectorAll('#zBody tr').length > 5 && !document.querySelector('#qCard .annb')));
       await p.evaluate(() => { const t = IR.lemans.list.find(x => x.code === '0202'); LEAF.map.setView(unproj(t.cx, t.cy), 14.5, {animate: false}); }); await p.waitForTimeout(800);
       await p.evaluate(() => document.querySelector('.lpin').dispatchEvent(new MouseEvent('click', {bubbles: true}))); await p.waitForTimeout(600);
       ok('ordi · pastille ouvre la fiche à droite', await p.evaluate(() => AD && AD.kind === 'v' && /Prix maximum/.test(document.getElementById('qDetailBody').innerText)));
