@@ -141,6 +141,20 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();
   }
+  // adresse exacte (services simulés)
+  { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('**/data.geopf.fr/geocodage/**', r => r.fulfill({contentType: 'application/json', body: JSON.stringify({features: [{properties: {label: '10 Rue Gougeard 72000 Le Mans', city: 'Le Mans', postcode: '72000', type: 'housenumber'}, geometry: {coordinates: [0.1915, 47.9975]}}]})}));
+    await p.route('**/routing.openstreetmap.de/**', r => r.fulfill({contentType: 'application/json', body: JSON.stringify({durations: [[0, 300, 2400, 900]], distances: [[0, 400, 3000, 1100]]})}));
+    await p.route('**/www.georisques.gouv.fr/**', r => { const u = r.request().url(); r.fulfill({contentType: 'application/json', body: u.includes('rga') ? '{"codeExposition":"1"}' : u.includes('ssp') ? '{"casias":{"results":2},"conclusions_sis":{"results":0},"instructions":{"results":0}}' : '{"results":0}'}); });
+    await p.goto(URL); await p.waitForTimeout(900);
+    await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
+    await p.fill('#biensForm .adrin', '10 rue Gougeard Le Mans'); await p.waitForTimeout(700);
+    await p.click('#biensForm [data-adrpick]'); await p.waitForTimeout(800);
+    ok('ordi · adresse : ville et quartier trouvés', await p.evaluate(() => document.getElementById('b-ville').value === 'lemans' && !!document.getElementById('b-quartier').value));
+    await p.fill('#biensForm [name=prix]', '60000'); await p.fill('#biensForm [name=surface]', '22'); await p.click('#biensForm [type=submit]'); await p.waitForTimeout(600);
+    ok('ordi · adresse enregistrée avec trajets et risques', await p.evaluate(() => BIENS.length === 1 && BIENS[0].lat > 47 && BIENS[0].geo && BIENS[0].geo.foot.length === 3 && !!BIENS[0].geo.risq));
+    ok('ordi · adresse sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
   // vraie carte (fonds de carte et Leaflet simulés hors ligne)
   const LJ = process.env.LEAFLET_JS;
   if (LJ && require('fs').existsSync(LJ)) {

@@ -24,7 +24,8 @@ function trajBlock(t){const r=trajOf(t); if(!r) return ""; const sp=stopOf(t);
 
 /* risques (Géorisques) */
 const ARG=["","faible","moyen","fort"];
-function risqPills(t){const r=risqOf(t); if(!r) return "";
+function risqPills(t){return risqPillsR(risqOf(t));}
+function risqPillsR(r){if(!r) return "";
  const P=[];
  if(r.t) P.push(["p-bad","Zone inondable (TRI)","Le centre du quartier est dans un territoire à risque important d'inondation : regardez le plan de prévention (PPRI) et l'étage du bien."]);
  if(r.a>=3) P.push(["p-n","Argile : aléa fort","Sols argileux qui gonflent et se rétractent : fissures possibles, surtout pour les maisons. Moins sensible pour un appartement en immeuble."]);
@@ -36,8 +37,16 @@ function risqPills(t){const r=risqOf(t); if(!r) return "";
  return `<div class="risqb">${P.map(([c,l,tip])=>`<span class="pill ${c}"${tip?` title="${esc(tip)}"`:""}>${l}</span>`).join("")}</div>`;}
 
 /* bloc complet pour la fiche quartier */
-function quartierReal(t){const a=dvfBlock(t), b=trajBlock(t), c=risqPills(t); if(!a&&!b&&!c) return "";
- return `<div class="qreal">${a?`<h4>Ventes réelles (DVF)</h4>${a}`:""}${b?`<h4>Trajets réels</h4>${b}`:""}${c?`<h4>Risques</h4>${c}`:""}</div>`;}
+function quartierReal(t){const a=dvfBlock(t), b=trajBlock(t), c=risqPills(t), d=poiBlock(t); if(!a&&!b&&!c&&!d) return "";
+ return `<div class="qreal">${a?`<h4>Ventes réelles (DVF)</h4>${a}`:""}${b?`<h4>Trajets réels</h4>${b}`:""}${d?`<h4>À pied autour du centre du quartier</h4>${d}`:""}${c?`<h4>Risques</h4>${c}`:""}</div>`;}
 
 document.getElementById("f-dvf").addEventListener("change",e=>{H.dvf=e.target.checked; try{localStorage.setItem("dvf",H.dvf?"1":"0");}catch(_){} render();});
 (function(){try{const v=localStorage.getItem("dvf"); if(v!=null){H.dvf=v==="1"; document.getElementById("f-dvf").checked=H.dvf;}}catch(_){}})();
+
+/* vie de quartier : commerces et services à pied (OpenStreetMap) */
+function poiOf(t){return typeof POIQ!=="undefined"&&POIQ[t.ck]?POIQ[t.ck][t.code]||null:null;}
+const dTxt=m=>m>=9999?"aucun à 1 km":m>=1000?fr(m/1000,1)+" km":Math.round(m/10)*10+" m";
+function poiItems(p){const sup=Math.min(p[1],p[2]); return [["Supermarché ou supérette",dTxt(sup)],["Boulangerie",dTxt(p[3])],["Pharmacie",dTxt(p[4])],["Cafés, restos, bars à 500 m",String(p[5])],["Laverie",dTxt(p[6])],["Salle de sport",dTxt(p[7])]];}
+const poiCls=s=>s>=8?"p-ok":s>=5?"p-n":"p-warn";
+function poiBlock(t){const p=poiOf(t); if(!p) return "";
+ return `<div class="poib"><span class="pill ${poiCls(p[0])}">Vie de quartier ${fr(p[0],1)}/10</span> ${poiItems(p).map(([l,v])=>`<span class="traj"><b>${l}</b> ${v}</span>`).join("")}</div>`;}

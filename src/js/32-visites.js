@@ -145,6 +145,7 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const 
    ${t&&trajOf(t)?trajOf(t).map(o=>`<div class="trow"><span>${MARKTXT[o.k]} (${fr(o.km,1)} km)</span><b>${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?" · "+minTxt(o.tc)+" bus/tram":""}</b></div>`).join(""):d?`<div class="trow"><span>Distance gare, université ou centre</span><b>${fr(d.d,1)} km</b></div>`:""}
    <div class="trow"><span>Mois vides par an retenus</span><b>${fr(r.vac,1)}</b></div>
    ${fg!=null&&nd>=15?`<div class="trow"><span>Petits appartements en DPE F ou G</span><b>${fr(fg,0)} %</b></div>`:""}
+   ${t&&poiOf(t)?`<div class="trow"><span>Vie de quartier</span><b>${fr(poiOf(t)[0],1)}/10 · supermarché ${dTxt(Math.min(poiOf(t)[1],poiOf(t)[2]))}</b></div>`:""}
    ${t&&risqOf(t)?`<div class="trow"><span>Risques</span>${risqPills(t)}</div>`:""}
    ${b.vu?`<div class="trow"><span>Annonce en ligne depuis</span><b>${b.vu.days} jours${b.vu.drops?` · ${b.vu.drops} baisse${b.vu.drops>1?"s":""}`:""}</b></div>`:""}</div></div></div>
  ${t&&dvfOf(t)&&dvfOf(t).n?`<div class="fbox"><h2>Studios réellement vendus dans le quartier</h2>${dvfBlock(t)}<p class="fnote">Source : DVF (Cerema), ventes d'un seul appartement de 12 à 35 m², 2023-2025. Prix nets vendeur, hors frais de notaire.</p></div>`:""}

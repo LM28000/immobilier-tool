@@ -698,3 +698,14 @@ table.annt{min-width:760px}
 .mapbox.leaf .leaflet-marker-pane{will-change:transform}
 
 .traj .tc{color:var(--accent)}
+.adrw{position:relative;display:block}
+.adrw .adrin{width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.adrlist{position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgb(0 0 0/.15);margin-top:4px;overflow:hidden}
+.adrlist button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--fg);font:inherit;font-size:.9rem;padding:9px 12px;cursor:pointer}
+.adrlist button+button{border-top:1px solid var(--line)}
+.adrlist button:hover,.adrlist button:focus{background:var(--accent-soft)}
+.adrst{display:block;color:var(--muted);font-size:.8rem;margin-top:4px;min-height:1em}
+.adrf>span{display:block;font-size:.82rem;font-weight:600;margin-bottom:4px}
+.adrbox{margin:8px 0}
+.mpadl{padding:10px 14px}
+.poib{display:flex;flex-wrap:wrap;gap:6px;align-items:center}

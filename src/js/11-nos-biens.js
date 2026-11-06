@@ -2,6 +2,7 @@
 let BIENS=[], DB=null, USER=null;
 function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
+ if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=0.5+2*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac});
  if(+b.loyer>0){o.rent=+b.loyer; o.rentM2=S;} else o.rent=c.rent*rr;
  if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(+b.travaux>0) o.trav=+b.travaux; if(scn) o._s=scn;
@@ -62,6 +63,7 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();
   const b={titre:g("titre").slice(0,120),url:/^https?:\/\//.test(g("url"))?g("url").slice(0,500):"",ville:g("ville"),quartier:g("quartier"),prix:+g("prix"),surface:+g("surface"),copro:+g("copro")||0,tf:+g("tf")||0,loyer:+g("loyer")||0,dpe:g("dpe"),notes:g("notes").slice(0,200),statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+  if(form.dataset.adr){try{Object.assign(b,JSON.parse(form.dataset.adr));}catch(_){} delete form.dataset.adr;}
   if(!(b.prix>5000)||!(b.surface>=8)){st.textContent="Indiquez au moins le prix et la surface."; return;}
   try{if(USER&&USER.id){try{b.by=await USER.id();}catch(_){}} await DB.collection("biens").add(b); form.reset(); document.getElementById("b-ville").value=b.ville; fillQuartiers(); st.textContent="Bien ajouté.";}
   catch(err){st.textContent=err&&err.code==="permission_denied"?"Ajout refusé : il faut un accès en modification à la page.":"Ajout impossible ("+(err&&err.code||"erreur")+").";}});
