@@ -1,7 +1,7 @@
-/* ================= vraie carte (rues OpenStreetMap) sur téléphone =================
+/* ================= vraie carte (rues OpenStreetMap), sur ordinateur et téléphone =================
    Chargée seulement si les fonds de carte s'affichent (page GitHub) ; sinon la carte dessinée reste (artifact Claude, hors ligne). */
 const LEAF={on:false,map:null,tiles:null,city:null,iris:null,pins:null,marks:null,poly:{},dark:null};
-const TILEURL=dark=>`https://{s}.basemaps.cartocdn.com/rastertiles/${dark?"dark_all":"voyager"}/{z}/{x}/{y}{r}.png`;
+const TILEURL=()=>"https://tile.openstreetmap.org/{z}/{x}/{y}.png";   // fonds OpenStreetMap, sans clé
 const LEAFJS="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js";
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#888";
 const colv=c=>c&&c.startsWith("var(")?cssv(c.slice(4,-1)):c;
@@ -18,7 +18,7 @@ const tLL=t=>unproj(t.cx,t.cy);
 function svgJump(bb,pad=1.15){const w=(bb[2]-bb[0])*pad, h=(bb[3]-bb[1])*pad, k=Math.min(KMAX,Math.max(KMIN(),Math.min(VW/w,VH/h))), cx=(bb[0]+bb[2])/2, cy=(bb[1]+bb[3])/2;
  cancelAnimationFrame(anim); V.k=k; V.x=VW/2-cx*k; V.y=VH/2-cy*k; clampV(); draw();}
 
-function leafPad(){const sh=document.getElementById("mSheet"), top=document.querySelector(".mmtop"); const r=sh?sh.getBoundingClientRect():{top:innerHeight}, m=document.getElementById("mMap").getBoundingClientRect();
+function leafPad(){if(!MOBON) return {padding:[28,28]}; const sh=document.getElementById("mSheet"), top=document.querySelector(".mmtop"); const r=sh?sh.getBoundingClientRect():{top:innerHeight}, m=document.getElementById("mMap").getBoundingClientRect();
  return {paddingTopLeft:[16,(top?top.getBoundingClientRect().bottom-m.top:100)+8],paddingBottomRight:[16,Math.max(20,m.bottom-r.top+12)]};}
 function leafFly(bb,opt){if(!LEAF.on) return; const b=L.latLngBounds(bbLL(bb)), o=Object.assign({duration:.6,maxZoom:15},leafPad(),opt||{}); if(matchMedia("(prefers-reduced-motion: reduce)").matches) LEAF.map.fitBounds(b,o); else LEAF.map.flyToBounds(b,o);}
 function leafHome(){const bs=Object.values(IR).map(z=>z.bb), u=[Math.min(...bs.map(b=>b[0])),Math.min(...bs.map(b=>b[1])),Math.max(...bs.map(b=>b[2])),Math.max(...bs.map(b=>b[3]))]; leafFly(u,{maxZoom:9});}
@@ -30,13 +30,13 @@ function leafCities(){const g=LEAF.city; g.clearLayers(); const maxS=Math.max(..
   m.on("click",()=>leafCity(c.k));
   const lab=L.marker([c.lat,c.lon],{icon:L.divIcon({className:"lcityw",html:`<span class="lcity${on?" on":""}" style="margin-left:${r+4}px"><b>${esc(c.name)}</b><span style="color:${col}">${CMODE==="cf"?sgn(x.cf):irrTxt(x)}</span></span>`,iconSize:[0,0],iconAnchor:[0,14]}),keyboard:false}).addTo(g);
   lab.on("click",()=>leafCity(c.k));});}
-function leafCity(k){SEL=k; QSEL=null; AD=null; render(); if(IR[k]){svgJump(IR[k].bb); leafFly(IR[k].bb);} else {const c=C.find(v=>v.k===k); LEAF.map.flyTo([c.lat,c.lon],11,{duration:.6});} if(typeof setSnap==="function"&&SNAP===0) setSnap(1);}
+function leafCity(k){SEL=k; QSEL=null; AD=null; render(); if(IR[k]){svgJump(IR[k].bb); leafFly(IR[k].bb);} else {const c=C.find(v=>v.k===k); LEAF.map.flyTo([c.lat,c.lon],11,{duration:.6});} if(MOBON&&SNAP===0) setSnap(1);}
 function leafIris(){const g=LEAF.iris; g.clearLayers(); LEAF.poly={};
  Object.keys(IR).forEach(ck=>{const ll=irisLL(ck); IR[ck].list.forEach(t=>{const x=QX[t.ck+t.i], on=QSEL===t;
   let st; if(x){const k=clsFor(x), dim=bankFail(x); st={fillColor:dim?cssv("--muted"):colv(k.c),fillOpacity:dim?.08:Math.min(.5,k.o+.04),color:on?cssv("--fg"):"#fff",weight:on?3:1,opacity:on?1:.8};}
   else st={fillColor:cssv("--sunk"),fillOpacity:.35,color:cssv("--line"),weight:1,dashArray:"3 3"};
   const p=L.polygon(ll[t.i],st).addTo(g); LEAF.poly[t.ck+t.i]=p;
-  p.on("click",e=>{L.DomEvent.stopPropagation(e); SEL=t.ck; QSEL=t; AD=null; svgJump(IR[t.ck].bb); render(); if(SNAP===0) setSnap(1);});});});}
+  p.on("click",e=>{L.DomEvent.stopPropagation(e); SEL=t.ck; QSEL=t; AD=null; svgJump(IR[t.ck].bb); render(); if(MOBON&&SNAP===0) setSnap(1);});});});}
 function leafPins(){const g=LEAF.pins; g.clearLayers(); const sel=AD&&AD.kind==="v"?AD.ck+AD.suf:null;
  Object.keys(IR).forEach(ck=>{const A=ADS[ck]; if(!A||!A.ventes) return; const by={};
   A.ventes.forEach(a=>{const t=venteIris(ck,a[1]); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
@@ -51,43 +51,48 @@ function leafMarks(){const g=LEAF.marks; g.clearLayers(); const ic={gare:"■",u
 function leafZoomLayers(){if(!LEAF.on) return; const z=LEAF.map.getZoom(), M=LEAF.map;
  const want=(g,on)=>{if(on&&!M.hasLayer(g)) g.addTo(M); if(!on&&M.hasLayer(g)) M.removeLayer(g);};
  want(LEAF.city,z<11); want(LEAF.iris,z>=10); want(LEAF.marks,z>=12); want(LEAF.pins,z>=12);
- document.getElementById("mMap").classList.toggle("lq",z>=10);}
-function leafRefresh(){if(!LEAF.on) return; if(LEAF.dark!==isDark()){LEAF.dark=isDark(); LEAF.tiles.setUrl(TILEURL(LEAF.dark));}
+ LEAF.host.classList.toggle("lq",z>=10);}
+function leafRefresh(){if(!LEAF.on) return; LEAF.dark=isDark(); LEAF.host.classList.toggle("ldark",LEAF.dark);
  leafCities(); leafIris(); leafPins(); leafZoomLayers();}
 /* quelle ville est au centre de l'écran (pour la feuille du bas quand on se promène) */
 function leafCenterCity(){if(!LEAF.on||LEAF.map.getZoom()<10) return; const c=LEAF.map.getCenter(); let best=null,bd=1e9;
  Object.keys(IR).forEach(ck=>{const cc=C.find(v=>v.k===ck), d=Math.hypot(cc.lat-c.lat,(cc.lon-c.lng)*0.7); if(d<bd){bd=d; best=ck;}});
  if(best&&best!==SEL&&bd<0.25){SEL=best; if(QSEL&&QSEL.ck!==best) QSEL=null; svgJump(IR[best].bb); render();}}
 
-function leafInit(){if(LEAF.on||!window.L) return; const host=document.getElementById("mMap"); if(!host) return;
+function leafInit(){if(LEAF.on||!window.L) return; const host=document.querySelector(".mapbox"); if(!host) return; LEAF.host=host;
  const el=document.createElement("div"); el.id="mLeaf"; host.appendChild(el);
- const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:6,maxZoom:18,zoomSnap:.25,worldCopyJump:false});
- M.setView([47.7,0],7); LEAF.map=M; LEAF.dark=isDark(); LEAF.tiles=L.tileLayer(TILEURL(LEAF.dark),{subdomains:"abcd",maxZoom:20,detectRetina:true}).addTo(M);
- L.control.attribution({position:"topright",prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>').addTo(M);
+ const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.25,worldCopyJump:false,scrollWheelZoom:false});
+ M.setView([47.7,0],7); LEAF.map=M; LEAF.tiles=L.tileLayer(TILEURL(),{maxZoom:19,crossOrigin:true}).addTo(M);
+ L.control.attribution({position:"bottomleft",prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>').addTo(M);
  LEAF.city=L.layerGroup(); LEAF.iris=L.layerGroup(); LEAF.pins=L.layerGroup(); LEAF.marks=L.layerGroup();
  LEAF.on=true; host.classList.add("leaf");
- const hb=document.createElement("button"); hb.type="button"; hb.className="mlhome"; hb.setAttribute("aria-label","Voir les cinq villes"); hb.innerHTML='<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M2.5 8 8 3.2 13.5 8M4.2 6.8V13h7.6V6.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'; hb.addEventListener("click",leafHome); host.appendChild(hb);
  M.on("zoomend",leafZoomLayers); M.on("moveend",leafCenterCity);
- M.on("click",()=>{if(QSEL){QSEL=null; AD=null; render();}});
+ M.on("click",()=>{M.scrollWheelZoom.enable(); if(QSEL){QSEL=null; AD=null; render();}});
+ el.addEventListener("mouseleave",()=>{if(!document.getElementById("mapSec").classList.contains("mapfull")||MOBON) M.scrollWheelZoom.disable();});
+ if(window.ResizeObserver) new ResizeObserver(()=>M.invalidateSize()).observe(host);
  const sel=SEL&&IR[SEL]&&QSEL?QSEL.bb:null; leafRefresh();
- if(sel) leafFly(sel); else leafHome();
+ if(sel) leafFly(sel); else if(IR[SEL]&&!MOBON) leafFly(IR[SEL].bb,{maxZoom:12}); else leafHome();
  setTimeout(()=>M.invalidateSize(),50);}
 
 /* ---------- branchements ---------- */
-const _flyToL=flyTo; flyTo=function(bb,pad){if(LEAF.on&&MOBON){svgJump(bb,pad||1.15); leafFly(bb); return;} return _flyToL(bb,pad);};
+const _flyToL=flyTo; flyTo=function(bb,pad){if(LEAF.on){svgJump(bb,pad||1.15); leafFly(bb); return;} return _flyToL(bb,pad);};
 const _mHome=mHome; mHome=function(){if(LEAF.on) leafHome(); else _mHome();};
 const _renderL=render; render=function(){_renderL.apply(this,arguments); if(LEAF.on) leafRefresh();};
 const _renderSideL=renderSide; renderSide=function(){_renderSideL.apply(this,arguments); if(LEAF.on){leafIris(); leafPins(); leafZoomLayers();}};
 const _mShowL=mShow; mShow=function(k){_mShowL(k); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
-document.addEventListener("click",e=>{if(!LEAF.on) return; const h=e.target.closest&&e.target.closest("#zHome"); if(h){e.preventDefault(); e.stopImmediatePropagation(); leafHome();}},true);
+function leafSetFull(){if(LEAF.on) setTimeout(()=>{LEAF.map.invalidateSize(); const f=document.getElementById("mapSec").classList.contains("mapfull")&&!MOBON; f?LEAF.map.scrollWheelZoom.enable():LEAF.map.scrollWheelZoom.disable();},80);}
+document.addEventListener("click",e=>{if(!LEAF.on) return; const h=e.target.closest&&e.target.closest("#zHome,#zAll,#zIn,#zOut,#zFull"); if(!h) return;
+ if(h.id==="zFull"){leafSetFull(); return;} e.preventDefault(); e.stopImmediatePropagation();
+ if(h.id==="zIn") LEAF.map.zoomIn(); else if(h.id==="zOut") LEAF.map.zoomOut(); else leafHome();},true);
+addEventListener("keydown",e=>{if(LEAF.on&&(e.key==="Escape"||e.key==="f"||e.key==="F")) leafSetFull();});
 new MutationObserver(()=>{if(LEAF.on&&LEAF.dark!==isDark()) leafRefresh();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
 /* on n'essaie la vraie carte que si un fond de carte se charge (refusé dans l'artifact Claude et hors ligne) */
-function leafTry(){if(LEAF.on||LEAF.trying||!MOBON) return; LEAF.trying=true;
+function leafTry(){if(LEAF.on||LEAF.trying) return; LEAF.trying=true;
  const img=new Image(); let done=false; const fail=()=>{if(done) return; done=true; LEAF.trying=false;};
  const t=setTimeout(fail,4000);
  img.onload=()=>{if(done) return; done=true; clearTimeout(t);
   if(window.L){leafInit(); return;} const s=document.createElement("script"); s.src=LEAFJS; s.crossOrigin="anonymous"; s.onload=leafInit; s.onerror=()=>{LEAF.trying=false;}; document.head.appendChild(s);};
  img.onerror=()=>{clearTimeout(t); fail();};
- img.src="https://a.basemaps.cartocdn.com/rastertiles/voyager/6/31/22.png";}
-if(MOBON) leafTry(); MOBQ.addEventListener&&MOBQ.addEventListener("change",e=>{if(e.matches) leafTry();});
+ img.src="https://tile.openstreetmap.org/6/31/22.png";}
+leafTry(); MOBQ.addEventListener&&MOBQ.addEventListener("change",()=>{if(LEAF.on){LEAF.map.invalidateSize(); leafRefresh();}});

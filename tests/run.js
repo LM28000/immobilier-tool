@@ -130,7 +130,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
   if (LJ && require('fs').existsSync(LJ)) {
     const fs = require('fs'); const c = await b.newContext({...devices['iPhone 13']}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
-    await p.route('**/*basemaps.cartocdn.com/**', r => r.fulfill({body: png, contentType: 'image/png'}));
+    await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
     await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => r.fulfill({body: fs.readFileSync(LJ), contentType: 'application/javascript'}));
     await p.goto(URL); await p.waitForTimeout(2500);
     ok('tel · vraie carte chargée', await p.evaluate(() => LEAF.on && document.querySelectorAll('#mLeaf .leaflet-tile').length > 0));
@@ -141,6 +141,21 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok('tel · pastille de prix ouvre la fiche', await p.evaluate(() => STACK.length === 1 && !!document.querySelector('.mpush.in .mdp')));
     ok('tel · vraie carte sans erreur', errs.length === 0, errs.join(' | '));
     await c.close();
+    // ordinateur
+    { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
+      await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => r.fulfill({body: fs.readFileSync(LJ), contentType: 'application/javascript'}));
+      await p.goto(URL); await p.waitForTimeout(2500);
+      ok('ordi · vraie carte chargée', await p.evaluate(() => LEAF.on && document.querySelector('#mapSec .mapbox #mLeaf') && document.querySelector('#mLeaf').offsetHeight > 300));
+      await p.evaluate(() => leafCity('stnazaire')); await p.waitForTimeout(1300);
+      ok('ordi · ville choisie, annonces sous la carte', await p.evaluate(() => SEL === 'stnazaire' && !document.getElementById('qBox').hidden));
+      await p.evaluate(() => { const t = IR.lemans.list.find(x => x.code === '0202'); LEAF.map.setView(unproj(t.cx, t.cy), 14.5, {animate: false}); }); await p.waitForTimeout(800);
+      await p.evaluate(() => document.querySelector('.lpin').dispatchEvent(new MouseEvent('click', {bubbles: true}))); await p.waitForTimeout(600);
+      ok('ordi · pastille ouvre la fiche à droite', await p.evaluate(() => AD && AD.kind === 'v' && /Prix maximum/.test(document.getElementById('qDetailBody').innerText)));
+      await p.click('#zIn'); await p.waitForTimeout(400);
+      ok('ordi · boutons de zoom', await p.evaluate(() => LEAF.map.getZoom() > 14.6));
+      ok('ordi · vraie carte sans erreur', errs.length === 0, errs.join(' | '));
+      await c.close(); }
   }
   await b.close();
   let bad = 0; for (const [name, pass, info] of res) { if (!pass) bad++; console.log((pass ? '✓ ' : '✗ ') + name + (pass || !info ? '' : '  → ' + info)); }
