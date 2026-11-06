@@ -89,7 +89,7 @@ addEventListener("hashchange",()=>{if(location.hash.slice(1)!==SEL+(QSEL?"-"+QSE
 /* ---------- plein écran ---------- */
 function fitVH(){const sec=document.getElementById("mapSec"), on=sec.classList.contains("mapfull")||document.body.classList.contains("mcarte"), cx=(VW/2-V.x)/V.k, cy=(VH/2-V.y)/V.k;
  cancelAnimationFrame(anim); const f=VW/WW;
- const r=sec.querySelector(".mapbox").getBoundingClientRect();
+ const r=document.querySelector(".mapbox").getBoundingClientRect();
  if(on){VW=Math.max(300,Math.round(r.width)); VH=Math.max(200,Math.round(r.height));}
  else {VW=Math.round(Math.min(WW,Math.max(460,r.width||WW))); VH=Math.round(VW*MAP.H/WW);}
  if(VW===draw.vw&&VH===draw.vh&&draw.rows) return; draw.vw=VW; draw.vh=VH;

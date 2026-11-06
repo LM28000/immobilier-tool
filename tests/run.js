@@ -20,6 +20,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     const T = s => `${n} · ${s}`;
     const scr = async k => { if (n === 'tel') { await p.evaluate(k => mShow(k), k); await p.waitForTimeout(300); } };
     await scr('carte');
+    if (n === 'ordi') {
     // pas de défilement horizontal
     ok(T('pas de débordement horizontal'), await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
     // clic sur une ville : sélection sans zoom, annonces en dessous
@@ -74,22 +75,47 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('supprimer puis annuler'), d0 === 0 && await p.evaluate(() => BIENS.length === 1));
     // listes repliées
     ok(T('listes repliées à 8'), await p.evaluate(() => [...document.querySelectorAll('.scrollbox')].every(s => [...s.querySelectorAll('tbody tr')].filter(t => !t.hidden && !t.classList.contains('more')).length <= 9)));
+    }
     if (n === 'tel') {
-      ok(T('barre d\'onglets à 5 écrans'), await p.evaluate(() => document.querySelectorAll('.mnav [data-ms]').length === 5 && getComputedStyle(document.querySelector('.mnav')).display !== 'none'));
-      let over = [];
-      for (const k of ['carte', 'annonces', 'short', 'fin', 'plus']) { await scr(k); if (!(await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1))) over.push(k); }
+      const go = async k => { await p.evaluate(k => { mPopAll(); mShow(k); }, k); await p.waitForTimeout(350); };
+      ok(T('barre d\'onglets à 5 écrans'), await p.evaluate(() => document.querySelectorAll('#mTab [data-mtab]').length === 5 && document.querySelector('.wrap').offsetHeight === 0));
+      const over = [];
+      for (const k of ['carte', 'annonces', 'short', 'budget', 'plus']) { await go(k); if (!(await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1))) over.push(k); }
       ok(T('aucun écran ne déborde'), !over.length, over.join(','));
-      await scr('carte');
-      ok(T('carte plein écran'), await p.evaluate(() => { const r = document.querySelector('.mapbox').getBoundingClientRect(), nav = document.querySelector('.mnav').getBoundingClientRect(); return r.height > innerHeight * 0.55 && r.bottom <= nav.top + 1; }));
-      await p.click('#mapChip'); await p.waitForTimeout(300);
-      ok(T('fiche de la ville en plein écran'), await p.evaluate(() => !document.getElementById('mDet').hidden && document.getElementById('detail').offsetHeight > 200));
-      await p.click('[data-mdetclose]');
-      await scr('annonces');
-      ok(T('annonces en cartes'), await p.evaluate(() => { const tr = document.querySelector('#mAnn table.vt tbody tr'); return !!tr && getComputedStyle(tr).display === 'grid'; }));
-      await p.click('#mCities [data-mcity="stnazaire"]'); await p.waitForTimeout(400);
-      ok(T('choix de la ville dans Annonces'), await p.evaluate(() => SEL === 'stnazaire' && /Saint-Nazaire/.test(document.getElementById('qBox').innerText)));
-      await scr('fin');
-      ok(T('écran financement visible'), await p.evaluate(() => document.getElementById('setPanel').offsetHeight > 300));
+      await go('carte');
+      ok(T('carte plein écran avec feuille'), await p.evaluate(() => { const r = document.querySelector('#mMap .mapbox').getBoundingClientRect(); return r.height > innerHeight * 0.7 && /Le Mans|Saint|Angers|Caen|Orléans|Laval|Rennes|Nantes|Tours/.test(document.getElementById('mSheetIn').innerText); }));
+      await p.evaluate(() => { SEL = 'lemans'; const t = IR.lemans.list.find(x => x.code === '0202'); QSEL = t; render(); flyTo(t.bb, 3.2); }); await p.waitForTimeout(900);
+      ok(T('quartier dans la feuille'), await p.evaluate(() => /Gare/.test(document.querySelector('#mSheetIn h2').textContent) && !!document.querySelector('#mSheetIn .qreal')));
+      await p.click('#mSheetIn .mmini'); await p.waitForTimeout(500);
+      ok(T('fiche plein écran depuis la carte'), await p.evaluate(() => !!document.querySelector('.mpush.in .mdp') && !!document.querySelector('.mpush.in .mcta')));
+      await go('annonces');
+      ok(T('classement de toutes les annonces'), await p.evaluate(() => { const n = Object.values(ADS).reduce((s, A) => s + ((A && A.ventes) || []).length, 0); return document.querySelectorAll('#mFeed .mcard').length === Math.min(20, n) && /studios? à vendre/.test(document.getElementById('mACount').textContent); }));
+      const irr = await p.evaluate(() => [...document.querySelectorAll('#mFeed .mci')].slice(0, 5).map(e => parseFloat(e.textContent.replace(',', '.'))));
+      ok(T('trié par rendement'), irr.every((v, i) => !i || v <= irr[i - 1] + 0.01), irr.join(' '));
+      await p.click('[data-mfc="stnazaire"]'); await p.waitForTimeout(300);
+      ok(T('filtre par ville'), await p.evaluate(() => document.querySelectorAll('#mFeed .mcard').length > 0 && [...document.querySelectorAll('#mFeed .mcs')].every(e => /Saint-Nazaire/.test(e.textContent))));
+      await p.click('[data-mfsort]'); await p.waitForTimeout(200);
+      ok(T('changer le tri'), await p.evaluate(() => MF.sort === 'cf'));
+      await p.click('#mFeed .mstar'); await p.waitForTimeout(500);
+      ok(T('étoile ajoute à la shortlist'), await p.evaluate(() => BIENS.length === 1 && !!document.querySelector('#mFeed .mstar.on')));
+      await go('short');
+      ok(T('shortlist en liste'), await p.evaluate(() => document.querySelectorAll('#mShort .msw').length === 1));
+      await p.click('#mShort .mswc'); await p.waitForTimeout(500);
+      ok(T('fiche du bien'), await p.evaluate(() => !!document.querySelector('.mpush.in [data-visit]') && !!document.querySelector('.mpush.in .stp')));
+      await p.evaluate(() => mPop()); await p.waitForTimeout(350);
+      await p.evaluate(() => { const r = document.querySelector('#mShort .msw'); r.querySelector('.mswc').style.transform = 'translateX(-172px)'; r.classList.add('open'); });
+      await p.click('#mShort .mswb.next'); await p.waitForTimeout(400);
+      ok(T('action glissée : statut suivant'), await p.evaluate(() => BIENS[0].statut === 'visité'));
+      await go('budget');
+      const t0 = await p.evaluate(() => H.taux); await p.click('[data-mstep="taux|1"]'); await p.waitForTimeout(300);
+      ok(T('budget : bouton + sur le taux'), await p.evaluate(t0 => Math.abs(H.taux - t0 - 0.05) < 1e-6 && /4,1/.test(document.querySelector('[data-mstep="taux|1"]').previousElementSibling.textContent), t0));
+      await p.click('label.mtg:has([data-mtgl="f-pess"])'); await p.waitForTimeout(300);
+      ok(T('budget : interrupteur scénario pessimiste'), await p.evaluate(() => H.pess === true));
+      await p.click('label.mtg:has([data-mtgl="f-pess"])'); await p.waitForTimeout(200);
+      await go('plus'); await p.click('[data-mgo="rank"]'); await p.waitForTimeout(400);
+      ok(T('plus : classement des villes'), await p.evaluate(() => document.querySelectorAll('.mpush.in #tbody tr').length >= 10));
+      await p.evaluate(() => mPop()); await p.waitForTimeout(350);
+      ok(T('retour : bloc rendu à la page'), await p.evaluate(() => !!document.querySelector('#tabsSec #p-rank')));
     }
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();
