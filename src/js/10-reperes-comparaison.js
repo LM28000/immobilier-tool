@@ -1,10 +1,6 @@
 /* ---------- repères, demande locative, annonces ---------- */
-const MARK={
- lemans:{gare:[47.9953,0.1923],univ:[48.0153,0.1655],centre:[48.0058,0.1983]},
- stnazaire:{gare:[47.2851,-2.2112],univ:[47.2547,-2.2677],centre:[47.2735,-2.2138]},
- angers:{gare:[47.4643,-0.5566],univ:[47.4805,-0.5933],univ2:[47.4790,-0.5470],centre:[47.4710,-0.5500]},
- caen:{gare:[49.1765,-0.3487],univ:[49.1880,-0.3640],centre:[49.1829,-0.3622]},
- orleans:{gare:[47.9078,1.9045],univ:[47.8450,1.9370],centre:[47.9025,1.9050]}};
+/* repères calculés par règle (tools/collecte/reperes.js) : gare la plus fréquentée, campus du supérieur public, mairie */
+const MARK=typeof REPQ!=="undefined"&&REPQ?REPQ:{};
 /* repères : un type par clé (gare, univ, centre), autant de repères du même type que nécessaire (univ, univ2, univ3…) */
 const mkT=k=>String(k).replace(/\d+$/,"");
 const mkMap=o=>new Proxy(o,{get:(t,k)=>typeof k==="string"?t[mkT(k)]:t[k]});

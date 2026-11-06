@@ -43,6 +43,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('sous la carte : annonces du quartier seulement'), await p.evaluate(() => document.getElementById('qAll').hidden && /Annonces · /.test(document.getElementById('qCard').textContent)));
     ok(T('rubrique habitants du quartier (Insee)'), await p.evaluate(() => { const h = document.querySelector('.qcard .fsec[data-sec=hab]'); return !!h && /Étudiants/.test(h.textContent) && /Revenu médian/.test(h.textContent); }));
     ok(T('mêmes règles partout : ventes réelles pour toutes les villes, écart de quartier calé'), await p.evaluate(() => hasDVF('tours') && Math.abs(studioPm2('tours') - DVFQ.tours.med) < 1 && Object.keys(IR).every(k => raBeta(k) >= 0 && raBeta(k) <= 1) && C.every(c => hasDVF(c.k))));
+    ok(T('repères et marché locatif par règle, pour toutes les villes'), await p.evaluate(() => C.every(c => MARK[c.k] && MARK[c.k].gare && MARK[c.k].univ && MARK[c.k].centre && demCity(c.k)) && Object.keys(TTQ).every(k => TTQ[k].marks.join() === TCQ[k].marks.join() && TTQ[k].marks.every(m => m in MARK[k])) && C.every(c => !('tension' in c))));
     ok(T('option ventes réelles DVF'), await p.evaluate(() => { const t = QSEL, a = calcIris(t).cost; H.dvf = false; const b = calcIris(t).cost; H.dvf = true; return a !== b; }));
     ok(T('pastilles de vente sur la carte'), await p.evaluate(() => document.querySelectorAll('.vpin').length > 5));
     // fiche annonce

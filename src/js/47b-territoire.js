@@ -62,3 +62,15 @@ function qTags(t){const out=[], tr=typeof trajOf==="function"?trajOf(t):null;
 /* listes de villes dérivées des données (jamais écrites en dur) */
 function cityNames(keys){const n=keys.map(k=>(C.find(c=>c.k===k)||{}).name||k); return n.length>1?n.slice(0,-1).join(", ")+" et "+n[n.length-1]:n[0]||"aucune";}
 document.querySelectorAll("[data-cities]").forEach(el=>{const w=el.dataset.cities; el.textContent=cityNames(C.map(c=>c.k).filter(k=>w==="iris"?!!(typeof IR!=="undefined"&&IR[k]):!!(ADS[k]&&ADS[k].ads)));});
+
+/* demande locative mesurée, même règle partout (Insee) : part de logements vides
+   moins de 7 % : marché tendu · 7 à 10 % : normal · 10 % ou plus : détendu ; en contexte, étudiants par petit logement (< 30 m²) et locataires du privé */
+function demCalc(pop,stud,log,vac,rp,loc,hlm,s30){if(!log) return null; const v=vac/log*100;
+ return {vac:v,cls:v<7?"p-ok":v<10?"p-n":"p-warn",txt:v<7?"tendu":v<10?"normal":"détendu",etud:s30?stud/s30:null,locp:rp?(loc-hlm)/rp*100:null,s30p:rp?s30/rp*100:null};}
+function demCity(ck){const c=hasHAB(ck)&&HABQ.city[ck]; if(!c||c.length<15) return null; return demCalc(c[0],c[0]*c[2]/100,c[6],c[7],c[8],c[9],c[10],c[12]);}
+function demQ(t){const h=t&&hasHAB(t.ck)&&HABQ.q[t.ck][t.code]; if(!h||h.length<15||h[6]<100) return null; return demCalc(h[0],h[2],h[6],h[7],h[8],h[9],h[10],h[12]);}
+function demRows(d,ref){if(!d) return []; return [["Marché locatif",`<span class="pill ${d.cls}">${d.txt}</span> ${pp(d.vac)} de logements vides`,ref?`ville : ${pp(ref.vac)} · tendu sous 7 %, détendu à 10 %`:"tendu sous 7 %, détendu à 10 % (Insee)"],
+ d.locp!=null&&["Locataires du privé",pp(d.locp),ref?`ville : ${pp(ref.locp)}`:"des résidences principales"],
+ d.etud!=null&&["Étudiants par petit logement",fr(d.etud,1),`logements de moins de 30 m² : ${pp(d.s30p)} du parc${ref?` · ville : ${fr(ref.etud,1)}`:""}`]];}
+/* une seule source pour les logements vides */
+C.forEach(c=>{const d=demCity(c.k); if(d&&RISK[c.k]) RISK[c.k][1]=+d.vac.toFixed(1);});
