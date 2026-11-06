@@ -38,10 +38,13 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await tap(p, n, ...ip); await p.waitForTimeout(700);
     ok(T('tap quartier ouvre la fiche'), await p.evaluate(() => !!QSEL && !document.getElementById('qDetail').hidden));
     ok(T('données réelles du quartier (DVF, trajets)'), await p.evaluate(() => { const a = document.querySelector('.qcard .fsec[data-sec=prix]'), b = document.querySelector('.qcard .fsec[data-sec=traj]'); return !!a && !!b && /studios? vendus?/.test(a.textContent) && /à pied/.test(b.textContent); }));
+    ok(T('rubriques écoles et urbanisme du quartier'), await p.evaluate(() => { const e = document.querySelector('.qcard .fsec[data-sec=ecoles]'), u = document.querySelector('.qcard .fsec[data-sec=urba]'); return !!e && !!u && /supérieur/.test(e.textContent) && /PLU/.test(u.textContent); }));
+    ok(T('un seul fil d\'Ariane'), await p.evaluate(() => document.querySelectorAll('.fcrumb').length === 0 && !!document.querySelector('#crumbs [data-crumb=city]')));
     ok(T('option ventes réelles DVF'), await p.evaluate(() => { const t = QSEL, a = calcIris(t).cost; H.dvf = false; const b = calcIris(t).cost; H.dvf = true; return a !== b; }));
     ok(T('pastilles de vente sur la carte'), await p.evaluate(() => document.querySelectorAll('.vpin').length > 5));
     // fiche annonce
     await p.evaluate(() => openAd('v', 'lemans', ADS.lemans.ventes[0][3])); await p.waitForTimeout(500);
+    ok(T('le fil suit le quartier de l\'annonce'), await p.evaluate(() => { const t = adQuart(AD); return !t || document.getElementById('crumbs').textContent.includes(t.name); }));
     const nego = await p.evaluate(() => document.querySelector('.nego')?.innerText || '');
     ok(T('bloc prix maximum'), /Prix maximum à payer/.test(nego) && /AUTOFINANC/i.test(nego));
     const s0 = await p.evaluate(() => AD.suf);

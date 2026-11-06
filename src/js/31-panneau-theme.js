@@ -6,7 +6,9 @@ function renderSide(){const sd=document.getElementById("qDetail"), det=document.
  if(!showQ&&!AD){sd.hidden=true; det.hidden=false; document.body.classList.remove("sheet-on"); renderSide.open=false; return;}
  const c=C.find(v=>v.k===SEL);
  const cr=[`<button type="button" class="lnk" data-crumb="city">← ${c.name}</button>`];
- if(showQ) cr.push(AD?`<button type="button" class="lnk" data-crumb="q">${esc(QSEL.name)}</button>`:`<b>${esc(QSEL.name)}</b>`);
+ const tq=AD&&typeof adQuart==="function"?adQuart(AD):null;
+ if(tq) cr.push(`<button type="button" class="lnk" data-fgo="q|${tq.ck}|${tq.code}">${esc(tq.name)}</button>`);
+ else if(showQ) cr.push(AD?`<button type="button" class="lnk" data-crumb="q">${esc(QSEL.name)}</button>`:`<b>${esc(QSEL.name)}</b>`);
  if(AD) cr.push(`<b>${AD.kind==="v"?"Studio à vendre":AD.kind==="b"?"Notre bien":"Studio à louer"}</b>`);
  document.getElementById("crumbs").innerHTML=cr.join('<span class="sep">›</span>')+`<button type="button" class="sheetx" data-crumb="${AD?"q":"city"}" aria-label="Fermer">×</button>`;
  document.getElementById("qDetailBody").innerHTML=AD?adFiche(AD):qCard(QSEL);
