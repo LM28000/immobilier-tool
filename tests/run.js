@@ -117,10 +117,26 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.click('label.mtg:has([data-mtgl="f-pess"])'); await p.waitForTimeout(300);
       ok(T('budget : interrupteur scénario pessimiste'), await p.evaluate(() => H.pess === true));
       await p.click('label.mtg:has([data-mtgl="f-pess"])'); await p.waitForTimeout(200);
+      await p.evaluate(() => { mPopAll(); mShow('annonces'); }); await p.waitForTimeout(200); await p.evaluate(() => mShow('budget')); await p.waitForTimeout(200);
+      await p.goBack(); await p.waitForTimeout(400);
+      ok(T('retour : onglet précédent'), await p.evaluate(() => MS === 'annonces'));
+      await p.evaluate(async () => { while (NAV.length) { history.back(); await new Promise(r => setTimeout(r, 120)); } }); await p.waitForTimeout(300);
+      await p.evaluate(() => history.back()); await p.waitForTimeout(500);
+      ok(T('retour à la racine : demande un second retour'), await p.evaluate(() => /encore une fois/.test(document.getElementById('toast').textContent) && !!document.getElementById('mApp')));
       await go('plus'); await p.click('[data-mgo="rank"]'); await p.waitForTimeout(400);
       ok(T('plus : classement des villes'), await p.evaluate(() => document.querySelectorAll('.mpush.in #tbody tr').length >= 10));
       await p.evaluate(() => mPop()); await p.waitForTimeout(350);
       ok(T('retour : bloc rendu à la page'), await p.evaluate(() => !!document.querySelector('#tabsSec #p-rank')));
+    }
+    if (n === 'ordi') {
+      await p.evaluate(() => { showTab('tab-ann'); }); await p.waitForTimeout(300);
+      ok(T('classement de toutes les annonces'), await p.evaluate(() => document.querySelectorAll('#annBox tbody tr').length === Math.min(30, allVentes().length)));
+      await p.click('#annBox [data-dfs="cf"]'); await p.waitForTimeout(200);
+      const cfs = await p.evaluate(() => [...document.querySelectorAll('#annBox tbody tr')].slice(0, 6).map(r => parseFloat(r.cells[6].textContent.replace('−', '-').replace(/[^0-9,.-]/g, '').replace(',', '.'))));
+      ok(T('tri par cash-flow'), cfs.every((v, i) => !i || v <= cfs[i - 1]), cfs.join(' '));
+      await p.click('#annBox tbody tr td:nth-child(3)'); await p.waitForTimeout(400);
+      ok(T('ligne du classement ouvre la fiche'), await p.evaluate(() => AD && AD.kind === 'v'));
+      ok(T('meilleures annonces : 12 cartes'), await p.evaluate(() => document.querySelectorAll('#dealsList .bcard').length === Math.min(12, allVentes().filter(v => v.r.x.irr != null && bankOk(v.r.x.ratio)).length)));
     }
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();

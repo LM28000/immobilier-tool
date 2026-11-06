@@ -13,6 +13,7 @@
     <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
     <h2 style="margin-top:18px" id="dealsH">Meilleures annonces du moment <span class="h2n">les meilleurs rendements parmi toutes les annonces en ligne que la banque accepterait</span></h2>
     <div class="rowwrap" id="dealsWrap"><div class="cards row" id="dealsList"></div></div>
+    <p class="sub" style="margin:6px 0 0" id="dealsMore"><button type="button" class="lnk" data-annall>Voir toutes les annonces, classées →</button></p>
   </section>
 
   <section class="panel" id="setPanel">
@@ -90,6 +91,7 @@
       <button type="button" role="tab" id="tab-rank" aria-controls="p-rank" aria-selected="true">Classement</button>
       <button type="button" role="tab" id="tab-sc" aria-controls="p-sc" aria-selected="false" tabindex="-1">Prix contre loyer</button>
       <button type="button" role="tab" id="tab-cmp" aria-controls="p-cmp" aria-selected="false" tabindex="-1">Comparer (0)</button>
+      <button type="button" role="tab" id="tab-ann" aria-controls="p-ann" aria-selected="false" tabindex="-1">Toutes les annonces</button>
       <button type="button" role="tab" id="tab-biens" aria-controls="p-biens" aria-selected="false" tabindex="-1">Nos biens</button>
     </div>
     <div role="tabpanel" id="p-rank" aria-labelledby="tab-rank">
@@ -104,6 +106,7 @@
       <p class="sub">Au-dessus d'une diagonale, la ville rapporte chaque année plus que ce pourcentage de son prix en loyers (rendement brut).</p>
     </div>
     <div role="tabpanel" id="p-cmp" aria-labelledby="tab-cmp" hidden><div id="cmpBox"></div></div>
+    <div role="tabpanel" id="p-ann" aria-labelledby="tab-ann" hidden><div id="annBox"></div></div>
     <div role="tabpanel" id="p-biens" aria-labelledby="tab-biens" hidden>
       <p class="sub" style="margin-top:0">Une annonce de vente repérée ? Ajoutez-la : le calcul reprend vos réglages, le loyer et la vacance du quartier. La liste est partagée avec les personnes qui ont accès à cette page.</p>
       <form id="biensForm" class="bform" autocomplete="off">

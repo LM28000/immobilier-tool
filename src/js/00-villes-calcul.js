@@ -46,7 +46,8 @@ function all(){
  const rows=C.map(c=>({c,x:calc(c)}));
  return rows;
 }
-const bank=x=>x<=0.33?["p-ok","Passe"]:x<=0.35?["p-warn","Limite"]:["p-bad","Trop haut"];
+const bankOk=x=>Math.round(x*100)<=35;   // même arrondi que l'affichage (35 % = limite, pas refusé)
+const bank=x=>Math.round(x*100)<=33?["p-ok","Passe"]:bankOk(x)?["p-warn","Limite"]:["p-bad","Trop haut"];
 const colIrr=irr=>irr==null||irr<2.5?"var(--bad)":irr<5?"var(--warn)":"var(--ok)";
 const colOf=r=>colCity(r.x);
 

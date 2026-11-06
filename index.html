@@ -685,6 +685,21 @@ body.mstack{overflow:hidden}
 .lmark{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-size:11px;font-weight:700;color:var(--fg);text-shadow:0 0 3px var(--surface),0 0 3px var(--surface)}
 .lmark i{font-style:normal;font-size:12px}
 #mLeaf svg{width:auto;height:auto;display:inline;max-width:none}
+
+/* tactile */
+body.mob .mscr,body.mob .mpin,body.mob .msheetin{touch-action:pan-y}
+body.mob .mchips,body.mob .mminis,body.mob .tablewrap,body.mob .scrollbox,body.mob .cards.row{touch-action:pan-x pan-y}
+body.mob button,body.mob a,body.mob .mcard,body.mob .mswc,body.mob label{touch-action:manipulation}
+body.mob .mtab,body.mob .mchips,body.mob .mrow,body.mob .mcard{-webkit-user-select:none;user-select:none}
+body.mob img{-webkit-touch-callout:none}
+body.mob .mrow:active,body.mob .mchip:active,body.mob .mtab button:active,body.mob .mmini:active{opacity:.6}
+.mscr{transition:none}
+.annf{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.annf select{font:inherit;font-size:.86rem;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg)}
+.annf .seg2 button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:6px 11px;cursor:pointer}
+.annf .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.annf .chip[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+table.annt{min-width:760px}
 </style>
 
 <div class="wrap">
@@ -701,6 +716,7 @@ body.mstack{overflow:hidden}
     <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
     <h2 style="margin-top:18px" id="dealsH">Meilleures annonces du moment <span class="h2n">les meilleurs rendements parmi toutes les annonces en ligne que la banque accepterait</span></h2>
     <div class="rowwrap" id="dealsWrap"><div class="cards row" id="dealsList"></div></div>
+    <p class="sub" style="margin:6px 0 0" id="dealsMore"><button type="button" class="lnk" data-annall>Voir toutes les annonces, classées →</button></p>
   </section>
 
   <section class="panel" id="setPanel">
@@ -778,6 +794,7 @@ body.mstack{overflow:hidden}
       <button type="button" role="tab" id="tab-rank" aria-controls="p-rank" aria-selected="true">Classement</button>
       <button type="button" role="tab" id="tab-sc" aria-controls="p-sc" aria-selected="false" tabindex="-1">Prix contre loyer</button>
       <button type="button" role="tab" id="tab-cmp" aria-controls="p-cmp" aria-selected="false" tabindex="-1">Comparer (0)</button>
+      <button type="button" role="tab" id="tab-ann" aria-controls="p-ann" aria-selected="false" tabindex="-1">Toutes les annonces</button>
       <button type="button" role="tab" id="tab-biens" aria-controls="p-biens" aria-selected="false" tabindex="-1">Nos biens</button>
     </div>
     <div role="tabpanel" id="p-rank" aria-labelledby="tab-rank">
@@ -792,6 +809,7 @@ body.mstack{overflow:hidden}
       <p class="sub">Au-dessus d'une diagonale, la ville rapporte chaque année plus que ce pourcentage de son prix en loyers (rendement brut).</p>
     </div>
     <div role="tabpanel" id="p-cmp" aria-labelledby="tab-cmp" hidden><div id="cmpBox"></div></div>
+    <div role="tabpanel" id="p-ann" aria-labelledby="tab-ann" hidden><div id="annBox"></div></div>
     <div role="tabpanel" id="p-biens" aria-labelledby="tab-biens" hidden>
       <p class="sub" style="margin-top:0">Une annonce de vente repérée ? Ajoutez-la : le calcul reprend vos réglages, le loyer et la vacance du quartier. La liste est partagée avec les personnes qui ont accès à cette page.</p>
       <form id="biensForm" class="bform" autocomplete="off">
@@ -934,7 +952,8 @@ function all(){
  const rows=C.map(c=>({c,x:calc(c)}));
  return rows;
 }
-const bank=x=>x<=0.33?["p-ok","Passe"]:x<=0.35?["p-warn","Limite"]:["p-bad","Trop haut"];
+const bankOk=x=>Math.round(x*100)<=35;   // même arrondi que l'affichage (35 % = limite, pas refusé)
+const bank=x=>Math.round(x*100)<=33?["p-ok","Passe"]:bankOk(x)?["p-warn","Limite"]:["p-bad","Trop haut"];
 const colIrr=irr=>irr==null||irr<2.5?"var(--bad)":irr<5?"var(--warn)":"var(--ok)";
 const colOf=r=>colCity(r.x);
 
@@ -1545,7 +1564,7 @@ const cfCls=cf=>cf<-50?0:cf<-10?1:cf<10?2:cf<40?3:4;
 const CLS=()=>CMODE==="cf"?CLS_CF:QCLS;
 const clsFor=x=>CMODE==="cf"?CLS_CF[cfCls(x.cf)]:QCLS[qCls(x.irr)];
 const colCity=x=>CMODE==="cf"?(x.cf<-50?"var(--bad)":x.cf<0?"var(--warn)":"var(--ok)"):colIrr(x.irr);
-const bankFail=x=>BANKOK&&x.ratio>0.35;
+const bankFail=x=>BANKOK&&!bankOk(x.ratio);
 
 /* ---------- comparaison ---------- */
 let CMP=[];
@@ -1760,7 +1779,7 @@ function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
  const inShort=b=>!isOut(b), out=BIENS.filter(b=>!inShort(b)).length, mine=BIENS.filter(inShort).map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,12);
  sl.innerHTML=(mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien dans la shortlist.</p>`); document.getElementById("shortOut").innerHTML=out?`<p class="sub shortout" style="margin:6px 0 0"><button type="button" class="lnk" data-gotab="tab-biens">${out} bien${out>1?"s":""} écarté${out>1?"s":""}, gardé${out>1?"s":""} dans « Nos biens » →</button></p>`:""; if(!BIENS.length) sl.innerHTML=`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
- const deals=allVentes().filter(v=>v.r.x.irr!=null&&v.r.x.ratio<=0.35&&!isAdded(VTURL+v.a[3])).sort((x,y)=>y.r.x.irr-x.r.x.irr).slice(0,6);
+ const deals=allVentes().filter(v=>v.r.x.irr!=null&&bankOk(v.r.x.ratio)&&!isAdded(VTURL+v.a[3])).sort((x,y)=>y.r.x.irr-x.r.x.irr).slice(0,12);
  dl.innerHTML=deals.length?deals.map(({ck,a,r})=>`<div class="bcard deal">${a[4]?`<img class="dealph" src="${esc(photoUrl(a[3],a[4],480,260))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="bch"><b>Studio ${String(a[0]).replace(".",",")} m²</b><span class="pill p-n">${C.find(c=>c.k===ck).name}</span></div>
   <div class="sub" style="margin:0">${esc(a[1]||"secteur non précisé")} · ${keur(a[2])} · ${eur(a[2]/a[0])}/m²</div>
   <div class="bcn"><span><small>Cash-flow ${mlab()}</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b></span><span><small>15 ans ${mlab()}</small><b class="mono" style="color:${colIrr(r.x.irr)}">${pct(r.x.irr)}</b></span></div>
@@ -2425,15 +2444,23 @@ const STACK=[];
 function mPush(title,html,opt){opt=opt||{}; const s=document.createElement("section"); s.className="mpush"+(opt.hero?" hero":"");
  s.innerHTML=`${opt.hero?"":`<div class="mpbar"><button type="button" class="mpback" data-mpop>${I('<path d="M15 5l-7 7 7 7"/>')}<span>${mEsc(opt.back||"Retour")}</span></button><b>${mEsc(title)}</b><span class="mpr">${opt.right||""}</span></div>`}<div class="mpin">${html||""}</div>${opt.cta?`<div class="mcta">${opt.cta}</div>`:""}`;
  document.getElementById("mStack").appendChild(s); STACK.push({s,els:[],onpop:opt.onpop,key:opt.key});
- try{history.pushState({mstack:STACK.length},""); MHIST=STACK.length;}catch(_){}
+ navPush({t:"push"});
  requestAnimationFrame(()=>s.classList.add("in")); document.body.classList.add("mstack"); return s;}
 function mPushEl(title,el,opt){const s=mPush(title,"",opt); const box=s.querySelector(".mpin"); mTake(el,box); el.hidden=false; STACK[STACK.length-1].els.push(el); return s;}
-let MHIST=0, MIGN=0;
-function mPop(){if(MHIST>0){try{history.back(); return;}catch(_){}} mPopNow();}
-addEventListener("popstate",e=>{if(!MOBON) return; if(MIGN){MIGN--; return;} const d=(e.state&&e.state.mstack)||0; MHIST=d; while(STACK.length>d) mPopNow();});
+/* historique : chaque changement d'onglet et chaque écran ouvert ajoute une entrée,
+   le bouton ou geste retour revient d'un cran ; à la racine, il faut faire retour deux fois pour quitter */
+const NAV=[]; let EXITT=0, NAVINIT=false;
+function navPush(e){NAV.push(e); try{history.pushState({mnav:NAV.length},"");}catch(_){}}
+function navInit(){if(NAVINIT) return; NAVINIT=true; try{history.replaceState({mnav:0,mroot:1},""); history.pushState({mnav:0,mguard:1},"");}catch(_){}}
+function mPop(){if(NAV.length&&NAV[NAV.length-1].t==="push"){try{history.back(); return;}catch(_){}} mPopNow();}
+function mBack(){try{history.back();}catch(_){}}
+addEventListener("popstate",e=>{if(!MOBON) return; const st=e.state||{};
+ if(st.mroot){if(Date.now()-EXITT<2200){try{history.back();}catch(_){} return;} EXITT=Date.now(); toast("Faites retour encore une fois pour quitter l'appli"); try{history.pushState({mnav:0,mguard:1},"");}catch(_){} return;}
+ const d=st.mnav||0; let undone=0; while(NAV.length>d){const n=NAV.pop(); undone++; if(n.t==="push") mPopNow(); else mShowNow(n.from,{back:true});}
+ if(!undone&&d>0){try{history.back();}catch(_){}}});
 function mPopNow(){const top=STACK.pop(); if(!top) return; top.els.forEach(mGive); top.onpop&&top.onpop(); top.s.style.transform=""; top.s.classList.remove("in"); top.s.classList.add("out"); setTimeout(()=>top.s.remove(),260);
  if(!STACK.length) document.body.classList.remove("mstack");}
-function mPopAll(){const n=MHIST; while(STACK.length) mPopNow(); if(n>0){MHIST=0; MIGN++; try{history.go(-n);}catch(_){MIGN--;}}}
+function mPopAll(){while(STACK.length) mPopNow(); while(NAV.length&&NAV[NAV.length-1].t==="push") NAV.pop();}
 function mRefreshTop(){const t=STACK[STACK.length-1]; if(t&&t.key&&t.key.refresh) t.key.refresh(t.s);}
 
 /* ---------- chiffres communs ---------- */
@@ -2482,9 +2509,8 @@ function mSheetRender(){if(!MOBON) return; const box=document.getElementById("mS
   moved=true; e.cancelable&&e.preventDefault(); sh.style.transition="none"; sh.style.transform=`translateY(${Math.max(-h0+60,dy)}px)`;};
  const end=e=>{if(y0==null) return; const y=(e.changedTouches?e.changedTouches[0].clientY:e.clientY), dy=y-y0, v=dy/Math.max(1,Date.now()-t0); sh.style.transition="";
   if(moved){if(dy<-50||v<-0.5) setSnap(SNAP+1); else if(dy>50||v>0.5) setSnap(SNAP-1); else setSnap(SNAP);} y0=null;};
- document.addEventListener("touchstart",e=>{if(MOBON&&e.target.closest&&e.target.closest("#mSheet")) start(e);},{passive:true});
- document.addEventListener("touchmove",e=>{if(MOBON) move(e);},{passive:false});
- document.addEventListener("touchend",e=>{if(MOBON) end(e);});
+ const sh0=()=>document.getElementById("mSheet");
+ setTimeout(()=>{const el=sh0(); if(!el) return; el.addEventListener("touchstart",e=>{if(MOBON) start(e);},{passive:true}); el.addEventListener("touchmove",e=>{if(MOBON) move(e);},{passive:false}); el.addEventListener("touchend",e=>{if(MOBON) end(e);},{passive:true});},0);
  document.addEventListener("click",e=>{if(MOBON&&e.target.closest&&e.target.closest("#mGrab")) setSnap(SNAP===2?1:SNAP+1);});})();
 
 /* recherche ville / quartier */
@@ -2497,10 +2523,10 @@ function mSearch(){const s=mPush("Rechercher",`<div class="msrch"><input type="s
  inp.addEventListener("input",run); run(); setTimeout(()=>inp.focus(),300);}
 
 /* ---------- fil d'annonces ---------- */
-function feedList(){const out=[]; Object.entries(ADS).forEach(([ck,A])=>{if(!A||!A.ventes) return; if(MF.ck&&MF.ck!==ck) return; A.ventes.forEach(a=>{if(MF.sec&&a[1]!==MF.sec) return; out.push(adInfo(ck,a));});});
+function feedList(F){F=F||MF; const out=[]; Object.entries(ADS).forEach(([ck,A])=>{if(!A||!A.ventes) return; if(F.ck&&F.ck!==ck) return; A.ventes.forEach(a=>{if(F.sec&&a[1]!==F.sec) return; out.push(adInfo(ck,a));});});
  return out;}
-function feedSorted(L){const f=L.filter(o=>(!MF.bank||o.x.ratio<=0.35)&&(!MF.nw||o.nw)&&(!MF.drop||(o.v&&o.v.last)));
- const k=MF.sort, by={irr:(p,q)=>(q.x.irr??-99)-(p.x.irr??-99),cf:(p,q)=>q.x.cf-p.x.cf,prix:(p,q)=>p.a[2]-q.a[2],new:(p,q)=>((hEntry(q.ck,q.a[3])||{}).f||"").localeCompare((hEntry(p.ck,p.a[3])||{}).f||"")||(q.x.irr??-99)-(p.x.irr??-99)};
+function feedSorted(L,F){F=F||MF; const f=L.filter(o=>(!F.bank||bankOk(o.x.ratio))&&(!F.nw||o.nw)&&(!F.drop||(o.v&&o.v.last)));
+ const k=F.sort, by={irr:(p,q)=>(q.x.irr??-99)-(p.x.irr??-99),cf:(p,q)=>q.x.cf-p.x.cf,prix:(p,q)=>p.a[2]-q.a[2],new:(p,q)=>((hEntry(q.ck,q.a[3])||{}).f||"").localeCompare((hEntry(p.ck,p.a[3])||{}).f||"")||(q.x.irr??-99)-(p.x.irr??-99)};
  return f.sort(by[k]||by.irr);}
 function adCard(o,rank){const b=bienOf(o.url), on=b&&!isOut(b), p=mPhoto(o.ck,o.a,720,440), [bc]=bank(o.x.ratio);
  const badge=o.nw?`<i class="mbdg nw">Nouveau</i>`:o.v&&o.v.last?`<i class="mbdg dr">↓ ${keur(o.v.last.amt)} le ${dm(o.v.last.d)}</i>`:o.v&&o.v.days>=30?`<i class="mbdg old">${o.v.days} j en ligne</i>`:"";
@@ -2588,10 +2614,11 @@ function mShortRender(){if(!MOBON) return; MSLATE=[]; const all=BIENS.filter(b=>
 /* glisser pour agir */
 (function(){let row=null,x0=0,y0=0,dx=0,dir=null,open=null;
  const W=172, close=r=>{if(r){r.querySelector(".mswc").style.transform=""; r.classList.remove("open");} if(open===r) open=null;};
- document.addEventListener("touchstart",e=>{if(!MOBON) return; const r=e.target.closest&&e.target.closest(".msw"); if(open&&open!==r) close(open); if(!r||e.target.closest(".mswa")) {row=null; return;} row=r; x0=e.touches[0].clientX; y0=e.touches[0].clientY; dx=0; dir=null;},{passive:true});
- document.addEventListener("touchmove",e=>{if(!row) return; const mx=e.touches[0].clientX-x0, my=e.touches[0].clientY-y0; if(!dir){if(Math.abs(mx)<8&&Math.abs(my)<8) return; dir=Math.abs(mx)>Math.abs(my)?"h":"v";}
-  if(dir!=="h") return; e.cancelable&&e.preventDefault(); const base=row.classList.contains("open")?-W:0; dx=Math.min(0,Math.max(-W-30,base+mx)); const c=row.querySelector(".mswc"); c.style.transition="none"; c.style.transform=`translateX(${dx}px)`;},{passive:false});
- document.addEventListener("touchend",()=>{if(!row||dir!=="h"){row=null; return;} const c=row.querySelector(".mswc"); c.style.transition=""; if(dx<-W/2){c.style.transform=`translateX(${-W}px)`; row.classList.add("open"); open=row;} else close(row); row.dataset.swiped=Date.now(); row=null;});
+ const SWH=()=>document.getElementById("mShort");
+ setTimeout(()=>{const H0=SWH(); if(!H0) return; H0.addEventListener("touchstart",e=>{if(!MOBON) return; const r=e.target.closest&&e.target.closest(".msw"); if(open&&open!==r) close(open); if(!r||e.target.closest(".mswa")) {row=null; return;} row=r; x0=e.touches[0].clientX; y0=e.touches[0].clientY; dx=0; dir=null;},{passive:true});
+ H0.addEventListener("touchmove",e=>{if(!row) return; const mx=e.touches[0].clientX-x0, my=e.touches[0].clientY-y0; if(!dir){if(Math.abs(mx)<8&&Math.abs(my)<8) return; dir=Math.abs(mx)>Math.abs(my)?"h":"v";}
+  if(dir!=="h") return; const base=row.classList.contains("open")?-W:0; dx=Math.min(0,Math.max(-W-30,base+mx)); const c=row.querySelector(".mswc"); c.style.transition="none"; c.style.transform=`translateX(${dx}px)`;},{passive:true});
+ H0.addEventListener("touchend",()=>{if(!row||dir!=="h"){row=null; return;} const c=row.querySelector(".mswc"); c.style.transition=""; if(dx<-W/2){c.style.transform=`translateX(${-W}px)`; row.classList.add("open"); open=row;} else close(row); row.dataset.swiped=Date.now(); row=null;},{passive:true});},0);
  document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest(".msw"); if(r&&r.dataset.swiped&&Date.now()-r.dataset.swiped<350){e.stopImmediatePropagation(); e.preventDefault();} else if(r&&r.classList.contains("open")&&!e.target.closest(".mswa")){e.stopImmediatePropagation(); e.preventDefault(); close(r);}},true);})();
 
 /* ---------- budget ---------- */
@@ -2630,7 +2657,8 @@ function mGo(k){const tb=id=>document.getElementById(id);
 
 /* ---------- navigation entre écrans ---------- */
 function mBadges(){const n=BIENS.filter(b=>!isOut(b)).length, el=document.querySelector('#mTab [data-mtab="short"] .mbadge'); if(el){el.hidden=!n; el.textContent=n;}}
-function mShow(k){if(!MOBON) return; if(MS!=="carte") MSCROLL[MS]=scrollY; MS=k; try{localStorage.setItem("mscreen",k);}catch(_){}
+function mShow(k){if(!MOBON) return; if(MS&&k!==MS&&!STACK.length) navPush({t:"tab",from:MS}); mShowNow(k);}
+function mShowNow(k,opt){if(!MOBON) return; if(MS!=="carte") MSCROLL[MS]=scrollY; MS=k; try{localStorage.setItem("mscreen",k);}catch(_){}
  document.body.dataset.ms=k; document.body.classList.toggle("mcarte",k==="carte");
  document.querySelectorAll("#mTab [data-mtab]").forEach(b=>{const on=b.dataset.mtab===k; b.setAttribute("aria-current",on?"page":"false"); b.querySelector(".mti").innerHTML=icoTab(b.dataset.mtab,on);});
  if(k==="annonces") mFeedRender(); if(k==="short") mShortRender(); if(k==="budget") mBudgetRender(); if(k==="plus") mPlusRender(); if(k==="carte") mSheetRender();
@@ -2640,7 +2668,7 @@ addEventListener("scroll",()=>{if(MOBON) mBarUpdate();},{passive:true});
 
 function mApply(on){if(on===MOBON) return; MOBON=on; document.body.classList.toggle("mob",on);
  if(on){document.getElementById("mapSec").classList.add("mapfull"); document.body.appendChild(mApp); mTake(document.querySelector("#mapSec .mapbox"),document.getElementById("mMap")); mTake(document.getElementById("cmode"),document.getElementById("mModeHost"));
-  let k="carte"; try{k=localStorage.getItem("mscreen")||"carte";}catch(_){} if(!MTABS.some(t=>t[0]===k)) k="carte"; MS=""; mShow(k); mBadges(); setTimeout(()=>{if(V.k<KQ) mHome();},80);}
+  let k="carte"; try{k=localStorage.getItem("mscreen")||"carte";}catch(_){} if(!MTABS.some(t=>t[0]===k)) k="carte"; MS=""; navInit(); mShowNow(k); mBadges(); setTimeout(()=>{if(V.k<KQ) mHome();},80);}
  else{document.getElementById("mapSec").classList.remove("mapfull"); mPopAll(); [...MPL.keys()].forEach(mGive); mApp.remove(); delete document.body.dataset.ms; document.body.classList.remove("mcarte","mstack"); requestAnimationFrame(()=>{draw.vw=0; fitVH();});}}
 
 /* ---------- clics ---------- */
@@ -2648,7 +2676,7 @@ document.addEventListener("click",e=>{if(!MOBON) return; const t=e.target.closes
  if(!t) return;
  const d=t.dataset;
  if(t.id==="mapChip"){e.stopImmediatePropagation(); setSnap(1); return;}
- if(d.mtab){mPopAll(); if(d.mtab===MS) scrollTo({top:0,behavior:"smooth"}); else mShow(d.mtab); return;}
+ if(d.mtab){const had=STACK.length; mPopAll(); if(d.mtab===MS){if(!had) scrollTo({top:0,behavior:"smooth"});} else mShow(d.mtab); return;}
  if(d.mpop!==undefined){mPop(); return;}
  if(d.mstar){e.stopPropagation(); const [ck,...r]=d.mstar.split("|"); mStar(ck,r.join("|")); return;}
  if(d.mfav){const b=BIENS.find(x=>x.id===d.mfav); if(b) updBien(b.id,{fav:!b.fav}); return;}
@@ -2676,19 +2704,26 @@ document.addEventListener("change",e=>{if(!MOBON) return; const t=e.target;
  if(t.dataset&&t.dataset.mtgl){mSet(t.dataset.mtgl,t.checked); return;}
  if(t.dataset&&t.dataset.msel){mSet(t.dataset.msel,t.value); setTimeout(mBudgetRender,50);}});
 addEventListener("keydown",e=>{if(MOBON&&e.key==="Escape"&&STACK.length) mPop();});
-/* retour : glisser vers la droite n'importe où sur un écran empilé (comme une appli) */
-(function(){let x0=null,y0=0,t0=0,s=null,dir=null,dx=0,under=null;
- const blocked=el=>el.closest&&el.closest(".mminis,.mchips,.tablewrap,.scrollbox,.scnt,input,textarea,select,.mseg,.mstep,.ngr,svg.fqmap,.cards.row");
- document.addEventListener("touchstart",e=>{if(!MOBON||!STACK.length||e.touches.length>1) return; if(blocked(e.target)&&e.touches[0].clientX>28) return;
-  s=STACK[STACK.length-1].s; if(!s.contains(e.target)) {s=null; return;} x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); dir=null; dx=0;
-  under=STACK.length>1?STACK[STACK.length-2].s:document.querySelector(".mscr[data-ms='"+MS+"']");},{passive:true});
- document.addEventListener("touchmove",e=>{if(x0==null) return; const mx=e.touches[0].clientX-x0, my=e.touches[0].clientY-y0;
-  if(!dir){if(Math.abs(mx)<10&&Math.abs(my)<10) return; dir=(mx>0&&Math.abs(mx)>Math.abs(my)*1.2)?"h":"v"; if(dir==="h"){s.style.transition="none"; if(under){under.style.transition="none";}}}
-  if(dir!=="h"){x0=null; return;} e.cancelable&&e.preventDefault(); dx=Math.max(0,mx); s.style.transform=`translateX(${dx}px)`; if(under) under.style.transform=`translateX(${(dx-innerWidth)*0.25}px)`;},{passive:false});
- document.addEventListener("touchend",()=>{if(x0==null||dir!=="h"){x0=null; return;} const v=dx/Math.max(1,Date.now()-t0); s.style.transition=""; if(under){under.style.transition="transform .28s cubic-bezier(.2,.8,.2,1)"; under.style.transform="";}
-  const go=dx>innerWidth*0.3||v>0.5; s.style.transform=go?"translateX(100%)":""; x0=null; if(go) setTimeout(()=>mPop(),180); if(under) setTimeout(()=>{under.style.transition="";},300);});})();
+/* retour : glisser vers la droite (écran empilé : n'importe où ; onglet : revient à l'onglet précédent ; carte : depuis le bord) */
+(function(){let x0=null,y0=0,t0=0,s=null,dir=null,dx=0,under=null,mode="";
+ const blocked=el=>el.closest&&el.closest(".mminis,.mchips,.tablewrap,.scrollbox,.scnt,input,textarea,select,.mseg,.mstep,.ngr,svg.fqmap,.cards.row,.msw,#mSheet,.leaflet-container,.mmap");
+ const startG=e=>{if(!MOBON||e.touches.length>1) return; const x=e.touches[0].clientX, edge=x<26;
+  if(STACK.length){s=STACK[STACK.length-1].s; if(!s.contains(e.target)){s=null; return;} if(blocked(e.target)&&!edge) return; mode="push"; under=STACK.length>1?STACK[STACK.length-2].s:document.querySelector(".mscr[data-ms='"+MS+"']");}
+  else {if(!NAV.length&&!edge) return; s=document.querySelector(".mscr[data-ms='"+MS+"']"); if(!s) return; if(MS==="carte"&&!edge) return; if(blocked(e.target)&&!edge) return; mode="tab"; under=null;}
+  x0=x; y0=e.touches[0].clientY; t0=Date.now(); dir=null; dx=0;};
+ const moveG=e=>{if(x0==null) return; const mx=e.touches[0].clientX-x0, my=e.touches[0].clientY-y0;
+  if(!dir){if(Math.abs(mx)<10&&Math.abs(my)<10) return; dir=(mx>0&&Math.abs(mx)>Math.abs(my)*1.3)?"h":"v"; if(dir==="h"){s.style.transition="none"; if(under) under.style.transition="none";}}
+  if(dir!=="h"){x0=null; return;} dx=Math.max(0,mx); s.style.transform=`translateX(${mode==="tab"?dx*0.5:dx}px)`; if(mode==="tab") s.style.opacity=String(1-Math.min(.5,dx/innerWidth)); if(under) under.style.transform=`translateX(${(dx-innerWidth)*0.25}px)`;};
+ const endG=()=>{if(x0==null||dir!=="h"){x0=null; return;} const v=dx/Math.max(1,Date.now()-t0), go=dx>innerWidth*0.28||v>0.45; x0=null;
+  s.style.transition="transform .22s ease,opacity .22s ease"; if(under){under.style.transition="transform .28s cubic-bezier(.2,.8,.2,1)"; under.style.transform="";}
+  const el=s;
+  if(mode==="push"){el.style.transform=go?"translateX(100%)":""; if(go) setTimeout(()=>mPop(),170);}
+  else {el.style.transform=""; el.style.opacity=""; if(go) mBack();}
+  setTimeout(()=>{el.style.transition=""; if(under) under.style.transition="";},320);};
+ document.addEventListener("touchstart",startG,{passive:true}); document.addEventListener("touchmove",moveG,{passive:true}); document.addEventListener("touchend",endG,{passive:true});})();
 
 /* ---------- branchements sur le reste de l'outil ---------- */
+(function(){const rs=history.replaceState.bind(history); history.replaceState=function(st,t,u){return rs(st==null?history.state:st,t,u);};})();
 const _openAd=openAd; openAd=function(kind,ck,suf){_openAd(kind,ck,suf); if(MOBON&&!(STACK.length&&STACK[STACK.length-1].s.dataset.ad===`${kind}|${ck}|${suf}`)) mDetail(kind,ck,suf);};
 let MHK=""; const inStack=id=>{const el=document.getElementById(id); return !!(el&&el.closest("#mStack"));};
 [["renderScatter","p-sc"],["renderTable","p-rank"],["renderCompare","p-cmp"],["renderBiens","biensList"],["renderDetail","detail"]].forEach(([fn,id])=>{const orig=window[fn]; if(typeof orig!=="function") return; window[fn]=function(){if(MOBON&&!inStack(id)){window[fn].dirty=arguments; return;} return orig.apply(this,arguments);}; window[fn].orig=orig;});
@@ -2765,14 +2800,13 @@ function leafCenterCity(){if(!LEAF.on||LEAF.map.getZoom()<10) return; const c=LE
 
 function leafInit(){if(LEAF.on||!window.L) return; const host=document.querySelector(".mapbox"); if(!host) return; LEAF.host=host;
  const el=document.createElement("div"); el.id="mLeaf"; host.appendChild(el);
- const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.25,worldCopyJump:false,scrollWheelZoom:false});
+ const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.25,worldCopyJump:false,scrollWheelZoom:true,wheelPxPerZoomLevel:36,wheelDebounceTime:16,zoomDelta:1});
  M.setView([47.7,0],7); LEAF.map=M; LEAF.tiles=L.tileLayer(TILEURL(),{maxZoom:19,crossOrigin:true}).addTo(M);
  L.control.attribution({position:"bottomleft",prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>').addTo(M);
  LEAF.city=L.layerGroup(); LEAF.iris=L.layerGroup(); LEAF.pins=L.layerGroup(); LEAF.marks=L.layerGroup();
  LEAF.on=true; host.classList.add("leaf");
  M.on("zoomend",leafZoomLayers); M.on("moveend",leafCenterCity);
- M.on("click",()=>{M.scrollWheelZoom.enable(); if(QSEL){QSEL=null; AD=null; render();}});
- el.addEventListener("mouseleave",()=>{if(!document.getElementById("mapSec").classList.contains("mapfull")||MOBON) M.scrollWheelZoom.disable();});
+ M.on("click",()=>{if(QSEL){QSEL=null; AD=null; render();}});
  if(window.ResizeObserver) new ResizeObserver(()=>M.invalidateSize()).observe(host);
  const sel=SEL&&IR[SEL]&&QSEL?QSEL.bb:null; leafRefresh();
  if(sel) leafFly(sel); else if(IR[SEL]&&!MOBON) leafFly(IR[SEL].bb,{maxZoom:12}); else leafHome();
@@ -2783,8 +2817,8 @@ const _flyToL=flyTo; flyTo=function(bb,pad){if(LEAF.on){svgJump(bb,pad||1.15); l
 const _mHome=mHome; mHome=function(){if(LEAF.on) leafHome(); else _mHome();};
 const _renderL=render; render=function(){_renderL.apply(this,arguments); if(LEAF.on) leafRefresh();};
 const _renderSideL=renderSide; renderSide=function(){_renderSideL.apply(this,arguments); if(LEAF.on){leafIris(); leafPins(); leafZoomLayers();}};
-const _mShowL=mShow; mShow=function(k){_mShowL(k); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
-function leafSetFull(){if(LEAF.on) setTimeout(()=>{LEAF.map.invalidateSize(); const f=document.getElementById("mapSec").classList.contains("mapfull")&&!MOBON; f?LEAF.map.scrollWheelZoom.enable():LEAF.map.scrollWheelZoom.disable();},80);}
+const _mShowL=mShowNow; mShowNow=function(k,o){_mShowL(k,o); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
+function leafSetFull(){if(LEAF.on) setTimeout(()=>LEAF.map.invalidateSize(),80);}
 document.addEventListener("click",e=>{if(!LEAF.on) return; const h=e.target.closest&&e.target.closest("#zHome,#zAll,#zIn,#zOut,#zFull"); if(!h) return;
  if(h.id==="zFull"){leafSetFull(); return;} e.preventDefault(); e.stopImmediatePropagation();
  if(h.id==="zIn") LEAF.map.zoomIn(); else if(h.id==="zOut") LEAF.map.zoomOut(); else leafHome();},true);
@@ -2800,6 +2834,31 @@ function leafTry(){if(LEAF.on||LEAF.trying) return; LEAF.trying=true;
  img.onerror=()=>{clearTimeout(t); fail();};
  img.src="https://tile.openstreetmap.org/6/31/22.png";}
 leafTry(); MOBQ.addEventListener&&MOBQ.addEventListener("change",()=>{if(LEAF.on){LEAF.map.invalidateSize(); leafRefresh();}});
+
+/* ---------- ordinateur : classement de toutes les annonces (onglet « Toutes les annonces ») ---------- */
+const DF={ck:"",sec:"",sort:"irr",nw:false,drop:false,bank:false,n:30};
+function renderAnn(){const box=document.getElementById("annBox"); if(!box||MOBON) return;
+ const all=feedList(DF), L=feedSorted(all.slice(),DF), nNew=all.filter(o=>o.nw).length, nDrop=all.filter(o=>o.v&&o.v.last).length, cities=Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ventes);
+ const row=(o,i)=>{const [bc,bt]=bank(o.x.ratio), b=bienOf(o.url), on=b&&!isOut(b);
+  const badge=o.nw?`<span class="hb new">nouveau</span>`:o.v&&o.v.last?`<span class="hb drop">↓ ${keur(o.v.last.amt)}</span>`:o.v&&o.v.days>=30?`<span class="hb old">${o.v.days} j</span>`:"";
+  return `<tr class="clk" tabindex="0" data-annad="${o.ck}|${esc(o.a[3])}"><td class="r mono">${i+1}</td><td class="tcell">${thumbHtml(o.a[3],o.a[4])}</td><td><b>${esc(o.a[1]||"secteur ?")}</b><div class="sub" style="margin:0">${esc(cityName(o.ck))}${o.d&&o.d.real?` · ${minTxt(o.d.min)} à pied (${({gare:"gare",univ:"fac",univ2:"fac",centre:"centre"})[o.d.mk]})`:""}</div></td>
+   <td class="r mono">${String(o.a[0]).replace(".",",")}</td><td class="r mono">${keur(o.a[2])} ${badge}</td><td class="r mono hm">${eur(o.a[2]/o.a[0])}</td><td class="r mono ${o.x.cf>=0?"pos":"neg"}">${sgn(o.x.cf)}</td><td class="r mono" style="color:${colIrr(o.x.irr)};font-weight:700">${irrTxt(o.x)}</td><td><span class="pill ${bc}">${pct(o.x.ratio*100,0)}</span></td>
+   <td style="white-space:nowrap">${on?`<span class="pill p-ok">★ shortlist</span>`:addBtn(o.ck,o.a)}</td></tr>`;};
+ box.innerHTML=`<div class="annf"><select data-dfc aria-label="Ville"><option value="">Toutes les villes (${all.length})</option>${cities.map(k=>`<option value="${k}"${DF.ck===k?" selected":""}>${esc(cityName(k))} (${ADS[k].ventes.length})</option>`).join("")}</select>
+  <span class="seg2" role="group" aria-label="Tri">${SORTS.map(([k,l])=>`<button type="button" data-dfs="${k}" aria-pressed="${DF.sort===k}">${l}</button>`).join("")}</span>
+  <button type="button" class="chip" data-dff="nw" aria-pressed="${DF.nw}">Nouvelles (${nNew})</button><button type="button" class="chip" data-dff="drop" aria-pressed="${DF.drop}">↓ Baisses (${nDrop})</button><button type="button" class="chip" data-dff="bank" aria-pressed="${DF.bank}">Banque OK</button>
+  <span class="sub" style="margin:0">${L.length} studio${L.length>1?"s":""}${MSEEN&&nNew?` · ${nNew} nouveau${nNew>1?"x":""} depuis votre visite du ${dm(MSEEN)}`:""}</span></div>
+  <div class="tablewrap"><table class="adt annt"><thead><tr><th class="r">#</th><th></th><th>Secteur</th><th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th>Banque</th><th></th></tr></thead><tbody>${L.slice(0,DF.n).map(row).join("")}</tbody></table></div>
+  ${L.length>DF.n?`<button type="button" class="btn ghost sm" data-dfmore style="margin-top:8px">Afficher ${Math.min(30,L.length-DF.n)} de plus</button>`:""}
+  <p class="sub" style="margin:6px 0 0">Toutes les annonces de vente suivies, calculées avec vos réglages (${H.net?"chiffres nets":"chiffres bruts"}). Cliquez une ligne pour sa fiche à côté de la carte.</p>`;}
+document.addEventListener("click",e=>{if(MOBON) return; const t=e.target.closest&&e.target.closest("[data-dfs],[data-dff],[data-dfmore],[data-annad],[data-annall]"); if(!t) return;
+ if(t.dataset.annall!==undefined){e.preventDefault(); showTab("tab-ann"); renderAnn(); document.getElementById("tabsSec").scrollIntoView({behavior:"smooth",block:"start"}); return;}
+ if(t.dataset.annad){if(e.target.closest("a,button")) return; const [ck,...r]=t.dataset.annad.split("|"); openAd("v",ck,r.join("|")); document.querySelector(".main").scrollIntoView({behavior:"smooth",block:"start"}); return;}
+ if(t.dataset.dfs){DF.sort=t.dataset.dfs; DF.n=30;} else if(t.dataset.dff){DF[t.dataset.dff]=!DF[t.dataset.dff]; DF.n=30;} else if(t.dataset.dfmore!==undefined) DF.n+=30; renderAnn();});
+document.addEventListener("change",e=>{const s=e.target.closest&&e.target.closest("[data-dfc]"); if(!s) return; DF.ck=s.value; DF.n=30; renderAnn();});
+document.addEventListener("keydown",e=>{const r=e.target.closest&&e.target.closest("[data-annad]"); if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault(); r.click();}});
+const _showTabA=showTab; showTab=function(id){_showTabA(id); if(id==="tab-ann") renderAnn();};
+const _renderA=render; render=function(){_renderA.apply(this,arguments); const p=document.getElementById("p-ann"); if(p&&!p.hidden) renderAnn();};
 
 initFin();
 fitVH();

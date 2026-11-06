@@ -61,14 +61,13 @@ function leafCenterCity(){if(!LEAF.on||LEAF.map.getZoom()<10) return; const c=LE
 
 function leafInit(){if(LEAF.on||!window.L) return; const host=document.querySelector(".mapbox"); if(!host) return; LEAF.host=host;
  const el=document.createElement("div"); el.id="mLeaf"; host.appendChild(el);
- const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.25,worldCopyJump:false,scrollWheelZoom:false});
+ const M=L.map(el,{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:19,zoomSnap:.25,worldCopyJump:false,scrollWheelZoom:true,wheelPxPerZoomLevel:36,wheelDebounceTime:16,zoomDelta:1});
  M.setView([47.7,0],7); LEAF.map=M; LEAF.tiles=L.tileLayer(TILEURL(),{maxZoom:19,crossOrigin:true}).addTo(M);
  L.control.attribution({position:"bottomleft",prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">les contributeurs OpenStreetMap</a>').addTo(M);
  LEAF.city=L.layerGroup(); LEAF.iris=L.layerGroup(); LEAF.pins=L.layerGroup(); LEAF.marks=L.layerGroup();
  LEAF.on=true; host.classList.add("leaf");
  M.on("zoomend",leafZoomLayers); M.on("moveend",leafCenterCity);
- M.on("click",()=>{M.scrollWheelZoom.enable(); if(QSEL){QSEL=null; AD=null; render();}});
- el.addEventListener("mouseleave",()=>{if(!document.getElementById("mapSec").classList.contains("mapfull")||MOBON) M.scrollWheelZoom.disable();});
+ M.on("click",()=>{if(QSEL){QSEL=null; AD=null; render();}});
  if(window.ResizeObserver) new ResizeObserver(()=>M.invalidateSize()).observe(host);
  const sel=SEL&&IR[SEL]&&QSEL?QSEL.bb:null; leafRefresh();
  if(sel) leafFly(sel); else if(IR[SEL]&&!MOBON) leafFly(IR[SEL].bb,{maxZoom:12}); else leafHome();
@@ -79,8 +78,8 @@ const _flyToL=flyTo; flyTo=function(bb,pad){if(LEAF.on){svgJump(bb,pad||1.15); l
 const _mHome=mHome; mHome=function(){if(LEAF.on) leafHome(); else _mHome();};
 const _renderL=render; render=function(){_renderL.apply(this,arguments); if(LEAF.on) leafRefresh();};
 const _renderSideL=renderSide; renderSide=function(){_renderSideL.apply(this,arguments); if(LEAF.on){leafIris(); leafPins(); leafZoomLayers();}};
-const _mShowL=mShow; mShow=function(k){_mShowL(k); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
-function leafSetFull(){if(LEAF.on) setTimeout(()=>{LEAF.map.invalidateSize(); const f=document.getElementById("mapSec").classList.contains("mapfull")&&!MOBON; f?LEAF.map.scrollWheelZoom.enable():LEAF.map.scrollWheelZoom.disable();},80);}
+const _mShowL=mShowNow; mShowNow=function(k,o){_mShowL(k,o); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
+function leafSetFull(){if(LEAF.on) setTimeout(()=>LEAF.map.invalidateSize(),80);}
 document.addEventListener("click",e=>{if(!LEAF.on) return; const h=e.target.closest&&e.target.closest("#zHome,#zAll,#zIn,#zOut,#zFull"); if(!h) return;
  if(h.id==="zFull"){leafSetFull(); return;} e.preventDefault(); e.stopImmediatePropagation();
  if(h.id==="zIn") LEAF.map.zoomIn(); else if(h.id==="zOut") LEAF.map.zoomOut(); else leafHome();},true);

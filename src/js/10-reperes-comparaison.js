@@ -32,7 +32,7 @@ const cfCls=cf=>cf<-50?0:cf<-10?1:cf<10?2:cf<40?3:4;
 const CLS=()=>CMODE==="cf"?CLS_CF:QCLS;
 const clsFor=x=>CMODE==="cf"?CLS_CF[cfCls(x.cf)]:QCLS[qCls(x.irr)];
 const colCity=x=>CMODE==="cf"?(x.cf<-50?"var(--bad)":x.cf<0?"var(--warn)":"var(--ok)"):colIrr(x.irr);
-const bankFail=x=>BANKOK&&x.ratio>0.35;
+const bankFail=x=>BANKOK&&!bankOk(x.ratio);
 
 /* ---------- comparaison ---------- */
 let CMP=[];

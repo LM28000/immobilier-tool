@@ -678,3 +678,18 @@ body.mstack{overflow:hidden}
 .lmark{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-size:11px;font-weight:700;color:var(--fg);text-shadow:0 0 3px var(--surface),0 0 3px var(--surface)}
 .lmark i{font-style:normal;font-size:12px}
 #mLeaf svg{width:auto;height:auto;display:inline;max-width:none}
+
+/* tactile */
+body.mob .mscr,body.mob .mpin,body.mob .msheetin{touch-action:pan-y}
+body.mob .mchips,body.mob .mminis,body.mob .tablewrap,body.mob .scrollbox,body.mob .cards.row{touch-action:pan-x pan-y}
+body.mob button,body.mob a,body.mob .mcard,body.mob .mswc,body.mob label{touch-action:manipulation}
+body.mob .mtab,body.mob .mchips,body.mob .mrow,body.mob .mcard{-webkit-user-select:none;user-select:none}
+body.mob img{-webkit-touch-callout:none}
+body.mob .mrow:active,body.mob .mchip:active,body.mob .mtab button:active,body.mob .mmini:active{opacity:.6}
+.mscr{transition:none}
+.annf{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.annf select{font:inherit;font-size:.86rem;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg)}
+.annf .seg2 button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:6px 11px;cursor:pointer}
+.annf .seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.annf .chip[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+table.annt{min-width:760px}
