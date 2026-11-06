@@ -24,7 +24,7 @@ async function collecteQuartiers(VILLES,QUOI){QUOI=QUOI||["trajets","risques","c
   const H=Q.filter(q=>q.t.type==="H");
   if(QUOI.includes("risques")){const o={}, G=p=>J("https://www.georisques.gouv.fr/api/v1/"+p);
    for(const {t,p:[la,lo]} of H){const L=`latlon=${lo},${la}`, [rga,tz,sis,cas,ic]=await Promise.all([G("rga?"+L),G("tri_zonage?"+L),G(`ssp/conclusions_sis?${L}&rayon=300&page_size=1`),G(`ssp/casias?${L}&rayon=300&page_size=1`),G(`installations_classees?${L}&rayon=500&page_size=100`)]);
-    const r={}, a=rga&&+rga.codeExposition||0; if(a) r.a=a; if(tz&&tz.results) r.t=1; if(sis&&sis.results) r.s=sis.results; if(ic&&(ic.data||[]).some(x=>/seveso/i.test(x.statutSeveso||""))) r.v=1; if(cas&&cas.results) r.c=cas.results; o[t.code]=r;}
+    const r={}, a=rga&&+rga.codeExposition||0; if(a) r.a=a; if(tz&&tz.results) r.t=1; if(sis&&sis.results) r.s=sis.results; if(ic&&(ic.data||[]).some(x=>/seuil/i.test(x.statutSeveso||""))) r.v=1; if(cas&&cas.results) r.c=cas.results; o[t.code]=r;}
    out.risques[ck]=o;}
   if(QUOI.includes("commerces")&&H.length){const la0=Math.min(...H.map(q=>q.p[0]))-0.012, la1=Math.max(...H.map(q=>q.p[0]))+0.012, lo0=Math.min(...H.map(q=>q.p[1]))-0.018, lo1=Math.max(...H.map(q=>q.p[1]))+0.018, bb=`(${la0},${lo0},${la1},${lo1})`;
    const sel=["shop=supermarket","shop=convenience","shop=bakery","amenity=pharmacy","amenity~\"^(cafe|restaurant|bar|pub)$\"","shop=laundry","leisure=fitness_centre"];

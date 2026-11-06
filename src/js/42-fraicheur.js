@@ -3,7 +3,7 @@
 const FRESH=[
  ["Annonces de location et de vente","<a href=\"https://www.bienici.com/\" target=\"_blank\" rel=\"noopener\">Bien'ici</a>, relevé quotidien","chaque jour",()=>ADS.iso||"2026-11-05",2],
  ["Taux du crédit","Offres bancaires, profil emprunteur","novembre 2026","2026-11-05",60],
- ["Ventes réelles de studios","<a href=\"https://www.data.gouv.fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/\" target=\"_blank\" rel=\"noopener\">DVF</a> : appartements d'une pièce de 12 à 35 m² vendus seuls, par ville et par quartier","2023 à 2025",()=>DVFALL.date,180],
+ ["Ventes réelles (DVF)","<a href=\"https://www.data.gouv.fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/\" target=\"_blank\" rel=\"noopener\">DVF</a> : appartements vendus seuls, par nombre de pièces (studio, T2, T3), par ville et par quartier","2023 à 2025",()=>DVFALL.date,180],
  ["Temps de trajet à pied et à vélo","<a href=\"https://routing.openstreetmap.de/\" target=\"_blank\" rel=\"noopener\">OSRM sur OpenStreetMap</a>, jusqu'aux repères (gare la plus fréquentée, campus, mairie), depuis le centre de chaque quartier","réseau actuel","2026-11-06",365],
  ["Repères gare, campus, centre","<a href=\"https://ressources.data.sncf.com/\" target=\"_blank\" rel=\"noopener\">SNCF</a> (fréquentation des gares), implantations du supérieur public, lieux de l'IGN (mairies)","état actuel","2026-11-06",365],
  ["Habitants par quartier","<a href=\"https://www.insee.fr/fr/statistiques/8647014\" target=\"_blank\" rel=\"noopener\">Insee</a> : recensement 2022, revenus Filosofi 2021","2021-2022","2026-11-06",365],

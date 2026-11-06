@@ -14,7 +14,7 @@ const hasTC=ck=>typeof TCQ!=="undefined"&&!!TCQ[ck];
 function fRows(rows){const R=rows.filter(Boolean); return R.length?`<dl class="frows">${R.map(([k,v,n])=>`<div><dt>${k}</dt><dd>${v}${n?`<small>${n}</small>`:""}</dd></div>`).join("")}</dl>`:"";}
 function fNote(t){return t?`<p class="fnote">${t}</p>`:"";}
 const fPct=(a,b,ref)=>{const d=(a/b-1)*100; return Math.abs(d)<0.5?`= ${ref}`:`${d>=0?"+":"−"}${fr(Math.abs(d),0)} % vs ${ref}`;};
-/* ventes réelles de studios (12-35 m²) dans le quartier */
+/* ventes réelles du type choisi (nombre de pièces) dans le quartier */
 function dvfBlock(t,compact){const D=dvfC(t.ck), T=TY(); if(!D) return "";
  const q=dvfOf(t), est=studioPm2(t.ck,t), city=C.find(v=>v.k===t.ck).name, dv=fPct(est,studioPm2(t.ck),"ville");
  if(!q||!q.n) return fRows([["Ventes réelles",`aucun ${T.lab} vendu en 2023-2025`],["Prix retenu",`<b class="mono">${eur(est)}/m²</b>`,`médiane de ${city} (${eur(D.med)}/m²) ajustée au quartier · ${dv}`]]);
@@ -46,7 +46,7 @@ document.getElementById("f-dvf").addEventListener("change",e=>{H.dvf=e.target.ch
 
 /* vie de quartier : commerces et services à pied (OpenStreetMap) */
 function poiOf(t){return typeof POIQ!=="undefined"&&POIQ[t.ck]?POIQ[t.ck][t.code]||null:null;}
-const dTxt=m=>m>=9999?"aucun à 1 km":m>=1000?fr(m/1000,1)+" km":Math.round(m/10)*10+" m";
+const dTxt=m=>m>=9999?"aucun à 1,2 km":m>=1000?fr(m/1000,1)+" km":Math.round(m/10)*10+" m";
 function poiItems(p){const sup=Math.min(p[1],p[2]); return [["Supermarché ou supérette",dTxt(sup)],["Boulangerie",dTxt(p[3])],["Pharmacie",dTxt(p[4])],["Cafés, restos, bars à 500 m",String(p[5])],["Laverie",dTxt(p[6])],["Salle de sport",dTxt(p[7])]];}
 const poiCls=s=>s>=8?"p-ok":s>=5?"p-n":"p-warn";
 function poiBlock(t){const p=poiOf(t); if(!p) return "";
