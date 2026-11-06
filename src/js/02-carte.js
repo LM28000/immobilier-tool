@@ -6,17 +6,19 @@ const nrm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^
 (function decodeIris(){
  Object.entries(IRIS).forEach(([ck,d])=>{
   const QQ=Q[ck]?Q[ck].q:d.q, qn={}; Object.entries(QQ).forEach(([n,p])=>qn[nrm(n)]=[n,p]);
+  /* signal de prix du quartier : RealAdvisor quand il publie le quartier ; sinon les ventes de studios du quartier, mélangées à la ville (poids de 8 ventes) */
+  const noRA=!Object.keys(QQ).length, DS=noRA&&dvfC(ck,"studio"), dvfP=code=>{const q=DS&&DS.q[code]; return DS?Math.round(q&&q.n?(q.n*q.med+8*DS.med)/(q.n+8):DS.med):null;};
   const rn={}; Object.entries(d.ra.q).forEach(([n,v])=>rn[nrm(n)]=v);
   const list=d.txt.split("\n").map((line,i)=>{const [name,code,type,rings]=line.split("|");
    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,sx=0,sy=0,n=0;
    const dd=rings.split(";").map(r=>{let X=0,Y=0;return r.split(" ").map((p,j)=>{const q=p.split(",");X+=+q[0];Y+=+q[1];
      const [x,y]=pxy(Y/1e4,X/1e4); if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; sx+=x;sy+=y;n++;
      return (j?"L":"M")+x.toFixed(3)+" "+y.toFixed(3);}).join("")+"Z";}).join("");
-   const key=nrm(name.replace(/^Z\.A\./,"ZA")), qm=qn[key]||qn[key.replace(/\d+$/,"")];
+   const key=nrm(name.replace(/^Z\.A\./,"ZA")), qm=noRA?(type==="H"&&DS?[name,dvfP(code)]:null):qn[key]||qn[key.replace(/\d+$/,"")];
    const ra=qm?rn[nrm(qm[0])]:undefined;
    return {i,ck,name,code,type,d:dd,bb:[x0,y0,x1,y1],cx:sx/n,cy:sy/n,price:qm?qm[1]:null,ra,dpe:d.dpe[code]||[0,0,0,0,0,0,0]};});
   const bb=list.reduce((b,t)=>[Math.min(b[0],t.bb[0]),Math.min(b[1],t.bb[1]),Math.max(b[2],t.bb[2]),Math.max(b[3],t.bb[3])],[1e9,1e9,-1e9,-1e9]);
-  IR[ck]={list,bb,med:median(Object.values(QQ)),raCity:d.ra.city};
+  IR[ck]={list,bb,med:noRA?(DS?DS.med:null):median(Object.values(QQ)),raCity:d.ra.city,noRA};
  });
 })();
 const clampR=v=>Math.min(1.15,Math.max(0.85,v));

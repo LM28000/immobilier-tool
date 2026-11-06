@@ -36,9 +36,9 @@ function calc(c){
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU, trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
- /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface ; en colocation, un loyer par chambre (H.colocPct % d'un studio) */
- const rentCC=c.rentFixed?c.rent:T.coloc?T.rooms*c.rent*Math.pow(TYPES.studio.surf/c.rentM2,rentExp(c.k))*H.colocPct/100:c.rent*Math.pow(SU/c.rentM2,rentExp(c.k));
- const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc*(c.rentFixed?1:T.rooms),0);
+ /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
+ const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(SU/c.rentM2,rentExp(c.k));
+ const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc,0);
  const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
@@ -71,7 +71,7 @@ function calc(c){
 }
 
 /* ---------- prix au m² du type de bien choisi : ventes réelles (DVF) ----------
-   Ville : médiane des ventes du type (pièces et surface, voir TYPES). Quartier : ses ventes, mélangées à la ville (poids de 8 ventes),
+   Ville : médiane des ventes du type (nombre de pièces, voir TYPES). Quartier : ses ventes, mélangées à la ville (poids de 8 ventes),
    la ville étant ajustée par l'écart RealAdvisor du quartier à la puissance β (β mesuré sur les ventes réelles de la ville, pour ce type). */
 /* taxe foncière : un avis réel de référence (40 €/mois pour 22 m² à un taux de 47,8 %), proportionnel au taux de la commune et à la surface */
 const TFREF={mois:H.tfMans,taux:47.80,m2:22};
@@ -88,7 +88,7 @@ function raBeta(ck,tk){const key=ck+"|"+tyKey(tk||H.type); if(RABETA[key]!=null)
   b=m>=5&&sxx>0?Math.min(1,Math.max(0,sxy/sxx)):0.5;}
  return RABETA[key]=b;}
 function studioPm2(ck,t,tk){const c=C.find(v=>v.k===ck); if(!c) return 0; tk=tk||H.type;
- const ir=typeof IR!=="undefined"&&IR[ck], raw=t&&t.price&&ir&&ir.med?t.price/ir.med:1;
+ const ir=typeof IR!=="undefined"&&IR[ck], raw=t&&t.price&&ir&&ir.med&&!ir.noRA?t.price/ir.med:1; /* sans RealAdvisor, le quartier ne vient que de ses ventes (ci-dessous) */
  if(!hasDVF(ck,tk)) return c.pm2*(1+(tyOf(tk).p===1?H.surcote:0)/100)*raw;
  const D=dvfC(ck,tk), prior=D.med*Math.pow(raw,raBeta(ck,tk)), q=t&&D.q[t.code]; if(!q||!q.n) return prior;
  return (q.n*q.med+8*prior)/(q.n+8);}

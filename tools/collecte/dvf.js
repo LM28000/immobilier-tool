@@ -1,13 +1,13 @@
 /* Ventes réelles (DVF), même règle pour toutes les villes et tous les types de bien.
    À exécuter dans la page publique de l'app (elle fournit IR et irisLL pour rattacher chaque vente à son quartier).
-   Règle : ventes 2023-2025, un seul logement dans la vente, appartement de p pièces entre smin et smax m², entre 500 et 12 000 €/m².
+   Règle : ventes 2023-2025, un seul logement dans la vente, appartement de p pièces (le type), surface entre des bornes larges qui écartent les erreurs de saisie, entre 500 et 12 000 €/m².
    TYPES = {type:[pièces, m² min, m² max]}, par défaut ceux de l'app.
    Sortie : {crit, date, types, t:{type:{ville:{n, med, miss, q:{code:{n, med, last:[[mois, prix, m²]…]}}}}}} */
-async function collecteDVF(VILLES,TYPES){TYPES=TYPES||{studio:[1,12,35],t2:[2,30,55],t3:[3,50,80],t4:[4,65,100]};
+async function collecteDVF(VILLES,TYPES){TYPES=TYPES||{studio:[1,9,45],t2:[2,25,75],t3:[3,40,110]};
  const parse=t=>{const rows=[];let row=[],f="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}else if(ch==='"')q=true;else if(ch===','){row.push(f);f="";}else if(ch==='\n'){row.push(f);rows.push(row);row=[];f="";}else if(ch!=='\r')f+=ch;}if(f||row.length){row.push(f);rows.push(row);}return rows;};
  const inRing=(p,r)=>{let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [yi,xi]=r[i],[yj,xj]=r[j];if(((yi>p[0])!==(yj>p[0]))&&(p[1]<(xj-xi)*(p[0]-yi)/(yj-yi)+xi))c=!c;}return c;};
  const med=a=>{const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length?Math.round(b.length%2?b[m]:(b[m-1]+b[m])/2):null;};
- const out={crit:"appartements vendus seuls, 2023-2025, 500 à 12 000 €/m², nombre de pièces et surface selon le type",date:new Date().toISOString().slice(0,10),types:TYPES,t:{}}; for(const ty in TYPES) out.t[ty]={};
+ const out={crit:"appartements vendus seuls, 2023-2025, 500 à 12 000 €/m², type = nombre de pièces, bornes de surface larges contre les erreurs de saisie",date:new Date().toISOString().slice(0,10),types:TYPES,t:{}}; for(const ty in TYPES) out.t[ty]={};
  for(const [ck,ins] of Object.entries(VILLES)){
   const R=parse(await (await fetch("https://dvf-api.data.gouv.fr/dvf/csv/?com="+ins)).text()), h=R[0], I=k=>h.indexOf(k), g={};
   R.slice(1).forEach(r=>{if(r.length<h.length) return; const y=r[I("date_mutation")].slice(0,4); if(y<"2023"||y>"2025"||r[I("nature_mutation")]!=="Vente") return; (g[r[I("id_mutation")]]=g[r[I("id_mutation")]]||[]).push(r);});
