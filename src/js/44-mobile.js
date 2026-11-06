@@ -79,7 +79,7 @@ function adInfo(ck,a){const r=venteCalc(ck,a), v=vu("v",ck,a[3]), t=venteIris(ck
 function bienOf(url){return BIENS.find(b=>b.url===url)||null;}
 function mPhoto(ck,a,w,h){return a[4]?photoUrl(a[3],a[4],w,h):"";}
 function imgTag(src,cls){return src?`<img class="${cls}" src="${mEsc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";}
-function tripTxt(d){return d&&d.real?`${minTxt(d.min)} ${MKFULL[d.mk]?({gare:"gare",univ:"fac",univ2:"fac",centre:"centre"})[d.mk]:""}`:"";}
+function tripTxt(d){return d&&d.real?`${minTxt(d.min)} ${MKSH[d.mk]||""}`:"";}
 
 /* ---------- carte ---------- */
 let SNAP=1; // 0 : replié · 1 : moitié · 2 : plein
@@ -135,7 +135,7 @@ function adCard(o,rank){const b=bienOf(o.url), on=b&&!isOut(b), p=mPhoto(o.ck,o.
  return `<article class="mcard" data-mad="v|${o.ck}|${mEsc(o.a[3])}"><div class="mcimg">${imgTag(p,"")}${badge}<span class="mrank">${rank}</span><button type="button" class="mstar${on?" on":""}" data-mstar="${o.ck}|${mEsc(o.a[3])}" aria-label="${on?"Retirer de la shortlist":"Ajouter à la shortlist"}">${on?"★":"☆"}</button></div>
   <div class="mcb"><div class="mcr"><span class="mcp">${eur(o.a[2])}</span><span class="mci" style="color:${colIrr(o.x.irr)}">${irrTxt(o.x)}<small>15 ans</small></span></div>
   <p class="mcs">${mEsc(o.a[1]||"secteur ?")} · ${mEsc(cityName(o.ck))} · ${String(o.a[0]).replace(".",",")} m² · ${eur(o.a[2]/o.a[0])}/m²</p>
-  <div class="mkrow sm">${kp("Cash-flow",sgn(o.x.cf),mcfc(o.x.cf))}${kp("Banque",pct(o.x.ratio*100,0),bc==="p-ok"?"pos":bc==="p-bad"?"neg":"")}${o.d&&o.d.real?kp(o.d.mode==="tc"?"En bus/tram":"À pied",minTxt(o.d.min),"",({gare:"gare",univ:"fac",univ2:"fac",centre:"centre"})[o.d.mk]):kp("Budget",keur(o.x.cost),"","tout compris")}</div></div></article>`;}
+  <div class="mkrow sm">${kp("Cash-flow",sgn(o.x.cf),mcfc(o.x.cf))}${kp("Banque",pct(o.x.ratio*100,0),bc==="p-ok"?"pos":bc==="p-bad"?"neg":"")}${o.d&&o.d.real?kp(o.d.mode==="tc"?"En bus/tram":"À pied",minTxt(o.d.min),"",MKSH[o.d.mk]):kp("Budget",keur(o.x.cost),"","tout compris")}</div></div></article>`;}
 function mFeedRender(){if(!MOBON) return; const all=feedList(), L=feedSorted(all), nNew=all.filter(o=>o.nw).length, nDrop=all.filter(o=>o.v&&o.v.last).length;
  const cities=Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ventes);
  document.getElementById("mACity").innerHTML=[`<button type="button" class="mchip${!MF.ck?" on":""}" data-mfc="">Toutes <small>${cities.reduce((s,k)=>s+ADS[k].ventes.length,0)}</small></button>`,...cities.map(k=>`<button type="button" class="mchip${MF.ck===k?" on":""}" data-mfc="${k}">${mEsc(cityName(k))} <small>${ADS[k].ventes.length}</small></button>`)].join("");

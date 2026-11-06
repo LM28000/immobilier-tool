@@ -42,7 +42,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('un seul fil d\'Ariane'), await p.evaluate(() => document.querySelectorAll('.fcrumb').length === 0 && !!document.querySelector('#crumbs [data-crumb=city]')));
     ok(T('sous la carte : annonces du quartier seulement'), await p.evaluate(() => document.getElementById('qAll').hidden && /Annonces · /.test(document.getElementById('qCard').textContent)));
     ok(T('rubrique habitants du quartier (Insee)'), await p.evaluate(() => { const h = document.querySelector('.qcard .fsec[data-sec=hab]'); return !!h && /Étudiants/.test(h.textContent) && /Revenu médian/.test(h.textContent); }));
-    ok(T('prix réels pour les villes sans quartiers, écart de quartier calé'), await p.evaluate(() => hasDVF('tours') && Math.abs(studioPm2('tours') - DVFC.c.tours.med) < 1 && raBeta('lemans') < 0.3 && raBeta('stnazaire') > 0.5));
+    ok(T('mêmes règles partout : ventes réelles pour toutes les villes, écart de quartier calé'), await p.evaluate(() => hasDVF('tours') && Math.abs(studioPm2('tours') - DVFQ.tours.med) < 1 && Object.keys(IR).every(k => raBeta(k) >= 0 && raBeta(k) <= 1) && C.every(c => hasDVF(c.k))));
     ok(T('option ventes réelles DVF'), await p.evaluate(() => { const t = QSEL, a = calcIris(t).cost; H.dvf = false; const b = calcIris(t).cost; H.dvf = true; return a !== b; }));
     ok(T('pastilles de vente sur la carte'), await p.evaluate(() => document.querySelectorAll('.vpin').length > 5));
     // fiche annonce

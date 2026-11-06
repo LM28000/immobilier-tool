@@ -5,7 +5,12 @@ const MARK={
  angers:{gare:[47.4643,-0.5566],univ:[47.4805,-0.5933],univ2:[47.4790,-0.5470],centre:[47.4710,-0.5500]},
  caen:{gare:[49.1765,-0.3487],univ:[49.1880,-0.3640],centre:[49.1829,-0.3622]},
  orleans:{gare:[47.9078,1.9045],univ:[47.8450,1.9370],centre:[47.9025,1.9050]}};
-const MARKTXT={gare:"Gare",univ:"Université",univ2:"Université",centre:"Centre"};
+/* repères : un type par clé (gare, univ, centre), autant de repères du même type que nécessaire (univ, univ2, univ3…) */
+const mkT=k=>String(k).replace(/\d+$/,"");
+const mkMap=o=>new Proxy(o,{get:(t,k)=>typeof k==="string"?t[mkT(k)]:t[k]});
+const MARKTXT=mkMap({gare:"Gare",univ:"Université",centre:"Centre"});
+const MKDE=mkMap({gare:"de la gare",univ:"de la fac",centre:"du centre"});
+const MKSH=mkMap({gare:"gare",univ:"fac",centre:"centre"});
 const unproj=(x,y)=>[MP.lat1-y/MAP.S, x/(MP.k*MAP.S)+MP.lon0];
 function demandOf(t){const m=MARK[t.ck]; if(!m) return null;
  const T=typeof TTQ!=="undefined"&&TTQ[t.ck], f=T&&T.foot[t.code];

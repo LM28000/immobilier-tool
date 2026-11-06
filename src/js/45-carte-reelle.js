@@ -47,7 +47,7 @@ function leafPins(){const g=LEAF.pins; g.clearLayers(); const sel=AD&&AD.kind===
    m.on("click",e=>{L.DomEvent.stopPropagation(e); openAd("v",ck,a[3]);});});});});
  BIENS.filter(b=>!isOut(b)&&((b.quartier&&IR[b.ville])||b.lat)).forEach(b=>{const t=IR[b.ville]&&IR[b.ville].list.find(v=>v.name===b.quartier); if(!t&&!b.lat) return;
   const m=L.marker(b.lat?[b.lat,b.lon]:tLL(t),{icon:L.divIcon({className:"lstar",html:"★",iconSize:[26,26],iconAnchor:[13,32]}),zIndexOffset:500}).addTo(g); m.on("click",e=>{L.DomEvent.stopPropagation(e); openAd("b",b.ville,b.id);});});}
-function leafMarks(){const g=LEAF.marks; g.clearLayers(); const ic={gare:"■",univ:"●",univ2:"●",centre:"◆"};
+function leafMarks(){const g=LEAF.marks; g.clearLayers(); const ic=mkMap({gare:"■",univ:"●",centre:"◆"});
  Object.entries(MARK).forEach(([ck,m])=>Object.entries(m).forEach(([k,p])=>L.marker(p,{icon:L.divIcon({className:"lmarkw",html:`<span class="lmark"><i>${ic[k]}</i>${MARKTXT[k]}</span>`,iconSize:[0,0],iconAnchor:[7,9]}),interactive:false,keyboard:false}).addTo(g)));}
 function leafZoomLayers(){if(!LEAF.on) return; const z=LEAF.map.getZoom(), M=LEAF.map;
  const want=(g,on)=>{if(on&&!M.hasLayer(g)) g.addTo(M); if(!on&&M.hasLayer(g)) M.removeLayer(g);};

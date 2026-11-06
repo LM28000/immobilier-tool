@@ -23,7 +23,7 @@ const clampR=v=>Math.min(1.15,Math.max(0.85,v));
 /* loyer du quartier : modèle, mélangé aux loyers demandés du secteur Bien'ici dès 4 annonces */
 const RBL=new Map();
 function rentBlend(ck,t){const k=ck+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
- if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec&&!/universit/i.test(sec)){const v=A.ads.filter(a=>a[1]===sec).map(r22); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(22/c.rentM2,0.6), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
+ if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(r22); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(22/c.rentM2,0.6), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
  RBL.set(k,o); return o;}
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
 const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
@@ -150,15 +150,19 @@ document.addEventListener("change",e=>{const sel=e.target.closest&&e.target.clos
 function adFilter(w){const f=w.querySelector('.adf [aria-pressed="true"]').dataset.f, sec=w.querySelector(".adf select").value; let n=0;
  w.querySelectorAll("tbody tr").forEach(tr=>{const ok=(f==="all"||tr.dataset.m===f)&&(!sec||tr.dataset.s===sec); tr.hidden=!ok; if(ok) n++;});
  w.querySelector(".adn").textContent=`${n} annonce${n>1?"s":""}`;}
-function adsStats(list){const v=list.map(r22); return v.length?{n:v.length,med:median(v)}:null;}
+/* annonces : les lots identiques (même secteur, surface et loyer) d'une même résidence comptent une fois */
+const adKey=a=>a[1]+"|"+a[0]+"|"+a[2];
+function adsDedup(list){const s=new Set(); return list.filter(a=>{const k=adKey(a); if(s.has(k)) return false; s.add(k); return true;});}
+function adTwins(ck,a){const A=ADS[ck]; return A&&A.ads?A.ads.filter(b=>adKey(b)===adKey(a)).length:1;}
+function adsStats(list){const v=adsDedup(list).map(r22); return v.length?{n:v.length,med:median(v)}:null;}
 function adsLine(t){const A=ADS[t.ck]; if(!A) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
  const st=adsStats(A.ads.filter(a=>a[1]===d)), x=QX[t.ck+t.i]; if(!st) return "";
  return fRows([["Annonces de location",`${st.n} studio${st.n>1?"s":""} · <b class="mono">${eur(st.med)}</b> CC à 22 m²`,`secteur Bien'ici « ${esc(d)} »${x?` · calcul : ${eur(x.rentHC+H.chLoc)} CC`:""}${st.n<3?" · trop peu pour conclure":""}`]]);}
-function adsCity(ck){const A=ADS[ck]; if(!A) return ""; const c=C.find(v=>v.k===ck), all=adsStats(A.ads), meu=adsStats(A.ads.filter(a=>a[3]&&a[1]!=="Université"));
+function adsCity(ck){const A=ADS[ck]; if(!A) return ""; const c=C.find(v=>v.k===ck), all=adsStats(A.ads), meu=adsStats(A.ads.filter(a=>a[3]));
  const model=c.rent*Math.pow(H.surface/c.rentM2,0.6);
- return fRows([["Annonces de location",`${all.n} studios · <b class="mono">${eur(all.med)}</b> CC à 22 m²`,`Bien'ici, ${ADS.date} · loyers demandés, pas signés`],meu&&["Dont meublés",`<b class="mono">${eur(meu.med)}</b>`,ck==="lemans"?"hors résidences étudiantes":""],["Notre calcul",`<b class="mono">${eur(model)}</b> CC`,meu&&meu.med>=model?"plutôt prudent":"un peu optimiste"]]);}
+ return fRows([["Annonces de location",`${all.n} studios · <b class="mono">${eur(all.med)}</b> CC à 22 m²`,`Bien'ici, ${ADS.date} · loyers demandés, pas signés`],meu&&["Dont meublés",`<b class="mono">${eur(meu.med)}</b>`,"lots identiques d'une résidence comptés une fois"],["Notre calcul",`<b class="mono">${eur(model)}</b> CC`,meu&&meu.med>=model?"plutôt prudent":"un peu optimiste"]]);}
 function demLine(t){const d=demandOf(t); if(!d) return "";
- return fRows([["Emplacement",d.real?`<b>${minTxt(d.min)}</b> ${d.mode==="tc"?"en bus ou tram":"à pied"} ${({gare:"de la gare",univ:"de la fac",univ2:"de la fac",centre:"du centre"})[d.mk]}`:`à ${fr(d.d,1)} km du repère le plus proche`,d.real?`${minTxt(d.foot)} à pied (${fr(d.d,1)} km) · ${minTxt(d.bike)} à vélo`:""]]);}
+ return fRows([["Emplacement",d.real?`<b>${minTxt(d.min)}</b> ${d.mode==="tc"?"en bus ou tram":"à pied"} ${MKDE[d.mk]}`:`à ${fr(d.d,1)} km du repère le plus proche`,d.real?`${minTxt(d.foot)} à pied (${fr(d.d,1)} km) · ${minTxt(d.bike)} à vélo`:""]]);}
 function qFilter(){const q=nrm(document.getElementById("qSearch").value||""); let n=0, t=0;
  document.querySelectorAll("#zBody tr").forEach(tr=>{t++; const ok=!q||nrm(tr.cells[0].textContent).includes(q); tr.hidden=!ok; if(ok) n++;});
  document.getElementById("qCount").textContent=q?`${n} sur ${t}`:`${t} quartiers, du meilleur au moins bon rendement`;}
@@ -170,7 +174,7 @@ function renderQBox(){renderSide(); const box=document.getElementById("qBox"); i
  const key=QC+"|"+(qs?qs.code:"");
  if(QBOXK!==key){QBOXK=key; const card=document.getElementById("qCard");
   if(qs){const sec=sectorOf(qs), ab=sec?annoncesBlock(QC,sec,false,OPENADS===sec):"", others=sec&&ADS[QC]?IR[QC].list.filter(v=>v!==qs&&ADS[QC].map[sec].includes(v.code)).map(v=>v.name):[];
-   card.innerHTML=`<div class="qbhead"><h3 class="qbh">Annonces · ${esc(qs.name)}</h3><button type="button" class="lnk" data-crumb="city">← Tous les quartiers de ${esc(c.name)}</button></div>${ab?`${others.length?fNote(`Secteur Bien'ici « ${esc(sec)} », qui couvre aussi ${others.slice(0,4).map(esc).join(", ")}${others.length>4?"…":""}.`):""}${ab}`:`<p class="empty" style="margin:0">${ADS[QC]?"Aucune annonce relevée dans ce quartier en ce moment.":`Pas d'annonces relevées à ${esc(c.name)} : le relevé quotidien couvre Le Mans et Saint-Nazaire.`}</p>`}`;}
+   card.innerHTML=`<div class="qbhead"><h3 class="qbh">Annonces · ${esc(qs.name)}</h3><button type="button" class="lnk" data-crumb="city">← Tous les quartiers de ${esc(c.name)}</button></div>${ab?`${others.length?fNote(`Secteur Bien'ici « ${esc(sec)} », qui couvre aussi ${others.slice(0,4).map(esc).join(", ")}${others.length>4?"…":""}.`):""}${ab}`:`<p class="empty" style="margin:0">${ADS[QC]?"Aucune annonce relevée dans ce quartier en ce moment.":`Pas d'annonces relevées à ${esc(c.name)} : le relevé quotidien couvre ${cityNames(Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ads))}.`}</p>`}`;}
   else card.innerHTML="";}
  document.getElementById("qTitle").textContent=`Les ${z.list.filter(t=>QX[t.ck+t.i]).length} quartiers de ${c.name}`;
  const tb=document.getElementById("zBody"); tb.innerHTML="";

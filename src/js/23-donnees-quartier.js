@@ -1,11 +1,11 @@
 /* ---------- données réelles par quartier : ventes DVF, trajets à pied / vélo, risques Géorisques ---------- */
-const MKFULL={gare:"la gare",univ:"l'université",univ2:"l'université (Belle-Beille / Saint-Serge)",centre:"le centre"};
+const MKFULL=mkMap({gare:"la gare",univ:"l'université",centre:"le centre"});
 const mois=s=>{const [y,m]=s.split("-"); return ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."][+m-1]+" "+y;};
 const minTxt=m=>m>=60?`${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")}`:`${m} min`;
 function dvfOf(t){return typeof DVFQ!=="undefined"&&DVFQ[t.ck]?DVFQ[t.ck].q[t.code]||null:null;}
 function risqOf(t){return typeof RISQ!=="undefined"&&RISQ[t.ck]?RISQ[t.ck][t.code]||null:null;}
 function trajOf(t){const T=typeof TTQ!=="undefined"&&TTQ[t.ck]; if(!T||!T.foot[t.code]) return null; const X=typeof TCQ!=="undefined"&&TCQ[t.ck], xq=X&&X.q[t.code];
- return T.marks.map((k,i)=>{const j=X?X.marks.indexOf(k==="univ2"?"univ2":k):-1, tc=xq&&j>=0?xq[j]:null; const foot=T.foot[t.code][i];
+ return T.marks.map((k,i)=>{const j=X?X.marks.indexOf(k):-1, tc=xq&&j>=0?xq[j]:null; const foot=T.foot[t.code][i];
   return {k,foot,bike:T.bike[t.code][i],km:T.dist[t.code][i],tc:tc!=null&&tc<foot-2?tc:null,best:tc!=null&&tc<foot-2?tc:foot,mode:tc!=null&&tc<foot-2?"tc":"foot"};});}
 const stopOf=t=>{const X=typeof TCQ!=="undefined"&&TCQ[t.ck]; return X&&X.stop?X.stop[t.code]:null;};
 const hasTC=ck=>typeof TCQ!=="undefined"&&!!TCQ[ck];

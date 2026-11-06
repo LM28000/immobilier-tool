@@ -16,7 +16,7 @@ after = [p for p, n in zip(js, names) if n >= "02"]   # carte et la suite
 jd = lambda n, f: "const %s=%s;" % (n, rd(f) if os.path.exists(os.path.join(R, f)) else "{}")
 code = "\n".join([
     rd("data/mapdata.js"),
-    jd("DVFQ", "data/dvf-quartiers.json"), jd("TTQ", "data/temps-trajets.json"), jd("RISQ", "data/risques-quartiers.json"), jd("TCQ", "data/transports.json"), jd("LOYQ", "data/loyers-etat.json"), jd("POIQ", "data/commerces.json"), jd("TERQ", "data/territoire.json"), jd("DVFC", "data/dvf-villes.json"), jd("HABQ", "data/habitants.json"),
+    jd("DVFALL", "data/dvf.json"), jd("TTQ", "data/temps-trajets.json"), jd("RISQ", "data/risques-quartiers.json"), jd("TCQ", "data/transports.json"), jd("LOYQ", "data/loyers-etat.json"), jd("POIQ", "data/commerces.json"), jd("TERQ", "data/territoire.json"), jd("HABQ", "data/habitants.json"),
     "const CITYMAP=" + rd("data/citymaps.json") + ";",
     *[open(p, encoding="utf-8").read() for p in before],
     rd("data/irisdata.js"),

@@ -36,7 +36,7 @@ function calc(c){
  const base=bien*(1+H.notaire/100)+H.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  const rentHC=Math.max(c.rent*Math.pow(SU/c.rentM2,0.6)*(1+la/100)-H.chLoc,0);
- const tf=c.tfM!=null?c.tfM:H.tfMans*c.tf/47.80*(SU/22), charges=(c.copro!=null?c.copro:H.copro)+H.autres+tf;
+ const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:H.copro)+H.autres+tf;
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
@@ -70,7 +70,11 @@ function calc(c){
 /* ---------- prix d'un studio : ventes réelles (DVF) quand on les a ---------- */
 // Villes avec relevé DVF des studios : médiane des ventes de 12 à 35 m² (2023-2025), sans surcote.
 // Quartier : la médiane du quartier, tirée vers la tendance RealAdvisor quand il y a peu de ventes (poids de 8 ventes fictives).
-const dvfC=ck=>typeof DVFQ!=="undefined"&&DVFQ[ck]&&DVFQ[ck].med?DVFQ[ck]:(typeof DVFC!=="undefined"&&DVFC.c[ck]?{med:DVFC.c[ck].med,n:DVFC.c[ck].n,q:{},city:true}:null);
+/* taxe foncière : un avis réel de référence (40 €/mois pour 22 m² à un taux de 47,8 %), proportionnel au taux de la commune et à la surface */
+const TFREF={mois:H.tfMans,taux:47.80,m2:22};
+/* ventes réelles : un seul fichier, même règle pour toutes les villes (tools/collecte/dvf.js) */
+const DVFQ=typeof DVFALL!=="undefined"&&DVFALL?DVFALL.c:{};
+const dvfC=ck=>DVFQ[ck]&&DVFQ[ck].med?DVFQ[ck]:null;
 const hasDVF=ck=>!!(H.dvf&&dvfC(ck));
 /* l'écart de prix des quartiers (RealAdvisor, tous appartements) se transmet mal aux studios :
    on le cale ville par ville sur les studios réellement vendus (exposant β entre 0 et 1) */

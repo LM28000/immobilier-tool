@@ -95,7 +95,7 @@
       <button type="button" role="tab" id="tab-biens" aria-controls="p-biens" aria-selected="false" tabindex="-1">Nos biens</button>
     </div>
     <div role="tabpanel" id="p-rank" aria-labelledby="tab-rank">
-      <p class="avg">Moyennes par ville (prix et loyers médians, tous quartiers confondus). Le détail par quartier est sur la carte pour Le Mans, Saint-Nazaire, Angers, Caen et Orléans.</p>
+      <p class="avg">Moyennes par ville (prix et loyers médians, tous quartiers confondus). Le détail par quartier est sur la carte pour <span data-cities="iris"></span>.</p>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>Ville</th><th class="r" title="Moyenne de la ville">Budget moyen</th><th class="r" title="Loyer médian de la ville">Loyer HC moyen</th><th class="r">Brut</th><th class="r">Cash-flow à deux</th><th class="r">15 ans</th><th>Banque</th><th>Demande</th><th class="r">Étudiants</th><th class="r">Laval · Nantes · Paris</th><th class="r">DPE F-G</th><th class="r">Population</th><th class="r">Logements vides</th><th class="r">Chômage</th></tr></thead>
         <tbody id="tbody"></tbody>
@@ -149,7 +149,7 @@
         <h3>Mises à jour</h3>
         <ul class="flist">
           <li>Annonces relevées chaque soir · dernier relevé : <b class="adsdate"></b></li>
-          <li>Villes suivies : Le Mans, Saint-Nazaire, Angers, Caen, Orléans</li>
+          <li>Annonces relevées : <span data-cities="ads"></span> · quartiers détaillés : <span data-cities="iris"></span></li>
           <li><a href="#sources" data-opensrc>Sources et fraîcheur des données</a> <a href="#sources" class="freshpill" id="freshPill2" hidden data-opensrc></a></li>
           <li>Code : <a href="https://github.com/LM28000/immobilier-tool" target="_blank" rel="noopener">github.com/LM28000/immobilier-tool</a></li>
         </ul>
@@ -164,16 +164,17 @@
     <details class="fdet">
       <summary>Comment c'est calculé</summary>
       <dl class="fmeth">
-        <dt>Prix</dt><dd>Au Mans, à Saint-Nazaire, Angers, Caen et Orléans : médiane des studios (12 à 35 m²) réellement vendus dans le quartier en 2023-2025 (DVF), tirée vers la tendance RealAdvisor du quartier quand il y a peu de ventes. Ailleurs : prix moyen des appartements vendus × surcote petite surface. Ou prix affiché de l'annonce. On ajoute le notaire, les meubles, les petits travaux et la garantie du prêt : c'est le « budget tout compris ».</dd>
-        <dt>Loyer</dt><dd>Loyer médian des studios, ramené à la surface du bien (loyer × (surface ÷ surface de référence)^0,6 : les grands studios se louent moins cher au m²), ajusté selon le quartier (écart RealAdvisor plafonné à ±15 %), moins les charges payées par le locataire.</dd>
-        <dt>Mois vides</dt><dd>Selon le trajet le plus rapide jusqu'à la gare, l'université ou le centre le plus proche : à pied par les rues (OpenStreetMap), ou en bus et tram quand c'est plus rapide (horaires publics des réseaux, un mardi vers 8 h, marche et attente comprises) : 0,5 mois par an à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus (désactivable). Hors des cinq villes détaillées : distance à vol d'oiseau.</dd>
+        <dt>Le principe</dt><dd>Les mêmes règles pour toutes les villes. Quand une donnée manque quelque part, on le dit et on retombe sur la règle du niveau au-dessus (le quartier prend la ville) : jamais de réglage propre à une ville.</dd>
+        <dt>Prix</dt><dd>Médiane des studios réellement vendus en 2023-2025 dans la ville (DVF : appartements d'une pièce de 12 à 35 m², vendus seuls). Dans un quartier : ses propres ventes, mélangées à la médiane de la ville d'autant plus qu'il en a peu (8 ventes pèsent autant que la ville). L'écart de prix RealAdvisor du quartier n'est gardé que dans la mesure où il se vérifie sur les ventes réelles de la ville. Sans ventes réelles : prix moyen des appartements × surcote petite surface. On ajoute le notaire, les meubles, les petits travaux et la garantie du prêt : c'est le « budget tout compris ».</dd>
+        <dt>Loyer</dt><dd>Loyer médian des studios de la ville, ramené à la surface du bien (loyer × (surface ÷ surface de référence)^0,6), ajusté selon le quartier (écart RealAdvisor, ou estimé depuis le prix), puis mélangé aux loyers demandés du secteur dès 4 annonces. L'écart au loyer de la ville reste plafonné à ±15 %. Les lots identiques d'une même résidence comptent une fois. On retire les charges payées par le locataire.</dd>
+        <dt>Mois vides</dt><dd>Selon le trajet le plus rapide jusqu'au repère le plus proche (gare, campus, centre), à pied par les rues ou en bus et tram quand c'est plus rapide (un mardi vers 8 h, attente comprise) : 1 mois par an à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus (désactivable). Sans temps calculés : distance à vol d'oiseau.</dd>
         <dt>Risques</dt><dd>Géorisques au centre du quartier : territoire à risque important d'inondation, retrait-gonflement des argiles, secteurs de sols pollués et sites Seveso à proximité. À vérifier à l'adresse exacte dans l'état des risques fourni par le vendeur.</dd>
         <dt>Vie de quartier</dt><dd>Note sur 10 d'après la distance du centre du quartier au supermarché ou à la supérette le plus proche (poids 3), à la boulangerie (1,5), à la pharmacie (1), à la laverie (1), à la salle de sport (0,5) et le nombre de cafés, restos et bars à moins de 500 m (2). Plein score à 250 m ou moins, zéro au-delà de 1,2 km. Données OpenStreetMap, parfois incomplètes.</dd>
         <dt>Charges</dt><dd>Copropriété (part propriétaire), assurance PNO et entretien, taxe foncière au taux 2025 de la ville (hors ordures ménagères, payées par le locataire).</dd>
         <dt>Impôts</dt><dd>Régime le plus avantageux entre micro-BIC (50 % des loyers imposés) et réel (charges, intérêts et amortissements déduits), selon la tranche de chacun et les prélèvements sociaux de 18,6 %. CFE et comptable (au réel) comptés. À la revente : impôt sur la plus-value avec abattements pour durée de détention, amortissements réintégrés.</dd>
         <dt>Rendement 15 ans</dt><dd>Rendement annuel de l'apport, revente comprise (taux de rendement interne). Brut : avant impôts et frais fiscaux ; net : après. Avant frais de vente.</dd>
         <dt>Banque</dt><dd>(Mensualité + prêt étudiant) ÷ (salaires + 70 % du loyer). Passe jusqu'à 33 %, limite jusqu'à 35 %.</dd>
-        <dt>Quartiers</dt><dd>Contours IRIS de l'INSEE. Prix RealAdvisor du quartier rapportés au prix des studios de la ville ; loyers ajustés de l'écart RealAdvisor ou estimés à partir du prix.</dd>
+        <dt>Quartiers</dt><dd>Contours IRIS de l'Insee. Étiquettes calculées : « centre-ville », « près de la gare » ou « près de la fac » à 10 min ou moins, « quartier prioritaire » d'après la liste officielle 2024.</dd>
         <dt>Trajets</dt><dd>Depuis Laval et Nantes : temps en voiture estimé depuis la distance (×1,2 à 105 km/h). Depuis Paris : meilleur train direct ou avec une correspondance. Repères et lignes de train approximatifs.</dd>
         <dt>Annonces</dt><dd>Pages de résultats Bien'ici lues chaque soir comme un visiteur. Une annonce absente deux jours de suite est considérée comme vendue ou retirée.</dd>
       </dl>

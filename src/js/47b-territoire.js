@@ -52,3 +52,13 @@ function habBlock(t){const h=habOf(t), c=habCity(t.ck); if(!h) return "";
 const habSum=t=>{const h=habOf(t); return h?`${pp(h.scol)} d'étudiants`:"";};
 function habAttn(t){const h=habOf(t), c=h&&habCity(t.ck); if(!h) return [];
  return [h.tp!=null&&h.tp>=35&&["warn",`Taux de pauvreté élevé (${pp(h.tp)}, ville ${pp(c.tp)}) : risque d'impayés et revente plus lente.`],h.scol>=c.scol*1.5&&h.scol>=10&&["ok",`Beaucoup d'étudiants : ${pp(h.scol)} des habitants (ville ${pp(c.scol)}).`]];}
+
+/* étiquettes de quartier : même règle partout (10 min ou moins en marchant ou en bus/tram ; quartier prioritaire) */
+function qTags(t){const out=[], tr=typeof trajOf==="function"?trajOf(t):null;
+ if(tr){const near=k=>tr.some(o=>mkT(o.k)===k&&o.best<=10); if(near("centre")) out.push(["Centre-ville","var(--ok)"]); if(near("gare")) out.push(["Près de la gare","var(--accent)"]); if(near("univ")) out.push(["Près de la fac","var(--warn)"]);}
+ const r=terOf(t); if(r&&r.q&&r.q.d===0) out.push(["Quartier prioritaire","var(--bad)"]);
+ return out.slice(0,2);}
+
+/* listes de villes dérivées des données (jamais écrites en dur) */
+function cityNames(keys){const n=keys.map(k=>(C.find(c=>c.k===k)||{}).name||k); return n.length>1?n.slice(0,-1).join(", ")+" et "+n[n.length-1]:n[0]||"aucune";}
+document.querySelectorAll("[data-cities]").forEach(el=>{const w=el.dataset.cities; el.textContent=cityNames(C.map(c=>c.k).filter(k=>w==="iris"?!!(typeof IR!=="undefined"&&IR[k]):!!(ADS[k]&&ADS[k].ads)));});

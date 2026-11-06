@@ -88,11 +88,11 @@ function quartierFiche(t,compact){const c=C.find(v=>v.k===t.ck), xc=calc(c), x=Q
  const risq=r?`${risqPills(t)}${fNote("Au centre du quartier (Géorisques). Ajoutez l'adresse d'un bien pour le mesurer chez lui.")}${catnatLine(t.ck)}`:catnatLine(t.ck);
  const ecoles=ecolesBlock(t), urba=urbaBlock(t);
  const ann="";
- const tags=Q[t.ck]&&Q[t.ck].tags&&Q[t.ck].tags[t.name], tg=tags&&TAG[tags]?`<span class="pill" style="background:${TAG[tags][1]};color:var(--surface)">${TAG[tags][0]}</span>`:"";
+ const tg=qTags(t).map(([l,col])=>`<span class="pill" style="background:${col};color:var(--surface)">${l}</span>`).join("");
  return `${compact?"":`<div class="dh"><h3 style="font-size:1.15rem">${t.name}</h3><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${tg}<span class="pill" style="background:${QCLS[qCls(x.irr)].c};color:var(--surface)">${x.irr==null?"n.d.":pct(x.irr)} sur 15 ans</span></span></div>
   ${fHead(x,xc,"ville")}`}${attn}
   ${fSec("quartier","prix",q&&q.n?`${q.n} ventes · ${eur(q.med)}/m²`:`${eur(studioPm2(t.ck,t))}/m²`,prix)}${fSec("quartier","loyer",`${eur(x.rentHC)} HC${nl?` · ${nl} locations`:""}`,loyer)}${fSec("quartier","calc",`${sgn(x.cf)}/mois`,calcH)}
-  ${fSec("quartier","traj",dm&&dm.real?`${minTxt(dm.min)} ${dm.mode==="tc"?"en bus":"à pied"} ${({gare:"de la gare",univ:"de la fac",univ2:"de la fac",centre:"du centre"})[dm.mk]}`:"",traj)}${fSec("quartier","vie",p?`${fr(p[0],1)}/10`:"",vie)}${fSec("quartier","bati",n>=15?`F-G ${fr(fg,0)} %`:"",bati)}
+  ${fSec("quartier","traj",dm&&dm.real?`${minTxt(dm.min)} ${dm.mode==="tc"?"en bus":"à pied"} ${MKDE[dm.mk]}`:"",traj)}${fSec("quartier","vie",p?`${fr(p[0],1)}/10`:"",vie)}${fSec("quartier","bati",n>=15?`F-G ${fr(fg,0)} %`:"",bati)}
   ${fSec("quartier","risq",r?(r.t||r.s?"à regarder":"rien de majeur"):"",risq)}${fSec("quartier","hab",habSum(t),habBlock(t))}${fSec("quartier","ecoles",ecolesSum(t),ecoles)}${fSec("quartier","urba",urbaSum(t),urba)}`;}
 qCard=function(t){return `<div class="qcard">${quartierFiche(t)}</div>`;};
 

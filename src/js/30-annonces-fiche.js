@@ -51,7 +51,7 @@ function adFiche(ad){if(ad.kind==="b") return bienFiche(ad.suf); const a=findAd(
  const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);
  return `${a[5]?`<img class="adph" src="${esc(photoUrl(a[4],a[5],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">Studio ${String(a[0]).replace(".",",")} m²${a[3]?" meublé":""}</h3><span class="pill p-n">à louer</span></div>
-  <p class="sub" style="margin:2px 0 10px">${c.name}${a[1]?" · secteur "+esc(a[1]):""}${a[1]==="Université"?" · probablement une résidence étudiante avec services":""}</p>
+  <p class="sub" style="margin:2px 0 10px">${c.name}${a[1]?" · secteur "+esc(a[1]):""}${adTwins(ad.ck,a)>1?` · ${adTwins(ad.ck,a)} lots identiques : souvent une résidence avec services`:""}</p>
   <div class="big4"><div><span>Loyer charges comprises</span><b>${eur(a[2])}</b></div><div><span>Ramené à 22 m²</span><b>${eur(r22(a))}</b></div><div><span>Notre calcul (22 m²)</span><b>${eur(model)}</b></div><div><span>Écart</span><b class="${r22(a)>=model?"pos":"neg"}">${r22(a)>=model?"+":"−"}${fr(Math.abs(r22(a)/model-1)*100,0)} %</b></div></div>
   <p class="sub" style="margin:8px 0">Une location concurrente : elle montre ce qu'un locataire paie aujourd'hui pour un studio comparable dans ce secteur. Loyer demandé, pas forcément signé.</p>
   <div class="adact">${adNav(ad)}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>`;}
