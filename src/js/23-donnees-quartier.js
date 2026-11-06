@@ -4,7 +4,11 @@ const mois=s=>{const [y,m]=s.split("-"); return ["janv.","févr.","mars","avr.",
 const minTxt=m=>m>=60?`${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")}`:`${m} min`;
 function dvfOf(t){return typeof DVFQ!=="undefined"&&DVFQ[t.ck]?DVFQ[t.ck].q[t.code]||null:null;}
 function risqOf(t){return typeof RISQ!=="undefined"&&RISQ[t.ck]?RISQ[t.ck][t.code]||null:null;}
-function trajOf(t){const T=typeof TTQ!=="undefined"&&TTQ[t.ck]; if(!T||!T.foot[t.code]) return null; return T.marks.map((k,i)=>({k,foot:T.foot[t.code][i],bike:T.bike[t.code][i],km:T.dist[t.code][i]}));}
+function trajOf(t){const T=typeof TTQ!=="undefined"&&TTQ[t.ck]; if(!T||!T.foot[t.code]) return null; const X=typeof TCQ!=="undefined"&&TCQ[t.ck], xq=X&&X.q[t.code];
+ return T.marks.map((k,i)=>{const j=X?X.marks.indexOf(k==="univ2"?"univ2":k):-1, tc=xq&&j>=0?xq[j]:null; const foot=T.foot[t.code][i];
+  return {k,foot,bike:T.bike[t.code][i],km:T.dist[t.code][i],tc:tc!=null&&tc<foot-2?tc:null,best:tc!=null&&tc<foot-2?tc:foot,mode:tc!=null&&tc<foot-2?"tc":"foot"};});}
+const stopOf=t=>{const X=typeof TCQ!=="undefined"&&TCQ[t.ck]; return X&&X.stop?X.stop[t.code]:null;};
+const hasTC=ck=>typeof TCQ!=="undefined"&&!!TCQ[ck];
 
 /* ventes réelles de studios (12-35 m²) dans le quartier */
 function dvfBlock(t,compact){const D=typeof DVFQ!=="undefined"&&DVFQ[t.ck]; if(!D) return "";
@@ -15,8 +19,8 @@ function dvfBlock(t,compact){const D=typeof DVFQ!=="undefined"&&DVFQ[t.ck]; if(!
   ${compact?"":`<table class="ftab dvft"><thead><tr><th>Vendu</th><th class="r">Surface</th><th class="r">Prix</th><th class="r">€/m²</th></tr></thead><tbody>${q.last.map(([m,p,s])=>`<tr><td>${mois(m)}</td><td class="r mono">${s} m²</td><td class="r mono">${keur(p)}</td><td class="r mono">${eur(p/s)}</td></tr>`).join("")}</tbody></table>`}</div>`;}
 
 /* temps de trajet réels (OpenStreetMap, à pied et à vélo) */
-function trajBlock(t){const r=trajOf(t); if(!r) return "";
- return `<div class="trajb">${r.map(o=>`<span class="traj"><b>${MARKTXT[o.k]}</b> ${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo</span>`).join("")}</div>`;}
+function trajBlock(t){const r=trajOf(t); if(!r) return ""; const sp=stopOf(t);
+ return `<div class="trajb">${r.map(o=>`<span class="traj"><b>${MARKTXT[o.k]}</b> ${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?` · <b class="tc">${minTxt(o.tc)} en bus/tram</b>`:hasTC(t.ck)?" · bus pas plus rapide":""}</span>`).join("")}</div>${sp!=null?`<p class="sub" style="margin:4px 0 0">Arrêt de bus ou tram le plus proche à ${sp<1000?Math.round(sp/10)*10+" m":fr(sp/1000,1)+" km"}. Transports : un mardi matin vers 8 h, attente comprise.</p>`:""}`;}
 
 /* risques (Géorisques) */
 const ARG=["","faible","moyen","fort"];

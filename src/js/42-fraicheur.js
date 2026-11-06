@@ -5,6 +5,7 @@ const FRESH=[
  ["Taux du crédit","Offres bancaires, profil emprunteur","novembre 2026","2026-11-05",60],
  ["Ventes réelles de studios par quartier","<a href=\"https://apidf-preprod.cerema.fr/\" target=\"_blank\" rel=\"noopener\">DVF+ du Cerema</a> (Le Mans, Saint-Nazaire, Angers, Caen, Orléans), ventes d'un appartement de 12 à 35 m²","2023 à 2025","2026-11-05",365],
  ["Temps de trajet à pied et à vélo","<a href=\"https://routing.openstreetmap.de/\" target=\"_blank\" rel=\"noopener\">OSRM sur OpenStreetMap</a>, depuis le centre de chaque quartier","réseau actuel","2026-11-05",365],
+ ["Temps en bus et tram","Horaires publics des réseaux sur <a href=\"https://transport.data.gouv.fr/\" target=\"_blank\" rel=\"noopener\">transport.data.gouv.fr</a> : Setram (Le Mans), Twisto (Caen), Ycéo (Saint-Nazaire)","un mardi, départ vers 8 h","2026-11-06",180],
  ["Risques (inondation, argile, sols pollués, Seveso)","<a href=\"https://www.georisques.gouv.fr/\" target=\"_blank\" rel=\"noopener\">Géorisques</a>, au centre de chaque quartier","base actuelle","2026-11-05",365],
  ["Prix des appartements par ville","<a href=\"https://immobilier.pappers.fr/prix-immobilier\" target=\"_blank\" rel=\"noopener\">Pappers Immobilier</a>, données DVF","12 derniers mois","2026-11-04",180],
  ["Loyers médians et demande","<a href=\"https://www.locservice.fr/tensiometre/tensiometre-studio-72181.html\" target=\"_blank\" rel=\"noopener\">Tensiomètre LocService</a>, studios et T1","annonces récentes","2026-11-04",180],

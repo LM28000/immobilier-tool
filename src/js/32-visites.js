@@ -142,7 +142,7 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const 
  <div class="fbox"><h2>Arguments pour négocier</h2>${(()=>{const a=negoArgs(b,x,g,t); return a.length?`<ol>${a.map(s=>`<li>${s}</li>`).join("")}</ol>`:`<p>Le prix affiché est déjà cohérent avec nos objectifs.</p>`;})()}</div>
  <div class="fbox fq"><h2>Le quartier${t?" : "+esc(t.name):""}</h2><div class="fqgrid">${quartierMap(b,t)}<div>
    ${qp?`<div class="trow"><span>Prix d'un studio du quartier</span><b>${eur(qp)}/m²</b></div><div class="trow"><span>Ce bien</span><b>${eur(r.pm2)}/m² (${r.pm2>=qp?"+":"−"}${fr(Math.abs(r.pm2/qp-1)*100,0)} %)</b></div>`:""}
-   ${t&&trajOf(t)?trajOf(t).map(o=>`<div class="trow"><span>${MARKTXT[o.k]} (${fr(o.km,1)} km)</span><b>${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo</b></div>`).join(""):d?`<div class="trow"><span>Distance gare, université ou centre</span><b>${fr(d.d,1)} km</b></div>`:""}
+   ${t&&trajOf(t)?trajOf(t).map(o=>`<div class="trow"><span>${MARKTXT[o.k]} (${fr(o.km,1)} km)</span><b>${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?" · "+minTxt(o.tc)+" bus/tram":""}</b></div>`).join(""):d?`<div class="trow"><span>Distance gare, université ou centre</span><b>${fr(d.d,1)} km</b></div>`:""}
    <div class="trow"><span>Mois vides par an retenus</span><b>${fr(r.vac,1)}</b></div>
    ${fg!=null&&nd>=15?`<div class="trow"><span>Petits appartements en DPE F ou G</span><b>${fr(fg,0)} %</b></div>`:""}
    ${t&&risqOf(t)?`<div class="trow"><span>Risques</span>${risqPills(t)}</div>`:""}

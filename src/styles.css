@@ -698,3 +698,5 @@ table.annt{min-width:760px}
 .mapbox.leaf .leaflet-overlay-pane{mix-blend-mode:multiply}
 .mapbox.leaf.ldark .leaflet-overlay-pane{mix-blend-mode:screen;opacity:.75}
 .mapbox.leaf .leaflet-marker-pane{will-change:transform}
+
+.traj .tc{color:var(--accent)}
