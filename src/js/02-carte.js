@@ -177,7 +177,7 @@ function renderQBox(){renderSide(); const box=document.getElementById("qBox"); i
 }
 
 /* --- navigation : molette, glisser, pincer, boutons --- */
-function clampV(){V.k=Math.min(KMAX,Math.max(Math.max(VW/WW,VH/MAP.H),V.k)); V.x=Math.min(0,Math.max(VW-WW*V.k,V.x)); V.y=Math.min(0,Math.max(VH-MAP.H*V.k,V.y));}
+function clampV(){V.k=Math.min(KMAX,Math.max(KMIN(),V.k)); const mw=WW*V.k, mh=MAP.H*V.k; V.x=mw<VW?Math.min(VW-mw,Math.max(0,V.x)):Math.min(0,Math.max(VW-mw,V.x)); V.y=mh<VH?Math.min(VH-mh,Math.max(0,V.y)):Math.min(0,Math.max(VH-mh,V.y));}
 const KMIN=()=>document.body.classList.contains("mob")?Math.min(VW/WW,VH/MAP.H)*0.7:Math.max(VW/WW,VH/MAP.H);
 function zoomAt(px,py,f){const k2=Math.min(KMAX,Math.max(KMIN(),V.k*f)); V.x=px-(px-V.x)*k2/V.k; V.y=py-(py-V.y)*k2/V.k; V.k=k2; clampV(); draw();}
 let anim=null;
