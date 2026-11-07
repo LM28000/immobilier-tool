@@ -25,7 +25,7 @@ import re
 # ce que dit la description et qui change la décision ; textes affichés : src/js/24-fiches-annonces.js (DFL)
 SIGNAUX = {
     "loue": r"locataire en place|vendu lou[ée]|bail en cours|actuellement lou[ée]|lou[ée] actuellement|lou[ée] depuis|occup[ée] par (?:un|une) locataire|loyer actuel",
-    "serv": r"r[ée]sidence (?:de )?services|r[ée]sidence (?:[ée]tudiante|seniors?|g[ée]r[ée]e|de tourisme|hôteli[eè]re|d'affaires)|bail commercial|gestionnaire|exploitant",
+    "serv": r"r[ée]sidence (?:de |avec )?services|r[ée]sidence[- ](?:[ée]tudiante|seniors?|g[ée]r[ée]e|de tourisme|h[ôo]teli[eè]re|d[’']affaires|de standing avec services)|appart[’' ]?h[ôo]tel|apparth[ôo]tel|bail commercial|gestionnaire|exploitant|loyers? garantis?|ne vous occupez de rien|sans souci de gestion|lmnp en r[ée]sidence",
     "viager": r"viager|nue[- ]propri[ée]t[ée]",
     "trav": r"(?:à|a) r[ée]nover|travaux (?:à|a) pr[ée]voir|(?:à|a) rafra[iî]chir|(?:à|a) r[ée]habiliter|gros travaux|(?:à|a) remettre au go[uû]t",
     "vote": r"travaux vot[ée]s|ravalement",

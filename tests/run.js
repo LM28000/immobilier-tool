@@ -146,7 +146,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       ok(T('tri par cash-flow'), cfs.every((v, i) => !i || v <= cfs[i - 1]), cfs.join(' '));
       await p.click('#annBox tbody tr td:nth-child(3)'); await p.waitForTimeout(400);
       ok(T('ligne du classement ouvre la fiche'), await p.evaluate(() => AD && AD.kind === 'v'));
-      ok(T('meilleures annonces : 12 cartes'), await p.evaluate(() => document.querySelectorAll('#dealsList .bcard').length === Math.min(12, allVentes().filter(v => v.r.x.irr != null && bankOk(v.r.x.ratio)).length)));
+      ok(T('meilleures annonces : 12 cartes'), await p.evaluate(() => document.querySelectorAll('#dealsList .bcard').length === Math.min(12, allVentes().filter(v => v.r.x.irr != null && bankOk(v.r.x.ratio) && !horsCalcul(v.a[3])).length)));
     }
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();

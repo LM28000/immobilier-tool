@@ -44,6 +44,7 @@ shutil.rmtree(T)
 spec = importlib.util.spec_from_file_location("fiches", R + "/tools/fiches.py"); F = importlib.util.module_from_spec(spec); spec.loader.exec_module(F)
 ok("signal : vendu loué", F.signaux({"d": "Studio vendu loué 450 € par mois, locataire en place depuis 2022"}) == ["loue"])
 ok("signal : résidence de services", "serv" in F.signaux({"d": "Studio en résidence étudiante avec gestionnaire, bail commercial"}))
+ok("signal : appart'hôtel", "serv" in F.signaux({"d": "Ce studio (appart'hôtel) bénéficie d'un emplacement idéal"}))
 ok("signal : travaux", F.signaux({"d": "Appartement à rénover entièrement"}) == ["trav"])
 ok("pas de signal sur une description ordinaire", F.signaux({"d": "Beau studio lumineux proche gare, cuisine équipée"}) == [])
 

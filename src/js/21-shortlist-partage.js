@@ -9,7 +9,7 @@ function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
  const inShort=b=>!isOut(b), out=BIENS.filter(b=>!inShort(b)).length, mine=BIENS.filter(inShort).map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,12);
  sl.innerHTML=(mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien dans la shortlist.</p>`); document.getElementById("shortOut").innerHTML=out?`<p class="sub shortout" style="margin:6px 0 0"><button type="button" class="lnk" data-gotab="tab-biens">${out} bien${out>1?"s":""} écarté${out>1?"s":""}, gardé${out>1?"s":""} dans « Nos biens » →</button></p>`:""; if(!BIENS.length) sl.innerHTML=`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
- const deals=allVentes().filter(v=>v.r.x.irr!=null&&bankOk(v.r.x.ratio)&&!isAdded(VTURL+v.a[3])).sort((x,y)=>y.r.x.irr-x.r.x.irr).slice(0,12);
+ const deals=allVentes().filter(v=>v.r.x.irr!=null&&bankOk(v.r.x.ratio)&&!isAdded(VTURL+v.a[3])&&!horsCalcul(v.a[3])).sort((x,y)=>y.r.x.irr-x.r.x.irr).slice(0,12);
  dl.innerHTML=deals.length?deals.map(({ck,a,r})=>`<div class="bcard deal">${a[4]?`<img class="dealph" src="${esc(photoUrl(a[3],a[4],480,260))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="bch"><b>Studio ${String(a[0]).replace(".",",")} m²</b><span class="pill p-n">${C.find(c=>c.k===ck).name}</span></div>
   <div class="sub" style="margin:0">${esc(a[1]||"secteur non précisé")} · ${keur(a[2])} · ${eur(a[2]/a[0])}/m²</div>
   <div class="bcn"><span><small>Cash-flow ${mlab()}</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b></span><span><small>15 ans ${mlab()}</small><b class="mono" style="color:${colIrr(r.x.irr)}">${pct(r.x.irr)}</b></span></div>
@@ -62,7 +62,7 @@ function sbDB(code){const HD={apikey:SB.key,"x-groupe":code,"Content-Type":"appl
  box.querySelector("#sh-save").addEventListener("click",()=>{const c=box.querySelector("#sh-code").value.trim(), n=box.querySelector("#sh-nom").value.trim().slice(0,30);
   if(c&&c.length<12){box.querySelector("#sh-state").textContent="Le code doit faire au moins 12 caractères."; return;}
   try{localStorage.setItem("biens-code",c); localStorage.setItem("biens-nom",n);}catch(_){} location.reload();});
- box.querySelector("#sh-state").textContent=inClaude?"Dans Claude, la liste est celle de Claude. La liste commune avec ton amie est sur la page GitHub (même code)."
+ box.querySelector("#sh-state").textContent=inClaude?"Dans Claude, la liste est celle de Claude. La liste commune à deux est sur la page GitHub (même code)."
   :!SB.url?"Liste commune pas encore configurée : en attendant, les biens restent dans ce navigateur."
   :code?"Liste commune active : vous voyez tous les deux les mêmes biens (mise à jour toutes les 20 secondes).":"Entrez le code commun (le même pour vous deux) pour partager la liste.";})();
 

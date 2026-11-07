@@ -68,3 +68,6 @@ function ficheBadges(suf){const f=ficx(suf); if(!f) return ""; const b=[];
  return b.join("");}
 /* les badges de la fiche s'ajoutent à ceux de l'historique (nouveau, baisse, jours en ligne) partout où ils s'affichent */
 const _vuBadgesF=vuBadges; vuBadges=function(kind,ck,suf){return _vuBadgesF(kind,ck,suf)+(kind==="v"?ficheBadges(suf):"");};
+
+/* annonces où le calcul de l'outil ne s'applique pas (résidence gérée, viager) : signalées partout, retirées des « Meilleures annonces » */
+const horsCalcul=suf=>{const f=ficx(suf); return !!(f&&f.fl&&f.fl.some(k=>k==="serv"||k==="viager"));};

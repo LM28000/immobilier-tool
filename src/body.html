@@ -11,7 +11,7 @@
     <div class="rowwrap"><div class="cards row" id="shortList"></div></div>
     <div id="shortOut"></div>
     <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
-    <h2 style="margin-top:18px" id="dealsH">Meilleures annonces du moment <span class="h2n">les meilleurs rendements parmi toutes les annonces en ligne que la banque accepterait</span></h2>
+    <h2 style="margin-top:18px" id="dealsH">Meilleures annonces du moment <span class="h2n">les meilleurs rendements parmi les annonces relevées (Le Mans, Saint-Nazaire, Angers, Caen, Orléans) que la banque accepterait, hors résidences gérées</span></h2>
     <div class="rowwrap" id="dealsWrap"><div class="cards row" id="dealsList"></div></div>
     <p class="sub" style="margin:6px 0 0" id="dealsMore"><button type="button" class="lnk" data-annall>Voir toutes les annonces, classées →</button></p>
   </section>
@@ -28,8 +28,8 @@
         <input type="range" id="s-surcote" min="-10" max="40" step="5"><small id="n-surcote">Surcote pour un studio bien placé et en bon état</small></div>
       <div class="sl"><label for="s-loyer">Loyer obtenu vs loyer médian <b id="v-loyer"></b></label>
         <input type="range" id="s-loyer" min="-20" max="20" step="5"><small>Négatif = studio moins bien placé ou loué plus bas</small></div>
-      <div class="sl"><label for="s-taux">Taux du crédit sur 25 ans <b id="v-taux"></b></label>
-        <input type="range" id="s-taux" min="3" max="5.5" step="0.05"><small>4,07 % en novembre 2026 pour votre profil</small></div>
+      <div class="sl"><label for="s-taux">Taux du crédit <b id="v-taux"></b></label>
+        <input type="range" id="s-taux" min="3" max="5.5" step="0.05"><small>Le taux de votre offre de prêt ; gardé dans ce navigateur</small></div>
     </div>
     <p class="sub" id="pessTxt" hidden>Scénario pessimiste actif : loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +1 %. Le taux ne change pas : il est fixé à la signature. Pour tester un cas plus dur, utilisez « Et si… » dans les fiches.</p>
     <details>
@@ -108,7 +108,7 @@
     <div role="tabpanel" id="p-cmp" aria-labelledby="tab-cmp" hidden><div id="cmpBox"></div></div>
     <div role="tabpanel" id="p-ann" aria-labelledby="tab-ann" hidden><div id="annBox"></div></div>
     <div role="tabpanel" id="p-biens" aria-labelledby="tab-biens" hidden>
-      <p class="sub" style="margin-top:0">Une annonce de vente repérée ? Ajoutez-la : le calcul reprend vos réglages, le loyer et la vacance du quartier. La liste est partagée avec les personnes qui ont accès à cette page.</p>
+      <p class="sub" style="margin-top:0">Une annonce de vente repérée ? Ajoutez-la : le calcul reprend vos réglages, le loyer et la vacance du quartier. Sans code commun, la liste reste dans ce navigateur ; avec le code commun (plus bas), elle est partagée à deux.</p>
       <form id="biensForm" class="bform" autocomplete="off">
         <label class="f">Nom<span class="inp"><input name="titre" maxlength="120" placeholder="Studio rue Gambetta"></span></label>
         <label class="f">Lien de l'annonce<span class="inp"><input name="url" type="url" placeholder="https://…"></span></label>

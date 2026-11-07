@@ -84,7 +84,7 @@ function tripTxt(d){return d&&d.real?`${minTxt(d.min)} ${MKSH[d.mk]||""}`:"";}
 /* ---------- carte ---------- */
 let SNAP=1; // 0 : replié · 1 : moitié · 2 : plein
 function setSnap(n){SNAP=Math.max(0,Math.min(2,n)); const sh=document.getElementById("mSheet"); sh.dataset.snap=SNAP; sh.style.transform=""; if(SNAP<2) document.getElementById("mSheetIn").scrollTop=0;}
-function topAds(ck,sec,n){const A=ADS[ck]; if(!A||!A.ventes) return []; return A.ventes.filter(a=>!sec||a[1]===sec).map(a=>adInfo(ck,a)).sort((p,q)=>(q.x.irr??-99)-(p.x.irr??-99)).slice(0,n);}
+function topAds(ck,sec,n){const A=ADS[ck]; if(!A||!A.ventes) return []; return A.ventes.filter(a=>(!sec||a[1]===sec)&&!horsCalcul(a[3])).map(a=>adInfo(ck,a)).sort((p,q)=>(q.x.irr??-99)-(p.x.irr??-99)).slice(0,n);}
 function miniAd(o){const p=mPhoto(o.ck,o.a,320,200); return `<button type="button" class="mmini" data-mad="v|${o.ck}|${mEsc(o.a[3])}"><span class="mmimg">${imgTag(p,"")}${o.nw?`<i class="mbdg nw">Nouveau</i>`:o.v&&o.v.last?`<i class="mbdg dr">↓ ${keur(o.v.last.amt)}</i>`:""}</span><span class="mmt"><b style="color:${colIrr(o.x.irr)}">${irrTxt(o.x)}</b> · ${keur(o.a[2])}</span><span class="mms">${mEsc(o.a[1]||"secteur ?")} · ${String(o.a[0]).replace(".",",")} m²</span></button>`;}
 function kp(label,val,cls,sub){return `<div class="mk"><small>${label}</small><b class="${cls||""}">${val}</b>${sub?`<em>${sub}</em>`:""}</div>`;}
 function mSheetRender(){if(!MOBON) return; const box=document.getElementById("mSheetIn"); if(!box) return;
@@ -129,7 +129,7 @@ function feedList(F){F=F||MF; const out=[]; Object.entries(ADS).forEach(([ck,A])
  return out;}
 function feedSorted(L,F){F=F||MF; const f=L.filter(o=>(!F.bank||bankOk(o.x.ratio))&&(!F.nw||o.nw)&&(!F.drop||(o.v&&o.v.last)));
  const k=F.sort, by={irr:(p,q)=>(q.x.irr??-99)-(p.x.irr??-99),cf:(p,q)=>q.x.cf-p.x.cf,prix:(p,q)=>p.a[2]-q.a[2],new:(p,q)=>((hEntry(q.ck,q.a[3])||{}).f||"").localeCompare((hEntry(p.ck,p.a[3])||{}).f||"")||(q.x.irr??-99)-(p.x.irr??-99)};
- return f.sort(by[k]||by.irr);}
+ const cmp=by[k]||by.irr; return f.sort((p,q)=>(horsCalcul(p.a[3])-horsCalcul(q.a[3]))||cmp(p,q));}   /* résidences gérées et viagers en fin de liste : le calcul ne s'y applique pas */
 function adCard(o,rank){const b=bienOf(o.url), on=b&&!isOut(b), p=mPhoto(o.ck,o.a,720,440), [bc]=bank(o.x.ratio);
  const badge=o.nw?`<i class="mbdg nw">Nouveau</i>`:o.v&&o.v.last?`<i class="mbdg dr">↓ ${keur(o.v.last.amt)} le ${dm(o.v.last.d)}</i>`:o.v&&o.v.days>=30?`<i class="mbdg old">${o.v.days} j en ligne</i>`:"";
  return `<article class="mcard" data-mad="v|${o.ck}|${mEsc(o.a[3])}"><div class="mcimg">${imgTag(p,"")}${badge}<span class="mrank">${rank}</span><button type="button" class="mstar${on?" on":""}" data-mstar="${o.ck}|${mEsc(o.a[3])}" aria-label="${on?"Retirer de la shortlist":"Ajouter à la shortlist"}">${on?"★":"☆"}</button></div>
