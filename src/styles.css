@@ -134,7 +134,7 @@ tr.off td{opacity:.5} tr.flash td{background:var(--accent-soft)!important;transi
 .bpin{cursor:pointer}
 .sharebox{background:var(--sunk);border-radius:9px;padding:10px 12px;margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
 .shf{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
-#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--surface);padding:9px 14px;border-radius:9px;font-size:.86rem;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:calc(100vw - 32px)}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--surface);padding:9px 14px;border-radius:9px;font-size:.86rem;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:130;max-width:calc(100vw - 32px)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 .scrollbox{max-height:264px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);-webkit-overflow-scrolling:touch}
 .scrollbox.tall{max-height:340px}
@@ -338,6 +338,7 @@ textarea{font:inherit;width:100%;border:0;background:transparent;color:var(--fg)
 .hbs{display:flex;gap:3px;justify-content:flex-end;flex-wrap:wrap;margin-top:2px}
 .hb{display:inline-block;font-family:inherit;font-size:.66rem;font-weight:700;border-radius:999px;padding:1px 6px;white-space:nowrap;vertical-align:middle}
 .hb.drop{background:var(--ok-soft);color:var(--ok)} .hb.new{background:var(--accent-soft);color:var(--accent)} .hb.old{background:var(--sunk);color:var(--muted)}
+.hb.fwarn{background:var(--warn-soft);color:var(--warn)}.hb.fbad{background:var(--bad-soft);color:var(--bad)}
 .annh .chip[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
 .pcurve svg{width:100%;max-width:420px}
 /* fraîcheur */
@@ -457,7 +458,7 @@ body.mob{--navh:56px;--safeb:env(safe-area-inset-bottom,0px);--safet:env(safe-ar
 body.mob>.wrap{display:none!important}
 body.mob #mApp{display:block}
 body.mob #qDetail{display:none!important}
-body.mob #toast{bottom:calc(var(--navh) + var(--safeb) + 12px);z-index:95}
+body.mob #toast{bottom:calc(var(--navh) + var(--safeb) + 12px);z-index:130}
 .mscr{display:none;min-height:100dvh;padding:calc(var(--safet) + 6px) 0 calc(var(--navh) + var(--safeb) + 24px)}
 body[data-ms="carte"] #ms-carte,body[data-ms="annonces"] #ms-annonces,body[data-ms="short"] #ms-short,body[data-ms="budget"] #ms-budget,body[data-ms="plus"] #ms-plus{display:block}
 .mhd{padding:8px var(--gr) 6px var(--gl)}
@@ -775,3 +776,5 @@ details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 .fdesc{white-space:pre-line;font-size:.9rem;line-height:1.5;margin:4px 0 6px;overflow-wrap:anywhere}
 .fdmore{margin:0 0 8px}.fdmore>summary{cursor:pointer;color:var(--accent);font-size:.88rem;font-weight:600}
 .fdesc:has(+.fdmore[open]){display:none}
+/* téléphone : 16 px au moins dans les champs, sinon iOS zoome la page à chaque saisie */
+@media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}}

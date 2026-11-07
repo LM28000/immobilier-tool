@@ -1,3 +1,4 @@
+const HASH0=location.hash; /* lien #ville-quartier, lu avant que le premier rendu ne le remplace */
 const P="https://immobilier.pappers.fr/prix-immobilier/", T="https://www.locservice.fr/tensiometre/tensiometre-studio-", HB="https://habity.fr/ville/";
 const C=[
  {k:"lemans",name:"Le Mans",lat:48.00,lon:0.20,pm2:1959,evol:1.9,rent:450,rentM2:21,tf:47.80,students:15690,paris:.92,lab:"r",src:[P+"pays-de-la-loire/sarthe/le-mans",T+"72181.html",HB+"le-mans-72/finance"]},
@@ -25,10 +26,15 @@ const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]]
  [[48.86,2.35],[47.90,1.91],[47.59,1.335],[47.39,0.69],[47.26,-0.08],[47.47,-0.55]],[[48.86,2.35],[47.79,1.07],[47.39,0.69],[46.58,0.34]],
  [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
  [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
-const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:14000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2307,pretEtud:486,pess:false,vacQ:true,dvf:true};
+const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:5,pess:false,vacQ:true,dvf:true};
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
- ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5]];
+ ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
+ ["salaires","Revenus nets du foyer","€/mois",50],["pretEtud","Autres crédits en cours","€/mois",10],["fraisVente","Frais à la revente","%",0.5]];
+/* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) */
+const HYPK=["apport","duree","notaire","chLoc","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
+let HYPOK=false; try{const s=JSON.parse(localStorage.getItem("hyp")||"null"); if(s&&typeof s==="object"){HYPK.forEach(k=>{if(typeof s[k]==="number"&&isFinite(s[k])) H[k]=s[k];}); HYPOK=s.salaires!=null;}}catch(_){}
+function saveHyp(){try{const s={}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true;}
 let SEL="lemans";
 
 const eur=v=>Math.round(v).toLocaleString("fr-FR")+" €";

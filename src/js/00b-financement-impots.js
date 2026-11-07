@@ -58,13 +58,13 @@ function calc(c){
   for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
    const v=rentEff*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
    if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=HZ*12) f.push(v);
-   const sale=k=>bien*Math.pow(1+px/100,k);
+   const sale=k=>bien*Math.pow(1+px/100,k)*(1-(H.fraisVente||0)/100); /* prix de revente net des frais (agence, diagnostics) */
    if(m===HZ*12) f[f.length-1]+=sale(HZ)-Math.max(crd,0)-pvT(bien,sale(HZ),HZ,trav,AB[HZ-1]);
    if(m%12===0){const k=m/12; gains.push(sale(k)-Math.max(crd,0)-(H.apport-cum)-pvT(bien,sale(k),k,trav,AB[k-1]));}}
   return {reg,T,F,AB,f,gains,irr:irrMonthly(f)};}
  let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
  const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], cfBrut=rentEff-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
- const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ),HZ,trav,R.AB[HZ-1]);
+ const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
  const wA=(H.tmiA+FISC.ps)*H.partA, wB=(H.tmiB+FISC.ps)*(100-H.partA), impA=imp1*wA/(wA+wB||1);
  return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};

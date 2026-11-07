@@ -43,8 +43,8 @@ function renderDetail(rows){
   <p class="sub">Trajets : ${trips}</p>
   <h2 style="margin:14px 0 6px">Risques à long terme</h2>
   <div style="display:flex;flex-wrap:wrap;gap:6px">${riskPills(c)}</div>
-  <div style="margin-top:10px">${dpeBar(DPECITY[c.k],360)}</div>
-  <p class="sub" style="margin-top:4px">DPE des ${DPECITY[c.k].reduce((a,b)=>a+b,0).toLocaleString("fr-FR")} appartements de 30 m² ou moins diagnostiqués depuis 2021 (ADEME). F : location interdite en 2028, G : déjà interdite.</p>
+  <div style="margin-top:10px">${dpeBar(dpeCity(c.k),360)}</div>
+  <p class="sub" style="margin-top:4px">DPE des ${dpeCity(c.k).reduce((a,b)=>a+b,0).toLocaleString("fr-FR")} appartements de 30 m² ou moins diagnostiqués depuis 2021 (ADEME). F : location interdite en 2028, G : déjà interdite.</p>
   <p class="sub" style="margin-top:6px">Population qui baisse ou beaucoup de logements vides = moins de locataires demain et une revente plus lente. Le chômage pèse sur la solvabilité des candidats.</p>
   ${c.note?`<div class="note">${c.note}</div>`:""}
   <div class="srcs">Sources : <a href="${c.src[0]}" target="_blank" rel="noopener">Prix</a> · <a href="${c.src[1]}" target="_blank" rel="noopener">Loyer</a> · <a href="${c.src[2]}" target="_blank" rel="noopener">Taxe foncière</a></div>`]])}`;
@@ -55,8 +55,8 @@ const RISK={lemans:[0.4,9.5,15.7],angers:[0.6,5.9,15.4],tours:[0.4,11.2,null],po
  stnazaire:[1.1,7.1,13.0],rennes:[1.1,6.5,13.8],blois:[0.4,11.6,17.6],caen:[0.6,8.9,15.0],cholet:[0.1,5.9,12.2],laroche:[0.1,6.6,11.3]};
 const fr=(v,d=1)=>v.toFixed(d).replace(".",",");
 const rPop=v=>v>=0.5?"p-ok":v>=0?"p-n":"p-warn", rVac=v=>v<7?"p-ok":v<=10?"p-n":"p-warn", rCho=v=>v==null?"p-n":v<13?"p-ok":v<=16?"p-n":"p-warn";
-function riskPills(c){const [p,v,ch]=RISK[c.k];
- return `<span class="pill ${rPop(p)}">Population ${p>0?"+":""}${fr(p)} %/an</span><span class="pill ${rVac(v)}">${fr(v)} % de logements vides</span><span class="pill ${rCho(ch)}">Chômage ${ch==null?"n.d.":fr(ch)+" %"}</span><span class="pill ${rFG(fgOf(DPECITY[c.k]))}">${fr(fgOf(DPECITY[c.k]))} % de petits appartements classés F ou G</span>`;}
+function riskPills(c){const [p,v,ch]=RISK[c.k]||[0,0,null];
+ return `<span class="pill ${rPop(p)}">Population ${p>0?"+":""}${fr(p)} %/an</span><span class="pill ${rVac(v)}">${fr(v)} % de logements vides</span><span class="pill ${rCho(ch)}">Chômage ${ch==null?"n.d.":fr(ch)+" %"}</span><span class="pill ${rFG(fgOf(dpeCity(c.k)))}">${fr(fgOf(dpeCity(c.k)))} % de petits appartements classés F ou G</span>`;}
 
 /* ---------- quartiers ---------- */
 const Q={

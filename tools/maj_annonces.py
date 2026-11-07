@@ -7,7 +7,9 @@ releve.json = {"date": "AAAA-MM-JJ", "villes": {"lemans": {"ads": [...], "ventes
   ads / ventes au premier niveau : studios ; "t2" / "t3" : mêmes listes pour les T2 et les T3 (facultatives).
   ads    : [surface, secteur, loyer CC, meublé 0/1, lien après /annonce/location/, photo]
   ventes : [surface, secteur, prix, lien après /annonce/vente/, photo]
-Une liste absente du relevé (page en échec) garde celle de la veille.
+Une liste absente du relevé (page en échec) garde celle de la veille, sans compter ses annonces comme vues ce jour-là.
+Garde-fou : une liste qui perd plus de la moitié de ses annonces (6 au moins la veille) est tenue pour un relevé partiel et gardée telle quelle,
+sauf avec --force. Disparue = absente de 2 relevés de suite où sa liste a bien été relevée.
 
 Fichiers modifiés : data/annoncesdata.js (const ADS) et data/historique.js (const HIST).
 ADS[ville] = {ads, ventes (studios), map, t: {t2: {ads, ventes}, t3: {ads, ventes}}}.
@@ -42,7 +44,9 @@ def main():
     d = datetime.date.fromisoformat(today)
     ADS = load_js(P_ADS, "ADS"); HIST = load_js(P_HIST, "HIST")
     SEC = json.load(open(P_SEC, encoding="utf-8")) if os.path.exists(P_SEC) else {}
-    out = {"date": today, "villes": {}, "baisses": [], "affaires": [], "echecs": []}
+    force = "--force" in sys.argv
+    out = {"date": today, "villes": {}, "baisses": [], "affaires": [], "echecs": [], "gardes": []}
+    maj = 0
     for ck, new in rel.get("villes", {}).items():
         if not new or not any((new if ty == "studio" else new.get(ty) or {}).get(k) for ty in TYPES for k in ("ads", "ventes")):
             out["echecs"].append(ck); continue
@@ -56,10 +60,17 @@ def main():
             if not N or (not N.get("ads") and not N.get("ventes")): continue
             B = A if ty == "studio" else A.setdefault("t", {}).setdefault(ty, {"ads": [], "ventes": []})
             old_v = {a[3] for a in B.get("ventes", [])}; old_l = {a[4] for a in B.get("ads", [])}
-            if N.get("ads"): B["ads"] = N["ads"]
-            if N.get("ventes"): B["ventes"] = N["ventes"]
+            fresh = {}
+            for key in ("ads", "ventes"):
+                nw, od = [a for a in (N.get(key) or []) if a and a[0] and a[0] > 0 and a[2] and a[2] > 0], B.get(key) or []
+                if not nw: continue
+                if not force and len(od) >= 6 and len(nw) < len(od) / 2:
+                    out["gardes"].append(f"{ck} {ty} {key} : {len(nw)} annonces au lieu de {len(od)}, liste de la veille gardée (--force pour accepter)"); continue
+                B[key] = nw; fresh[key] = True
+            if fresh: maj += 1; A["iso"] = today
             tag = [] if ty == "studio" else [ty]
-            for kind, lst, ip, il, meta in (("v", B["ventes"], 2, 3, lambda a: [a[0], a[1], a[4]] + tag), ("l", B["ads"], 2, 4, lambda a: [a[0], a[1], a[5]] + tag)):
+            for kind, lst, ip, il, meta in (("v", B["ventes"] if fresh.get("ventes") else [], 2, 3, lambda a: [a[0], a[1], a[4]] + tag), ("l", B["ads"] if fresh.get("ads") else [], 2, 4, lambda a: [a[0], a[1], a[5]] + tag)):
+                if not lst: continue
                 seen = set()
                 for a in lst:
                     k = a[il]; seen.add(k); e = H[kind].get(k)
@@ -70,11 +81,12 @@ def main():
                             if kind == "v" and a[ip] < e["p"][-1][1]:
                                 out["baisses"].append({"type": ty, "ville": ck, "lien": "https://www.bienici.com/annonce/vente/" + k, "avant": e["p"][-1][1], "apres": a[ip], "secteur": a[1]})
                             e["p"].append([today, a[ip]])
-                        e["s"] = today; e["m"] = meta(a); e.pop("g", None)
+                        e["s"] = today; e["m"] = meta(a); e.pop("g", None); e.pop("a", None); e.pop("ad", None)
                 for k, e in H[kind].items():
                     if (e["m"][3] if len(e["m"]) > 3 else "studio") != ty: continue
-                    if k not in seen and "g" not in e and (d - datetime.date.fromisoformat(e["s"])).days >= 2:
-                        e["g"] = today
+                    if k not in seen and "g" not in e and e["s"] != today and e.get("ad") != today:
+                        e["a"] = e.get("a", 0) + 1; e["ad"] = today   # absente d'un relevé de plus (une fois par jour)
+                        if e["a"] >= 2: e["g"] = today; e.pop("a", None); e.pop("ad", None)
             nv = [a for a in B["ventes"] if a[3] not in old_v]; nl = [a for a in B["ads"] if a[4] not in old_l]
             pm = [a[2] / a[0] for a in B["ventes"]]; pmed = st.median(pm) if len(pm) >= 5 else None
             for a in nv:
@@ -91,7 +103,10 @@ def main():
                 "prixM2Median": med(pm), "ventesNouvelles": len(nv),
                 "vendues": sum(1 for e in H["v"].values() if e.get("g") == today and (e["m"][3] if len(e["m"]) > 3 else "studio") == ty)}
         out["villes"][ck] = stats
-    ADS["date"] = f"{d.day}{'er' if d.day == 1 else ''} {MOIS[d.month - 1]} {d.year}"; ADS["iso"] = today
+    if maj:   # la date affichée n'avance que si au moins une liste a vraiment été relevée
+        ADS["date"] = f"{d.day}{'er' if d.day == 1 else ''} {MOIS[d.month - 1]} {d.year}"; ADS["iso"] = today
+    else:
+        out["echecs"].append("aucune liste relevée : date et fichiers inchangés"); print(json.dumps(out, ensure_ascii=False, indent=1)); sys.exit(1)
     save_js(P_ADS, "ADS", ADS); save_js(P_HIST, "HIST", HIST)
     print(json.dumps(out, ensure_ascii=False, indent=1))
 

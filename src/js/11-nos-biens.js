@@ -1,8 +1,20 @@
 /* ---------- nos biens (liste partagée) ---------- */
 let BIENS=[], DB=null, USER=null;
+/* chaque bien lu passe par ici : types vérifiés, listes blanches, longueurs bornées. Une ligne abîmée reste visible (« bien illisible ») pour pouvoir la supprimer. */
+function normBien(id,raw){const r=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{}, num=v=>{v=+v; return isFinite(v)?v:0;}, str=(v,n)=>typeof v==="string"?v.slice(0,n):"", obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:undefined;
+ const sid=String(id==null?"":id).replace(/[^A-Za-z0-9_-]/g,"").slice(0,64), okV=C.some(c=>c.k===r.ville), url=str(r.url,500);
+ const b={id:sid,titre:str(r.titre,120),url:/^https?:\/\//i.test(url)?url:"",ville:okV?r.ville:C[0].k,quartier:str(r.quartier,80),secteur:str(r.secteur,80),
+  prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
+  notes:str(r.notes,200),statut:["à voir","visité","offre faite","écarté"].includes(r.statut)?r.statut:"à voir",fav:r.fav===true,par:str(r.par,30),ts:num(r.ts),
+  short:typeof r.short==="boolean"?r.short:undefined,adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
+ Object.keys(b).forEach(k=>{if(b[k]===undefined) delete b[k];});
+ if(TYPES[r.type]) b.type=r.type; if(+r.pieces>0) b.pieces=num(r.pieces); if(isFinite(+r.lat)&&r.lat!=null) b.lat=+r.lat; if(isFinite(+r.lon)&&r.lon!=null) b.lon=+r.lon;
+ if(b.geo&&b.geo.foot&&!Array.isArray(b.geo.foot)) delete b.geo.foot;
+ if(!okV||sid!==String(id)||!(b.prix>0)||!(b.surface>0)){b.bad=true; b.titre="⚠ Bien illisible"+(b.titre?" : "+b.titre:""); if(!(b.surface>0)) b.surface=22; if(!(b.prix>0)) b.prix=1;}
+ return b;}
 function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
- if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=0.5+2*(1-sc);}
+ if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
  if(+b.loyer>0){o.rent=+b.loyer; o.rentM2=S; o.rentFixed=true;} else o.rent=c.rent*rr;
  if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(+b.travaux>0) o.trav=+b.travaux; if(scn) o._s=scn;
@@ -58,7 +70,7 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
   hook(db);
  }).catch(()=>{clearTimeout(timer); if(!DB){DB=localDB(); hook(DB);}});
  function hook(db){
-  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>Object.assign({id:d.id},d.data())); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
+  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
    e=>{clearTimeout(timer); st.textContent="Lecture de la liste impossible ("+(e&&e.code||"erreur")+").";});
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();

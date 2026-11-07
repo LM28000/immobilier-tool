@@ -99,8 +99,8 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  if(t.dataset.vv){const cur=(((b.visite||{}).avis||{})[meV()]||{}).verdict; saveVisit(avisPatch(b,meV(),"verdict",cur===t.dataset.vv?null:t.dataset.vv)); return;}
  if(t.id==="visitPanel"&&e.target===t) closeVisit();});
 document.addEventListener("change",e=>{if(!VISIT) return; const f=e.target.closest&&e.target.closest("[data-vf],[data-va],[data-vf2]"); if(!f) return; const b=BIENS.find(x=>x.id===VISIT); if(!b) return;
- if(f.dataset.va){saveVisit(avisPatch(b,meV(),f.dataset.va,f.dataset.va==="vprix"?(+f.value||0):f.value.trim())); return;}
- if(f.dataset.vf2){const v=visCopy(b); v.offre=+f.value||0; saveVisit({visite:v}); return;}
+ if(f.dataset.va){saveVisit(avisPatch(b,meV(),f.dataset.va,f.dataset.va==="vprix"?Math.min(Math.max(+f.value||0,0),(+b.prix||0)*3):f.value.trim())); return;}
+ if(f.dataset.vf2){const v=visCopy(b), o=+f.value||0; if(o&&(o<1000||o>(+b.prix||0)*3)){toast("Prix proposé hors de portée : entre 1 000 € et 3 fois le prix affiché."); f.value=v.offre||""; return;} v.offre=o; saveVisit({visite:v}); return;}
  const k=f.dataset.vf; if(k==="votes"){const v=visCopy(b); v.votes=f.value.trim(); saveVisit({visite:v}); return;}
  saveVisit({[k]:k==="dpe"?f.value:(+f.value||0)});});
 addEventListener("keydown",e=>{if(e.key==="Escape"&&VISIT){e.stopImmediatePropagation(); closeVisit();}},true);

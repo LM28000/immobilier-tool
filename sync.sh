@@ -32,6 +32,10 @@ PY
     node --check .sync-check.js 2>.sync-err || { head -5 .sync-err; rm -f .sync-check.js .sync-err; fail "le script de index.html contient une erreur de syntaxe"; }
   else echo "$(now) node introuvable : syntaxe de la page non vérifiée"; fi
   rm -f .sync-check.js .sync-err
+  # tests rapides, sans navigateur (calcul, nettoyage des biens, scripts de données, cohérence des villes)
+  if command -v node >/dev/null; then node tests/unit.js >.sync-err 2>&1 || { grep "✗" .sync-err | head -5; rm -f .sync-err; fail "tests du calcul en échec"; }; fi
+  python3 tests/test_donnees.py >.sync-err 2>&1 || { grep "✗" .sync-err | head -5; rm -f .sync-err; fail "tests des données en échec"; }
+  rm -f .sync-err
 
   # 3. commit avec un message qui dit ce qui a changé
   git add -A

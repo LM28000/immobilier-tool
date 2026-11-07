@@ -12,3 +12,4 @@ data/fiches-du-jour.json
 .env*
 *.pem
 *.key
+__pycache__/

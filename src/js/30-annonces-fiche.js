@@ -23,8 +23,11 @@ function openAd(kind,ck,suf){const a=findAd(kind,ck,suf); if(!a) return; AD={kin
  else if(!QSEL||QSEL.ck!==ck){const t=kind==="v"?venteIrisA(ck,a):venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
 function priceFor(ck,a,test){let lo=5000, hi=Math.max(a[2]*1.8,30000); if(!test(lo)) return null; if(test(hi)) return hi;
  for(let i=0;i<26;i++){const m=(lo+hi)/2; if(test(m)) lo=m; else hi=m;} return Math.floor(lo/500)*500;}
-const TGC={};
-function targetsFor(b){const ref=+b.prix||60000, key=JSON.stringify([b.ville,b.quartier,b.surface,b.prix,b.loyer,b.copro,b.tf,H]); if(TGC[key]) return TGC[key];
+const TGC={}; let TGN=0;
+const TGSKIP=new Set(["id","titre","notes","statut","fav","par","ts","url","visite","by","secteur","adresse"]);
+/* clé = toutes les entrées de calcBien (travaux, type, pièces, adresse… compris) et tous les réglages */
+const tgKey=b=>JSON.stringify([H,Object.keys(b).filter(k=>!TGSKIP.has(k)).sort().map(k=>[k,b[k]])]);
+function targetsFor(b){const ref=+b.prix||60000, key=tgKey(b); if(TGC[key]) return TGC[key]; if(++TGN>4000){for(const k in TGC) delete TGC[k]; TGN=0;}
  const T=p=>calcBien(Object.assign({},b,{prix:p})).x, f=t=>priceFor(null,[0,0,ref],t);
  return TGC[key]={ref,cf:f(p=>T(p).cf>=0),r7:f(p=>{const x=T(p); return x.irr!=null&&x.irr>=7;})};}
 function tgtChip(p,ref,short){if(p==null) return `<span class="tchip bad">${short?"hors d'atteinte":"hors d'atteinte même très bas"}</span>`; const d=p-ref;
@@ -48,11 +51,11 @@ function adFiche(ad){if(ad.kind==="b") return bienFiche(ad.suf); const a=findAd(
   <h2 class="psec">Et si…</h2>${scnBox("ad",scnBien(vb))}
   <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
   <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}
- const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6);
+ const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,rentExp(ad.ck));
  return `${a[5]?`<img class="adph" src="${esc(photoUrl(a[4],a[5],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">Studio ${String(a[0]).replace(".",",")} m²${a[3]?" meublé":""}</h3><span class="pill p-n">à louer</span></div>
   <p class="sub" style="margin:2px 0 10px">${c.name}${a[1]?" · secteur "+esc(a[1]):""}${adTwins(ad.ck,a)>1?` · ${adTwins(ad.ck,a)} lots identiques : souvent une résidence avec services`:""}</p>
-  <div class="big4"><div><span>Loyer charges comprises</span><b>${eur(a[2])}</b></div><div><span>Ramené à ${H.surface} m²</span><b>${eur(r22(a))}</b></div><div><span>Notre calcul (${H.surface} m²)</span><b>${eur(model)}</b></div><div><span>Écart</span><b class="${r22(a)>=model?"pos":"neg"}">${r22(a)>=model?"+":"−"}${fr(Math.abs(r22(a)/model-1)*100,0)} %</b></div></div>
+  <div class="big4"><div><span>Loyer charges comprises</span><b>${eur(a[2])}</b></div><div><span>Ramené à ${H.surface} m²</span><b>${eur(r22(a,ad.ck))}</b></div><div><span>Notre calcul (${H.surface} m²)</span><b>${eur(model)}</b></div><div><span>Écart</span><b class="${r22(a,ad.ck)>=model?"pos":"neg"}">${r22(a,ad.ck)>=model?"+":"−"}${fr(Math.abs(r22(a,ad.ck)/model-1)*100,0)} %</b></div></div>
   <p class="sub" style="margin:8px 0">Une location concurrente : elle montre ce qu'un locataire paie aujourd'hui pour ${TY().un} comparable dans ce secteur. Loyer demandé, pas forcément signé.</p>
   <div class="adact">${adNav(ad)}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">Photos et description sur Bien'ici ↗</a></div>`;}
 

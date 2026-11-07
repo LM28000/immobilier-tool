@@ -52,3 +52,19 @@ function ficheSum(f){if(f===undefined) return "chargement…"; if(!f) return "pa
 /* rubrique « L'annonce » des fiches (ordinateur et téléphone) */
 function ficheSec(b){const s=b.kind==="v"?b.suf:(typeof bienSuf==="function"?bienSuf(b):null); if(!s) return ["",""]; const f=ficheOf(b.ville,s);
  return [ficheSum(f),f===undefined?`<div data-fwait="${esc(b.ville)}|${esc(s)}"><p class="sub" style="margin:0">Chargement de la description et des photos…</p></div>`:f?ficheHtml(b.ville,s,f):ficheNone(s)];}
+
+/* ce que dit la description (signaux calculés par tools/fiches.py) */
+const DFL={loue:["warn","loué","Vendu loué : un bail est en cours. Demandez le loyer, la date de fin du bail et le dépôt de garantie : on ne choisit ni le locataire ni le loyer."],
+ serv:["bad","rés. gérée","Résidence gérée (services, étudiante, seniors) : bail commercial, loyer fixé par le gestionnaire et revente plus difficile. Le calcul de l'outil ne s'applique pas tel quel."],
+ viager:["bad","viager","Viager ou nue-propriété : le calcul de l'outil ne s'applique pas."],
+ trav:["warn","travaux","La description annonce des travaux : chiffrez-les à la visite (champ « Travaux » de la visite)."],
+ vote:["warn","copro : travaux","Travaux de copropriété mentionnés (ravalement, travaux votés) : demandez qui les paie et le montant."],
+ meub:["ok","vendu meublé","Vendu meublé : moins de meubles à acheter."]};
+function ficheAttn(suf){const f=ficx(suf); return f&&f.fl?f.fl.filter(k=>DFL[k]).map(k=>[DFL[k][0]==="ok"?"ok":DFL[k][0],DFL[k][2]]):[];}
+function ficheBadges(suf){const f=ficx(suf); if(!f) return ""; const b=[];
+ if(f.dpe) b.push(`<span class="hb ${/[FG]/.test(f.dpe)?"fbad":"old"}" title="DPE annoncé">DPE ${f.dpe}</span>`);
+ (f.fl||[]).forEach(k=>{const d=DFL[k]; if(d) b.push(`<span class="hb ${d[0]==="bad"?"fbad":d[0]==="warn"?"fwarn":"drop"}" title="${esc(d[2])}">${d[1]}</span>`);});
+ if(f.proc) b.push(`<span class="hb fbad" title="Copropriété en procédure selon l'annonce">copro en procédure</span>`);
+ return b.join("");}
+/* les badges de la fiche s'ajoutent à ceux de l'historique (nouveau, baisse, jours en ligne) partout où ils s'affichent */
+const _vuBadgesF=vuBadges; vuBadges=function(kind,ck,suf){return _vuBadgesF(kind,ck,suf)+(kind==="v"?ficheBadges(suf):"");};

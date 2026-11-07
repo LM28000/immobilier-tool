@@ -21,6 +21,19 @@ R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D = os.path.join(R, "data", "fiches")
 TYPES = ("studio", "t2", "t3")
 GARDE_JOURS = 180
+import re
+# ce que dit la description et qui change la décision ; textes affichés : src/js/24-fiches-annonces.js (DFL)
+SIGNAUX = {
+    "loue": r"locataire en place|vendu lou[ée]|bail en cours|actuellement lou[ée]|lou[ée] actuellement|lou[ée] depuis|occup[ée] par (?:un|une) locataire|loyer actuel",
+    "serv": r"r[ée]sidence (?:de )?services|r[ée]sidence (?:[ée]tudiante|seniors?|g[ée]r[ée]e|de tourisme|hôteli[eè]re|d'affaires)|bail commercial|gestionnaire|exploitant",
+    "viager": r"viager|nue[- ]propri[ée]t[ée]",
+    "trav": r"(?:à|a) r[ée]nover|travaux (?:à|a) pr[ée]voir|(?:à|a) rafra[iî]chir|(?:à|a) r[ée]habiliter|gros travaux|(?:à|a) remettre au go[uû]t",
+    "vote": r"travaux vot[ée]s|ravalement",
+    "meub": r"vendu meubl[ée]|enti[eè]rement meubl[ée]|(?:livr[ée]|c[ée]d[ée]) meubl[ée]|meubl[ée] et [ée]quip[ée]",
+}
+def signaux(f):
+    d = (f.get("d") or "") + " " + (f.get("titre") or "")
+    return [k for k, rx in SIGNAUX.items() if re.search(rx, d, re.I)]
 
 
 def load_js(path):
@@ -100,7 +113,12 @@ def merge(args):
     for ck, c in st.items():
         for i in [i for i in c if gone.get(i) and gone[i] < lim]:
             del c[i]; res["oubliees"] += 1
-    for ck, c in st.items(): save_city(ck, c)
+    for ck, c in st.items():
+        for f in c.values():
+            fl = signaux(f)
+            if fl: f["fl"] = fl
+            else: f.pop("fl", None)
+        save_city(ck, c)
     res["total"] = {ck: len(c) for ck, c in sorted(st.items())}
     print(json.dumps(res, ensure_ascii=False, indent=1))
     # un refus n'empêche pas la suite : les fiches déjà lues sont gardées, les autres seront relues demain

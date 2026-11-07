@@ -8,6 +8,7 @@ const VIEWS = [['ordi', {viewport: {width: 1300, height: 900}}], ['tel', {...dev
 async function page(b, o) {
   const c = await b.newContext(o); const p = await c.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message));
+  await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());   // suite principale : carte dessinée (SVG), sans dépendre du réseau ; la vraie carte a ses tests plus bas
   await p.goto(URL); await p.waitForTimeout(900);
   return {c, p, errs};
 }
@@ -150,8 +151,14 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();
   }
+  // lien partagé #ville-quartier : la fiche du quartier s'ouvre au chargement
+  { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
+    await p.goto(URL + '#lemans-0202'); await p.waitForTimeout(1200);
+    ok('ordi · lien #lemans-0202 ouvre le quartier', await p.evaluate(() => SEL === 'lemans' && QSEL && QSEL.code === '0202' && location.hash === '#lemans-0202'), await p.evaluate(() => JSON.stringify([SEL, QSEL && QSEL.code, location.hash])));
+    await c.close(); }
   // adresse exacte (services simulés)
   { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
     await p.route('**/data.geopf.fr/geocodage/**', r => r.fulfill({contentType: 'application/json', body: JSON.stringify({features: [{properties: {label: '10 Rue Gougeard 72000 Le Mans', city: 'Le Mans', postcode: '72000', type: 'housenumber'}, geometry: {coordinates: [0.1915, 47.9975]}}]})}));
     await p.route('**/routing.openstreetmap.de/**', r => r.fulfill({contentType: 'application/json', body: JSON.stringify({durations: [[0, 300, 2400, 900]], distances: [[0, 400, 3000, 1100]]})}));
     await p.route('**/www.georisques.gouv.fr/**', r => { const u = r.request().url(); r.fulfill({contentType: 'application/json', body: u.includes('rga') ? '{"codeExposition":"1"}' : u.includes('ssp') ? '{"casias":{"results":2},"conclusions_sis":{"results":0},"instructions":{"results":0}}' : '{"results":0}'}); });
@@ -165,8 +172,8 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok('ordi · adresse sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // vraie carte (fonds de carte et Leaflet simulés hors ligne)
-  const LJ = process.env.LEAFLET_JS;
-  if (LJ && require('fs').existsSync(LJ)) {
+  const LJ = process.env.LEAFLET_JS || path.join(__dirname, 'vendor/leaflet-1.9.4.js');   // Leaflet servi depuis le dépôt : tests de la vraie carte sans réseau
+  if (!require('fs').existsSync(LJ)) { ok('vraie carte : Leaflet introuvable (' + LJ + ')', false); } else {
     const fs = require('fs'); const c = await b.newContext({...devices['iPhone 13']}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
     await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
@@ -178,6 +185,10 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.evaluate(() => { const t = IR.lemans.list.find(x => x.code === '0202'); LEAF.map.setView(unproj(t.cx, t.cy), 14.5, {animate: false}); }); await p.waitForTimeout(600);
     await p.evaluate(() => document.querySelector('.lpin').dispatchEvent(new MouseEvent('click', {bubbles: true}))); await p.waitForTimeout(600);
     ok('tel · pastille de prix ouvre la fiche', await p.evaluate(() => STACK.length === 1 && !!document.querySelector('.mpush.in .mdp')));
+    // lien vers un quartier depuis un autre écran : la carte était cachée (taille nulle), le zoom doit attendre son affichage
+    await p.evaluate(() => { mPopAll(); mShow('annonces'); }); await p.waitForTimeout(500);
+    await p.evaluate(() => { const b = document.createElement('button'); b.dataset.mgoq = 'lemans|0101'; b.id = 'tq'; document.getElementById('mFeed').appendChild(b); b.click(); }); await p.waitForTimeout(1600);
+    ok('tel · lien vers un quartier depuis les annonces', await p.evaluate(() => MS === 'carte' && QSEL && QSEL.code === '0101' && LEAF.map.getZoom() >= 13 && !LEAF.pending), await p.evaluate(() => JSON.stringify([MS, QSEL && QSEL.code, LEAF.map.getZoom(), !!LEAF.pending])));
     ok('tel · vraie carte sans erreur', errs.length === 0, errs.join(' | '));
     await c.close();
     // ordinateur

@@ -1,0 +1,14 @@
+{
+  "name": "immobilier-tool",
+  "private": true,
+  "description": "Où acheter notre studio ? — comparateur de villes, quartiers et annonces",
+  "scripts": {
+    "build": "python3 build.py",
+    "test:unit": "node tests/unit.js && python3 tests/test_donnees.py",
+    "test:e2e": "node tests/run.js",
+    "test": "python3 build.py && npm run test:unit && npm run test:e2e"
+  },
+  "devDependencies": {
+    "playwright": "1.65.0"
+  }
+}

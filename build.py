@@ -1,57 +1,118 @@
 #!/usr/bin/env python3
-"""Assemble la page à partir de src/ et data/.
+"""Assemble la page à partir de src/ et data/, et refuse de produire une page cassée.
 Sorties :
   dist/index.html     page autonome (GitHub Pages)
-  dist/artifact.html  même page sans squelette (artifact Claude)
-  dist/test.html      copie locale pour les tests Playwright
+  dist/artifact.html  même page sans squelette (artifact Claude), annonces et fiches toujours incluses
+  dist/test.html      copie locale pour les tests Playwright (comme l'artefact)
   index.html          copie de dist/index.html servie par GitHub Pages
+  sw.js               numéro de version mis à jour (le téléphone installe la nouvelle version)
+Réglage : publication.json → "annonces_publiques": false retire annonces, historique et fiches de la page publique ;
+  la page les lit alors dans Supabase avec le code de groupe (tools/supabase_annonces.py les y envoie).
+Ordre d'assemblage : données, puis src/js/00* et 01*, puis IRIS, annonces, src/ads-vue.js, historique, puis src/js/02* et la suite.
 """
-import os, glob, sys
+import os, glob, sys, json, hashlib, shutil, subprocess, tempfile
+
 R = os.path.dirname(os.path.abspath(__file__))
-rd = lambda p: open(os.path.join(R, p), encoding="utf-8").read()
-js = sorted(glob.glob(os.path.join(R, "src/js/*.js")))
+P = lambda p: os.path.join(R, p)
+rd = lambda p: open(P(p), encoding="utf-8").read()
+ERR = []
+
+def need(p):
+    if not os.path.exists(P(p)): ERR.append(f"fichier manquant : {p}"); return "{}"
+    return rd(p)
+
+def jdata(p):
+    """un fichier JSON de data/, vérifié"""
+    s = need(p)
+    try: json.loads(s)
+    except Exception as e: ERR.append(f"{p} n'est pas un JSON valide : {e}")
+    return s
+
+def jsobj(p, name):
+    """un fichier data/*.js de la forme « const NAME={…}; », vérifié ; renvoie (texte, objet)"""
+    s = need(p)
+    if not s.lstrip().startswith(f"const {name}="): ERR.append(f"{p} doit commencer par « const {name}= »")
+    try: return s, json.loads(s[s.index("{"):s.rindex("}") + 1])
+    except Exception as e: ERR.append(f"{p} illisible : {e}"); return s, {}
+
+conf = json.loads(rd("publication.json")) if os.path.exists(P("publication.json")) else {}
+PUBLIC_ADS = conf.get("annonces_publiques", True)
+
+js = sorted(glob.glob(P("src/js/*.js")))
 names = [os.path.basename(p) for p in js]
 before = [p for p, n in zip(js, names) if n < "02"]   # villes, calcul, fiche
 after = [p for p, n in zip(js, names) if n >= "02"]   # carte et la suite
-jd = lambda n, f: "const %s=%s;" % (n, rd(f) if os.path.exists(os.path.join(R, f)) else "{}")
-import json
+DATA = [("DVFALL", "dvf.json"), ("TTQ", "temps-trajets.json"), ("RISQ", "risques-quartiers.json"), ("TCQ", "transports.json"), ("LOYQ", "loyers-etat.json"),
+        ("POIQ", "commerces.json"), ("TERQ", "territoire.json"), ("HABQ", "habitants.json"), ("REPQ", "reperes.json")]
+
+ads_txt, ads = jsobj("data/annoncesdata.js", "ADS")
+hist_txt, hist = jsobj("data/historique.js", "HIST")
 # fiches des annonces (tools/fiches.py) : FICX = champs utiles au calcul pour les annonces du relevé ; FICHES = fiches complètes
-FICH = {os.path.basename(p)[:-5]: json.load(open(p, encoding="utf-8")) for p in sorted(glob.glob(os.path.join(R, "data/fiches/*.json")))}
-_ads = rd("data/annoncesdata.js"); _ads = json.loads(_ads[_ads.index("{"):_ads.rindex("}") + 1])
-_ids = set()
-for _v in _ads.values():
-    if isinstance(_v, dict):
-        for _b in [_v] + list((_v.get("t") or {}).values()):
-            _ids |= {str(a[3]).split("/")[-1] for a in _b.get("ventes", [])} | {str(a[4]).split("/")[-1] for a in _b.get("ads", [])}
-FICX = {i: {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc") if k in f} for c in FICH.values() for i, f in c.items() if i in _ids}
+FICH = {}
+for p in sorted(glob.glob(P("data/fiches/*.json"))):
+    try: FICH[os.path.basename(p)[:-5]] = json.load(open(p, encoding="utf-8"))
+    except Exception as e: ERR.append(f"{os.path.relpath(p, R)} illisible : {e}")
+ids = set()
+for v in ads.values():
+    if isinstance(v, dict):
+        for b in [v] + list((v.get("t") or {}).values()):
+            ids |= {str(a[3]).split("/")[-1] for a in b.get("ventes", [])} | {str(a[4]).split("/")[-1] for a in b.get("ads", [])}
+FICX = {i: {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f} for c in FICH.values() for i, f in c.items() if i in ids}
 FICX = {i: v for i, v in FICX.items() if v}
-FICHES_JS = json.dumps(FICH, ensure_ascii=False, separators=(",", ":"))
-code = "\n".join([
-    rd("data/mapdata.js"),
-    jd("DVFALL", "data/dvf.json"), jd("TTQ", "data/temps-trajets.json"), jd("RISQ", "data/risques-quartiers.json"), jd("TCQ", "data/transports.json"), jd("LOYQ", "data/loyers-etat.json"), jd("POIQ", "data/commerces.json"), jd("TERQ", "data/territoire.json"), jd("HABQ", "data/habitants.json"), jd("REPQ", "data/reperes.json"),
-    "const CITYMAP=" + rd("data/citymaps.json") + ";",
-    *[open(p, encoding="utf-8").read() for p in before],
-    rd("data/irisdata.js"),
-    rd("data/annoncesdata.js").replace("const ADS=", "const ADSRAW=", 1),
-    "const FICX=" + json.dumps(FICX, ensure_ascii=False, separators=(",", ":")) + ";\nconst FICHES=/*FICHES*/null;",
-    rd("src/ads-vue.js"),
-    rd("data/historique.js") if os.path.exists(os.path.join(R, "data/historique.js")) else "const HIST={};",
-    *[open(p, encoding="utf-8").read() for p in after],
-])
-page = rd("src/head.html") + "<style>\n" + rd("src/styles.css") + "</style>\n" + rd("src/body.html") + "<script>\n" + code + "</script>\n"
-os.makedirs(os.path.join(R, "dist"), exist_ok=True)
-w = lambda p, s: open(os.path.join(R, p), "w", encoding="utf-8").write(s)
-# artefact et page de test : fiches complètes dans la page ; GitHub Pages : chargées à la demande (data/fiches/<ville>.json)
-inl = page.replace("const FICHES=/*FICHES*/null;", "const FICHES=" + FICHES_JS + ";", 1)
-assert inl != page, "marqueur FICHES introuvable"
-w("dist/artifact.html", inl)
-w("dist/test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + inl)
+dumps = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
+
+def code(public):
+    """le script de la page ; public=False : annonces, historique et fiches incluses (artefact, tests)"""
+    strip = public and not PUBLIC_ADS
+    a = "const ADSRAW=" + dumps({"date": ads.get("date"), "iso": ads.get("iso"), "prive": True}) + ";" if strip else ads_txt.replace("const ADS=", "const ADSRAW=", 1)
+    return "\n".join([
+        need("data/mapdata.js"),
+        *["const %s=%s;" % (n, jdata("data/" + f)) for n, f in DATA],
+        "const CITYMAP=" + jdata("data/citymaps.json") + ";",
+        *[open(p, encoding="utf-8").read() for p in before],
+        need("data/irisdata.js"),
+        a,
+        "const FICX=" + ("{}" if strip else dumps(FICX)) + ";\nconst FICHES=" + ("null" if public else dumps(FICH)) + ";",
+        need("src/ads-vue.js"),
+        "const HIST={};" if strip else hist_txt,
+        *[open(p, encoding="utf-8").read() for p in after],
+    ])
+
+def page(public):
+    return need("src/head.html") + "<style>\n" + need("src/styles.css") + "</style>\n" + need("src/body.html") + "<script>\n" + code(public) + "</script>\n"
+
+pub, full = page(True), page(False)
+
+# contrôles : déclarations en double, syntaxe, taille
+import re
+decl = re.findall(r"^(?:const|let|function|async function) ([A-Za-z_$][\w$]*)", code(False), re.M)
+dup = sorted({n for n in decl if decl.count(n) > 1})
+if dup: ERR.append("déclarations en double : " + ", ".join(dup))
+if shutil.which("node"):
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as t: t.write(code(False))
+    r = subprocess.run(["node", "--check", t.name], capture_output=True, text=True); os.unlink(t.name)
+    if r.returncode: ERR.append("erreur de syntaxe dans le script assemblé :\n" + "\n".join(r.stderr.splitlines()[:6]))
+else: print("attention : node introuvable, syntaxe non vérifiée", file=sys.stderr)
+if len(pub) > 3_000_000: ERR.append(f"page publique trop lourde ({len(pub)} octets)")
+if ERR:
+    print("BUILD REFUSÉ\n- " + "\n- ".join(ERR), file=sys.stderr); sys.exit(1)
+
+def w(p, s):  # écriture atomique : jamais de fichier à moitié écrit (sync.sh surveille index.html)
+    os.makedirs(os.path.dirname(P(p)) or R, exist_ok=True)
+    tmp = P(p) + ".tmp"; open(tmp, "w", encoding="utf-8").write(s); os.replace(tmp, P(p))
+
+w("dist/artifact.html", full)
+w("dist/test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + full)
 head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+        '<meta name="referrer" content="strict-origin-when-cross-origin">'
         '<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>'
-        + (rd("src/pwa-head.html") if os.path.exists(os.path.join(R, "src/pwa-head.html")) else "")
+        + (rd("src/pwa-head.html") if os.path.exists(P("src/pwa-head.html")) else "")
         + '</head><body>')
-full = head + page + "</body></html>"
-w("dist/index.html", full)
-w("index.html", full)
-print("ok", len(page), "octets ;", len(FICX), "annonces avec fiche ;", len(inl) - len(page), "octets de fiches dans l'artefact")
+html = head + pub + "</body></html>"
+w("dist/index.html", html)
+if not os.path.exists(P("index.html")) or rd("index.html") != html: w("index.html", html)   # pas de réécriture inutile (sync.sh surveille ce fichier)
+ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
+sw = rd("sw.js"); sw2 = re.sub(r'const VERSION = "[^"]*";', f'const VERSION = "{ver}";', sw, count=1)
+if sw2 != sw: w("sw.js", sw2)
+print("ok", len(pub), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")

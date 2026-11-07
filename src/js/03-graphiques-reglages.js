@@ -35,7 +35,7 @@ function renderTable(rows){
    <td class="r mono">${eur(r.x.cost)}</td><td class="r mono">${eur(r.x.rentHC)}</td><td class="r mono">${pct(r.x.brut)}</td>
    <td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}</td>
    <td><span class="pill ${bc}">${bt} · ${pct(r.x.ratio*100,0)}</span></td><td>${(d=>d?`<span class="pill ${d.cls}">${d.txt}</span>`:"n.d.")(demCity(r.c.k))}</td>
-   <td class="r mono">${r.c.students.toLocaleString("fr-FR")}</td><td class="r mono">${hm(trip(r.c,"laval"))} · ${hm(trip(r.c,"nantes"))} · ${hm(trip(r.c,"paris"))}</td><td class="r"><span class="pill ${rFG(fgOf(DPECITY[r.c.k]))}">${fr(fgOf(DPECITY[r.c.k]))} %</span></td>${(()=>{const [p,v,ch]=RISK[r.c.k];return `<td class="r"><span class="pill ${rPop(p)}">${p>0?"+":""}${fr(p)} %/an</span></td><td class="r"><span class="pill ${rVac(v)}">${fr(v)} %</span></td><td class="r"><span class="pill ${rCho(ch)}">${ch==null?"n.d.":fr(ch)+" %"}</span></td>`;})()}`;
+   <td class="r mono">${r.c.students.toLocaleString("fr-FR")}</td><td class="r mono">${hm(trip(r.c,"laval"))} · ${hm(trip(r.c,"nantes"))} · ${hm(trip(r.c,"paris"))}</td><td class="r"><span class="pill ${rFG(fgOf(dpeCity(r.c.k)))}">${fr(fgOf(dpeCity(r.c.k)))} %</span></td>${(()=>{const [p,v,ch]=RISK[r.c.k];return `<td class="r"><span class="pill ${rPop(p)}">${p>0?"+":""}${fr(p)} %/an</span></td><td class="r"><span class="pill ${rVac(v)}">${fr(v)} %</span></td><td class="r"><span class="pill ${rCho(ch)}">${ch==null?"n.d.":fr(ch)+" %"}</span></td>`;})()}`;
   const go=()=>{SEL=r.c.k;render();}; tr.addEventListener("click",go); tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});
   tb.appendChild(tr);});
 }
@@ -52,9 +52,10 @@ function render(){
  const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); renderFin(); setHash();
 }
 [["s-surcote","surcote"],["s-loyer","loyerAdj"],["s-taux","taux"]].forEach(([id,k])=>{const el=document.getElementById(id); el.value=H[k];
- el.addEventListener("input",()=>{H[k]=parseFloat(el.value);render();});});
+ el.addEventListener("input",()=>{H[k]=parseFloat(el.value);saveHyp();render();});});
 const hf=document.getElementById("hypFields");
 hypDefs.forEach(([k,l,u,st])=>{const id="f-"+k, lab=document.createElement("label"); lab.className="f"; lab.htmlFor=id;
  lab.innerHTML=`${l}<span class="inp"><input id="${id}" type="number" inputmode="decimal" step="${st}" value="${H[k]}"><span>${u}</span></span>`;
- lab.querySelector("input").addEventListener("input",e=>{const v=parseFloat(e.target.value); if(!isNaN(v)){H[k]=v;render();}}); hf.appendChild(lab);});
+ lab.querySelector("input").addEventListener("input",e=>{const v=parseFloat(e.target.value); if(!isNaN(v)&&isFinite(v)){H[k]=k==="duree"?Math.min(30,Math.max(5,v)):Math.max(0,v); if(HYPK.includes(k)) saveHyp(); render();}}); hf.appendChild(lab);});
+if(!HYPOK){const sl=document.querySelector("#setPanel .sliders"); if(sl) sl.insertAdjacentHTML("afterend",`<p class="warnline" id="hypNote">Revenus, apport et crédits en cours sont des valeurs d'exemple : entrez les vôtres dans « Plus d'hypothèses ». Ils restent dans ce navigateur, pas dans le code publié.</p>`);}
 document.getElementById("f-pess").addEventListener("change",e=>{H.pess=e.target.checked;render();});

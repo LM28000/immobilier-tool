@@ -134,7 +134,7 @@ function adCard(o,rank){const b=bienOf(o.url), on=b&&!isOut(b), p=mPhoto(o.ck,o.
  const badge=o.nw?`<i class="mbdg nw">Nouveau</i>`:o.v&&o.v.last?`<i class="mbdg dr">↓ ${keur(o.v.last.amt)} le ${dm(o.v.last.d)}</i>`:o.v&&o.v.days>=30?`<i class="mbdg old">${o.v.days} j en ligne</i>`:"";
  return `<article class="mcard" data-mad="v|${o.ck}|${mEsc(o.a[3])}"><div class="mcimg">${imgTag(p,"")}${badge}<span class="mrank">${rank}</span><button type="button" class="mstar${on?" on":""}" data-mstar="${o.ck}|${mEsc(o.a[3])}" aria-label="${on?"Retirer de la shortlist":"Ajouter à la shortlist"}">${on?"★":"☆"}</button></div>
   <div class="mcb"><div class="mcr"><span class="mcp">${eur(o.a[2])}</span><span class="mci" style="color:${colIrr(o.x.irr)}">${irrTxt(o.x)}<small>15 ans</small></span></div>
-  <p class="mcs">${mEsc(o.a[1]||"secteur ?")} · ${mEsc(cityName(o.ck))} · ${String(o.a[0]).replace(".",",")} m² · ${eur(o.a[2]/o.a[0])}/m²</p>
+  <p class="mcs">${mEsc(o.a[1]||"secteur ?")} · ${mEsc(cityName(o.ck))} · ${String(o.a[0]).replace(".",",")} m² · ${eur(o.a[2]/o.a[0])}/m²</p>${ficheBadges(o.a[3])?`<div class="hbs" style="justify-content:flex-start;margin:2px 0 6px">${ficheBadges(o.a[3])}</div>`:""}
   <div class="mkrow sm">${kp("Cash-flow",sgn(o.x.cf),mcfc(o.x.cf))}${kp("Banque",pct(o.x.ratio*100,0),bc==="p-ok"?"pos":bc==="p-bad"?"neg":"")}${o.d&&o.d.real?kp(o.d.mode==="tc"?"En bus/tram":"À pied",minTxt(o.d.min),"",MKSH[o.d.mk]):kp("Budget",keur(o.x.cost),"","tout compris")}</div></div></article>`;}
 function mFeedRender(){if(!MOBON) return; const all=feedList(), L=feedSorted(all), nNew=all.filter(o=>o.nw).length, nDrop=all.filter(o=>o.v&&o.v.last).length;
  const cities=Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ventes);
@@ -199,7 +199,7 @@ async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); i
 
 /* ---------- shortlist ---------- */
 const MST=[["tous","Tous"],["à voir","À voir"],["visité","Visité"],["offre faite","Offre"]];
-const tgReady=b=>!!TGC[JSON.stringify([b.ville,b.quartier,b.surface,b.prix,b.loyer,b.copro,b.tf,H])];
+const tgReady=b=>!!TGC[tgKey(b)];
 let MSLATE=[], MSLT=null;
 function mShortRender(){if(!MOBON) return; MSLATE=[]; const all=BIENS.filter(b=>!isOut(b)), out=BIENS.filter(isOut);
  const L=all.filter(b=>MSF.st==="tous"||(b.statut||"à voir")===MSF.st).map(b=>({b,r:calcBien(b)})).sort((p,q)=>(q.b.fav-p.b.fav)||((q.r.x.irr??-99)-(p.r.x.irr??-99)));
@@ -289,8 +289,8 @@ document.addEventListener("click",e=>{if(!MOBON) return; const t=e.target.closes
  if(d.mfmore!==undefined){MF.n+=20; mFeedRender(); return;}
  if(d.msf){MSF.st=d.msf; mShortRender(); return;}
  if(d.mgo){mGo(d.mgo); return;}
- if(d.mgoc){mPopAll(); SEL=d.mgoc; QSEL=null; AD=null; render(); if(IR[SEL]) flyTo(IR[SEL].bb); else document.getElementById("zHome").click(); mShow("carte"); setSnap(1); return;}
- if(d.mgoq){const [ck,code]=d.mgoq.split("|"), q=IR[ck]&&IR[ck].list.find(v=>v.code===code); if(!q) return; mPopAll(); SEL=ck; QSEL=q; AD=null; render(); flyTo(q.bb,3.2); mShow("carte"); setSnap(1); return;}
+ if(d.mgoc){mPopAll(); SEL=d.mgoc; QSEL=null; AD=null; render(); mShow("carte"); if(IR[SEL]) flyTo(IR[SEL].bb); else document.getElementById("zHome").click(); setSnap(1); return;}
+ if(d.mgoq){const [ck,code]=d.mgoq.split("|"), q=IR[ck]&&IR[ck].list.find(v=>v.code===code); if(!q) return; mPopAll(); SEL=ck; QSEL=q; AD=null; render(); mShow("carte"); flyTo(q.bb,3.2); setSnap(1); return;}
  if(d.mzoom){flyTo(IR[d.mzoom].bb); setSnap(0); return;}
  if(d.mqclose!==undefined){QSEL=null; AD=null; draw(); renderQBox(); mSheetRender(); return;}
  if(d.mcity!==undefined){mPushEl(cityName(SEL),document.getElementById("detail"),{back:"Carte"}); mDraw("renderDetail"); return;}

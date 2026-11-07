@@ -1,5 +1,5 @@
 /* ---------- financement : réglages, détail du prêt, part de chacun, scénarios ---------- */
-Object.assign(H,{nomA:"Louis-Marie", nomB:"Associée"});
+Object.assign(H,{nomA:"", nomB:""});
 (function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){if(s.nomA) H.nomA=s.nomA; if(s.nomB) H.nomB=s.nomB;}}catch(_){}})();
 const _saveFin=saveFin; saveFin=function(){_saveFin(); try{const s=JSON.parse(localStorage.getItem("fin")||"{}"); s.nomA=H.nomA; s.nomB=H.nomB; localStorage.setItem("fin",JSON.stringify(s));}catch(_){}};
 const REG={auto:"le plus avantageux",micro:"micro-BIC",reel:"réel"};
@@ -37,7 +37,7 @@ function renderFin(){const box=document.getElementById("finDetail"); if(!box) re
    <div class="trow"><span>Garantie (payée au départ)</span><b class="mono">${eur(x.gar)}</b></div>
    <div class="trow"><span>Coût total du crédit</span><b class="mono">${eur(tot+totIns+x.gar)}</b></div></div>
   <div class="fincard"><h3>Pour chacun (${H.partA}/${100-H.partA})</h3>
-   <div class="trow"><span></span><b>${esc(H.nomA)}</b><b>${esc(H.nomB)}</b></div>
+   <div class="trow"><span></span><b>${esc(H.nomA||"Personne 1")}</b><b>${esc(H.nomB||"Personne 2")}</b></div>
    <div class="trow"><span>Apport</span><b class="mono">${eur(half(H.apport))}</b><b class="mono">${eur(other(H.apport))}</b></div>
    <div class="trow"><span>Mensualité</span><b class="mono">${eur(half(x.mens))}</b><b class="mono">${eur(other(x.mens))}</b></div>
    <div class="trow"><span>Cash-flow / mois</span><b class="mono ${x.cf>=0?"pos":"neg"}">${sgn(half(x.cf))}</b><b class="mono ${x.cf>=0?"pos":"neg"}">${sgn(other(x.cf))}</b></div>

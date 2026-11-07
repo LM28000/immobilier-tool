@@ -21,7 +21,7 @@ function svgJump(bb,pad=1.15){const w=(bb[2]-bb[0])*pad, h=(bb[3]-bb[1])*pad, k=
 
 function leafPad(){if(!MOBON) return {padding:[28,28]}; const sh=document.getElementById("mSheet"), top=document.querySelector(".mmtop"); const r=sh?sh.getBoundingClientRect():{top:innerHeight}, m=document.getElementById("mMap").getBoundingClientRect();
  return {paddingTopLeft:[16,(top?top.getBoundingClientRect().bottom-m.top:100)+8],paddingBottomRight:[16,Math.max(20,m.bottom-r.top+12)]};}
-function leafFly(bb,opt){if(!LEAF.on) return; const b=L.latLngBounds(bbLL(bb)), o=Object.assign({duration:.6,maxZoom:15},leafPad(),opt||{}); if(matchMedia("(prefers-reduced-motion: reduce)").matches) LEAF.map.fitBounds(b,o); else LEAF.map.flyToBounds(b,o);}
+function leafFly(bb,opt){if(!LEAF.on) return; const sz=LEAF.map.getSize(); if(sz.x<40||sz.y<40){LEAF.pending=[bb,opt]; return;} LEAF.pending=null; const b=L.latLngBounds(bbLL(bb)), o=Object.assign({duration:.6,maxZoom:15},leafPad(),opt||{}); if(matchMedia("(prefers-reduced-motion: reduce)").matches) LEAF.map.fitBounds(b,o); else LEAF.map.flyToBounds(b,o);}
 function leafHome(){const bs=Object.values(IR).map(z=>z.bb), u=[Math.min(...bs.map(b=>b[0])),Math.min(...bs.map(b=>b[1])),Math.max(...bs.map(b=>b[2])),Math.max(...bs.map(b=>b[3]))]; leafFly(u,{maxZoom:9});}
 
 /* calques */
@@ -81,7 +81,7 @@ const _flyToL=flyTo; flyTo=function(bb,pad){if(LEAF.on){svgJump(bb,pad||1.15); l
 const _mHome=mHome; mHome=function(){if(LEAF.on) leafHome(); else _mHome();};
 const _renderL=render; render=function(){_renderL.apply(this,arguments); if(LEAF.on) leafRefresh();};
 const _renderSideL=renderSide; renderSide=function(){_renderSideL.apply(this,arguments); if(LEAF.on) leafRefresh();};
-const _mShowL=mShowNow; mShowNow=function(k,o){_mShowL(k,o); if(LEAF.on&&k==="carte") setTimeout(()=>LEAF.map.invalidateSize(),60);};
+const _mShowL=mShowNow; mShowNow=function(k,o){_mShowL(k,o); if(LEAF.on&&k==="carte") setTimeout(()=>{LEAF.map.invalidateSize(); if(LEAF.pending){const p=LEAF.pending; LEAF.pending=null; leafFly(p[0],p[1]);}},60);};
 function leafSetFull(){if(LEAF.on) setTimeout(()=>LEAF.map.invalidateSize(),80);}
 document.addEventListener("click",e=>{if(!LEAF.on) return; const h=e.target.closest&&e.target.closest("#zHome,#zAll,#zIn,#zOut,#zFull"); if(!h) return;
  if(h.id==="zFull"){leafSetFull(); return;} e.preventDefault(); e.stopImmediatePropagation();

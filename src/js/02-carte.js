@@ -9,12 +9,14 @@ const nrm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^
   /* signal de prix du quartier : RealAdvisor quand il publie le quartier ; sinon les ventes de studios du quartier, mélangées à la ville (poids de 8 ventes) */
   const noRA=!Object.keys(QQ).length, DS=noRA&&dvfC(ck,"studio"), dvfP=code=>{const q=DS&&DS.q[code]; return DS?Math.round(q&&q.n?(q.n*q.med+8*DS.med)/(q.n+8):DS.med):null;};
   const rn={}; Object.entries(d.ra.q).forEach(([n,v])=>rn[nrm(n)]=v);
+  /* ville avec RealAdvisor, quartier absent de RealAdvisor : ses ventes (5 au moins), mélangées à la ville, ramenées à l'échelle RealAdvisor */
+  const DV=!noRA&&dvfC(ck,"studio"), raMed=!noRA?median(Object.values(QQ)):null, dvfRA=code=>{const q=DV&&DV.q[code]; return q&&q.n>=5&&raMed?Math.round(raMed*((q.n*q.med+8*DV.med)/(q.n+8))/DV.med):null;};
   const list=d.txt.split("\n").map((line,i)=>{const [name,code,type,rings]=line.split("|");
    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,sx=0,sy=0,n=0;
    const dd=rings.split(";").map(r=>{let X=0,Y=0;return r.split(" ").map((p,j)=>{const q=p.split(",");X+=+q[0];Y+=+q[1];
      const [x,y]=pxy(Y/1e4,X/1e4); if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; sx+=x;sy+=y;n++;
      return (j?"L":"M")+x.toFixed(3)+" "+y.toFixed(3);}).join("")+"Z";}).join("");
-   const key=nrm(name.replace(/^Z\.A\./,"ZA")), qm=noRA?(type==="H"&&DS?[name,dvfP(code)]:null):qn[key]||qn[key.replace(/\d+$/,"")];
+   const key=nrm(name.replace(/^Z\.A\./,"ZA")), qm=noRA?(type==="H"&&DS?[name,dvfP(code)]:null):qn[key]||qn[key.replace(/\d+$/,"")]||(type==="H"&&dvfRA(code)?[name,dvfRA(code)]:null);
    const ra=qm?rn[nrm(qm[0])]:undefined;
    return {i,ck,name,code,type,d:dd,bb:[x0,y0,x1,y1],cx:sx/n,cy:sy/n,price:qm?qm[1]:null,ra,dpe:d.dpe[code]||[0,0,0,0,0,0,0]};});
   const bb=list.reduce((b,t)=>[Math.min(b[0],t.bb[0]),Math.min(b[1],t.bb[1]),Math.max(b[2],t.bb[2]),Math.max(b[3],t.bb[3])],[1e9,1e9,-1e9,-1e9]);
@@ -25,7 +27,7 @@ const clampR=v=>Math.min(1.15,Math.max(0.85,v));
 /* loyer du quartier : modèle, mélangé aux loyers demandés du secteur Bien'ici dès 4 annonces */
 const RBL=new Map();
 function rentBlend(ck,t){/* annonces du type choisi, ramenées à la surface du bien */ const k=ck+"|"+H.type+"|"+H.surface+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
- if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(r22); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(22/c.rentM2,0.6), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
+ if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(a=>r22(a,ck)); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(H.surface/c.rentM2,rentExp(ck)), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
  RBL.set(k,o); return o;}
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
 const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
@@ -140,7 +142,7 @@ function qCard(t){const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t
   <div>${n?dpeBar(t.dpe,220):""} <span class="sub">${n?`${n} DPE de petits appartements${n>=15?` · F-G ${fr(fg,0)} %`:" · trop peu pour conclure"}`:"aucun DPE de petit appartement"}</span></div>`, sec=sectorOf(t), A=sec&&ADS[t.ck], nv=A?(A.ventes||[]).filter(a=>a[1]===sec).length+A.ads.filter(a=>a[1]===sec).length:0;
    return sec?ptabs("q",[[`Annonces (${nv})`,adsLine(t)+annoncesBlock(t.ck,sec,false,OPENADS===sec)],["Détails du quartier",det]]):det;})()}</div>`;}
 
-const r22=a=>a[2]*Math.pow(H.surface/a[0],0.6); /* loyer d'une annonce ramené à la surface du bien */
+const r22=(a,ck)=>a[2]*Math.pow(H.surface/a[0],ck?rentExp(ck):0.6); /* loyer d'une annonce ramené à la surface du bien */
 const ADURL="https://www.bienici.com/annonce/location/";
 function adsTable(list,sector,ck){ck=ck||"";const l=[...list].sort((a,b)=>r22(a)-r22(b)), secs=[...new Set(l.map(a=>a[1]||"non précisé"))].sort((a,b)=>a.localeCompare(b,"fr"));
  const ctl=sector?`<div class="adf"><span class="seg2" role="group" aria-label="Type"><button type="button" data-f="all" aria-pressed="true">Tous</button><button type="button" data-f="1" aria-pressed="false">Meublés</button><button type="button" data-f="0" aria-pressed="false">Vides</button></span>
@@ -259,5 +261,5 @@ function toVB(e){const svg=svgEl(), m=svg.getScreenCTM(); if(!m){const r=svg.get
 const DPECITY={lemans:[5,28,2367,1630,761,236,140],angers:[425,100,4894,3163,1950,750,595],tours:[36,365,5394,3306,1727,835,574],poitiers:[4,36,3108,2550,947,384,192],
  laval:[6,31,924,834,715,127,82],orleans:[23,40,4911,2094,1728,591,372],chartres:[0,3,546,684,342,132,73],stnazaire:[8,33,743,540,228,81,58],rennes:[7,610,8505,4759,2432,803,609],
  blois:[7,10,723,612,319,135,75],caen:[135,226,3060,3086,1767,685,456],cholet:[0,1,555,367,135,37,20],laroche:[7,65,1070,1051,252,70,23]};
-const fgOf=d=>(d[5]+d[6])/d.reduce((a,b)=>a+b,0)*100, rFG=v=>v<8?"p-ok":v<=11?"p-n":"p-warn";
+const DPE0=[0,0,0,0,0,0,0], dpeCity=k=>DPECITY[k]||DPE0, fgOf=d=>{d=d||DPE0; const s=d.reduce((a,b)=>a+b,0); return s?(d[5]+d[6])/s*100:0;}, rFG=v=>v<8?"p-ok":v<=11?"p-n":"p-warn";
 
