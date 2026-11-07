@@ -48,6 +48,14 @@ ok("signal : appart'hôtel", "serv" in F.signaux({"d": "Ce studio (appart'hôtel
 ok("signal : travaux", F.signaux({"d": "Appartement à rénover entièrement"}) == ["trav"])
 ok("pas de signal sur une description ordinaire", F.signaux({"d": "Beau studio lumineux proche gare, cuisine équipée"}) == [])
 
+# --- une fiche relue garde la lecture de sa description
+T2 = tempfile.mkdtemp(); os.makedirs(T2 + "/tools"); os.makedirs(T2 + "/data/fiches"); shutil.copy(R + "/tools/fiches.py", T2 + "/tools/")
+json.dump({"x1": {"k": "v", "d": "Studio vendu loué 400 €", "ia": {"loue": True, "loyer_mensuel": 400}}}, open(T2 + "/data/fiches/lemans.json", "w"))
+json.dump({"fiches": [{"id": "x1", "ck": "lemans", "k": "v", "d": "Studio vendu loué 400 €"}]}, open(T2 + "/f.json", "w"))
+subprocess.run([sys.executable, "tools/fiches.py", "merge", "f.json"], cwd=T2, capture_output=True)
+ok("fiche relue : la lecture par Claude est gardée", json.load(open(T2 + "/data/fiches/lemans.json"))["x1"].get("ia", {}).get("loyer_mensuel") == 400)
+shutil.rmtree(T2)
+
 # --- cohérence des villes entre fichiers
 villes_json = set(json.load(open(R + "/tools/villes.json")))
 code_C = set(re.findall(r'\{k:"([a-z]+)"', open(R + "/src/js/00-villes-calcul.js", encoding="utf-8").read()))

@@ -188,7 +188,9 @@ def merge(args):
         if f.get("err"): res["erreurs"].append(f"{ck} {i} : {f['err']}"); continue
         rec = {k: v for k, v in f.items() if k not in ("id", "ck") and v not in (None, "", [])}
         rec["lu"] = today
-        st.setdefault(ck, {})[i] = rec
+        old = st.setdefault(ck, {}).get(i) or {}
+        if "ia" in old: rec["ia"] = old["ia"]   # une fiche relue garde ce que Claude a lu dans sa description
+        st[ck][i] = rec
         res["ajoutees"] += 1; res["par_ville"][ck] = res["par_ville"].get(ck, 0) + 1
     # oubli des fiches d'annonces disparues depuis plus de GARDE_JOURS jours
     hist = load_js(os.path.join(R, "data", "historique.js")); lim = (datetime.date.today() - datetime.timedelta(days=GARDE_JOURS)).isoformat()
