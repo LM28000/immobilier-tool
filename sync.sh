@@ -56,7 +56,15 @@ PY
   git commit --quiet -m "$msg" || fail "commit impossible"
 fi
 
-# 4. récupérer GitHub puis pousser ; un conflit bloque la publication au lieu d'être masqué
+# 4. annonces privées : si le relevé a changé depuis le dernier envoi, les envoyer dans Supabase (la page publique les lit là)
+M=.git/supabase-envoi
+if [ -f data/annoncesdata.js ] && { [ ! -f "$M" ] || [ -n "$(find data/annoncesdata.js data/historique.js data/fiches -newer "$M" 2>/dev/null | head -1)" ]; }; then
+  if python3 tools/supabase_annonces.py push >.sync-err 2>&1; then touch "$M"; echo "$(now) annonces envoyées dans Supabase"
+  else echo "$(now) envoi Supabase impossible : $(tail -2 .sync-err | tr '\n' ' ')"; osascript -e 'display notification "Envoi des annonces vers Supabase impossible" with title "Notre studio"' >/dev/null 2>&1; fi
+  rm -f .sync-err
+fi
+
+# 5. récupérer GitHub puis pousser ; un conflit bloque la publication au lieu d'être masqué
 git pull --rebase --quiet origin main || { git rebase --abort >/dev/null 2>&1; fail "conflit avec GitHub : à résoudre à la main"; }
 if [ -n "$(git log --oneline origin/main..HEAD 2>/dev/null)" ]; then
   git push --quiet origin main && echo "$(now) poussé : $(git log -1 --format=%s)" || echo "$(now) échec du push (nouvel essai au prochain passage)"
