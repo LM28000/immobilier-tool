@@ -6,6 +6,12 @@
 cd "$(dirname "$0")" || exit 1
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 now() { date '+%F %T'; }
+# un seul passage à la fois (launchd peut relancer pendant qu'un passage tourne) ; verrou de plus de 30 min = abandonné
+L=.git/sync.lock
+if ! mkdir "$L" 2>/dev/null; then
+  if [ -n "$(find "$L" -maxdepth 0 -mmin +30 2>/dev/null)" ]; then rmdir "$L"; mkdir "$L" || exit 0; else exit 0; fi
+fi
+trap 'rmdir "$L" 2>/dev/null' EXIT
 fail() { echo "$(now) NON PUBLIÉ : $1"; osascript -e "display notification \"$1\" with title \"Notre studio : publication bloquée\"" >/dev/null 2>&1; exit 1; }
 
 # 1. reprendre une synchronisation interrompue plutôt que de committer par-dessus
