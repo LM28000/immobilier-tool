@@ -27,7 +27,7 @@ const clampR=v=>Math.min(1.15,Math.max(0.85,v));
 /* loyer du quartier : modèle, mélangé aux loyers demandés du secteur Bien'ici dès 4 annonces */
 const RBL=new Map();
 function rentBlend(ck,t){/* annonces du type choisi, ramenées à la surface du bien */ const k=ck+"|"+H.type+"|"+H.surface+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
- if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(a=>r22(a,ck)); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(TY().surf/c.rentM2,rentExp(ck))*Math.pow(H.surface/TY().surf,expT(H.type)), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
+ if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(a=>r22(a,ck)); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(TY().surf/c.rentM2,rentExp(ck))*Math.pow(H.surface/TY().surf,expT(H.type))*lrc(ck,H.type), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
  RBL.set(k,o); return o;}
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
 const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};

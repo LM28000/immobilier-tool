@@ -1,18 +1,17 @@
 # Routine Claude du relevé quotidien
 
-Texte de la routine planifiée sur claude.ai (navigateur intégré + accès à l'ordinateur). À recoller dans la routine quand il change.
+Texte de la routine planifiée sur claude.ai (navigateur intégré + accès à l'ordinateur). À recoller dans la routine quand il change. Version 5 (7 novembre 2026) : pagination complète.
 
 ```
 Relevé quotidien des loyers et des ventes de studios, T2 et T3 pour le comparateur « Où acheter notre studio ? » : artifact https://claude.ai/artifact/GwJBDtGHLFcKX16DL7E6fu et sa copie publique, construite dans le dossier « immobilier-tool » de l'ordinateur (/Users/Louis-Marie PERRET DU CRAY/immobilier-tool, publié sur https://lm28000.github.io/immobilier-tool/). Réponds en français.
 
-1. Avec le navigateur intégré (built-in browser, charge d'abord sa skill), ouvre ces pages une par une, comme un visiteur, sans appeler d'API en masse et sans contourner un blocage. Pour chaque page : attends ~3 s, puis lance avec javascript_tool le script du fichier tools/extraction-bienici.js du dossier (lis-le avec device_bash : cat "$HOME/mnt/"*immobilier-tool/tools/extraction-bienici.js) ; il renvoie {loc, n, rows}. Fusionne page 1 et page 2 d'une même liste en dédoublonnant par lien (5e colonne pour les locations, 4e pour les ventes). Ville → slug : le-mans-72000 → lemans, saint-nazaire-44600 → stnazaire, angers-49000 → angers, caen-14000 → caen, orleans-45000 → orleans. Types (le type = le nombre de pièces ; les bornes de surface écartent seulement les erreurs de saisie, mêmes bornes que l'app) :
+1. Avec le navigateur intégré (built-in browser, charge d'abord sa skill), ouvre ces pages une par une, comme un visiteur, sans appeler d'API en masse et sans contourner un blocage. Pour chaque page : attends ~3 s, puis lance avec javascript_tool le script du fichier tools/extraction-bienici.js du dossier (lis-le avec device_bash : cat "$HOME/mnt/"*immobilier-tool/tools/extraction-bienici.js) ; il renvoie {loc, n, cartes, page, suivante, rows}. Tant que « suivante » est true, ouvre la page suivante de la même liste (&page=2, &page=3…, 8 pages au plus) ; fusionne toutes les pages d'une même liste en dédoublonnant par lien (5e colonne pour les locations, 4e pour les ventes). Ville → slug : le-mans-72000 → lemans, saint-nazaire-44600 → stnazaire, angers-49000 → angers, caen-14000 → caen, orleans-45000 → orleans. Types (le type = le nombre de pièces ; les bornes de surface écartent seulement les erreurs de saisie, mêmes bornes que l'app) :
 studio : chemin appartement/studio, ?surface-min=9&surface-max=45
 t2 : chemin appartement/2-pieces, ?surface-min=25&surface-max=75
 t3 : chemin appartement/3-pieces, ?surface-min=40&surface-max=110
 Pour chaque ville (dans cet ordre : le-mans-72000, saint-nazaire-44600, angers-49000, caen-14000, orleans-45000) et chaque type (studio, t2, t3) :
-https://www.bienici.com/recherche/location/<ville>/<chemin><bornes> puis la même avec &page=2
-https://www.bienici.com/recherche/achat/<ville>/<chemin><bornes> puis la même avec &page=2
-N'ouvre la page 2 que si la page 1 a renvoyé au moins 20 annonces. Si une page est refusée ou ne renvoie rien, laisse cette liste de côté (ne mets pas de liste vide) et note-le.
+https://www.bienici.com/recherche/location/<ville>/<chemin><bornes> puis les pages suivantes tant que « suivante » est true
+https://www.bienici.com/recherche/achat/<ville>/<chemin><bornes> puis les pages suivantes tant que « suivante » est true Si une page est refusée ou ne renvoie rien, laisse cette liste de côté (ne mets pas de liste vide) et note-le.
 
 2. Écris le relevé dans /mnt/user-data/outputs/releve-du-jour.json au format {"date": "AAAA-MM-JJ" (date du jour, Europe/Paris), "villes": {"lemans": {"ads": [...studios loués], "ventes": [...studios à vendre], "t2": {"ads": [...], "ventes": [...]}, "t3": {"ads": [...], "ventes": [...]}}, ...}} puis copie-le sur l'ordinateur avec device_commit_files vers /Users/Louis-Marie PERRET DU CRAY/immobilier-tool/data/releve-du-jour.json (force: true).
 

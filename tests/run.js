@@ -54,6 +54,8 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('le fil suit le quartier de l\'annonce'), await p.evaluate(() => { const t = adQuart(AD); return !t || document.getElementById('crumbs').textContent.includes(t.name); }));
     const nego = await p.evaluate(() => document.querySelector('.nego')?.innerText || '');
     ok(T('bloc prix maximum'), /Prix maximum à payer/.test(nego) && /AUTOFINANC/i.test(nego));
+    ok(T('fiche : écart habituel des annonces de la ville'), await p.evaluate(() => /Annonces de Le Mans/.test(document.getElementById('qDetail').textContent) && /en médiane/.test(document.getElementById('qDetail').textContent)));
+    ok(T('loyers recalés sur les annonces (T2 du Mans sous le modèle de l\'État)'), await p.evaluate(() => LRC.t2 && LRC.t2.v.lemans > 0.7 && LRC.t2.v.lemans < 1 && LRC.studio.tous > 0.7));
     const s0 = await p.evaluate(() => AD.suf);
     await p.click('[data-adstep="1"]'); await p.waitForTimeout(400);
     ok(T('annonce suivante'), await p.evaluate(s => AD && AD.suf !== s, s0));

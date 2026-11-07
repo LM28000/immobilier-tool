@@ -79,6 +79,27 @@ def expt():
         out[ty] = round(min(0.9, max(0.15, sxy / sxx)), 3) if n >= 30 and sxx > 0 else 0.6
     return out
 EXPT = expt()
+def lrc0():
+    """mêmes facteurs que loyerRecal() (src/ads-vue.js), calculés ici pour la page publique qui n'a pas les annonces"""
+    src = rd("src/js/00-villes-calcul.js"); LOY = json.loads(rd("data/loyers-etat.json"))
+    C = {m.group(1): (float(m.group(2)), float(m.group(3))) for m in re.finditer(r'\{k:"(\w+)".*?rent:([\d.]+),rentM2:([\d.]+)', src)}
+    sref = LOY.get("sref", [37, 72]); SURF = {"studio": 22, "t2": 42, "t3": 62}
+    def rexp(ck):
+        if ck not in LOY.get("c3", {}) or ck not in LOY.get("c", {}): return 0.6
+        return min(0.9, max(0.4, 1 + math.log(LOY["c3"][ck] / LOY["c"][ck][0]) / math.log(sref[1] / sref[0])))
+    out = {}
+    for ty in ("studio", "t2", "t3"):
+        v = {}
+        for ck, V in ads.items():
+            if not isinstance(V, dict) or ck not in C: continue
+            b = V if ty == "studio" else (V.get("t") or {}).get(ty) or {}
+            rent, m2 = C[ck]; T = SURF[ty]
+            r = sorted(a[2] / (rent * (T / m2) ** rexp(ck) * (a[0] / T) ** EXPT[ty]) for a in b.get("ads", []) if a[0] > 0 and a[2] > 0 and not (FICX.get(str(a[4]).split("/")[-1]) or {}).get("coloc"))
+            if len(r) >= 15: v[ck] = round(min(1.2, max(0.7, statistics.median(r))), 3)
+        out[ty] = {"v": v, "tous": round(statistics.median(v.values()), 3) if v else 1}
+    return out
+import re, statistics
+LRC0 = lrc0()
 
 def code(public):
     """le script de la page ; public=False : annonces, historique et fiches incluses (artefact, tests)"""
@@ -91,7 +112,7 @@ def code(public):
         *[open(p, encoding="utf-8").read() for p in before],
         need("data/irisdata.js"),
         a,
-        "const FICX=" + ("{}" if strip else dumps(FICX)) + ";\nconst EXPT=" + dumps(EXPT) + ";\nconst FICHES=" + ("null" if public else dumps(FICH)) + ";",
+        "const FICX=" + ("{}" if strip else dumps(FICX)) + ";\nconst EXPT=" + dumps(EXPT) + ";\nconst LRC0=" + dumps(LRC0) + ";\nconst FICHES=" + ("null" if public else dumps(FICH)) + ";",
         need("src/ads-vue.js"),
         "const HIST={};" if strip else hist_txt,
         *[open(p, encoding="utf-8").read() for p in after],

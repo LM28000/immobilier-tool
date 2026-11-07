@@ -93,3 +93,11 @@ function iaHtml(f){const ia=f&&f.ia; if(!ia) return ""; const rows=[
 
 /* même bien publié par une autre agence (tools/fiches.py doublons) : retiré des classements, signalé sur sa fiche */
 const estDoublon=suf=>{const f=ficx(suf); return !!(f&&f.dup);};
+
+/* écart habituel entre prix affichés et ventes réelles : médiane, sur les annonces du type dans la ville (hors résidences gérées et doublons),
+   de (prix au m² affiché ÷ prix au m² des ventes du quartier à la même surface). Situe un bien : « +35 % quand l'habitude est +12 % ». */
+const EMC=new Map();
+function ecartMarche(ck){const key=ck+"|"+H.type+"|"+H.dvf+"|"+H.surcote; if(EMC.has(key)) return EMC.get(key); const A=ADS[ck]; let o=null;
+ if(A&&A.ventes){const r=A.ventes.filter(a=>!horsCalcul(a[3])&&!estDoublon(a[3])).map(a=>{const t=venteIrisA(ck,a), qs=(t&&t.price?studioPm2(ck,t):studioPm2(ck,null))*pm2Adj(H.type,a[0]); return qs?a[2]/a[0]/qs:null;}).filter(v=>v&&isFinite(v)).sort((x,y)=>x-y);
+  if(r.length>=10) o={med:r[r.length>>1],n:r.length};}
+ EMC.set(key,o); return o;}

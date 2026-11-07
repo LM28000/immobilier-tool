@@ -6,3 +6,17 @@ adsPrep();
 const ADSV={};
 const ADS=new Proxy(ADSRAW,{get(o,k){const v=o[k]; if(!v||typeof v!=="object"||!v.map) return v; const ty=H.type||"studio"; if(ty==="studio") return v;
  const key=k+"|"+ty; if(!ADSV[key]){const x=v.t&&v.t[ty]||{}; ADSV[key]={map:v.map,ads:x.ads||[],ventes:x.ventes||[]};} return ADSV[key];}});
+
+/* loyer de la ville recalé sur les annonces de location : par ville et par type, médiane de (loyer demandé ÷ loyer du modèle à la même surface)
+   dès 15 annonces (colocations exclues), bornée 0,7–1,2 ; une ville sans annonces prend la médiane des villes relevées. */
+let LRC={};
+function loyerRecal(){const out={}, med=a=>{const b=[...a].sort((x,y)=>x-y), m=b.length>>1; return b.length?(b.length%2?b[m]:(b[m-1]+b[m])/2):null;};
+ for(const ty of ["studio","t2","t3"]){const T=tyOf(ty), v={}, n={};
+  Object.entries(ADSRAW).forEach(([ck,V])=>{if(!V||typeof V!=="object"||!V.map) return; const c=C.find(x=>x.k===ck); if(!c) return; const L=ty==="studio"?V.ads:((V.t||{})[ty]||{}).ads;
+   const r=(L||[]).filter(a=>a[0]>0&&a[2]>0).map(a=>a[2]/(c.rent*Math.pow(T.surf/c.rentM2,rentExp(ck))*Math.pow(a[0]/T.surf,expT(ty))));
+   if(r.length>=15){v[ck]=Math.round(Math.min(1.2,Math.max(0.7,med(r)))*1000)/1000; n[ck]=r.length;}});
+  const all=Object.values(v); out[ty]={v,n,tous:all.length?Math.round(med(all)*1000)/1000:1};}
+ /* page publique sans annonces : facteurs calculés au build (LRC0) */
+ if(!Object.values(out).some(o=>Object.keys(o.v).length)&&typeof LRC0!=="undefined") Object.assign(out,LRC0);
+ LRC=out; if(typeof CALCC!=="undefined") CALCC.clear();}
+loyerRecal();

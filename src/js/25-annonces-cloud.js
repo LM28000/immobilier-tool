@@ -17,7 +17,7 @@ async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""
  if(by.hist){Object.keys(HIST).forEach(k=>delete HIST[k]); Object.assign(HIST,by.hist);}
  if(by.ficx){Object.keys(FICX).forEach(k=>delete FICX[k]); Object.assign(FICX,by.ficx);}
  Object.keys(by).filter(k=>k.startsWith("fiches-")).forEach(k=>{FD[k.slice(7)]=by[k];});
- adsPrep(); ADSCLOUD=ads.iso||true;
+ adsPrep(); loyerRecal(); ADSCLOUD=ads.iso||true;
  [typeof ADSV!=="undefined"&&ADSV].forEach(o=>o&&Object.keys(o).forEach(k=>delete o[k]));
  [typeof VC!=="undefined"&&VC,typeof VIP!=="undefined"&&VIP,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear());
  if(typeof TGC!=="undefined") Object.keys(TGC).forEach(k=>delete TGC[k]);

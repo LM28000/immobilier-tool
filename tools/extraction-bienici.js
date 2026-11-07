@@ -1,5 +1,5 @@
 // Lit les cartes d'annonces d'une page de résultats Bien'ici déjà ouverte (à lancer dans la page), quel que soit le type (studio, T2, T3).
-// Renvoie {loc, n, rows} : rows = [surface, secteur, loyer, meublé, lien, photo] (location)
+// Renvoie {loc, n, cartes, page, suivante, rows} : suivante = le site propose une page après celle-ci (à ouvrir, jusqu'à 5 pages) : rows = [surface, secteur, loyer, meublé, lien, photo] (location)
 // ou [surface, secteur, prix, lien, photo] (vente). Les programmes neufs sont ignorés.
 (()=>{const loc=location.pathname.includes('/location/');const rows=[];const seen=new Set();
 for(const a of document.querySelectorAll('article')){const t=a.innerText.replace(/\s+/g,' ');
@@ -13,4 +13,5 @@ for(const a of document.querySelectorAll('article')){const t=a.innerText.replace
  let ph=''; if(img){ph=img.split('file.bienici.com/photo/')[1].split('?')[0]; ph=ph.startsWith(id+'_')?ph.slice(id.length+1):'!'+ph;}
  const suf=link.replace(/^\/annonce\/(location|vente)\//,'');
  if(!s||!pr) continue; rows.push(loc?[s,sec,pr,meu,suf,ph]:[s,sec,pr,suf,ph]);}
-return JSON.stringify({loc,n:rows.length,rows});})()
+const page=+(new URLSearchParams(location.search).get('page')||1), suivante=!!document.querySelector(`a[href*="page=${page+1}"]`);
+return JSON.stringify({loc,n:rows.length,cartes:document.querySelectorAll('article').length,page,suivante,rows});})()
