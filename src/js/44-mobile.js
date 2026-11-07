@@ -75,7 +75,7 @@ let MSEEN=null;           // date de la visite précédente (pour « nouveau »)
  else MSEEN=s.prev;}catch(_){}})();
 function hEntry(ck,suf){return HIST[ck]&&HIST[ck].v&&HIST[ck].v[suf];}
 function isNewAd(ck,suf){const e=hEntry(ck,suf); if(!e) return false; if(MSEEN) return e.f>MSEEN; const v=vu("v",ck,suf); return !!(v&&v.isNew);}
-function adInfo(ck,a){const r=venteCalc(ck,a), v=vu("v",ck,a[3]), t=venteIris(ck,a[1]), d=t?demandOf(t):null; return {ck,a,r,x:r.x,v,t,d,nw:isNewAd(ck,a[3]),url:VTURL+a[3]};}
+function adInfo(ck,a){const r=venteCalc(ck,a), v=vu("v",ck,a[3]), t=venteIrisA(ck,a), d=t?demandOf(t):null; return {ck,a,r,x:r.x,v,t,d,nw:isNewAd(ck,a[3]),url:VTURL+a[3]};}
 function bienOf(url){return BIENS.find(b=>b.url===url)||null;}
 function mPhoto(ck,a,w,h){return a[4]?photoUrl(a[3],a[4],w,h):"";}
 function imgTag(src,cls){return src?`<img class="${cls}" src="${mEsc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";}
@@ -194,7 +194,7 @@ function mBienDetail(id){const b=BIENS.find(x=>x.id===id); if(!b) return;
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
  if(b&&!isOut(b)){const prev=b.statut||"à voir"; await updBien(b.id,{statut:"écarté"}); toast("Retiré de la shortlist.",{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})}); return;}
  if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,dpe:"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:0,loyer:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
 
 /* ---------- shortlist ---------- */

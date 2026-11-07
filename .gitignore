@@ -5,3 +5,10 @@ node_modules/
 data/releve-du-jour.json
 data/gtfs/
 data/insee/
+data/fiches-du-jour.json
+.sync-check.js
+.sync-err
+*.tmp
+.env*
+*.pem
+*.key

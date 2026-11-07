@@ -767,3 +767,11 @@ details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 .typeseg button{font:inherit;font-size:.84rem;font-weight:700;border:0;background:var(--sunk);color:var(--fg);padding:7px 12px;cursor:pointer}
 .typeseg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
 .typerow small{flex-basis:100%;margin:0}
+
+/* fiche complète d'une annonce : galerie et description */
+.fgal{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 0 6px;margin:0 0 6px;-webkit-overflow-scrolling:touch}
+.fgal a{flex:none;scroll-snap-align:start;border-radius:8px;overflow:hidden;background:var(--sunk);line-height:0}
+.fgal img{display:block;height:120px;width:160px;object-fit:cover}
+.fdesc{white-space:pre-line;font-size:.9rem;line-height:1.5;margin:4px 0 6px;overflow-wrap:anywhere}
+.fdmore{margin:0 0 8px}.fdmore>summary{cursor:pointer;color:var(--accent);font-size:.88rem;font-weight:600}
+.fdesc:has(+.fdmore[open]){display:none}

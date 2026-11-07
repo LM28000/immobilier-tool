@@ -20,7 +20,7 @@ document.addEventListener("keydown",e=>{if(e.key!=="Enter") return; const tr=e.t
 function findAd(kind,ck,suf){if(kind==="b") return BIENS.find(b=>b.id===suf)||null; const A=ADS[ck]; if(!A) return null; return kind==="v"?(A.ventes||[]).find(a=>a[3]===suf):(A.ads||[]).find(a=>a[4]===suf);}
 function openAd(kind,ck,suf){const a=findAd(kind,ck,suf); if(!a) return; AD={kind,ck,suf};
  if(kind==="b"){const t=a.quartier&&IR[ck]?IR[ck].list.find(v=>v.name===a.quartier):null; if(t) QSEL=t;}
- else if(!QSEL||QSEL.ck!==ck){const t=venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
+ else if(!QSEL||QSEL.ck!==ck){const t=kind==="v"?venteIrisA(ck,a):venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
 function priceFor(ck,a,test){let lo=5000, hi=Math.max(a[2]*1.8,30000); if(!test(lo)) return null; if(test(hi)) return hi;
  for(let i=0;i<26;i++){const m=(lo+hi)/2; if(test(m)) lo=m; else hi=m;} return Math.floor(lo/500)*500;}
 const TGC={};

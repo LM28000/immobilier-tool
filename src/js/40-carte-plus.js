@@ -6,7 +6,7 @@ function vState(ck,a){const hk=JSON.stringify(H); if(VST.k!==hk){VST.k=hk; VST.m
 const VCOL={ok:"var(--ok)",warn:"var(--warn)",bad:"var(--bad)"};
 function ventePins(P,pinB,boxes){let s=""; const sel=AD&&AD.kind==="v"?AD.ck+AD.suf:null;
  Object.keys(IR).forEach(ck=>{const A=ADS[ck]; if(!A||!A.ventes) return; const by={};
-  A.ventes.forEach(a=>{const t=venteIris(ck,a[1]); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
+  A.ventes.forEach(a=>{const t=venteIrisA(ck,a); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
   Object.values(by).forEach(({t,l})=>{const [x,y]=P(t.cx,t.cy); if(x<-40||x>VW+40||y<-40||y>VH+40) return;
    l.sort((p,q)=>p[2]-q[2]).forEach(a=>{const v=vState(ck,a), hv=vu("v",ck,a[3]), lab=(hv&&hv.last?"↓":"")+keur(a[2]), w=lab.length*6.3+14, on=sel===ck+a[3];
     const hit=(x0,y0)=>pinB.some(b=>!(x0+w/2<b[0]||x0-w/2>b[2]||y0+18<b[1]||y0>b[3]));

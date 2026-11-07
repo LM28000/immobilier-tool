@@ -40,7 +40,7 @@ function leafIris(){const g=LEAF.iris; g.clearLayers(); LEAF.poly={};
   p.on("click",e=>{L.DomEvent.stopPropagation(e); SEL=t.ck; QSEL=t; AD=null; svgJump(IR[t.ck].bb); render(); if(MOBON&&SNAP===0) setSnap(1);});});});}
 function leafPins(){const g=LEAF.pins; g.clearLayers(); const sel=AD&&AD.kind==="v"?AD.ck+AD.suf:null;
  Object.keys(IR).forEach(ck=>{const A=ADS[ck]; if(!A||!A.ventes) return; const by={};
-  A.ventes.forEach(a=>{const t=venteIris(ck,a[1]); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
+  A.ventes.forEach(a=>{const t=venteIrisA(ck,a); if(t) (by[t.code]=by[t.code]||{t,l:[]}).l.push(a);});
   Object.values(by).forEach(({t,l})=>{const ll=tLL(t); l.sort((p,q)=>p[2]-q[2]).forEach((a,i)=>{const v=vState(ck,a), hv=vu("v",ck,a[3]), lab=(hv&&hv.last?"↓":"")+keur(a[2]), on=sel===ck+a[3];
    const col=i%2?1:-1, row=Math.floor(i/2), ax=col>0?-4:0;
    const m=L.marker(ll,{icon:L.divIcon({className:"lpinw",html:`<span class="lpin ${v.st}${on?" on":""}${isNewAd(ck,a[3])?" nw":""}${col<0?" lft":""}">${lab}</span>`,iconSize:[0,0],iconAnchor:[0,10+row*24]}),keyboard:false,riseOnHover:true,zIndexOffset:on?1000:0}).addTo(g);
