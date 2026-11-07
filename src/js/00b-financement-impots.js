@@ -37,7 +37,7 @@ function calc(c){
  const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
- const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(SU/c.rentM2,rentExp(c.k));
+ const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(T.surf/c.rentM2,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk));
  const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc,0);
  const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
@@ -77,6 +77,8 @@ function calc(c){
 const TFREF={mois:H.tfMans,taux:47.80,m2:22};
 /* loyer selon la surface : loyer ∝ surface^e, e mesuré pour chaque ville sur la carte des loyers de l'État
    (1-2 pièces autour de 37 m², 3 pièces et plus autour de 72 m²) ; 0,6 si la ville n'y est pas */
+/* à nombre de pièces égal, le loyer monte moins vite avec la surface : exposant mesuré sur les annonces de location du type (EXPT, build.py), 0,6 à défaut */
+const expT=tk=>{const e=typeof EXPT!=="undefined"&&EXPT&&EXPT[tyKey(tk)]; return e>0?e:0.6;};
 const rentExp=ck=>{const L=typeof LOYQ!=="undefined"&&LOYQ&&LOYQ.c3&&LOYQ.c[ck]&&LOYQ.c3[ck]; if(!L) return 0.6; const s=LOYQ.sref||[37,72]; return Math.min(0.9,Math.max(0.4,1+Math.log(LOYQ.c3[ck]/LOYQ.c[ck][0])/Math.log(s[1]/s[0])));};
 /* ventes réelles : un seul fichier, même règle pour toutes les villes et tous les types (tools/collecte/dvf.js) */
 const DVFT=typeof DVFALL!=="undefined"&&DVFALL?(DVFALL.t||{studio:DVFALL.c}):{};

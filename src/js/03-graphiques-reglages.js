@@ -52,10 +52,13 @@ function render(){
  const rows=all(); renderMap(rows); renderDetail(rows); renderScatter(rows); renderTable(rows); renderCompare(); renderBiens(); renderShort(); updateCmpButtons(); renderChip(); renderFin(); setHash();
 }
 [["s-surcote","surcote"],["s-loyer","loyerAdj"],["s-taux","taux"]].forEach(([id,k])=>{const el=document.getElementById(id); el.value=H[k];
- el.addEventListener("input",()=>{H[k]=parseFloat(el.value);saveHyp();render();});});
+ el.addEventListener("input",()=>{H[k]=parseFloat(el.value);saveHyp();renderSoon();});});
 const hf=document.getElementById("hypFields");
 hypDefs.forEach(([k,l,u,st])=>{const id="f-"+k, lab=document.createElement("label"); lab.className="f"; lab.htmlFor=id;
  lab.innerHTML=`${l}<span class="inp"><input id="${id}" type="number" inputmode="decimal" step="${st}" value="${H[k]}"><span>${u}</span></span>`;
  lab.querySelector("input").addEventListener("input",e=>{const v=parseFloat(e.target.value); if(!isNaN(v)&&isFinite(v)){H[k]=k==="duree"?Math.min(30,Math.max(5,v)):Math.max(0,v); if(HYPK.includes(k)) saveHyp(); render();}}); hf.appendChild(lab);});
 if(!HYPOK){const sl=document.querySelector("#setPanel .sliders"); if(sl) sl.insertAdjacentHTML("afterend",`<p class="warnline" id="hypNote">Revenus, apport et crédits en cours sont des valeurs d'exemple : entrez les vôtres dans « Plus d'hypothèses ». Ils restent dans ce navigateur, pas dans le code publié.</p>`);}
 document.getElementById("f-pess").addEventListener("change",e=>{H.pess=e.target.checked;render();});
+
+/* curseurs : un seul recalcul quand on fait glisser (au lieu d'un par cran) */
+let RSOON=null; function renderSoon(){clearTimeout(RSOON); RSOON=setTimeout(render,120);}

@@ -27,7 +27,7 @@ const clampR=v=>Math.min(1.15,Math.max(0.85,v));
 /* loyer du quartier : modèle, mélangé aux loyers demandés du secteur Bien'ici dès 4 annonces */
 const RBL=new Map();
 function rentBlend(ck,t){/* annonces du type choisi, ramenées à la surface du bien */ const k=ck+"|"+H.type+"|"+H.surface+"|"+t.code; if(RBL.has(k)) return RBL.get(k); let o=null; const A=typeof ADS!=="undefined"&&ADS[ck], c=C.find(v=>v.k===ck);
- if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(a=>r22(a,ck)); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(H.surface/c.rentM2,rentExp(ck)), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
+ if(A&&A.ads&&A.map){const sec=Object.keys(A.map).find(s=>A.map[s].includes(t.code)); if(sec){const v=adsDedup(A.ads.filter(a=>a[1]===sec)).map(a=>r22(a,ck)); if(v.length>=4){const med=median(v), ref=c.rent*Math.pow(TY().surf/c.rentM2,rentExp(ck))*Math.pow(H.surface/TY().surf,expT(H.type)), w=v.length/(v.length+6); o={sec,n:v.length,med,w,ratio:med/ref};}}}
  RBL.set(k,o); return o;}
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
 const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
@@ -142,7 +142,7 @@ function qCard(t){const x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t
   <div>${n?dpeBar(t.dpe,220):""} <span class="sub">${n?`${n} DPE de petits appartements${n>=15?` · F-G ${fr(fg,0)} %`:" · trop peu pour conclure"}`:"aucun DPE de petit appartement"}</span></div>`, sec=sectorOf(t), A=sec&&ADS[t.ck], nv=A?(A.ventes||[]).filter(a=>a[1]===sec).length+A.ads.filter(a=>a[1]===sec).length:0;
    return sec?ptabs("q",[[`Annonces (${nv})`,adsLine(t)+annoncesBlock(t.ck,sec,false,OPENADS===sec)],["Détails du quartier",det]]):det;})()}</div>`;}
 
-const r22=(a,ck)=>a[2]*Math.pow(H.surface/a[0],ck?rentExp(ck):0.6); /* loyer d'une annonce ramené à la surface du bien */
+const r22=(a,ck)=>a[2]*Math.pow(H.surface/a[0],expT(H.type));   /* annonce du même type ramenée à la surface du bien */ /* loyer d'une annonce ramené à la surface du bien */
 const ADURL="https://www.bienici.com/annonce/location/";
 function adsTable(list,sector,ck){ck=ck||"";const l=[...list].sort((a,b)=>r22(a)-r22(b)), secs=[...new Set(l.map(a=>a[1]||"non précisé"))].sort((a,b)=>a.localeCompare(b,"fr"));
  const ctl=sector?`<div class="adf"><span class="seg2" role="group" aria-label="Type"><button type="button" data-f="all" aria-pressed="true">Tous</button><button type="button" data-f="1" aria-pressed="false">Meublés</button><button type="button" data-f="0" aria-pressed="false">Vides</button></span>

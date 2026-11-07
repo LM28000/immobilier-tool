@@ -37,7 +37,8 @@ function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.fi
  const off=+v.offre||0, xo=off?calcBien(Object.assign({},b,{prix:off})).x:null, nFl=visitFlags(b), lv=priceLevels(b);
  const lines=s=>(s||"").split("\n").map(t=>t.trim()).filter(Boolean);
  el.innerHTML=`<div class="dh"><h3 style="margin:0">${esc(b.titre||"Bien")}</h3><span style="display:flex;gap:6px;flex-wrap:wrap">${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}${nFl?`<span class="pill p-bad">${nFl} point${nFl>1?"s":""} à problème</span>`:""}</span></div>
- <p class="sub" style="margin:2px 0 12px">${C.find(c=>c.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché</p>
+ <p class="sub" style="margin:2px 0 8px">${C.find(c=>c.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché</p>
+ <label class="sdate" style="margin:0 0 12px">Rendez-vous de visite <input type="datetime-local" data-vrdv="${b.id}" value="${esc(v.rdv||"")}" style="font:inherit;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--bg);color:var(--fg)"></label>
  <nav class="vnav">${["Chiffres","Checklist","Avis","Offre","Questions"].map((t,i)=>`<a href="#vs${i}">${t}</a>`).join("")}</nav>
  <h2 class="psec" id="vs0">Les chiffres réels</h2>
  <div class="fields vf">

@@ -151,6 +151,25 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('aucune erreur JavaScript'), errs.length === 0, errs.join(' | '));
     await c.close();
   }
+  // accueil « Où on en est » et suivi de l'achat
+  { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
+    await p.goto(URL); await p.waitForTimeout(1000);
+    ok('ordi · accueil : étape 2 sur 6 sans bien suivi', await p.evaluate(() => /Étape 2 sur 6/.test(document.getElementById('homePanel').textContent) && document.querySelectorAll('#homePanel .hcity').length === 3));
+    await p.evaluate(async () => { await DB.collection('biens').add(Object.assign(venteBien('lemans', ADS.lemans.ventes[2]), {statut: 'offre faite', fav: false, ts: Date.now(), suivi: {offre: '2030-01-05'}})); }); await p.waitForTimeout(500);
+    ok('ordi · accueil : offre en cours, réponse attendue', await p.evaluate(() => /Étape 4 sur 6/.test(document.getElementById('homePanel').textContent) && /Réponse du vendeur/.test(document.getElementById('homePanel').textContent)));
+    await p.evaluate(() => openAd('b', BIENS[0].ville, BIENS[0].id)); await p.waitForTimeout(500);
+    ok('ordi · fiche : rubrique suivi de l\'achat', await p.evaluate(() => !!document.querySelector('#qDetail .fsec[data-sec=suivi] .suivi')));
+    await p.evaluate(() => { const i = document.querySelector('#qDetail [data-suivi$="|compromis"]'); i.value = '2030-01-20'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(600);
+    ok('ordi · date de compromis : statut compromis, fin de rétractation au 30 janvier', await p.evaluate(() => BIENS[0].statut === 'compromis' && /30 janv\. 2030|30 janv/.test(document.querySelector('#qDetail .fsec[data-sec=suivi]').textContent)), await p.evaluate(() => BIENS[0].statut));
+    ok('ordi · accueil et suivi sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
+  { const c = await b.newContext({...devices['iPhone 13']}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
+    await p.goto(URL); await p.waitForTimeout(1000);
+    ok('tel · ouverture sur l\'accueil', await p.evaluate(() => MS === 'accueil' && !!document.querySelector('#mAcc .hstep') && document.querySelector('#mTab [data-mtab]').dataset.mtab === 'accueil'));
+    await p.click('#mAcc .hcity'); await p.waitForTimeout(500);
+    ok('tel · accueil : une ville ouvre l\'explorateur', await p.evaluate(() => MS === 'carte'));
+    ok('tel · accueil sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
   // lien partagé #ville-quartier : la fiche du quartier s'ouvre au chargement
   { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
     await p.goto(URL + '#lemans-0202'); await p.waitForTimeout(1200);

@@ -3,6 +3,8 @@
 
 Usage : python3 tools/supabase_annonces.py push      (après maj_annonces.py, fiches.py merge et build.py)
         python3 tools/supabase_annonces.py check     (lit ce qui est en ligne et compare)
+        python3 tools/supabase_annonces.py pull      (recrée data/annoncesdata.js, data/historique.js et data/fiches/ depuis Supabase :
+                                                      tests sur GitHub, nouvel ordinateur ; n'écrase rien d'existant sans --force)
 
 Le code de groupe (le même que dans la page, rubrique « Liste commune ») est lu dans ~/.config/immobilier-tool/groupe,
 ou dans la variable SB_GROUPE. Il ne doit jamais être dans le dépôt. Sans code : rien n'est envoyé, sortie sans erreur.
@@ -33,7 +35,10 @@ def rows():
         if isinstance(v, dict):
             for b in [v] + list((v.get("t") or {}).values()):
                 ids |= {str(a[3]).split("/")[-1] for a in b.get("ventes", [])} | {str(a[4]).split("/")[-1] for a in b.get("ads", [])}
-    ficx = {i: {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f} for c in fich.values() for i, f in c.items() if i in ids}
+    sys.path.insert(0, os.path.join(R, "tools")); from fiches import ficx_de
+    from fiches import doublons
+    ficx = {i: ficx_de(f) for c in fich.values() for i, f in c.items() if i in ids}
+    for j, i in doublons(fich, ids).items(): ficx.setdefault(j, {})["dup"] = i
     out = [("ads", ads), ("hist", hist), ("ficx", {i: v for i, v in ficx.items() if v})]
     out += [("fiches-" + ck, c) for ck, c in fich.items()]
     return out
@@ -49,7 +54,7 @@ def call(method, url, key, code, body=None, prefer=None):
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     url, key, code = conf()
-    if cmd not in ("push", "check"): print(__doc__); sys.exit(1)
+    if cmd not in ("push", "check", "pull"): print(__doc__); sys.exit(1)
     if len(code) < 12:
         print(json.dumps({"envoi": "aucun", "raison": f"pas de code de groupe (fichier {CFG})"}, ensure_ascii=False)); return
     base = url + "/rest/v1/annonces"
@@ -57,6 +62,19 @@ def main():
         try: got = json.loads(call("GET", base + "?select=cle,maj", key, code))
         except urllib.error.HTTPError as e: print(json.dumps({"erreur": e.code, "detail": e.read().decode()[:300]}, ensure_ascii=False)); sys.exit(1)
         print(json.dumps({"en_ligne": got}, ensure_ascii=False, indent=1)); return
+    if cmd == "pull":
+        rows_ = json.loads(call("GET", base + "?select=cle,data", key, code)); by = {x["cle"]: x["data"] for x in rows_}
+        if "ads" not in by: print(json.dumps({"erreur": "rien dans Supabase"}, ensure_ascii=False)); sys.exit(1)
+        force = "--force" in sys.argv; out = []
+        def put(rel, txt):
+            p = os.path.join(R, rel)
+            if os.path.exists(p) and not force: out.append(rel + " (gardé)"); return
+            os.makedirs(os.path.dirname(p), exist_ok=True); open(p, "w", encoding="utf-8").write(txt); out.append(rel)
+        put("data/annoncesdata.js", "const ADS=" + json.dumps(by["ads"], ensure_ascii=False, separators=(",", ":")) + ";\n")
+        put("data/historique.js", "const HIST=" + json.dumps(by.get("hist", {}), ensure_ascii=False, separators=(",", ":")) + ";\n")
+        for k, v in by.items():
+            if k.startswith("fiches-"): put(f"data/fiches/{k[7:]}.json", json.dumps(v, ensure_ascii=False, separators=(",", ":")))
+        print(json.dumps({"ecrits": out}, ensure_ascii=False, indent=1)); return
     res = {"envoyees": [], "erreurs": []}
     for cle, data in rows():
         try:

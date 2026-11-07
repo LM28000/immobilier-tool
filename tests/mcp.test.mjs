@@ -1,0 +1,23 @@
+// Test du serveur MCP : node tests/mcp.test.mjs (après python3 build.py). Lance le serveur comme le ferait une IA et appelle chaque outil.
+import {Client} from "@modelcontextprotocol/sdk/client/index.js";
+import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
+import path from "node:path"; import {fileURLToPath} from "node:url";
+const R = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const c = new Client({name: "test", version: "1"}); await c.connect(new StdioClientTransport({command: process.execPath, args: [path.join(R, "mcp/serveur.mjs")], stderr: "ignore"}));
+let n = 0, bad = 0; const ok = (name, cond, info = "") => { n++; if (!cond) bad++; console.log((cond ? "✓ " : "✗ ") + name + (cond || !info ? "" : "  → " + info)); };
+const call = async (name, args = {}) => { const r = await c.callTool({name, arguments: args}); const t = r.content[0].text; if (r.isError) return {erreur: t}; return JSON.parse(t); };
+const tools = (await c.listTools()).tools.map(t => t.name);
+ok("9 outils exposés", ["classement_villes", "quartiers", "annonces", "fiche_annonce", "simuler_bien", "nouveautes", "reglages", "nos_biens", "ajouter_bien", "changer_statut"].every(t => tools.includes(t)), tools.join(","));
+const cl = await call("classement_villes"); ok("classement : 13 villes triées", cl.villes.length === 13 && cl.villes[0].rendement_15ans_pct >= cl.villes[12].rendement_15ans_pct, JSON.stringify(cl).slice(0, 200));
+const t2 = await call("classement_villes", {type: "t2"}); ok("classement en T2, réglages inchangés ensuite", t2.type === "t2" && (await call("classement_villes")).type === "studio");
+const q = await call("quartiers", {ville: "Le Mans", n: 5}); ok("quartiers du Mans", q.quartiers.length === 5 && q.quartiers[0].quartier, JSON.stringify(q).slice(0, 200));
+ok("ville inconnue : message clair", /ville inconnue/.test((await call("quartiers", {ville: "Atlantis"})).erreur || ""));
+const an = await call("annonces", {n: 5}); ok("annonces : 5, sans résidence gérée", an.annonces.length === 5 && an.annonces.every(a => a.calcul_applicable), JSON.stringify(an).slice(0, 300));
+const f = await call("fiche_annonce", {lien: an.annonces[0].lien}); ok("fiche complète : prix à proposer et historique", !!f.prix_a_proposer && Array.isArray(f.historique_prix), JSON.stringify(f).slice(0, 300));
+const s = await call("simuler_bien", {ville: "lemans", prix: 60000, surface: 22}); ok("simulation d'un bien", s.budget_tout_compris > 60000 && s.rendement_15ans_pct != null && s.prix_a_proposer, JSON.stringify(s).slice(0, 300));
+const nv = await call("nouveautes"); ok("nouveautés", Array.isArray(nv.nouvelles) && Array.isArray(nv.baisses));
+const rg = await call("reglages"); ok("réglages lus", typeof rg.taux === "number" && rg.type);
+ok("réglage inconnu refusé", /inconnus/.test((await call("reglages", {changer: {pirate: 1}})).erreur || ""));
+const nb = await call("nos_biens"); ok("nos biens (Supabase) lus ou absence de code signalée", Array.isArray(nb) || /code de groupe|Supabase/.test(nb.erreur || ""), JSON.stringify(nb).slice(0, 200));
+await c.close();
+console.log(`\n${n - bad}/${n} tests MCP réussis`); process.exit(bad ? 1 : 0);

@@ -13,3 +13,8 @@ data/fiches-du-jour.json
 *.pem
 *.key
 __pycache__/
+# annonces, historique et fiches : privés, dans Supabase (tools/supabase_annonces.py ; publication.json)
+data/annoncesdata.js
+data/historique.js
+data/fiches/
+data/lecture-du-jour.json

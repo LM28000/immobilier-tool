@@ -16,5 +16,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22", cache: npm }
       - run: npm ci
+      - name: Annonces (privées, dans Supabase)
+        env:
+          SB_GROUPE: ${{ secrets.SB_GROUPE }}
+        run: python3 tools/supabase_annonces.py pull
       - run: npx playwright install --with-deps chromium
       - run: npm test

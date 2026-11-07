@@ -11,6 +11,7 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `src/head.html`, `src/body.html`, `src/styles.css` | squelette et styles de la page |
 | `src/js/` | le code, découpé par thème ; les fichiers sont assemblés dans l'ordre de leur numéro |
 | `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour (`annoncesdata.js`), historique des prix (`historique.js`), secteurs Bien'ici → IRIS des nouvelles villes |
+| `mcp/` | serveur MCP : brancher l'outil sur une IA (voir `mcp/README.md`) |
 | `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE, étage, position) |
 | `data/fiches/` | fiches complètes des annonces, une par ville, lues une seule fois par annonce |
 | `tests/run.js`, `tests/visit.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright ; `tests/vendor/` : Leaflet pour tester la vraie carte sans réseau |
@@ -36,7 +37,7 @@ Les annonces sont relevées chaque jour (Le Mans, Saint-Nazaire, Angers, Caen, O
 
 ## Annonces privées (Supabase)
 
-Les annonces, leur historique et leurs fiches (descriptions, photos d'agences) peuvent quitter le dépôt public et n'être lisibles qu'avec le code de groupe :
+Depuis le 7 novembre 2026, les annonces, leur historique et leurs fiches (descriptions, photos d'agences) ne sont plus dans le dépôt public : la page les lit dans Supabase avec le code de groupe ; sans code, elle n'en affiche aucune. Sur un nouvel ordinateur : `python3 tools/supabase_annonces.py pull`. Mise en place (déjà faite) :
 
 1. Dans Supabase > SQL Editor, coller la partie « Novembre 2026 » de `supabase.sql`, puis Run.
 2. Sur le Mac, enregistrer le code de groupe (le même que dans la page, « Liste commune ») :

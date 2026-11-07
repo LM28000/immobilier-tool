@@ -6,9 +6,15 @@
     "build": "python3 build.py",
     "test:unit": "node tests/unit.js && python3 tests/test_donnees.py",
     "test:e2e": "node tests/run.js",
-    "test": "python3 build.py && npm run test:unit && npm run test:e2e"
+    "test": "python3 build.py && npm run test:unit && npm run test:mcp && npm run test:e2e",
+    "mcp": "node mcp/serveur.mjs",
+    "test:mcp": "node tests/mcp.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.65.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
   }
 }

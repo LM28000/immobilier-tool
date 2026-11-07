@@ -6,6 +6,12 @@ Usage :
       Liste les annonces du relevé (ou, sans relevé, de data/annoncesdata.js) dont la fiche manque encore,
       ventes d'abord (studios, T2, T3), puis locations, par lots de 10 à passer à tools/fiches-bienici.js.
       Affiche {"manquantes": n, "lots": [[[id, ville, "v"|"l"], …], …]}.
+  python3 tools/fiches.py a-lire [--max 40]
+      Ventes dont la description n'a pas encore été lue par Claude : {"lots": [[{id, ville, titre, prix, surface, description}, …], …]} (lots de 10).
+  python3 tools/fiches.py lu data/lecture-du-jour.json
+      Range ce que Claude a lu dans chaque description (champ « ia » de la fiche), après contrôle des bornes. Entrée : liste d'objets
+      {id, loue, loyer_mensuel, loyer_charges_comprises, fin_bail, travaux_a_prevoir, travaux_votes, taxe_fonciere, surface_carrez,
+       residence_geree, etat, exposition, points} (null quand la description ne dit rien), ou {"lectures": [...]}.
   python3 tools/fiches.py merge data/fiches-du-jour.json
       Range les fiches lues dans data/fiches/<ville>.json et affiche un résumé JSON.
       Le fichier d'entrée est la sortie de fiches-bienici.js, une liste de ces sorties, ou {"lots": [...]}.
@@ -33,7 +39,13 @@ SIGNAUX = {
 }
 def signaux(f):
     d = (f.get("d") or "") + " " + (f.get("titre") or "")
-    return [k for k, rx in SIGNAUX.items() if re.search(rx, d, re.I)]
+    fl = [k for k, rx in SIGNAUX.items() if re.search(rx, d, re.I)]
+    ia = f.get("ia") or {}
+    if ia.get("residence_geree") and "serv" not in fl: fl.append("serv")
+    if ia.get("loue") is True and "loue" not in fl: fl.append("loue")
+    if ia.get("loue") is False and "loue" in fl and not ia.get("loyer_mensuel"): fl.remove("loue")   # « possibilité de vendre loué » n'est pas « loué »
+    if ia.get("etat") in ("à rénover", "à rafraîchir") and "trav" not in fl: fl.append("trav")
+    return fl
 
 
 def load_js(path):
@@ -86,6 +98,78 @@ def todo(args):
                       "lots": [pick[i:i + 10] for i in range(0, len(pick), 10)]}, ensure_ascii=False))
 
 
+IA_CHAMPS = {  # nom: (type, min, max)
+    "loue": (bool,), "loyer_mensuel": (float, 150, 2500), "loyer_charges_comprises": (bool,), "fin_bail": (str,),
+    "travaux_a_prevoir": (float, 0, 200000), "travaux_votes": (float, 0, 100000), "taxe_fonciere": (float, 50, 5000),
+    "surface_carrez": (float, 5, 200), "residence_geree": (bool,), "etat": (str,), "exposition": (str,), "points": (list,)}
+ETATS = {"neuf", "très bon", "bon", "à rafraîchir", "à rénover"}
+
+def valide_ia(x):
+    out = {}
+    for k, spec in IA_CHAMPS.items():
+        v = x.get(k)
+        if v is None: continue
+        t = spec[0]
+        if t is bool and isinstance(v, bool): out[k] = v
+        elif t is float and isinstance(v, (int, float)) and not isinstance(v, bool) and spec[1] <= v <= spec[2]: out[k] = round(float(v), 2)
+        elif t is str and isinstance(v, str) and v.strip():
+            v = v.strip()[:60]
+            if k == "fin_bail" and not re.fullmatch(r"\d{4}(-\d{2})?", v): continue
+            if k == "etat" and v not in ETATS: continue
+            out[k] = v
+        elif t is list and isinstance(v, list): out[k] = [str(p)[:120] for p in v if isinstance(p, str) and p.strip()][:4]
+    return out
+
+IA_CALC = ("loue", "loyer_mensuel", "loyer_charges_comprises", "taxe_fonciere", "travaux_a_prevoir", "travaux_votes", "surface_carrez")
+def ficx_de(f):
+    """champs d'une fiche utiles au calcul, inclus dans la page (FICX)"""
+    x = {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f}
+    ia = {k: v for k, v in (f.get("ia") or {}).items() if k in IA_CALC}
+    if ia: x["ia"] = ia
+    return x
+
+def doublons(st, ids):
+    """même bien publié par plusieurs agences : ventes de la même ville, même surface (0,1 m²), même étage connu,
+    positions à moins de 100 m et prix à 6 % près. On garde la moins chère ; renvoie {id doublon: id gardé}."""
+    import math
+    out = {}
+    for ck, c in st.items():
+        L = [(i, f) for i, f in c.items() if i in ids and f.get("k") == "v" and f.get("surf") and f.get("et") is not None and f.get("la") is not None and (f.get("r") or 0) <= 300 and f.get("prix")]
+        L.sort(key=lambda x: x[1]["prix"])
+        for a in range(len(L)):
+            i, f = L[a]
+            if i in out: continue
+            for b in range(a + 1, len(L)):
+                j, g = L[b]
+                if j in out or abs(f["surf"] - g["surf"]) > 0.1 or f["et"] != g["et"] or g["prix"] > f["prix"] * 1.06: continue
+                d = 6371000 * math.hypot(math.radians(g["lo"] - f["lo"]) * math.cos(math.radians(f["la"])), math.radians(g["la"] - f["la"]))
+                if d <= 100: out[j] = i
+    return out
+
+def a_lire(args):
+    mx = int(args[args.index("--max") + 1]) if "--max" in args else 40
+    st = load_store(); L = []
+    for ck, c in st.items():
+        for i, f in c.items():
+            if f.get("k") == "v" and "ia" not in f and f.get("d"):
+                L.append({"id": i, "ville": ck, "titre": f.get("titre"), "prix": f.get("prix"), "surface": f.get("surf"), "description": f["d"][:3000]})
+    L.sort(key=lambda x: x["id"]); pick = L[:mx]
+    print(json.dumps({"restantes": len(L), "lots": [pick[i:i + 10] for i in range(0, len(pick), 10)]}, ensure_ascii=False))
+
+def lu(args):
+    raw = json.load(open(args[0], encoding="utf-8")); L = raw.get("lectures", raw) if isinstance(raw, dict) else raw
+    st = load_store(); where = {i: ck for ck, c in st.items() for i in c}; today = datetime.date.today().isoformat(); n = 0; inconnues = []
+    for x in L:
+        if not isinstance(x, dict) or x.get("id") not in where: inconnues.append(str(x.get("id") if isinstance(x, dict) else x)); continue
+        ia = valide_ia(x); ia["lu"] = today; st[where[x["id"]]][x["id"]]["ia"] = ia; n += 1
+    for ck, c in st.items():
+        for f in c.values():
+            fl = signaux(f)
+            if fl: f["fl"] = fl
+            else: f.pop("fl", None)
+        save_city(ck, c)
+    print(json.dumps({"lues": n, "inconnues": inconnues[:10]}, ensure_ascii=False))
+
 def merge(args):
     raw = json.load(open(args[0], encoding="utf-8"))
     runs = raw.get("lots") if isinstance(raw, dict) and "lots" in raw else raw if isinstance(raw, list) else [raw]
@@ -127,5 +211,7 @@ def merge(args):
 if __name__ == "__main__":
     cmd, rest = (sys.argv[1] if len(sys.argv) > 1 else ""), sys.argv[2:]
     if cmd == "todo": todo(rest)
+    elif cmd == "a-lire": a_lire(rest)
+    elif cmd == "lu" and rest: lu(rest)
     elif cmd == "merge" and rest: merge(rest)
     else: print(__doc__); sys.exit(1)

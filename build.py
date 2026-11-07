@@ -57,9 +57,28 @@ for v in ads.values():
     if isinstance(v, dict):
         for b in [v] + list((v.get("t") or {}).values()):
             ids |= {str(a[3]).split("/")[-1] for a in b.get("ventes", [])} | {str(a[4]).split("/")[-1] for a in b.get("ads", [])}
-FICX = {i: {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f} for c in FICH.values() for i, f in c.items() if i in ids}
+sys.path.insert(0, P("tools")); from fiches import ficx_de
+from fiches import doublons
+FICX = {i: ficx_de(f) for c in FICH.values() for i, f in c.items() if i in ids}
+for j, i in doublons(FICH, ids).items(): FICX.setdefault(j, {})["dup"] = i   # même bien chez une autre agence
 FICX = {i: v for i, v in FICX.items() if v}
 dumps = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
+import math
+def expt():
+    """loyer ∝ surface^e à nombre de pièces égal : pente log-log des annonces de location, chaque ville centrée sur sa moyenne (colocations exclues)"""
+    out = {}
+    for ty in ("studio", "t2", "t3"):
+        sxy = sxx = 0; n = 0
+        for v in ads.values():
+            if not isinstance(v, dict): continue
+            b = v if ty == "studio" else (v.get("t") or {}).get(ty) or {}
+            L = [(math.log(a[0]), math.log(a[2])) for a in b.get("ads", []) if a[0] > 0 and a[2] > 0 and not (FICX.get(str(a[4]).split("/")[-1]) or {}).get("coloc")]
+            if len(L) < 8: continue
+            mx = sum(x for x, _ in L) / len(L); my = sum(y for _, y in L) / len(L)
+            sxy += sum((x - mx) * (y - my) for x, y in L); sxx += sum((x - mx) ** 2 for x, _ in L); n += len(L)
+        out[ty] = round(min(0.9, max(0.15, sxy / sxx)), 3) if n >= 30 and sxx > 0 else 0.6
+    return out
+EXPT = expt()
 
 def code(public):
     """le script de la page ; public=False : annonces, historique et fiches incluses (artefact, tests)"""
@@ -72,7 +91,7 @@ def code(public):
         *[open(p, encoding="utf-8").read() for p in before],
         need("data/irisdata.js"),
         a,
-        "const FICX=" + ("{}" if strip else dumps(FICX)) + ";\nconst FICHES=" + ("null" if public else dumps(FICH)) + ";",
+        "const FICX=" + ("{}" if strip else dumps(FICX)) + ";\nconst EXPT=" + dumps(EXPT) + ";\nconst FICHES=" + ("null" if public else dumps(FICH)) + ";",
         need("src/ads-vue.js"),
         "const HIST={};" if strip else hist_txt,
         *[open(p, encoding="utf-8").read() for p in after],
@@ -115,4 +134,4 @@ if not os.path.exists(P("index.html")) or rd("index.html") != html: w("index.htm
 ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
 sw = rd("sw.js"); sw2 = re.sub(r'const VERSION = "[^"]*";', f'const VERSION = "{ver}";', sw, count=1)
 if sw2 != sw: w("sw.js", sw2)
-print("ok", len(pub), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")
+print("exposant loyer/surface par type :", EXPT); print("ok", len(pub), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")

@@ -2,19 +2,21 @@
    Écrans propres au téléphone, construits avec les mêmes calculs et données que la version ordinateur.
    Les blocs de la version ordinateur (carte, classement, nos biens…) sont déplacés dans l'appli quand on en a besoin. */
 const MOBQ=matchMedia("(max-width:760px)");
-let MOBON=false, MS="carte";
+let MOBON=false, MS="accueil";
 const MSCROLL={};
 const MF={ck:"",sort:"irr",bank:false,nw:false,drop:false,sec:"",n:20};   // filtres du fil d'annonces
 const MSF={st:"tous"};                                                   // filtre de la shortlist
 const SORTS=[["irr","Rendement"],["cf","Cash-flow"],["prix","Prix"],["new","Nouveauté"]];
 const I=(d,f)=>`<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${f?`<g fill="currentColor">${d}</g>`:`<g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</g>`}</svg>`;
 const MICO={
+ accueil:[`<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/>`,`<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/>`],
  carte:[`<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>`,`<path d="M3 6.5 9 4v13.5L3 20zM10.5 4.3l3 1.3v13.8l-3-1.3zM15 6.5 21 4v13.5L15 20z"/>`],
  annonces:[`<rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/>`,`<rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/>`],
  short:[`<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>`,`<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>`],
  budget:[`<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/>`,null],
  plus:[`<circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/>`,`<circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/>`]};
-const MTABS=[["carte","Carte"],["annonces","Annonces"],["short","Shortlist"],["budget","Budget"],["plus","Plus"]];
+const MTABS=[["accueil","Accueil"],["carte","Explorer"],["annonces","Annonces"],["short","Nos biens"],["budget","Budget"]];
+const MSCRT={accueil:"Où on en est",carte:"Explorer",annonces:"Annonces",short:"Nos biens",budget:"Budget",plus:"Plus"};
 const icoTab=(k,on)=>{const [o,f]=MICO[k]; return on&&f?I(f,true):(k==="plus"?I(o,true):I(o));};
 const chev=`<span class="mchev" aria-hidden="true">›</span>`;
 const mEsc=s=>esc(s==null?"":String(s));
@@ -23,13 +25,14 @@ const cityName=k=>(C.find(c=>c.k===k)||{}).name||k;
 /* ---------- squelette ---------- */
 const mApp=document.createElement("div"); mApp.id="mApp";
 mApp.innerHTML=`
+<section class="mscr" id="ms-accueil" data-ms="accueil"><header class="mhd"><h1>Où on en est</h1><p id="mAccDate"></p></header><div class="mpad" id="mAcc"></div></section>
 <section class="mscr" id="ms-carte" data-ms="carte">
  <div class="mmap" id="mMap"></div>
  <div class="mmtop"><button type="button" class="msearch" data-msearch>${I('<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>')}<span>Ville ou quartier</span></button><div class="mmrow" id="mModeHost"></div></div>
  <div class="msheet" id="mSheet" data-snap="1"><div class="mgrab" id="mGrab"><i></i></div><div class="msheetin" id="mSheetIn"></div></div>
 </section>
 <section class="mscr" id="ms-annonces" data-ms="annonces"><header class="mhd"><h1>Annonces</h1><p id="mACount"></p></header><div class="mchips" id="mACity"></div><div class="mchips" id="mAFil"></div><div class="mfeed" id="mFeed"></div></section>
-<section class="mscr" id="ms-short" data-ms="short"><header class="mhd"><h1>Shortlist</h1><p id="mSCount"></p></header><div class="mchips" id="mSFil"></div><div class="mpad" id="mShort"></div></section>
+<section class="mscr" id="ms-short" data-ms="short"><header class="mhd"><h1>Nos biens</h1><p id="mSCount"></p></header><div class="mchips" id="mSFil"></div><div class="mpad" id="mShort"></div></section>
 <section class="mscr" id="ms-budget" data-ms="budget"><header class="mhd"><h1>Budget</h1></header><div class="mpad" id="mBudget"></div></section>
 <section class="mscr" id="ms-plus" data-ms="plus"><header class="mhd"><h1>Plus</h1></header><div class="mpad" id="mPlus"></div></section>
 <div class="mbar" id="mBar" aria-hidden="true"><b id="mBarT"></b></div>
@@ -84,7 +87,7 @@ function tripTxt(d){return d&&d.real?`${minTxt(d.min)} ${MKSH[d.mk]||""}`:"";}
 /* ---------- carte ---------- */
 let SNAP=1; // 0 : replié · 1 : moitié · 2 : plein
 function setSnap(n){SNAP=Math.max(0,Math.min(2,n)); const sh=document.getElementById("mSheet"); sh.dataset.snap=SNAP; sh.style.transform=""; if(SNAP<2) document.getElementById("mSheetIn").scrollTop=0;}
-function topAds(ck,sec,n){const A=ADS[ck]; if(!A||!A.ventes) return []; return A.ventes.filter(a=>(!sec||a[1]===sec)&&!horsCalcul(a[3])).map(a=>adInfo(ck,a)).sort((p,q)=>(q.x.irr??-99)-(p.x.irr??-99)).slice(0,n);}
+function topAds(ck,sec,n){const A=ADS[ck]; if(!A||!A.ventes) return []; return A.ventes.filter(a=>(!sec||a[1]===sec)&&!horsCalcul(a[3])&&!estDoublon(a[3])).map(a=>adInfo(ck,a)).sort((p,q)=>(q.x.irr??-99)-(p.x.irr??-99)).slice(0,n);}
 function miniAd(o){const p=mPhoto(o.ck,o.a,320,200); return `<button type="button" class="mmini" data-mad="v|${o.ck}|${mEsc(o.a[3])}"><span class="mmimg">${imgTag(p,"")}${o.nw?`<i class="mbdg nw">Nouveau</i>`:o.v&&o.v.last?`<i class="mbdg dr">↓ ${keur(o.v.last.amt)}</i>`:""}</span><span class="mmt"><b style="color:${colIrr(o.x.irr)}">${irrTxt(o.x)}</b> · ${keur(o.a[2])}</span><span class="mms">${mEsc(o.a[1]||"secteur ?")} · ${String(o.a[0]).replace(".",",")} m²</span></button>`;}
 function kp(label,val,cls,sub){return `<div class="mk"><small>${label}</small><b class="${cls||""}">${val}</b>${sub?`<em>${sub}</em>`:""}</div>`;}
 function mSheetRender(){if(!MOBON) return; const box=document.getElementById("mSheetIn"); if(!box) return;
@@ -125,7 +128,7 @@ function mSearch(){const s=mPush("Rechercher",`<div class="msrch"><input type="s
  inp.addEventListener("input",run); run(); setTimeout(()=>inp.focus(),300);}
 
 /* ---------- fil d'annonces ---------- */
-function feedList(F){F=F||MF; const out=[]; Object.entries(ADS).forEach(([ck,A])=>{if(!A||!A.ventes) return; if(F.ck&&F.ck!==ck) return; A.ventes.forEach(a=>{if(F.sec&&a[1]!==F.sec) return; out.push(adInfo(ck,a));});});
+function feedList(F){F=F||MF; const out=[]; Object.entries(ADS).forEach(([ck,A])=>{if(!A||!A.ventes) return; if(F.ck&&F.ck!==ck) return; A.ventes.forEach(a=>{if(F.sec&&a[1]!==F.sec) return; if(estDoublon(a[3])) return; out.push(adInfo(ck,a));});});
  return out;}
 function feedSorted(L,F){F=F||MF; const f=L.filter(o=>(!F.bank||bankOk(o.x.ratio))&&(!F.nw||o.nw)&&(!F.drop||(o.v&&o.v.last)));
  const k=F.sort, by={irr:(p,q)=>(q.x.irr??-99)-(p.x.irr??-99),cf:(p,q)=>q.x.cf-p.x.cf,prix:(p,q)=>p.a[2]-q.a[2],new:(p,q)=>((hEntry(q.ck,q.a[3])||{}).f||"").localeCompare((hEntry(p.ck,p.a[3])||{}).f||"")||(q.x.irr??-99)-(p.x.irr??-99)};
@@ -194,18 +197,18 @@ function mBienDetail(id){const b=BIENS.find(x=>x.id===id); if(!b) return;
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
  if(b&&!isOut(b)){const prev=b.statut||"à voir"; await updBien(b.id,{statut:"écarté"}); toast("Retiré de la shortlist.",{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})}); return;}
  if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:0,loyer:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
 
 /* ---------- shortlist ---------- */
-const MST=[["tous","Tous"],["à voir","À voir"],["visité","Visité"],["offre faite","Offre"]];
+const MST=[["tous","Tous"],["à voir","À voir"],["visité","Visité"],["offre faite","Offre"],["compromis","Compromis"],["acheté","Acheté"]];
 const tgReady=b=>!!TGC[tgKey(b)];
 let MSLATE=[], MSLT=null;
 function mShortRender(){if(!MOBON) return; MSLATE=[]; const all=BIENS.filter(b=>!isOut(b)), out=BIENS.filter(isOut);
  const L=all.filter(b=>MSF.st==="tous"||(b.statut||"à voir")===MSF.st).map(b=>({b,r:calcBien(b)})).sort((p,q)=>(q.b.fav-p.b.fav)||((q.r.x.irr??-99)-(p.r.x.irr??-99)));
  document.getElementById("mSCount").textContent=all.length?`${all.length} bien${all.length>1?"s":""} · glisser une ligne vers la gauche pour changer son statut`:"";
  document.getElementById("mSFil").innerHTML=MST.map(([k,l])=>{const n=k==="tous"?all.length:all.filter(b=>(b.statut||"à voir")===k).length; return `<button type="button" class="mchip${MSF.st===k?" on":""}" data-msf="${k}">${l} <small>${n}</small></button>`;}).join("");
- const row=({b,r})=>{const x=r.x, ph=bienPhoto(b,200,200), lv=tgReady(b)?(()=>{try{return priceLevels(b);}catch(_){return null;}})():(MSLATE.push(b),null), st=b.statut||"à voir", nx=STATUTS[(STATUTS.indexOf(st)+1)%3];
+ const row=({b,r})=>{const x=r.x, ph=bienPhoto(b,200,200), lv=tgReady(b)?(()=>{try{return priceLevels(b);}catch(_){return null;}})():(MSLATE.push(b),null), st=b.statut||"à voir", nx=nextStatut(st);
   return `<div class="msw" data-mswid="${b.id}"><div class="mswa"><button type="button" class="mswb next" data-stset="${b.id}|${nx}">${nx==="offre faite"?"Offre":nx[0].toUpperCase()+nx.slice(1)}</button><button type="button" class="mswb red" data-unshort="${b.id}">Écarter</button></div>
    <div class="mswc" data-mad="b|${b.ville}|${b.id}"><span class="mth">${imgTag(ph,"")}</span><span class="mst"><b>${b.fav?"★ ":""}${mEsc(b.titre||"Bien")}</b><small>${mEsc(cityName(b.ville))} · ${keur(+b.prix)}${lv?` · cible ${keur(lv.cible)}`:""}</small><small><b style="color:${colIrr(x.irr)}">${irrTxt(x)}</b> · <span class="${mcfc(x.cf)}">${sgn(x.cf)}/mois</span> · <i class="mdot ${STC[st]||"st0"}"></i>${st}</small></span>${chev}</div></div>`;};
  document.getElementById("mShort").innerHTML=(L.length?`<div class="mgroup mswl">${L.map(row).join("")}</div>`:`<div class="mempty">${all.length?"Aucun bien avec ce statut.":"Aucun bien pour l'instant.<br>Touchez ☆ sur une annonce pour l'ajouter."}</div>`)
@@ -221,13 +224,14 @@ function mShortRender(){if(!MOBON) return; MSLATE=[]; const all=BIENS.filter(b=>
  document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest(".msw"); if(r&&r.dataset.swiped&&Date.now()-r.dataset.swiped<350){e.stopImmediatePropagation(); e.preventDefault();} else if(r&&r.classList.contains("open")&&!e.target.closest(".mswa")){e.stopImmediatePropagation(); e.preventDefault(); close(r);}},true);})();
 
 /* ---------- budget ---------- */
-const STEP={apport:["f-apport",500,0,100000,0,v=>eur(v)],taux:["s-taux",0.05,1,8,2,v=>pct(v,2)],surcote:["s-surcote",5,-10,40,0,v=>(v>0?"+":"")+v+" %"],loyerAdj:["s-loyer",5,-20,20,0,v=>(v>0?"+":"")+v+" %"],surface:["f-surface",1,10,40,0,v=>v+" m²"]};
+const STEP={salaires:["f-salaires",50,0,20000,0,v=>eur(v)],pretEtud:["f-pretEtud",10,0,5000,0,v=>eur(v)],fraisVente:["f-fraisVente",0.5,0,10,1,v=>pct(v,1)],apport:["f-apport",500,0,100000,0,v=>eur(v)],taux:["s-taux",0.05,1,8,2,v=>pct(v,2)],surcote:["s-surcote",5,-10,40,0,v=>(v>0?"+":"")+v+" %"],loyerAdj:["s-loyer",5,-20,20,0,v=>(v>0?"+":"")+v+" %"],surface:["f-surface",1,10,40,0,v=>v+" m²"]};
 function stepper(k,label,sub){const [,,,,,f]=STEP[k]; return `<div class="mli"><span>${label}${sub?`<small>${sub}</small>`:""}</span><span class="mstep"><button type="button" data-mstep="${k}|-1" aria-label="Moins">−</button><b>${f(H[k])}</b><button type="button" data-mstep="${k}|1" aria-label="Plus">+</button></span></div>`;}
 function tgl(id,label,on,sub){return `<label class="mli mtg"><span>${label}${sub?`<small>${sub}</small>`:""}</span><input type="checkbox" role="switch" data-mtgl="${id}"${on?" checked":""}><i></i></label>`;}
 function selRow(id,label){const el=document.getElementById(id); if(!el) return ""; return `<label class="mli msel"><span>${label}</span><span class="mselv"><select data-msel="${id}">${[...el.options].map(o=>`<option value="${mEsc(o.value)}"${o.value===el.value?" selected":""}>${mEsc(o.textContent)}</option>`).join("")}</select>${chev}</span></label>`;}
 function mBudgetRender(){if(!MOBON) return; const c=C.find(v=>v.k===SEL)||C[0], x=calc(c), [bc,bt]=bank(x.ratio);
  document.getElementById("mBudget").innerHTML=`<div class="msum"><small>${TY().lab} moyen à ${mEsc(c.name)} · ${keur(x.cost)} tout compris</small><b>${eur(x.mens)}<span>/mois</span></b><div><span>${H.duree} ans · ${pct(H.taux,2)}</span><span>Banque ${pct(x.ratio*100,0)} · ${bt}</span><span>Cash-flow ${sgn(x.cf)}</span></div></div>
  <h3 class="msec">Chiffres affichés</h3><div class="mlist"><div class="mli"><span>Net ou brut</span><span class="mseg"><button type="button" data-net="1" aria-pressed="${!!H.net}">Net</button><button type="button" data-net="0" aria-pressed="${!H.net}">Brut</button></span></div></div>
+ ${HYPOK?"":`<p class="warnline">Revenus, apport et crédits : valeurs d'exemple. Entrez les vôtres, ils restent sur ce téléphone.</p>`}<h3 class="msec">Vos revenus</h3><div class="mlist">${stepper("salaires","Revenus nets du foyer","par mois")}${stepper("pretEtud","Autres crédits","mensualités en cours")}</div>
  <h3 class="msec">Crédit</h3><div class="mlist">${stepper("apport","Apport","à deux")}${stepper("taux","Taux","hors assurance")}<div class="mli"><span>Durée</span><span class="mseg">${[15,20,25].map(d=>`<button type="button" data-mdur="${d}" aria-pressed="${H.duree===d}">${d} ans</button>`).join("")}</span></div></div>
  <h3 class="msec">Le bien</h3><div class="mlist"><div class="mli"><span>Type</span>${typeSeg().replace("seg2 typeseg","mseg")}</div>${stepper("surface","Surface")}${stepper("surcote","Prix payé vs studios vendus",hasDVF(c.k)?"sans effet ici : prix réels DVF":"")}${stepper("loyerAdj","Loyer vs loyer médian")}</div>
  <h3 class="msec">Hypothèses</h3><div class="mlist">${tgl("f-pess","Scénario pessimiste",H.pess,"loyer −5 %, ½ mois vide de plus")}${tgl("f-vacq","Vacance selon l'emplacement",H.vacQ,"selon le temps à pied")}${tgl("f-dvf","Prix réels des studios (DVF)",H.dvf)}${tgl("f-bank","Seulement si la banque suit",BANKOK,"sur la carte")}</div>
@@ -260,14 +264,14 @@ function mShow(k){if(!MOBON) return; if(MS&&k!==MS&&!STACK.length) navPush({t:"t
 function mShowNow(k,opt){if(!MOBON) return; if(MS!=="carte") MSCROLL[MS]=scrollY; MS=k; try{localStorage.setItem("mscreen",k);}catch(_){}
  document.body.dataset.ms=k; document.body.classList.toggle("mcarte",k==="carte");
  document.querySelectorAll("#mTab [data-mtab]").forEach(b=>{const on=b.dataset.mtab===k; b.setAttribute("aria-current",on?"page":"false"); b.querySelector(".mti").innerHTML=icoTab(b.dataset.mtab,on);});
- if(k==="annonces") mFeedRender(); if(k==="short") mShortRender(); if(k==="budget") mBudgetRender(); if(k==="plus") mPlusRender(); if(k==="carte") mSheetRender();
+ if(k==="annonces") mFeedRender(); if(k==="short") mShortRender(); if(k==="budget") mBudgetRender(); if(k==="plus") mPlusRender(); if(k==="carte") mSheetRender(); if(k==="accueil") mAccRender();
  requestAnimationFrame(()=>{scrollTo(0,k==="carte"?0:(MSCROLL[k]||0)); mBarUpdate(); if(k==="carte"){draw.vw=0; fitVH();}});}
-function mBarUpdate(){const bar=document.getElementById("mBar"); if(!bar) return; const on=MS!=="carte"&&scrollY>44; bar.classList.toggle("on",on); document.getElementById("mBarT").textContent=(MTABS.find(t=>t[0]===MS)||[,""])[1];}
+function mBarUpdate(){const bar=document.getElementById("mBar"); if(!bar) return; const on=MS!=="carte"&&scrollY>44; bar.classList.toggle("on",on); document.getElementById("mBarT").textContent=MSCRT[MS]||"";}
 addEventListener("scroll",()=>{if(MOBON) mBarUpdate();},{passive:true});
 
 function mApply(on){if(on===MOBON) return; MOBON=on; document.body.classList.toggle("mob",on);
  if(on){document.getElementById("mapSec").classList.add("mapfull"); document.body.appendChild(mApp); mTake(document.querySelector("#mapSec .mapbox"),document.getElementById("mMap")); mTake(document.getElementById("cmode"),document.getElementById("mModeHost"));
-  let k="carte"; try{k=localStorage.getItem("mscreen")||"carte";}catch(_){} if(!MTABS.some(t=>t[0]===k)) k="carte"; MS=""; navInit(); mShowNow(k); mBadges(); setTimeout(()=>{if(V.k<KQ) mHome();},80);}
+  let k="accueil"; try{k=localStorage.getItem("mscreen")||"accueil";}catch(_){} if(!MTABS.some(t=>t[0]===k)) k="accueil"; MS=""; navInit(); mShowNow(k); mBadges(); setTimeout(()=>{if(V.k<KQ) mHome();},80);}
  else{document.getElementById("mapSec").classList.remove("mapfull"); mPopAll(); [...MPL.keys()].forEach(mGive); mApp.remove(); delete document.body.dataset.ms; document.body.classList.remove("mcarte","mstack"); requestAnimationFrame(()=>{draw.vw=0; fitVH();});}}
 
 /* ---------- clics ---------- */
@@ -296,7 +300,7 @@ document.addEventListener("click",e=>{if(!MOBON) return; const t=e.target.closes
  if(d.mcity!==undefined){mPushEl(cityName(SEL),document.getElementById("detail"),{back:"Carte"}); mDraw("renderDetail"); return;}
  if(d.msearch!==undefined){mSearch(); return;}
  if(d.msim){const [ck,code]=d.msim.split("|"); simHere(ck,code); mGo("addbien"); return;}
- if(d.mstep){const [k,s]=d.mstep.split("|"), [id,st,lo,hi,dec]=STEP[k]; const v=Math.round(Math.min(hi,Math.max(lo,H[k]+st*(+s)))*Math.pow(10,dec))/Math.pow(10,dec); H[k]=v; const el=document.getElementById(id); if(el) el.value=v; render(); return;}
+ if(d.mstep){const [k,s]=d.mstep.split("|"), [id,st,lo,hi,dec]=STEP[k]; const v=Math.round(Math.min(hi,Math.max(lo,H[k]+st*(+s)))*Math.pow(10,dec))/Math.pow(10,dec); H[k]=v; const el=document.getElementById(id); if(el) el.value=v; if(HYPK.includes(k)) saveHyp(); render(); if(MS==="budget") mBudgetRender(); return;}
  if(d.mdur){mSet("f-duree",+d.mdur); H.duree=+d.mdur; render(); return;}
  if(d.mtheme){const cur=document.documentElement.getAttribute("data-theme"); if(cur!==d.mtheme) document.getElementById("themeBtn").click(); mPlusRender(); return;}},true);
 document.addEventListener("change",e=>{if(!MOBON) return; const t=e.target;

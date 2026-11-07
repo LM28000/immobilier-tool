@@ -1,8 +1,8 @@
 /* ================= fiches ville, quartier et bien : même structure partout =================
    Rubriques dans le même ordre ; chaque niveau se compare au niveau du dessus au lieu de le répéter.
    Les rubriques se replient (résumé d'une ligne) et l'outil retient lesquelles vous gardez ouvertes. */
-const FRUB=[["attn","Points d'attention"],["annonce","L'annonce"],["prix","Prix d'achat"],["loyer","Loyer et demande"],["calc","Le calcul"],["visite","Visite"],["traj","Trajets"],["vie","Vie de quartier"],["bati","Bâti et énergie"],["risq","Risques"],["hab","Habitants"],["ecoles","Écoles et campus"],["urba","Urbanisme et projets"],["ann","Annonces"],["src","Sources"]];
-const FDEF={ville:{calc:1,prix:1},quartier:{prix:1,traj:1,vie:0},bien:{annonce:1,prix:1,calc:1}};
+const FRUB=[["attn","Points d'attention"],["annonce","L'annonce"],["prix","Prix d'achat"],["loyer","Loyer et demande"],["calc","Le calcul"],["suivi","Suivi de l'achat"],["visite","Visite"],["traj","Trajets"],["vie","Vie de quartier"],["bati","Bâti et énergie"],["risq","Risques"],["hab","Habitants"],["ecoles","Écoles et campus"],["urba","Urbanisme et projets"],["ann","Annonces"],["src","Sources"]];
+const FDEF={ville:{calc:1,prix:1},quartier:{prix:1,traj:1,vie:0},bien:{suivi:1,annonce:1,prix:1,calc:1}};
 let FOPEN={}; try{FOPEN=JSON.parse(localStorage.getItem("fopen")||"{}");}catch(_){}
 const fIsOpen=(lv,k)=>FOPEN[lv+k]!=null?FOPEN[lv+k]:!!(FDEF[lv]&&FDEF[lv][k]);
 document.addEventListener("toggle",e=>{const d=e.target; if(!d.matches||!d.matches("details.fsec")) return; FOPEN[d.dataset.lv+d.dataset.sec]=d.open; try{localStorage.setItem("fopen",JSON.stringify(FOPEN));}catch(_){}},true);
@@ -117,7 +117,7 @@ function bienFicheBody(b,opt){opt=opt||{}; {const s0=b.kind==="v"?b.suf:bienSuf(
  const comps=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec&&a[3]!==s):[], sold=sec?soldList(b.ville,sec).slice(0,5):[];
  const ann=comps.length||sold.length?`${comps.length?ventesTable(b.ville,comps,false):""}${sold.length?`<h4 class="fh4">Parties récemment</h4>${soldTable(b.ville,sold)}`:""}`:"";
  const qname=t?t.name:(b.quartier||"");
- return `${opt.noHead?"":fHead(x,xq,t?"quartier":"ville")}${attn}${fSec("bien","annonce",fiche[0],fiche[1])}
+ return `${opt.noHead?"":fHead(x,xq,t?"quartier":"ville")}${attn}${(()=>{const s=suiviSec(b); return fSec("bien","suivi",s[0],s[1]);})()}${fSec("bien","annonce",fiche[0],fiche[1])}
   ${fSec("bien","prix",`${keur(+b.prix)} · ${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs ${t?"quartier":"ville"}`,prix)}${fSec("bien","loyer",`${eur(x.rentHC)} HC`,loyer)}${fSec("bien","calc",`${sgn(x.cf)}/mois · ${x.irr==null?"n.d.":pct(x.irr)}`,calcH)}
   ${isB?fSec("bien","visite",visitScore(b)!=null?`note ${fr(visitScore(b),1)}/5`:"pas encore visité",visite):""}${fSec("bien","traj",b.adresse?"à l'adresse":qname?"au centre du quartier":"",traj)}${fSec("bien","vie",p?`${fr(p[0],1)}/10 (quartier)`:"",vie)}
   ${fSec("bien","bati",b.dpe?`DPE ${esc(b.dpe)}`:"DPE inconnu",bati)}${fSec("bien","risq",risqR?(risqR.t||risqR.s?"à regarder":"rien de majeur"):"",risq)}${fSec("bien","hab",t?habSum(t):"",t?habBlock(t):"")}${fSec("bien","ecoles",t?ecolesSum(t):"",ecoles)}${fSec("bien","urba",g.urba?`zone ${esc(g.urba[0])} à l'adresse`:t?urbaSum(t):"",urba)}${fSec("bien","ann",comps.length?`${comps.length} comparables`:"",ann)}`;}

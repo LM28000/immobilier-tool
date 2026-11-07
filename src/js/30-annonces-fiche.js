@@ -22,7 +22,7 @@ function openAd(kind,ck,suf){const a=findAd(kind,ck,suf); if(!a) return; AD={kin
  if(kind==="b"){const t=a.quartier&&IR[ck]?IR[ck].list.find(v=>v.name===a.quartier):null; if(t) QSEL=t;}
  else if(!QSEL||QSEL.ck!==ck){const t=kind==="v"?venteIrisA(ck,a):venteIris(ck,a[1]); if(t) QSEL=t;} if(SEL!==ck){SEL=ck; render();} else {draw(); renderQBox();}}
 function priceFor(ck,a,test){let lo=5000, hi=Math.max(a[2]*1.8,30000); if(!test(lo)) return null; if(test(hi)) return hi;
- for(let i=0;i<26;i++){const m=(lo+hi)/2; if(test(m)) lo=m; else hi=m;} return Math.floor(lo/500)*500;}
+ while(hi-lo>250){const m=(lo+hi)/2; if(test(m)) lo=m; else hi=m;} return Math.floor(lo/500)*500;}   /* précision 250 € : le résultat est arrondi à 500 € (9 calculs au lieu de 26) */
 const TGC={}; let TGN=0;
 const TGSKIP=new Set(["id","titre","notes","statut","fav","par","ts","url","visite","by","secteur","adresse"]);
 /* clé = toutes les entrées de calcBien (travaux, type, pièces, adresse… compris) et tous les réglages */
@@ -51,7 +51,7 @@ function adFiche(ad){if(ad.kind==="b") return bienFiche(ad.suf); const a=findAd(
   <h2 class="psec">Et si…</h2>${scnBox("ad",scnBien(vb))}
   <p class="sub" style="margin:8px 0 0">Calcul avec notaire, meubles, petits travaux, le loyer et la vacance du quartier, et vos réglages. Charges de copropriété et taxe foncière estimées : corrigez-les après la visite dans « Nos biens ».</p>
   <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;}
- const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,rentExp(ad.ck));
+ const url=ADURL+a[4], t=venteIris(ad.ck,a[1]), x=t&&QX[t.ck+t.i], model=x?x.rentHC+H.chLoc:c.rent*Math.pow(TY().surf/c.rentM2,rentExp(ad.ck))*Math.pow(H.surface/TY().surf,expT(H.type));
  return `${a[5]?`<img class="adph" src="${esc(photoUrl(a[4],a[5],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
   <div class="dh"><h3 style="font-size:1.15rem;margin:0">Studio ${String(a[0]).replace(".",",")} m²${a[3]?" meublé":""}</h3><span class="pill p-n">à louer</span></div>
   <p class="sub" style="margin:2px 0 10px">${c.name}${a[1]?" · secteur "+esc(a[1]):""}${adTwins(ad.ck,a)>1?` · ${adTwins(ad.ck,a)} lots identiques : souvent une résidence avec services`:""}</p>

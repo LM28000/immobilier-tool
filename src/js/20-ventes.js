@@ -3,9 +3,9 @@ const VTURL="https://www.bienici.com/annonce/vente/";
 const VC=new Map();
 function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[sector]) return null;
  const ts=z.list.filter(t=>A.map[sector].includes(t.code)&&t.price); return ts.sort((a,b)=>b.dpe.reduce((x,y)=>x+y,0)-a.dpe.reduce((x,y)=>x+y,0))[0]||null;}
-function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12):0,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
+function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
-const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.map(a=>({ck,a,r:venteCalc(ck,a)})));
+const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.filter(a=>!estDoublon(a[3])).map(a=>({ck,a,r:venteCalc(ck,a)})));
 const isAdded=url=>BIENS.some(b=>b.url===url);
 function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}" aria-label="Ajouter à nos biens">+${big?" Ajouter à nos biens":`<span class="lbl"> Ajouter</span>`}</button>`;}
 function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99));
@@ -20,7 +20,7 @@ function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) ret
  return fRows([["À vendre en ligne",`${tyN(A.ventes.length)} · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:0,loyer:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  b.disabled=true; b.textContent="ajout…";
  try{await DB.collection("biens").add(bien); b.outerHTML=`<span class="pill p-ok">ajouté</span>`; toast(`« ${vb.titre} » ajouté à nos biens.`);}catch(err){b.disabled=false; b.textContent="+ Ajouter"; toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}});
 
@@ -40,10 +40,10 @@ function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) ret
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-sim]"); if(!b) return; e.preventDefault(); const [ck,code]=b.dataset.sim.split("|"); simHere(ck,code);});
 
 /* ---------- statuts, favoris, auteur ---------- */
-const STATUTS=["à voir","visité","offre faite","écarté"];
+const STATUTS=["à voir","visité","offre faite","compromis","acheté","écarté"];
 function myName(){try{return localStorage.getItem("biens-nom")||"";}catch(_){return "";}}
 async function updBien(id,patch){try{await DB.collection("biens").doc(id).update(patch);}catch(err){toast("Modification refusée ("+(err&&err.code||"erreur")+").");}}
-const STC={"à voir":"st0","visité":"st1","offre faite":"st2","écarté":"st3"};
+const STC={"à voir":"st0","visité":"st1","offre faite":"st2","compromis":"st4","acheté":"st5","écarté":"st3"};
 function stPill(b){const s=b.statut||"à voir"; return `<span class="stwrap"><button type="button" class="stp ${STC[s]||"st0"}" data-stmenu="${b.id}" aria-haspopup="true" aria-expanded="false" title="Changer le statut"><i></i>${s} <span aria-hidden="true">▾</span></button></span>`;}
 function closeStMenus(){document.querySelectorAll(".stmenu").forEach(m=>m.remove()); document.querySelectorAll("[data-stmenu][aria-expanded=true]").forEach(b=>b.setAttribute("aria-expanded","false"));}
 let STY=0; addEventListener("scroll",e=>{if(!document.querySelector(".stmenu")) return; if(e.target!==document&&e.target.classList&&e.target.classList.contains("row")){closeStMenus(); return;} if(Math.abs(scrollY-STY)>40) closeStMenus();},{passive:true,capture:true}); addEventListener("resize",()=>closeStMenus());
