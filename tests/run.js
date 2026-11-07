@@ -170,6 +170,13 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok('tel · accueil : une ville ouvre l\'explorateur', await p.evaluate(() => MS === 'carte'));
     ok('tel · accueil sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
+  // barre latérale (ordinateur large)
+  { const c = await b.newContext({viewport: {width: 1600, height: 900}}); const p = await c.newPage(); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
+    await p.goto(URL); await p.waitForTimeout(1000);
+    ok('ordi large · barre latérale visible', await p.evaluate(() => getComputedStyle(document.getElementById('sideNav')).display === 'flex'));
+    await p.click('#sideNav [data-side="tab-biens"]'); await p.waitForTimeout(900);
+    ok('ordi large · « Nos biens » ouvre l\'onglet et le surligne', await p.evaluate(() => document.getElementById('tab-biens').getAttribute('aria-selected') === 'true' && document.querySelector('#sideNav [aria-current="location"]').dataset.side === 'tab-biens' && document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+    await c.close(); }
   // lien partagé #ville-quartier : la fiche du quartier s'ouvre au chargement
   { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
     await p.goto(URL + '#lemans-0202'); await p.waitForTimeout(1200);

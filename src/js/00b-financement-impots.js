@@ -33,7 +33,7 @@ function calc(c){
  const S=c._s||{}, pe=H.pess;
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?0.5:0), px=pe?Math.min(H.px,0.5):H.px, la=H.loyerAdj+(pe?-5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
- const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU, trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
+ const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
@@ -82,6 +82,8 @@ const expT=tk=>{const e=typeof EXPT!=="undefined"&&EXPT&&EXPT[tyKey(tk)]; return
 const rentExp=ck=>{const L=typeof LOYQ!=="undefined"&&LOYQ&&LOYQ.c3&&LOYQ.c[ck]&&LOYQ.c3[ck]; if(!L) return 0.6; const s=LOYQ.sref||[37,72]; return Math.min(0.9,Math.max(0.4,1+Math.log(LOYQ.c3[ck]/LOYQ.c[ck][0])/Math.log(s[1]/s[0])));};
 /* ventes réelles : un seul fichier, même règle pour toutes les villes et tous les types (tools/collecte/dvf.js) */
 const DVFT=typeof DVFALL!=="undefined"&&DVFALL?(DVFALL.t||{studio:DVFALL.c}):{};
+/* prix au m² DVF donnés à la surface type (22, 42, 62 m²) : pour une autre surface, pente mesurée sur les ventes du type (data/dvf.json « pente ») */
+const pm2Adj=(tk,SU)=>{const b=typeof DVFALL!=="undefined"&&DVFALL&&DVFALL.pente?DVFALL.pente[tyKey(tk)]:0; return b&&SU>0?Math.pow(SU/tyOf(tk).surf,b):1;};
 const dvfC=(ck,tk)=>{const d=(DVFT[tyKey(tk||H.type)]||{})[ck]; return d&&d.med?d:null;};
 const hasDVF=(ck,tk)=>!!(H.dvf&&dvfC(ck,tk));
 const RABETA={};
