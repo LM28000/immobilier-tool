@@ -2335,8 +2335,9 @@ function agentQuestions(b){const s=bienSuf(b), v=s?vu("v",b.ville,s):null, Q=["P
  return Q;}
 
 let VISIT=null;
-function openVisit(id){VISIT=id; renderVisit(); document.getElementById("visitPanel").hidden=false; document.body.classList.add("noscroll"); setTimeout(()=>document.querySelector("#visitPanel .vclose").focus(),50);}
-function closeVisit(){VISIT=null; document.getElementById("visitPanel").hidden=true; document.body.classList.remove("noscroll");}
+let VOPENER=null, FOPENER=null;
+function openVisit(id){if(!VISIT) VOPENER=document.activeElement; VISIT=id; renderVisit(); document.getElementById("visitPanel").hidden=false; document.body.classList.add("noscroll"); setTimeout(()=>document.querySelector("#visitPanel .vclose").focus(),50);}
+function closeVisit(){VISIT=null; document.getElementById("visitPanel").hidden=true; document.body.classList.remove("noscroll"); if(VOPENER&&VOPENER.isConnected) try{VOPENER.focus();}catch(_){} VOPENER=null;}
 function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.find(x=>x.id===VISIT); if(!el) return; if(!b){closeVisit(); return;}
  const sc0=el.closest(".vsheet")?el.closest(".vsheet").scrollTop:0;
  const v=b.visite||{}, av=v.avis||{}, me=meV(), others=Object.keys(av).filter(n=>n!==me), {x0,x1,g0,g1}=beforeAfter(b), sc=visitScore(b), ck=v.check||{}, my=av[me]||{};
@@ -2413,7 +2414,7 @@ document.addEventListener("change",e=>{if(!VISIT) return; const f=e.target.close
  if(f.dataset.vf2){const v=visCopy(b), o=+f.value||0; if(o&&(o<1000||o>(+b.prix||0)*3)){toast("Prix proposé hors de portée : entre 1 000 € et 3 fois le prix affiché."); f.value=v.offre||""; return;} v.offre=o; saveVisit({visite:v}); return;}
  const k=f.dataset.vf; if(k==="votes"){const v=visCopy(b); v.votes=f.value.trim(); saveVisit({visite:v}); return;}
  saveVisit({[k]:k==="dpe"?f.value:(+f.value||0)});});
-addEventListener("keydown",e=>{if(e.key==="Escape"&&VISIT){e.stopImmediatePropagation(); closeVisit();}},true);
+addEventListener("keydown",e=>{if(e.key==="Escape"&&VISIT&&document.getElementById("fichePanel").hidden){e.stopImmediatePropagation(); closeVisit();}},true);   /* la fiche à emporter, au-dessus, se ferme d'abord */
 
 /* ---------- fiche à emporter (imprimable) ---------- */
 function negoArgs(b,x,g,t){const A=[], pm2=+b.prix/(+b.surface||22);
@@ -2431,7 +2432,7 @@ function quartierMap(b,t){if(!t||!IR[b.ville]) return ""; const bb=t.bb, w=bb[2]
  const others=IR[b.ville].list.filter(o=>o!==t&&!(o.bb[2]<vb[0]||o.bb[0]>vb[0]+vb[2]||o.bb[3]<vb[1]||o.bb[1]>vb[1]+vb[3]));
  const mk=Object.entries(MARK[b.ville]||{}).map(([k,p])=>{const [x,y]=pxy(p[0],p[1]); return `<g><circle cx="${x}" cy="${y}" r="${m*0.025}" fill="#18202c"/><text x="${x+m*0.04}" y="${y+m*0.015}" font-size="${m*0.055}" font-weight="700" fill="#18202c" paint-order="stroke" stroke="#fff" stroke-width="${m*0.012}">${MARKTXT[k]}</text></g>`;}).join("");
  return `<svg class="fqmap" viewBox="${vb.join(" ")}" role="img" aria-label="Carte du quartier"><rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="#eef2f6"/>${others.map(o=>`<path d="${o.d}" fill="#fff" stroke="#c9d1db" stroke-width="${m*0.004}"/>`).join("")}<path d="${t.d}" fill="#2f47b3" fill-opacity=".22" stroke="#2f47b3" stroke-width="${m*0.01}"/>${mk}</svg>`;}
-function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const sf=bienSuf(b0), b=Object.assign({},b0,{vu:sf?vu("v",b0.ville,sf):null}); const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville), t=r.t, lv=priceLevels(b), ph=bienPhoto(b,720,400), V=b.visite||{}, ck=V.check||{};
+function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; if(document.getElementById("fichePanel").hidden) FOPENER=document.activeElement; const sf=bienSuf(b0), b=Object.assign({},b0,{vu:sf?vu("v",b0.ville,sf):null}); const r=calcBien(b), x=r.x, g=targetsFor(b), [bc,bt]=bank(x.ratio), c=C.find(v=>v.k===b.ville), t=r.t, lv=priceLevels(b), ph=bienPhoto(b,720,400), V=b.visite||{}, ck=V.check||{};
  const A=ADS[b.ville], sec=t?sectorOf(t):(sf&&findAd("v",b.ville,sf)||[])[1], d=t?demandOf(t):null;
  const rents=A&&sec?A.ads.filter(a=>a[1]===sec).sort((p,q)=>r22(p)-r22(q)).slice(0,5):[], sales=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec&&a[3]!==sf).sort((p,q)=>p[2]/p[0]-q[2]/q[0]).slice(0,5):[], sold=sec?soldList(b.ville,sec).slice(0,3):[];
  const qp=t&&t.price?studioPm2(b.ville,t,b.type||typeFor(b.surface,b.pieces)):null, fg=t?fgPct(t.dpe):null, nd=t?t.dpe.reduce((a,z)=>a+z,0):0;
@@ -2466,9 +2467,15 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; const 
  <div class="fbox"><h2>Notes</h2><div class="flines"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
  <p class="fsrc">Estimations calculées par « Où acheter notre studio ? » avec nos réglages (apport ${eur(H.apport)}, taux ${pct(H.taux,2)} sur ${H.duree} ans, ${REG[x.regime]}). Pas un conseil financier.</p>`;
  document.getElementById("fichePanel").hidden=false; document.body.classList.add("noscroll","fiche-on"); document.getElementById("fichePanel").scrollTop=0;}
-function closeFiche(){document.getElementById("fichePanel").hidden=true; document.body.classList.remove("fiche-on"); if(!VISIT) document.body.classList.remove("noscroll");}
+function closeFiche(){const op=FOPENER; FOPENER=null; setTimeout(()=>{if(op&&op.isConnected) try{op.focus();}catch(_){}},0); document.getElementById("fichePanel").hidden=true; document.body.classList.remove("fiche-on"); if(!VISIT) document.body.classList.remove("noscroll");}
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest(".fclose,.fprint"); if(!t) return; if(t.classList.contains("fclose")) closeFiche(); else {try{window.print();}catch(_){} setTimeout(()=>toast("Si rien ne s'ouvre (version Claude), utilisez la page GitHub pour imprimer ou enregistrer en PDF."),400);}});
 addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("fichePanel").hidden){e.stopImmediatePropagation(); closeFiche();}},true);
+
+/* fenêtres (visite, fiche à emporter) : la touche Tab reste dans la fenêtre du dessus */
+addEventListener("keydown",e=>{if(e.key!=="Tab") return; const top=["fichePanel","visitPanel"].map(i=>document.getElementById(i)).find(d=>d&&!d.hidden); if(!top) return;
+ const f=[...top.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select,textarea,summary,[tabindex]:not([tabindex="-1"])')].filter(x=>x.offsetParent!==null); if(!f.length) return;
+ const a=f[0], z=f[f.length-1], cur=document.activeElement;
+ if(!top.contains(cur)){e.preventDefault(); a.focus();} else if(e.shiftKey&&cur===a){e.preventDefault(); z.focus();} else if(!e.shiftKey&&cur===z){e.preventDefault(); a.focus();}},true);
 
 /* ---------- fiche complète d'un de nos biens (panneau de droite / feuille du bas) ---------- */
 function bienSuf(b){return (b.url||"").startsWith(VTURL)?b.url.slice(VTURL.length).split("?")[0]:null;}
