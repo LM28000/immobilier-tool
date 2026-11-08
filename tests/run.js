@@ -75,6 +75,16 @@ async function mlRoutes(p) {
       await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '20000'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(400);
       ok(`v2 ${dev} · hypothèse modifiée et appliquée`, await p.evaluate(() => H.apport === 20000));
       await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '15000'; i.dispatchEvent(new Event('change', {bubbles: true})); });
+      // mode « Tous » : studios, T2 et T3 ensemble, chaque annonce avec son type ; une annonce T2 s'ouvre avec les réglages T2
+      if (dev === 'ordi') {
+        await p.evaluate(() => document.querySelector('[data-v2tous]').click()); await p.waitForTimeout(2500);
+        await p.evaluate(() => document.querySelector('[data-v2tab="annonces"]').click()); await p.waitForTimeout(600);
+        ok('v2 · mode Tous : les trois types ensemble', await p.evaluate(() => { const t = new Set([...document.querySelectorAll('#v2p-annonces .v2sub')].map(e => e.textContent.trim()).filter(x => /^(Studio|T2|T3)$/.test(x))); return t.size >= 2 && /annonces/.test(document.querySelector('#v2p-annonces .v2sub').textContent); }));
+        await p.evaluate(() => { const r = [...document.querySelectorAll('#v2p-annonces [data-v2open]')].find(e => /\bT2\b/.test(e.innerText)); if (r) r.click(); }); await p.waitForTimeout(800);
+        ok('v2 · mode Tous : une annonce T2 s\'ouvre en T2', await p.evaluate(() => H.type === 't2' && /T2/.test(document.querySelector('#v2fiche .v2ft').textContent)));
+        await p.evaluate(() => { document.querySelector('[data-v2close]').click(); document.querySelector('#v2type [data-type="studio"]').click(); }); await p.waitForTimeout(1200);
+        ok('v2 · retour à un type', await p.evaluate(() => H.type === 'studio' && document.querySelector('[data-v2tous]').getAttribute('aria-pressed') === 'false'));
+      }
       ok(`v2 ${dev} · sans erreur`, errs.length === 0, errs.slice(0, 3).join(' | '));
       await c.close(); } }
   // v2 · réglages communs à deux : deux navigateurs (deux personnes), une liste commune simulée (Supabase en mémoire)

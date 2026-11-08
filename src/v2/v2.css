@@ -210,3 +210,7 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2as>b{font-size:14px}
 .v2as .v2grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 @media (max-width:860px){.v2assoc{grid-template-columns:1fr}}
+/* type d'une annonce quand les types sont mélangés (mode « Tous ») */
+.v2ty{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.03em;background:var(--sunk);color:var(--fg);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
+/* téléphone étroit : le nom de l'app laisse la place au type de bien (quatre boutons) et aux critères */
+@media (max-width:480px){.v2brand{display:none}.v2top .v2seg button{padding:6px 9px}.v2top{gap:6px}}

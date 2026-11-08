@@ -1,5 +1,5 @@
 /* ---------- nos biens (liste partagée) ---------- */
-let BIENS=[], DB=null, USER=null;
+let BIENS=[], DB=null, USER=null, BIENSJ="";
 /* chaque bien lu passe par ici : types vérifiés, listes blanches, longueurs bornées. Une ligne abîmée reste visible (« bien illisible ») pour pouvoir la supprimer. */
 function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à voir | "n" passer} */ const votesOf=v=>{if(!v||typeof v!=="object"||Array.isArray(v)) return undefined; const o={}; Object.entries(v).slice(0,6).forEach(([k,x])=>{k=String(k).slice(0,30); if(k&&["o","m","n"].includes(x)) o[k]=x;}); return Object.keys(o).length?o:undefined;};
  const r=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{}, num=v=>{v=+v; return isFinite(v)?v:0;}, str=(v,n)=>typeof v==="string"?v.slice(0,n):"", obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:undefined;
@@ -53,7 +53,8 @@ function localDB(){const K="biens-local"; let mem=[]; const load=()=>{try{return
   hook(db);
  }).catch(()=>{clearTimeout(timer); if(!DB){DB=localDB(); hook(DB);}});
  function hook(db){
-  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=(typeof regTake==="function"?regTake(snap.docs):snap.docs).map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; if(typeof VC!=="undefined") VC.clear(); if(VISIT) renderVisit(); document.dispatchEvent(new Event("biens"));},
+  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=(typeof regTake==="function"?regTake(snap.docs):snap.docs).map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; const bj=JSON.stringify(BIENS); if(bj===BIENSJ) return; BIENSJ=bj;   /* relecture sans changement : rien à refaire */
+   if(typeof VC!=="undefined") VC.clear(); if(VISIT) renderVisit(); document.dispatchEvent(new Event("biens"));},
    e=>{clearTimeout(timer); st.textContent="Lecture de la liste impossible ("+(e&&e.code||"erreur")+").";});
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();
