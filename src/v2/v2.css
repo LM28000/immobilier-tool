@@ -141,3 +141,8 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .v2in{padding-top:14px}
 }
 @media (prefers-reduced-motion:no-preference){.v2fiche:not([hidden]){animation:v2in .16s ease-out}@keyframes v2in{from{opacity:.4;transform:translateX(16px)}to{opacity:1;transform:none}}}
+/* réglages : valeurs différentes du défaut, et d'où viennent les réglages communs */
+.v2f .v2chg input{border-color:var(--accent);background:var(--accent-soft)}
+.v2f .v2chg label{color:var(--accent)}
+.v2def{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.v2regnote{margin-top:-6px}

@@ -7,12 +7,13 @@
    - revente : plus-value des particuliers, 19 % + 17,2 %, abattements pour durée de détention ;
      depuis 2025, les amortissements du bâti déduits au réel sont réintégrés dans la plus-value. */
 const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5};
-Object.assign(H,{garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true});
+const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true};
+Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
 (function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){
   if(!s.v2){if(s.tmiB===11) delete s.tmiB; if(s.compta===300) delete s.compta; if(s.cfe===200) delete s.cfe;} // anciens réglages par défaut
   ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});}
  const m=localStorage.getItem("chiffres"); if(m) H.net=m!=="brut";}catch(_){}})();
-function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta,v2:1}));}catch(_){}}
+function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
 const insRate=()=>(H.assurA*H.quotA+H.assurB*H.quotB)/100;          // % du capital par an
 const taxRate=()=>((H.tmiA+FISC.ps)*H.partA+(H.tmiB+FISC.ps)*(100-H.partA))/1e4; // taux moyen du foyer « à deux »
 
@@ -32,7 +33,7 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
 function calc(c){
  const S=c._s||{}, pe=H.pess, fa=H.fav&&!pe; /* fa : scénario favorable, miroir du prudent (loyer +5 %, ½ mois vide de moins, prix +0,5 %/an) */
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
- const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
+ const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeVals(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const meu=c.meubles!=null?c.meubles:D.meubles, base=bien*(1+H.notaire/100)+meu+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;

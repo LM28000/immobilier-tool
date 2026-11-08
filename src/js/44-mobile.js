@@ -299,7 +299,7 @@ document.addEventListener("click",e=>{if(!MOBON) return; const t=e.target.closes
  if(d.mcity!==undefined){mPushEl(cityName(SEL),document.getElementById("detail"),{back:"Carte"}); mDraw("renderDetail"); return;}
  if(d.msearch!==undefined){mSearch(); return;}
  if(d.msim){const [ck,code]=d.msim.split("|"); simHere(ck,code); mGo("addbien"); return;}
- if(d.mstep){const [k,s]=d.mstep.split("|"), [id,st,lo,hi,dec]=STEP[k]; const v=Math.round(Math.min(hi,Math.max(lo,H[k]+st*(+s)))*Math.pow(10,dec))/Math.pow(10,dec); H[k]=v; const el=document.getElementById(id); if(el) el.value=v; if(HYPK.includes(k)) saveHyp(); render(); if(MS==="budget") mBudgetRender(); return;}
+ if(d.mstep){const [k,s]=d.mstep.split("|"), [id,st,lo,hi,dec]=STEP[k]; const v=Math.round(Math.min(hi,Math.max(lo,H[k]+st*(+s)))*Math.pow(10,dec))/Math.pow(10,dec); H[k]=v; const el=document.getElementById(id); if(el) el.value=v; if(HYPK.includes(k)) saveHyp(); else if(TYK.includes(k)) saveTyv(k); render(); if(MS==="budget") mBudgetRender(); return;}
  if(d.mdur){mSet("f-duree",+d.mdur); H.duree=+d.mdur; render(); return;}
  if(d.mtheme){const cur=document.documentElement.getAttribute("data-theme"); if(cur!==d.mtheme) document.getElementById("themeBtn").click(); mPlusRender(); return;}},true);
 document.addEventListener("change",e=>{if(!MOBON) return; const t=e.target;

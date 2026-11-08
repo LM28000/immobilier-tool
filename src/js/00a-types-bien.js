@@ -13,6 +13,14 @@ const PART_PROPRIO=0.35, CH_LOC={studio:45,t2:50,t3:75};
 /* règles de départ selon le type (modifiables ensuite dans les hypothèses) :
    meubles 1 500 € + 1 500 € par pièce · petits travaux 105 €/m² · copropriété, part propriétaire = 35 % des charges médianes · charges du locataire mesurées */
 function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+1500*T.p,travaux:Math.round(105*T.surf/50)*50,copro:Math.round(PART_PROPRIO*(25+1.6*T.surf)),chLoc:CH_LOC[tyKey(k)]};}
+/* valeurs du type changées à la main (surface, meubles, travaux, copro, charges du locataire) : elles remplacent les règles de départ
+   pour ce type, sont gardées dans ce navigateur et communes à deux avec la liste commune (13-reglages-communs.js) */
+const TYK=["surface","meubles","travaux","copro","chLoc"];
+let TYV={}; try{const t=JSON.parse(localStorage.getItem("tyv")||"null"); if(t&&typeof t==="object"&&!Array.isArray(t)) TYV=t;}catch(_){}
+function typeVals(k){const d=typeDefaults(k), o=TYV[tyKey(k)]||{}; TYK.forEach(f=>{if(typeof o[f]==="number"&&isFinite(o[f])) d[f]=o[f];}); return d;}
+function saveTyvLocal(){try{localStorage.setItem("tyv",JSON.stringify(TYV));}catch(_){}}
+function saveTyv(k){const t=tyKey(H.type), d=typeDefaults(t), o=Object.assign({},TYV[t]||{}); if(H[k]===d[k]) delete o[k]; else o[k]=H[k];
+ if(Object.keys(o).length) TYV[t]=o; else delete TYV[t]; saveTyvLocal(); if(typeof regPush==="function") regPush();}
 /* type d'un bien : ses pièces ; à défaut, sa surface */
 function typeFor(surface,pieces){pieces=+pieces||0; if(pieces) return pieces>=3?"t3":pieces===2?"t2":"studio"; const s=+surface||22; return s<=30?"studio":s<=50?"t2":"t3";}
 /* libellés : « studio », « T2 »… et le pluriel avec majuscule */

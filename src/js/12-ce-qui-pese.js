@@ -16,7 +16,7 @@ const PW_CHAMPS=["travaux","meubles","loyer","copro","tf"];
 const r50=v=>Math.round(v/50)*50;
 
 function valeursBien(b,ty){
- ty=ty||b.type||typeFor(+b.surface||22,b.pieces); const T=tyOf(ty), D=ty===H.type?H:Object.assign({},H,typeDefaults(ty)), S=+b.surface||T.surf;
+ ty=ty||b.type||typeFor(+b.surface||22,b.pieces); const T=tyOf(ty), D=ty===H.type?H:Object.assign({},H,typeVals(ty)), S=+b.surface||T.surf;
  const suf=b.kind==="v"?b.suf:(b.url&&typeof bienSuf==="function"?bienSuf(b):null), fx=suf&&typeof ficx==="function"?ficx(suf):null;
  const ia=fx&&typeof lueIA==="function"?lueIA(fx):{loyer:0,travaux:0,tf:0}, raw=(fx&&fx.ia)||{}, fl=(fx&&fx.fl)||[], dpe=b.dpe||(fx&&fx.dpe)||"";
  const typed=(v,...annonce)=>+v>0&&!annonce.some(a=>a>0&&Math.round(+v)===Math.round(a));
@@ -45,7 +45,7 @@ function avecSaisies(vb){const ex=typeof bienOf==="function"?bienOf(vb.url):null
 /* le bloc : une ligne par valeur, avec sa provenance et son poids (écart de rendement pour un pas donné) */
 function pwKey(b){const ex=b.id?null:(b.bid||null); return b.id?"b|"+b.id:ex?"b|"+ex:"v|"+b.ville+"|"+(b.kind==="v"?b.suf:bienSuf(b)||"");}
 function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) return "";
- const ty=b.type||typeFor(+b.surface||22,b.pieces), D=ty===H.type?H:Object.assign({},H,typeDefaults(ty));
+ const ty=b.type||typeFor(+b.surface||22,b.pieces), D=ty===H.type?H:Object.assign({},H,typeVals(ty));
  const d=patch=>{const y=calcBien(Object.assign({},b,patch)).x; return y.irr==null?null:y.irr-x.irr;};
  const loyCC=V.loyer.v||Math.round(x.rentHC+D.chLoc), tfAn=V.tf.v||Math.round(x.tf*12);
  const pt=v=>v==null?"":`${v>0?"+":"−"}${fr(Math.abs(v),1)} pt`;

@@ -290,6 +290,57 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '15000'; i.dispatchEvent(new Event('change', {bubbles: true})); });
       ok(`v2 ${dev} · sans erreur`, errs.length === 0, errs.slice(0, 3).join(' | '));
       await c.close(); } }
+  // v2 · réglages communs à deux : deux navigateurs (deux personnes), une liste commune simulée (Supabase en mémoire)
+  { const fs = require('fs'), {URL: U} = require('url'), LJ2 = process.env.LEAFLET_JS || path.join(__dirname, 'vendor/leaflet-1.9.4.js'), URL2 = 'file://' + path.resolve(__dirname, '../dist/v2-test.html');
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+    const rows = []; let n = 0; const CORS = {'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*'};
+    const sb = async r => { const q = r.request(), u = new U(q.url()), m = q.method(), id = (u.searchParams.get('id') || '').replace(/^eq\./, ''), js = (s, b) => r.fulfill({status: s, headers: CORS, contentType: 'application/json', body: b});
+      if (m === 'OPTIONS') return r.fulfill({status: 204, headers: CORS, body: ''});
+      if (u.pathname.endsWith('/annonces')) return js(200, '[]');
+      if (m === 'GET') return js(200, JSON.stringify(id ? rows.filter(x => x.id === id) : rows.slice().sort((a, b) => b.created_at.localeCompare(a.created_at))));
+      if (m === 'POST') { rows.push({id: 'r' + (++n), data: JSON.parse(q.postData()).data, created_at: new Date(Date.now() + n).toISOString()}); return js(201, ''); }
+      if (m === 'PATCH') { const x = rows.find(x => x.id === id); if (x) x.data = JSON.parse(q.postData()).data; return js(204, ''); }
+      if (m === 'DELETE') { const i = rows.findIndex(x => x.id === id); if (i >= 0) rows.splice(i, 1); return js(204, ''); }
+      return js(405, ''); };
+    const open = async nom => { const c = await b.newContext({viewport: {width: 1440, height: 900}});
+      await c.addInitScript(nom => { try { localStorage.setItem('biens-code', 'groupe-de-test-commun'); localStorage.setItem('biens-nom', nom); } catch (_) {} }, nom);
+      const p = await c.newPage(), errs = []; p.on('pageerror', e => errs.push(e.message));
+      await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
+      await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
+      await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => fs.existsSync(LJ2) ? r.fulfill({body: fs.readFileSync(LJ2), contentType: 'application/javascript'}) : r.abort());
+      await p.route('**/rest/v1/**', sb);
+      await p.goto(URL2); await p.waitForTimeout(2500); return {c, p, errs}; };
+    const tick = p => p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    const reg = () => (rows.find(x => x.data && x.data.kind === 'reglages') || {}).data || null;
+    const A = await open('Louis');
+    ok('v2 commun · premier lancement : critères demandés', await A.p.evaluate(() => !!document.querySelector('.v2dlg')));
+    await A.p.evaluate(() => { const i = document.getElementById('v2cB'); i.value = '80000'; i.dispatchEvent(new Event('input', {bubbles: true})); document.querySelector('.v2dlg button[type=submit]').click(); });
+    await A.p.waitForTimeout(500);
+    await A.p.evaluate(() => { document.querySelector('[data-v2tab="budget"]').click(); }); await A.p.waitForTimeout(300);
+    await A.p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '21000'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await A.p.waitForTimeout(1800);
+    ok('v2 commun · une seule ligne de réglages, avec apport et critères', rows.filter(x => x.data.kind === 'reglages').length === 1 && reg() && reg().hyp.apport === 21000 && reg().crit && reg().crit.budget === 80000, JSON.stringify(reg() && {hyp: reg().hyp.apport, crit: reg().crit}));
+    const B = await open('Camille');
+    ok('v2 commun · l\'autre reçoit les réglages', await B.p.evaluate(() => H.apport === 21000 && critV().budget === 80000));
+    ok('v2 commun · pas de critères redemandés à l\'autre', await B.p.evaluate(() => !document.querySelector('.v2dlg')));
+    ok('v2 commun · la ligne des réglages n\'est pas un bien', await B.p.evaluate(() => BIENS.length === 0));
+    await B.p.evaluate(() => { document.querySelector('[data-v2tab="budget"]').click(); }); await B.p.waitForTimeout(300);
+    await B.p.evaluate(() => { const i = document.getElementById('v2h-taux'); i.value = '3.5'; i.dispatchEvent(new Event('change', {bubbles: true})); const m = document.getElementById('v2h-meubles'); m.value = '4000'; m.dispatchEvent(new Event('change', {bubbles: true})); }); await B.p.waitForTimeout(1800);
+    await tick(A.p); await A.p.waitForTimeout(1200);
+    ok('v2 commun · un changement de l\'autre arrive (taux, meubles du type)', await A.p.evaluate(() => H.taux === 3.5 && H.meubles === 4000), await A.p.evaluate(() => H.taux + ' / ' + H.meubles));
+    ok('v2 commun · message nommant qui a modifié', await A.p.evaluate(() => /Camille a modifié les réglages communs/.test((document.getElementById('toast') || {}).textContent || '')));
+    await A.p.reload(); await A.p.waitForTimeout(2500);
+    ok('v2 commun · meubles du type gardés après rechargement', await A.p.evaluate(() => H.meubles === 4000));
+    // offre : suivre une annonce puis choisir un prix, l'autre le voit
+    await A.p.evaluate(() => document.querySelector('[data-v2tab="annonces"]').click()); await A.p.waitForTimeout(500);
+    await A.p.evaluate(() => document.querySelector('#v2p-annonces [data-v2star]').click()); await A.p.waitForTimeout(1500);
+    await A.p.evaluate(() => document.querySelector('#v2p-annonces [data-v2open]').click()); await A.p.waitForTimeout(600);
+    await A.p.evaluate(() => document.querySelector('#v2fiche [data-v2ft="achat"]').click()); await A.p.waitForTimeout(300);
+    await A.p.evaluate(() => { const s = document.getElementById('v2off'); s.value = '90'; s.dispatchEvent(new Event('input', {bubbles: true})); s.dispatchEvent(new Event('change', {bubbles: true})); }); await A.p.waitForTimeout(1500);
+    const off = (rows.find(x => x.data && x.data.kind !== 'reglages' && x.data.visite) || {data: {visite: {}}}).data.visite.offre;
+    await tick(B.p); await B.p.waitForTimeout(1200);
+    ok('v2 commun · offre enregistrée pour les deux', off > 0 && await B.p.evaluate(o => BIENS.length === 1 && +BIENS[0].visite.offre === o, off), String(off));
+    ok('v2 commun · sans erreur', !A.errs.length && !B.errs.length, A.errs.concat(B.errs).slice(0, 3).join(' | '));
+    await A.c.close(); await B.c.close(); }
   await b.close();
   let bad = 0; for (const [name, pass, info] of res) { if (!pass) bad++; console.log((pass ? '✓ ' : '✗ ') + name + (pass || !info ? '' : '  → ' + info)); }
   console.log(`\n${res.length - bad}/${res.length} tests réussis`); process.exit(bad ? 1 : 0);

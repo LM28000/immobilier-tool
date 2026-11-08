@@ -985,6 +985,11 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .v2in{padding-top:14px}
 }
 @media (prefers-reduced-motion:no-preference){.v2fiche:not([hidden]){animation:v2in .16s ease-out}@keyframes v2in{from{opacity:.4;transform:translateX(16px)}to{opacity:1;transform:none}}}
+/* réglages : valeurs différentes du défaut, et d'où viennent les réglages communs */
+.v2f .v2chg input{border-color:var(--accent);background:var(--accent-soft)}
+.v2f .v2chg label{color:var(--accent)}
+.v2def{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.v2regnote{margin-top:-6px}
 </style>
 
 <div class="wrap">
@@ -1230,14 +1235,15 @@ const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]]
  [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
  [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
 const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:45,vacance:1,copro:21,autres:48,grosTrav:6,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,pess:false,vacQ:true,dvf:true};
+const HDEF=Object.assign({},H);   /* valeurs de départ (bouton « valeurs par défaut ») */
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
  ["copro","Copro (part proprio)","€/mois",1],["grosTrav","Gros travaux copro (provision)","€/m²/an",1],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
  ["salaires","Revenus nets du foyer","€/mois",50],["pretEtud","Autres crédits en cours","€/mois",10],["fraisVente","Frais à la revente","%",0.5]];
-/* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) */
+/* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) ; communs à deux avec la liste commune (13-reglages-communs.js) */
 const HYPK=["apport","duree","notaire","grosTrav","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
 let HYPOK=false; try{const s=JSON.parse(localStorage.getItem("hyp")||"null"); if(s&&typeof s==="object"){if(!s.v2&&s.fraisVente===5) delete s.fraisVente; /* ancienne valeur par défaut (5 %, novembre 2026), trop prudente */ HYPK.forEach(k=>{if(typeof s[k]==="number"&&isFinite(s[k])) H[k]=s[k];}); HYPOK=s.salaires!=null;}}catch(_){}
-function saveHyp(){try{const s={v2:1}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true;}
+function saveHyp(){try{const s={v2:1}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true; if(typeof regPush==="function") regPush();}
 let SEL="lemans";
 
 const eur=v=>Math.round(v).toLocaleString("fr-FR")+" €";
@@ -1276,6 +1282,14 @@ const PART_PROPRIO=0.35, CH_LOC={studio:45,t2:50,t3:75};
 /* règles de départ selon le type (modifiables ensuite dans les hypothèses) :
    meubles 1 500 € + 1 500 € par pièce · petits travaux 105 €/m² · copropriété, part propriétaire = 35 % des charges médianes · charges du locataire mesurées */
 function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+1500*T.p,travaux:Math.round(105*T.surf/50)*50,copro:Math.round(PART_PROPRIO*(25+1.6*T.surf)),chLoc:CH_LOC[tyKey(k)]};}
+/* valeurs du type changées à la main (surface, meubles, travaux, copro, charges du locataire) : elles remplacent les règles de départ
+   pour ce type, sont gardées dans ce navigateur et communes à deux avec la liste commune (13-reglages-communs.js) */
+const TYK=["surface","meubles","travaux","copro","chLoc"];
+let TYV={}; try{const t=JSON.parse(localStorage.getItem("tyv")||"null"); if(t&&typeof t==="object"&&!Array.isArray(t)) TYV=t;}catch(_){}
+function typeVals(k){const d=typeDefaults(k), o=TYV[tyKey(k)]||{}; TYK.forEach(f=>{if(typeof o[f]==="number"&&isFinite(o[f])) d[f]=o[f];}); return d;}
+function saveTyvLocal(){try{localStorage.setItem("tyv",JSON.stringify(TYV));}catch(_){}}
+function saveTyv(k){const t=tyKey(H.type), d=typeDefaults(t), o=Object.assign({},TYV[t]||{}); if(H[k]===d[k]) delete o[k]; else o[k]=H[k];
+ if(Object.keys(o).length) TYV[t]=o; else delete TYV[t]; saveTyvLocal(); if(typeof regPush==="function") regPush();}
 /* type d'un bien : ses pièces ; à défaut, sa surface */
 function typeFor(surface,pieces){pieces=+pieces||0; if(pieces) return pieces>=3?"t3":pieces===2?"t2":"studio"; const s=+surface||22; return s<=30?"studio":s<=50?"t2":"t3";}
 /* libellés : « studio », « T2 »… et le pluriel avec majuscule */
@@ -1293,12 +1307,13 @@ const tyPl=k=>{const s=tyOf(k||H.type).pl; return s.charAt(0).toUpperCase()+s.sl
    - revente : plus-value des particuliers, 19 % + 17,2 %, abattements pour durée de détention ;
      depuis 2025, les amortissements du bâti déduits au réel sont réintégrés dans la plus-value. */
 const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5};
-Object.assign(H,{garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true});
+const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true};
+Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
 (function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){
   if(!s.v2){if(s.tmiB===11) delete s.tmiB; if(s.compta===300) delete s.compta; if(s.cfe===200) delete s.cfe;} // anciens réglages par défaut
   ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});}
  const m=localStorage.getItem("chiffres"); if(m) H.net=m!=="brut";}catch(_){}})();
-function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta,v2:1}));}catch(_){}}
+function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
 const insRate=()=>(H.assurA*H.quotA+H.assurB*H.quotB)/100;          // % du capital par an
 const taxRate=()=>((H.tmiA+FISC.ps)*H.partA+(H.tmiB+FISC.ps)*(100-H.partA))/1e4; // taux moyen du foyer « à deux »
 
@@ -1318,7 +1333,7 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
 function calc(c){
  const S=c._s||{}, pe=H.pess, fa=H.fav&&!pe; /* fa : scénario favorable, miroir du prudent (loyer +5 %, ½ mois vide de moins, prix +0,5 %/an) */
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
- const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
+ const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeVals(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const meu=c.meubles!=null?c.meubles:D.meubles, base=bien*(1+H.notaire/100)+meu+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
@@ -1834,7 +1849,7 @@ function render(){
 const hf=document.getElementById("hypFields");
 hypDefs.forEach(([k,l,u,st])=>{const id="f-"+k, lab=document.createElement("label"); lab.className="f"; lab.htmlFor=id;
  lab.innerHTML=`${l}<span class="inp"><input id="${id}" type="number" inputmode="decimal" step="${st}" value="${H[k]}"><span>${u}</span></span>`;
- lab.querySelector("input").addEventListener("input",e=>{const v=parseFloat(e.target.value); if(!isNaN(v)&&isFinite(v)){H[k]=k==="duree"?Math.min(30,Math.max(5,v)):Math.max(0,v); if(HYPK.includes(k)) saveHyp(); render();}}); hf.appendChild(lab);});
+ lab.querySelector("input").addEventListener("input",e=>{const v=parseFloat(e.target.value); if(!isNaN(v)&&isFinite(v)){H[k]=k==="duree"?Math.min(30,Math.max(5,v)):Math.max(0,v); if(HYPK.includes(k)) saveHyp(); else if(TYK.includes(k)) saveTyv(k); render();}}); hf.appendChild(lab);});
 if(!HYPOK){const sl=document.querySelector("#setPanel .sliders"); if(sl) sl.insertAdjacentHTML("afterend",`<p class="warnline" id="hypNote">Revenus, apport et crédits en cours sont des valeurs d'exemple : entrez les vôtres dans « Plus d'hypothèses ». Ils restent dans ce navigateur, pas dans le code publié.</p>`);}
 document.getElementById("f-pess").addEventListener("change",e=>{H.pess=e.target.checked;render();});
 
@@ -2140,7 +2155,7 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
   hook(db);
  }).catch(()=>{clearTimeout(timer); if(!DB){DB=localDB(); hook(DB);}});
  function hook(db){
-  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; if(typeof VC!=="undefined") VC.clear(); renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
+  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=(typeof regTake==="function"?regTake(snap.docs):snap.docs).map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; if(typeof VC!=="undefined") VC.clear(); renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
    e=>{clearTimeout(timer); st.textContent="Lecture de la liste impossible ("+(e&&e.code||"erreur")+").";});
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();
@@ -2170,7 +2185,7 @@ const PW_CHAMPS=["travaux","meubles","loyer","copro","tf"];
 const r50=v=>Math.round(v/50)*50;
 
 function valeursBien(b,ty){
- ty=ty||b.type||typeFor(+b.surface||22,b.pieces); const T=tyOf(ty), D=ty===H.type?H:Object.assign({},H,typeDefaults(ty)), S=+b.surface||T.surf;
+ ty=ty||b.type||typeFor(+b.surface||22,b.pieces); const T=tyOf(ty), D=ty===H.type?H:Object.assign({},H,typeVals(ty)), S=+b.surface||T.surf;
  const suf=b.kind==="v"?b.suf:(b.url&&typeof bienSuf==="function"?bienSuf(b):null), fx=suf&&typeof ficx==="function"?ficx(suf):null;
  const ia=fx&&typeof lueIA==="function"?lueIA(fx):{loyer:0,travaux:0,tf:0}, raw=(fx&&fx.ia)||{}, fl=(fx&&fx.fl)||[], dpe=b.dpe||(fx&&fx.dpe)||"";
  const typed=(v,...annonce)=>+v>0&&!annonce.some(a=>a>0&&Math.round(+v)===Math.round(a));
@@ -2199,7 +2214,7 @@ function avecSaisies(vb){const ex=typeof bienOf==="function"?bienOf(vb.url):null
 /* le bloc : une ligne par valeur, avec sa provenance et son poids (écart de rendement pour un pas donné) */
 function pwKey(b){const ex=b.id?null:(b.bid||null); return b.id?"b|"+b.id:ex?"b|"+ex:"v|"+b.ville+"|"+(b.kind==="v"?b.suf:bienSuf(b)||"");}
 function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) return "";
- const ty=b.type||typeFor(+b.surface||22,b.pieces), D=ty===H.type?H:Object.assign({},H,typeDefaults(ty));
+ const ty=b.type||typeFor(+b.surface||22,b.pieces), D=ty===H.type?H:Object.assign({},H,typeVals(ty));
  const d=patch=>{const y=calcBien(Object.assign({},b,patch)).x; return y.irr==null?null:y.irr-x.irr;};
  const loyCC=V.loyer.v||Math.round(x.rentHC+D.chLoc), tfAn=V.tf.v||Math.round(x.tf*12);
  const pt=v=>v==null?"":`${v>0?"+":"−"}${fr(Math.abs(v),1)} pt`;
@@ -2235,6 +2250,83 @@ document.addEventListener("change",async e=>{const i=e.target.closest&&e.target.
  const old=BIENS.find(x=>x.url===VTURL+suf); if(old){await updBien(old.id,Object.assign({[f]:v},isOut(old)?{statut:"à voir",short:true}:{})); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  bien[f]=v; try{await DB.collection("biens").add(bien); toast(`« ${vb.titre} » ajouté à nos biens avec cette valeur.`);}catch(err){toast("Enregistrement impossible ("+(err&&err.code||"erreur")+").");}});
+
+/* ---------- réglages communs à deux ----------
+   Hypothèses, financement, valeurs par type de bien et critères de recherche : une seule version pour le groupe, gardée dans une
+   ligne spéciale de la liste commune (data.kind = "reglages", même table que les biens). Elle profite de ce que la liste fait déjà :
+   relecture toutes les 20 secondes, fusion des modifications faites en même temps (merge3), copie hors ligne.
+   Sans liste commune, rien ne change : les réglages restent dans ce navigateur.
+   Restent à chacun : le scénario affiché (prudent, central, favorable) et le type de bien regardé, qui sont des façons de regarder.
+   Au premier passage, la ligne est créée avec les réglages de la personne qui ouvre ; l'autre reçoit ensuite ces valeurs et un message
+   dit lesquelles ont remplacé les siennes. Une ligne créée avec les valeurs d'exemple (exemple: true) ne remplace pas de vraies
+   valeurs : la personne qui en a les envoie à la place. */
+const FINK=["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta","nomA","nomB"];
+const CRIT0={budget:90000,rmin:3,bank:true};
+let NOSCRIT=null; try{const c=JSON.parse(localStorage.getItem("crit")||"null"); if(c&&typeof c==="object"&&!Array.isArray(c)) NOSCRIT=c;}catch(_){}
+let REGL=null, REGREADY=false, REGNEW=false, REGT=0, REGIN=false;
+const critV=()=>Object.assign({},CRIT0,NOSCRIT||{});
+const regShared=()=>!!(typeof DB!=="undefined"&&DB&&!DB.local);
+function regLab(k){const L={surcote:"prix payé vs prix moyen",loyerAdj:"loyer obtenu",taux:"taux du crédit",tmiA:"tranche d'impôt 1",tmiB:"tranche d'impôt 2",regime:"régime fiscal",
+  assurA:"assurance du prêt 1",assurB:"assurance du prêt 2",quotA:"quotité 1",quotB:"quotité 2",garantie:"garantie du prêt",cfe:"CFE",compta:"comptable",nomA:"prénom 1",nomB:"prénom 2",
+  budget:"budget",rmin:"rendement minimum",bank:"banque"};
+ return L[k]||((hypDefs.find(d=>d[0]===k)||[])[1]||k).toLowerCase();}
+function saveCrit(){try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){} regPush();}
+function regVals(){const hyp={}, fin={}; HYPK.forEach(k=>{hyp[k]=H[k];}); FINK.forEach(k=>{if(H[k]!=null&&H[k]!=="") fin[k]=H[k];});
+ return {hyp,fin,tyv:JSON.parse(JSON.stringify(TYV)),crit:NOSCRIT?Object.assign({},NOSCRIT):null};}
+/* qui a modifié les réglages communs, et quand (onglet Budget) */
+function regInfo(){if(!regShared()) return null; const d=REGL&&REGL.data||{}; return {par:d.par||"",le:d.le||"",pret:REGREADY};}
+
+/* appelé par la liste commune (11-nos-biens.js) à chaque lecture : retire la ligne des réglages et l'applique */
+function regTake(docs){const out=[], R=[];
+ docs.forEach(d=>{let x=null; try{x=d.data();}catch(_){} if(x&&x.kind==="reglages") R.push({id:d.id,data:x}); else out.push(d);});
+ if(!regShared()){if(!REGREADY){REGREADY=true; document.dispatchEvent(new Event("reglages"));} return out;}
+ R.sort((a,b)=>String(a.data.cree||"").localeCompare(String(b.data.cree||"")));
+ /* deux lignes créées en même temps : la plus ancienne fait foi, l'autre est retirée */
+ R.slice(1).forEach(r=>{try{DB.collection("biens").doc(r.id).delete();}catch(_){}});
+ const first=!REGREADY; REGREADY=true;
+ if(R[0]&&first&&R[0].data.exemple===true&&HYPOK){REGL=R[0]; REGNEW=false; regPush();}
+ else if(R[0]){REGL=R[0]; REGNEW=false; regApply(R[0].data,first);
+  if((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)) regPush();}
+ else if(!REGNEW){REGNEW=true; setTimeout(regSend,0);}
+ if(first) document.dispatchEvent(new Event("reglages"));
+ return out;}
+
+function regApply(d,first){const ch=[];
+ const setK=(k,v)=>{if(v==null||(typeof v==="number"&&!isFinite(v))) return; if(H[k]!==v){ch.push(k); H[k]=v;}};
+ REGIN=true;
+ try{
+  if(d.hyp&&typeof d.hyp==="object") HYPK.forEach(k=>{if(typeof d.hyp[k]==="number") setK(k,d.hyp[k]);});
+  if(d.fin&&typeof d.fin==="object") FINK.forEach(k=>{const v=d.fin[k]; if(typeof v==="number"||(typeof v==="string"&&v.length<=40)) setK(k,v);});
+  if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&JSON.stringify(d.tyv)!==JSON.stringify(TYV)){
+   TYV=JSON.parse(JSON.stringify(d.tyv)); saveTyvLocal(); const v=typeVals(H.type); TYK.forEach(k=>setK(k,v[k]));}
+  if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&JSON.stringify(d.crit)!==JSON.stringify(NOSCRIT)){
+   if(NOSCRIT) ["budget","rmin","bank"].forEach(k=>{if(NOSCRIT[k]!==d.crit[k]) ch.push(k);});
+   NOSCRIT={budget:+d.crit.budget||CRIT0.budget,rmin:isFinite(+d.crit.rmin)?+d.crit.rmin:CRIT0.rmin,bank:d.crit.bank!==false};
+   try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){} if(!ch.length) ch.push("");}
+  if(ch.length){saveHyp(); saveFin();}   /* copie locale (REGIN empêche le renvoi) */
+ }finally{REGIN=false;}
+ if(!ch.length) return;
+ [typeof CALCC!=="undefined"&&CALCC,typeof VC!=="undefined"&&VC,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear());
+ if(typeof QBOXK!=="undefined") QBOXK=null;
+ /* champs de l'ancienne interface, remplis une seule fois au départ */
+ ch.forEach(k=>["f-","s-","fin-"].forEach(p=>{const el=k&&document.getElementById(p+k); if(el&&document.activeElement!==el) el.value=H[k];}));
+ const lab=[...new Set(ch.filter(Boolean).map(regLab))], me=myName(), who=d.par&&d.par!==me?d.par:"";
+ if(lab.length) toast(first?`Réglages communs appliqués : ${lab.join(", ")} (vos valeurs étaient différentes).`:`${who?who+" a modifié":"Modifiés"} les réglages communs : ${lab.join(", ")}.`);
+ render();}
+
+/* envoi des réglages (après chaque changement, groupé) */
+function regPush(){if(REGIN||!regShared()) return; clearTimeout(REGT); REGT=setTimeout(regSend,700);}
+async function regSend(){if(!regShared()) return; if(!REGREADY){REGT=setTimeout(regSend,1500); return;}
+ const le=new Date().toISOString(), v=Object.assign({par:myName()||"",le,exemple:REGL?false:!HYPOK},regVals());
+ try{if(REGL) await DB.collection("biens").doc(REGL.id).update(v);
+  else {REGNEW=true; await DB.collection("biens").add(Object.assign({kind:"reglages",cree:le},v));}}
+ catch(e){toast("Réglages non partagés ("+(e&&e.code||"erreur")+") : ils restent dans ce navigateur.");}}
+
+/* revenir aux valeurs de départ (pour vous deux) */
+function regReset(){HYPK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];}); FINK.forEach(k=>{if(k!=="nomA"&&k!=="nomB"&&HDEF[k]!=null) H[k]=HDEF[k];});
+ TYV={}; saveTyvLocal(); Object.assign(H,typeVals(H.type));
+ REGIN=true; try{saveHyp(); saveFin();}finally{REGIN=false;} regPush();
+ [typeof CALCC!=="undefined"&&CALCC,typeof VC!=="undefined"&&VC,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear()); render();}
 
 /* ---------- ventes du type choisi (studios, T2, T3 à vendre) ---------- */
 const VTURL="https://www.bienici.com/annonce/vente/";
@@ -3412,7 +3504,7 @@ document.addEventListener("click",e=>{if(!MOBON) return; const t=e.target.closes
  if(d.mcity!==undefined){mPushEl(cityName(SEL),document.getElementById("detail"),{back:"Carte"}); mDraw("renderDetail"); return;}
  if(d.msearch!==undefined){mSearch(); return;}
  if(d.msim){const [ck,code]=d.msim.split("|"); simHere(ck,code); mGo("addbien"); return;}
- if(d.mstep){const [k,s]=d.mstep.split("|"), [id,st,lo,hi,dec]=STEP[k]; const v=Math.round(Math.min(hi,Math.max(lo,H[k]+st*(+s)))*Math.pow(10,dec))/Math.pow(10,dec); H[k]=v; const el=document.getElementById(id); if(el) el.value=v; if(HYPK.includes(k)) saveHyp(); render(); if(MS==="budget") mBudgetRender(); return;}
+ if(d.mstep){const [k,s]=d.mstep.split("|"), [id,st,lo,hi,dec]=STEP[k]; const v=Math.round(Math.min(hi,Math.max(lo,H[k]+st*(+s)))*Math.pow(10,dec))/Math.pow(10,dec); H[k]=v; const el=document.getElementById(id); if(el) el.value=v; if(HYPK.includes(k)) saveHyp(); else if(TYK.includes(k)) saveTyv(k); render(); if(MS==="budget") mBudgetRender(); return;}
  if(d.mdur){mSet("f-duree",+d.mdur); H.duree=+d.mdur; render(); return;}
  if(d.mtheme){const cur=document.documentElement.getAttribute("data-theme"); if(cur!==d.mtheme) document.getElementById("themeBtn").click(); mPlusRender(); return;}},true);
 document.addEventListener("change",e=>{if(!MOBON) return; const t=e.target;
@@ -3849,7 +3941,7 @@ if(typeof mAdHeavy==="function"){
 
 /* ---------- choix du type de bien (ordinateur et téléphone) ---------- */
 function typeSeg(){return `<span class="seg2 typeseg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${H.type===k}" title="${esc(T.un)}">${T.lab}</button>`).join("")}</span>`;}
-function setType(k,quiet){if(!TYPES[k]) k="studio"; Object.assign(H,{type:k},typeDefaults(k));
+function setType(k,quiet){if(!TYPES[k]) k="studio"; Object.assign(H,{type:k},typeVals(k));
  ["surface","meubles","travaux","copro"].forEach(f=>{const el=document.getElementById("f-"+f); if(el) el.value=H[f];});
  try{localStorage.setItem("type",k);}catch(_){}
  if(typeof RBL!=="undefined") RBL.clear(); if(typeof VC!=="undefined") VC.clear(); if(typeof QBOXK!=="undefined") QBOXK=null;
@@ -3982,8 +4074,14 @@ if(!readHash()) render();
  ["leafInit","leafTry","leafRefresh","leafFly","leafZoomLayers","leafCenterCity","leafSetFull"].forEach(n=>{if(typeof window[n]==="function") window[n]=function(){};});
  document.documentElement.classList.add("v2"); document.body.classList.remove("simple","mob","noscroll","mcarte");
  const $=id=>document.getElementById(id), cv=c=>typeof colv==="function"?colv(c):c, PH=()=>matchMedia("(max-width:860px)").matches;
- const DEF={tab:"carte",city:null,vue:"crit",aview:"tableau",cview:"tableau",sort:["irr",-1],ftab:"bien",n:60,min:false,crit:{budget:90000,rmin:3,bank:true,done:false},loc:{}};
- let V; try{V=Object.assign({},DEF,JSON.parse(localStorage.getItem("v2s")||"{}"));}catch(_){V=Object.assign({},DEF);} V.crit=Object.assign({},DEF.crit,V.crit||{}); V.loc=V.loc||{}; V.sel=null;
+ const DEF={tab:"carte",city:null,vue:"crit",aview:"tableau",cview:"tableau",sort:["irr",-1],ftab:"bien",n:60,min:false};
+ let V; try{V=Object.assign({},DEF,JSON.parse(localStorage.getItem("v2s")||"{}"));}catch(_){V=Object.assign({},DEF);} V.sel=null;
+ /* critères : communs à deux (13-reglages-communs.js) ; ceux d'avant, gardés dans ce navigateur, sont repris une fois */
+ if(!NOSCRIT&&V.crit&&V.crit.done){NOSCRIT={budget:+V.crit.budget||CRIT0.budget,rmin:+V.crit.rmin,bank:V.crit.bank!==false}; try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){}}
+ delete V.crit; delete V.loc;
+ /* scénario affiché : propre à chacun, gardé d'une ouverture à l'autre */
+ try{const s=localStorage.getItem("scn"); if(s){H.pess=s==="prudent"; H.fav=s==="favorable";}}catch(_){}
+ const OFFT={};   /* offre en cours d'essai (curseur), pas encore enregistrée */
  const save=()=>{try{const o=Object.assign({},V); delete o.sel; localStorage.setItem("v2s",JSON.stringify(o));}catch(_){}};
  const scn=()=>H.pess?"prudent":H.fav?"favorable":"central";
  const tyl=()=>TYPES[H.type].lab, typl=()=>TYPES[H.type].pl||tyl();
@@ -3996,7 +4094,7 @@ if(!readHash()) render();
  function feed(){if(FEED) return FEED; FEED=feedList({}).filter(o=>o.x&&o.x.irr!=null&&!horsCalcul(o.a[3])); FEED.forEach(o=>{o.f=ficx(o.a[3])||{}; o.id=o.a[3];}); return FEED;}
  const z3=o=>o.z||(o.z=irr3(o.x)||{});
  const inShort=o=>{const b=bienOf(o.url); return !!(b&&!isOut(b));};
- const pass=o=>o.x.cost<=V.crit.budget&&o.x.irr>=V.crit.rmin&&(!V.crit.bank||bankOk(o.x.ratio));
+ const pass=o=>{const c=critV(); return o.x.cost<=c.budget&&o.x.irr>=c.rmin&&(!c.bank||bankOk(o.x.ratio));};
  const VUES=[["crit","Nos critères",o=>pass(o)],["new","Nouvelles",o=>o.nw&&pass(o)],["drop","Baisses",o=>!!(o.v&&o.v.last)],["short","Shortlist",inShort],["all","Toutes",()=>true]];
  function market(city){let L=feed(); if(city) L=L.filter(o=>o.ck===city); const f=(VUES.find(v=>v[0]===V.vue)||VUES[0])[2]; L=L.filter(f);
   const [k,d]=V.sort, g={irr:o=>o.x.irr,cf:o=>o.x.cf,p:o=>o.a[2],m2:o=>o.a[2]/o.a[0],s:o=>o.a[0],new:o=>o.nw?1:0}[k]||(o=>o.x.irr);
@@ -4085,12 +4183,12 @@ if(!readHash()) render();
  function pAnnonces(){const el=$("v2p-annonces"), L0=market(null), cities=Object.keys(ADS).filter(k=>ADS[k]&&ADS[k].ventes);
   let body;
   if(V.aview==="nuage"){const pts=L0.map(o=>{const z=z3(o), c=cv(colIrr(o.x.irr)); return {x:o.x.cost/1000,y:o.x.irr,lo:z.prudent,hi:z.favorable,c,open:key(o),ring:o.nw,on:V.sel===key(o),shape:inShort(o)?"star":null,t:`${titre(o)} · ${where(o)} · ${keur(o.a[2])} · ${pctS(o.x.irr)}`};});
-   const xs=pts.map(p=>p.x).concat([V.crit.budget/1000]);
-   body=pts.length?nuage({label:"Rendement selon le budget, une pastille par annonce",x:[Math.floor(Math.min(...xs)/10)*10-5,Math.ceil(Math.max(...xs)/10)*10+5],y:[-4,12],xf:v=>v+" k€",yf:v=>fr(v,0)+" %",xl:"budget tout compris",yl:`rendement sur 15 ans · ${scn()}`,pts,lines:[{x:V.crit.budget/1000,t:"budget max"},{y:V.crit.rmin,t:"rendement min."}],zone:{x:V.crit.budget/1000,y:V.crit.rmin,t:"Nos critères"}})+`<div class="v2leg"><span>Trait : du scénario prudent au favorable</span><span>Anneau : nouvelle</span><span>Étoile : shortlist</span><span>Touchez une pastille pour sa fiche</span></div>`:`<p class="v2empty">Aucune annonce dans cette vue.</p>`;}
+   const cr=critV(), xs=pts.map(p=>p.x).concat([cr.budget/1000]);
+   body=pts.length?nuage({label:"Rendement selon le budget, une pastille par annonce",x:[Math.floor(Math.min(...xs)/10)*10-5,Math.ceil(Math.max(...xs)/10)*10+5],y:[-4,12],xf:v=>v+" k€",yf:v=>fr(v,0)+" %",xl:"budget tout compris",yl:`rendement sur 15 ans · ${scn()}`,pts,lines:[{x:cr.budget/1000,t:"budget max"},{y:cr.rmin,t:"rendement min."}],zone:{x:cr.budget/1000,y:cr.rmin,t:"Nos critères"}})+`<div class="v2leg"><span>Trait : du scénario prudent au favorable</span><span>Anneau : nouvelle</span><span>Étoile : shortlist</span><span>Touchez une pastille pour sa fiche</span></div>`:`<p class="v2empty">Aucune annonce dans cette vue.</p>`;}
   else if(PH()) body=`<div class="v2tw">${L0.slice(0,V.n).map(o=>`<div class="v2row${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${o.nw?'<span class="v2new">nouv.</span>':""}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(where(o))} · ${sgn(o.x.cf)}/mois</span><span>${rng(o,64)}</span></div>`).join("")}</div>`;
   else body=`<div class="v2tw"><table class="v2t"><thead><tr><th></th><th></th>${th("p","Prix",1)}${th("s","m²",1)}<th>Ville · quartier</th>${th("irr","15 ans",1)}<th>Fourchette</th>${th("cf","Cash-flow",1)}${th("m2","€/m²",1)}<th>Banque</th><th>DPE · signaux</th></tr></thead><tbody>${L0.slice(0,V.n).map(o=>{const [bc,bt]=bank(o.x.ratio); return `<tr class="${V.sel===key(o)?"on":""}" data-v2open="${esc(key(o))}" tabindex="0"><td>${starBtn(o)}</td><td>${img(photo(o,160,120),"v2th")}</td><td class="r mono"><b>${keur(o.a[2])}</b>${o.nw?'<span class="v2new">nouv.</span>':""}${o.v&&o.v.last?`<span class="v2drop">↓ ${keur(o.v.last.amt)}</span>`:""}</td><td class="r mono">${String(o.a[0]).replace(".",",")}</td><td><b>${esc(cityName(o.ck))}</b><div class="v2sub" style="font-size:12px">${esc(o.t?o.t.name:o.a[1]||"")}</div></td><td class="r mono" style="color:${cv(colIrr(o.x.irr))};font-weight:700">${pctS(o.x.irr)}</td><td>${rng(o)}</td><td class="r mono" style="color:${cfC(o.x.cf)}">${sgn(o.x.cf)}</td><td class="r mono">${nf(o.a[2]/o.a[0])}</td><td><span class="v2pill ${bc==="p-ok"?"ok":bc==="p-warn"?"warn":"bad"}">${bt}</span></td><td>${o.f.dpe?`<span class="v2pill ${"FG".includes(o.f.dpe)?"bad":o.f.dpe==="E"?"warn":""}">DPE ${o.f.dpe}</span> `:""}${ficheBadges(o.a[3])||""}</td></tr>`;}).join("")}</tbody></table></div>`;
   el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Annonces</h1><span class="v2sub">${L0.length} ${typl()} · relevé du ${esc(ADSRAW.date||ADS.date||"")} · ${cities.length} villes</span><span class="v2sp"></span><span class="v2seg" role="group" aria-label="Affichage"><button type="button" data-v2av="tableau" aria-pressed="${V.aview!=="nuage"}">Tableau</button><button type="button" data-v2av="nuage" aria-pressed="${V.aview==="nuage"}">Nuage</button></span></div>
-   <div class="v2bar"><div class="v2chips">${vueChips(null)}</div><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2crit>Budget ≤ ${keur(V.crit.budget)} · rendement ≥ ${fr(V.crit.rmin)} %${V.crit.bank?" · banque":""}</button></div>
+   <div class="v2bar"><div class="v2chips">${vueChips(null)}</div><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2crit>Budget ≤ ${keur(critV().budget)} · rendement ≥ ${fr(critV().rmin)} %${critV().bank?" · banque":""}</button></div>
    ${L0.length?body:`<p class="v2empty">Aucune annonce dans cette vue. Élargissez les critères ou choisissez « Toutes ».</p>`}
    ${V.aview!=="nuage"&&L0.length>V.n?`<div class="v2more"><button type="button" class="v2btn" data-v2more>Afficher ${Math.min(60,L0.length-V.n)} de plus (${L0.length-V.n} restantes)</button></div>`:""}</div>`;}
 
@@ -4119,12 +4217,15 @@ if(!readHash()) render();
  function sensi(){const c=C.find(v=>v.k===(V.city||"lemans"))||C[0], base=calc(c).irr, T=[["Hausse des prix",{px:0},{px:2},"0 % / 2 % par an"],["Loyer",{loyerAdj:H.loyerAdj-7},{loyerAdj:H.loyerAdj+7},"−7 % / +7 %"],["Vacance",{vacance:H.vacance+1},{vacance:Math.max(0,H.vacance-0.5)},"+1 mois / −½ mois"],["Hausse des loyers",{ly:H.ly-1},{ly:H.ly+0.5},`${fr(H.ly-1)} % / ${fr(H.ly+0.5)} % par an`],["Taux du crédit",{taux:H.taux+0.45},{taux:H.taux-0.45},`${fr(H.taux+0.45,2)} % / ${fr(H.taux-0.45,2)} %`],["Frais à la revente",{fraisVente:H.fraisVente+2},{fraisVente:Math.max(0,H.fraisVente-1)},`${fr(H.fraisVente+2)} % / ${fr(Math.max(0,H.fraisVente-1))} %`]];
   const run=m=>{const s={}; Object.keys(m).forEach(k=>{s[k]=H[k]; H[k]=m[k];}); const v=calc(c).irr; Object.assign(H,s); return v;};
   return `<p class="v2sub">${tyl()} à ${esc(c.name)}, ${pctS(base)} en ${scn()} :</p><div class="v2tw"><table class="v2t"><thead><tr><th>Hypothèse</th><th>Variation</th><th class="r">Rendement</th></tr></thead><tbody>${T.map(([l,a,b,t])=>`<tr><td>${l}</td><td>${t}</td><td class="r mono">${pctS(run(a))} / ${pctS(run(b))}</td></tr>`).join("")}</tbody></table></div>`;}
- function pBudget(){const el=$("v2p-budget"), f=(k,l,u,st)=>`<div><label for="v2h-${k}">${l} <span class="v2sub">(${u})</span></label><input type="number" id="v2h-${k}" data-v2h="${k}" step="${st}" value="${H[k]}"></div>`;
-  el.innerHTML=`<div class="v2in"><h1 class="v2h1">Budget et hypothèses</h1>
-   <div class="v2card"><h2>Nos critères</h2><p class="v2sub" style="font-size:15px;color:var(--fg)">${tyl()} · budget tout compris jusqu'à <b>${keur(V.crit.budget)}</b> · rendement au moins <b>${fr(V.crit.rmin)} %</b> · ${V.crit.bank?"la banque doit suivre":"avec ou sans la banque"}</p><div><button type="button" class="v2btn" data-v2crit>Modifier les critères</button></div></div>
-   <div class="v2card"><h2>Scénario affiché partout</h2>${scnSeg()}<p class="v2sub">Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : l'inverse. Le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.</p></div>
+ function defOf(k){return TYK.includes(k)?typeDefaults(H.type)[k]:HDEF[k];}
+ function pBudget(){const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK,...TYK,"tmiA","tmiB","regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
+  f=(k,l,u,st)=>{const d=defOf(k), ch=d!=null&&H[k]!==d; return `<div class="${ch?"v2chg":""}"><label for="v2h-${k}">${l} <span class="v2sub">(${u})</span></label><input type="number" id="v2h-${k}" data-v2h="${k}" step="${st}" value="${H[k]}">${ch?`<small class="v2def">défaut : ${d>=1000?nf(d):String(d).replace(".",",")}</small>`:""}</div>`;};
+  el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Budget et hypothèses</h1><span class="v2sp"></span>${nch?`<button type="button" class="v2btn sm" data-v2reset>Revenir aux valeurs par défaut (${nch} changée${nch>1?"s":""})</button>`:""}</div>
+   <p class="v2sub v2regnote">${ri?`Communs à vous deux : un changement ici change les chiffres de l'autre.${ri.par?` Dernière modification par ${esc(ri.par)}${ri.le?" le "+esc(dateTxt(ri.le.slice(0,10))):""}.`:""}`:"Pas encore partagés : sans code commun (onglet Nos biens), ces réglages restent dans ce navigateur."} Les valeurs différentes du défaut sont signalées.</p>
+   <div class="v2card"><h2>Nos critères</h2><p class="v2sub" style="font-size:15px;color:var(--fg)">${tyl()} · budget tout compris jusqu'à <b>${keur(cr.budget)}</b> · rendement au moins <b>${fr(cr.rmin)} %</b> · ${cr.bank?"la banque doit suivre":"avec ou sans la banque"}</p><div><button type="button" class="v2btn" data-v2crit>Modifier les critères</button></div></div>
+   <div class="v2card"><h2>Scénario affiché partout (le vôtre)</h2>${scnSeg()}<p class="v2sub">Ce choix ne change que votre écran. Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : l'inverse. Le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.</p></div>
    <div class="v2card"><h2>Le crédit et le foyer</h2><div class="v2grid v2f">${f("apport","Apport","€",500)}${f("taux","Taux du crédit","%",0.05)}${f("duree","Durée","ans",1)}${f("salaires","Revenus nets du foyer","€/mois",50)}${f("pretEtud","Autres crédits en cours","€/mois",10)}${f("notaire","Frais de notaire","%",0.5)}</div></div>
-   <div class="v2card"><h2>Le bien et sa location</h2><div class="v2grid v2f">${f("surcote","Prix payé vs prix moyen","%",5)}${f("loyerAdj","Loyer obtenu vs loyer médian","%",5)}${f("vacance","Vacance","mois/an",0.5)}${f("chLoc","Charges payées par le locataire","€/mois",5)}${f("copro","Copro (part proprio)","€/mois",1)}${f("grosTrav","Gros travaux copro (provision)","€/m²/an",1)}${f("autres","Assurance PNO, entretien","€/mois",5)}${f("meubles","Meubles","€",250)}${f("travaux","Petits travaux","€",250)}</div></div>
+   <div class="v2card"><h2>Le bien et sa location</h2><p class="v2sub">Surface, charges, copro, meubles et travaux valent pour les ${typl()} ; chaque type garde les siennes.</p><div class="v2grid v2f">${f("surface","Surface type","m²",1)}${f("surcote","Prix payé vs prix moyen","%",5)}${f("loyerAdj","Loyer obtenu vs loyer médian","%",5)}${f("vacance","Vacance","mois/an",0.5)}${f("chLoc","Charges payées par le locataire","€/mois",5)}${f("copro","Copro (part proprio)","€/mois",1)}${f("grosTrav","Gros travaux copro (provision)","€/m²/an",1)}${f("autres","Assurance PNO, entretien","€/mois",5)}${f("meubles","Meubles","€",250)}${f("travaux","Petits travaux","€",250)}</div></div>
    <div class="v2card"><h2>Le long terme</h2><div class="v2grid v2f">${f("px","Hausse des prix","%/an",0.5)}${f("ly","Hausse des loyers","%/an",0.5)}${f("fraisVente","Frais à la revente","%",0.5)}</div></div>
    <div class="v2card"><h2>Impôts</h2><div class="v2grid v2f"><div><label for="v2-reg">Régime</label><select id="v2-reg" data-v2fin="regime">${[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]].map(([k,l])=>`<option value="${k}"${H.regime===k?" selected":""}>${l}</option>`).join("")}</select></div>${["tmiA","tmiB"].map((k,i)=>`<div><label for="v2-${k}">Tranche d'imposition ${i?"de votre binôme":"de l'un"}</label><select id="v2-${k}" data-v2fin="${k}">${[0,11,30,41,45].map(t=>`<option value="${t}"${H[k]===t?" selected":""}>${t} %</option>`).join("")}</select></div>`).join("")}</div></div>
    <div class="v2card"><h2>Ce qui pèse le plus</h2>${sensi()}</div>
@@ -4142,19 +4243,23 @@ if(!readHash()) render();
   pts.push({x:s,y:pm,c:cv("var(--accent)"),r:8,on:true,t:"Ce bien"}); const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y).concat([ref]), dif=(pm/ref-1)*100;
   return `<p class="v2sub" style="color:var(--fg)">Prix au m² <b>${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} %</b> par rapport aux ventes réelles ${t?"du quartier":"de la ville"} (ramenées à ${String(s).replace(".",",")} m²). Carrés : dernières ventes du quartier. Ronds : autres annonces du quartier.</p>`
    +nuage({label:"Prix au mètre carré selon la surface",w:460,h:280,x:[Math.max(0,Math.floor(Math.min(...xs)/5)*5-5),Math.ceil(Math.max(...xs)/5)*5+5],y:[Math.floor(Math.min(...ys)/500)*500-250,Math.ceil(Math.max(...ys)/500)*500+250],xf:v=>v+" m²",yf:v=>fr(v/1000,1)+" k",xl:"surface",yl:"€/m²",pts,lines:[{y:ref,t:`${t?"quartier":"ville"} à ${String(s).replace(".",",")} m²`}]});}
- function offre(b,id){const P=+b.prix, pc=V.loc[id+"|o"]||100, prix=Math.round(P*pc/100/500)*500, y=calcBien(Object.assign({},b,{prix})).x, cpd=V.loc[id+"|c"]||"";
-  const add=n=>{const d=new Date(cpd+"T12:00:00"); d.setDate(d.getDate()+n); return d.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});};
-  const rows=[100,97.5,95,92.5,90,87.5,85].map(p=>{const pr=Math.round(P*p/100/500)*500, z=calcBien(Object.assign({},b,{prix:pr})).x; return `<tr${p===pc?' class="on"':""}><td class="r mono">${keur(pr)}</td><td class="r mono">${p===100?"affiché":"−"+fr(100-p,1)+" %"}</td><td class="r mono" style="color:${cv(colIrr(z.irr))};font-weight:700">${pctS(z.irr)}</td><td class="r mono" style="color:${cfC(z.cf)}">${sgn(z.cf)}</td><td class="r mono">${eur(z.mens)}</td></tr>`;}).join("");
-  return `<div class="v2sec"><h3>Faire une offre</h3><div class="v2f"><label for="v2off">Prix proposé : <b class="mono" style="color:var(--fg)">${keur(prix)}</b> (${pc>=100?"prix affiché":"−"+fr(100-pc,1)+" %"})</label><input type="range" id="v2off" min="80" max="100" step="0.5" value="${pc}" data-v2off="${esc(id)}"></div>
-   <div class="v2kp"><div class="v2k"><span>Rendement à ce prix</span><b style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b><small>${scn()}</small></div><div class="v2k"><span>Cash-flow · mensualité</span><b style="color:${cfC(y.cf)}">${sgn(y.cf)}</b><small>mensualité ${eur(y.mens)}</small></div></div>
-   <div class="v2tw"><table class="v2t"><thead><tr><th class="r">Offre</th><th class="r">Écart</th><th class="r">15 ans</th><th class="r">Cash-flow</th><th class="r">Mensualité</th></tr></thead><tbody>${rows}</tbody></table></div>
-   ${b.kind==="v"?`<div class="v2f"><label for="v2cpd">Date du compromis</label><input type="date" id="v2cpd" value="${esc(cpd)}" data-v2cpd="${esc(id)}"></div>${cpd?`<ol style="margin:0;padding-left:20px;line-height:1.8"><li>Compromis le ${add(0)}</li><li>Fin du délai de rétractation : ${add(10)}</li><li>Accord de prêt attendu vers le ${add(45)}</li><li>Acte chez le notaire vers le ${add(90)}</li></ol>`:`<p class="v2sub">Indiquez la date du compromis pour voir les échéances jusqu'à l'acte.</p>`}`:""}</div>`;}
- function visite(b,id){const r=calcBien(b), y=r.x, tv=r.V?r.V.travaux:null, ck=V.loc[id+"|k"]||{};
-  const CK=["Lumière, bruit, vis-à-vis","Humidité, fenêtres, chauffage","Tableau électrique, eau chaude","Parties communes et extérieur","Procès-verbaux des 3 dernières assemblées générales","Charges annuelles et travaux votés","Taxe foncière (dernier avis)","Diagnostic de performance énergétique réel"];
+ /* l'offre est celle de nos biens (visite.offre, la même que dans la grille de visite) : commune à deux ; sur une annonce pas encore suivie, ce n'est qu'un essai */
+ function offre(b,id,bb){const P=+b.prix, sv=bb?+((bb.visite||{}).offre)||0:0, pc=OFFT[id]!=null?OFFT[id]:sv?Math.round(sv/P*1000)/10:100, prix=OFFT[id]!=null||!sv?Math.round(P*pc/100/500)*500:sv, y=calcBien(Object.assign({},b,{prix})).x;
+  const keep=OFFT[id]!=null&&prix!==sv, cpd=bb&&bb.suivi&&bb.suivi.compromis||"";
+  const rows=[100,97.5,95,92.5,90,87.5,85].map(p=>{const pr=Math.round(P*p/100/500)*500, z=calcBien(Object.assign({},b,{prix:pr})).x; return `<tr${pr===prix?' class="on"':""}><td class="r mono">${keur(pr)}</td><td class="r mono">${p===100?"affiché":"−"+fr(100-p,1)+" %"}</td><td class="r mono" style="color:${cv(colIrr(z.irr))};font-weight:700">${pctS(z.irr)}</td><td class="r mono" style="color:${cfC(z.cf)}">${sgn(z.cf)}</td><td class="r mono">${eur(z.mens)}</td></tr>`;}).join("");
+  return `<div class="v2sec"><h3>Faire une offre</h3><div class="v2f"><label for="v2off" class="v2offx">Prix proposé : <b class="mono" style="color:var(--fg)">${keur(prix)}</b> (${pc>=100?"prix affiché":"−"+fr(100-pc,1)+" %"})</label><input type="range" id="v2off" min="70" max="100" step="0.5" value="${Math.max(70,Math.min(100,pc))}" data-v2off="${esc(id)}"${bb?` data-v2offb="${esc(bb.id)}"`:""}></div>
+   <p class="v2sub v2offx" style="margin:0">${bb?(sv&&!keep?`Offre enregistrée pour vous deux : <b class="mono">${keur(sv)}</b>.`:keep?"Lâchez le curseur : l'offre est enregistrée pour vous deux.":"Choisissez un prix : il sera enregistré pour vous deux."):`Essai seulement. <button type="button" class="v2btn sm" data-v2offkeep="${esc(id)}">Garder cette offre (suit le bien)</button>`}</p>
+   <div class="v2kp v2offx"><div class="v2k"><span>Rendement à ce prix</span><b style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b><small>${scn()}</small></div><div class="v2k"><span>Cash-flow · mensualité</span><b style="color:${cfC(y.cf)}">${sgn(y.cf)}</b><small>mensualité ${eur(y.mens)}</small></div></div>
+   <div class="v2tw v2offx"><table class="v2t"><thead><tr><th class="r">Offre</th><th class="r">Écart</th><th class="r">15 ans</th><th class="r">Cash-flow</th><th class="r">Mensualité</th></tr></thead><tbody>${rows}</tbody></table></div>
+   ${bb?`<div class="v2f"><label for="v2cpd">Date du compromis</label><input type="date" id="v2cpd" value="${esc(cpd)}" data-suivi="${esc(bb.id)}|compromis"></div>${cpd?`<ol style="margin:0;padding-left:20px;line-height:1.8">${suiviSteps(bb).filter(x=>x.d&&x.k!=="offre"&&x.k!=="reponse").map(x=>`<li>${esc(x.l)} : ${esc(dateTxt(x.d))}</li>`).join("")}</ol>`:`<p class="v2sub">Indiquez la date du compromis pour voir les échéances jusqu'à l'acte (communes à vous deux, comme dans le suivi de l'achat).</p>`}`:""}</div>`;}
+ /* la visite : les points de la grille de visite de nos biens (visite.check), communs à deux */
+ function visite(b,id,bb){const r=calcBien(b), y=r.x, tv=r.V?r.V.travaux:null, ck=bb&&(bb.visite||{}).check||{};
+  const nT=CHECK.reduce((s,g)=>s+g[1].length,0), nOk=Object.values(ck).filter(v=>v==="oui").length, nKo=Object.values(ck).filter(v=>v==="non").length, nV=Object.values(ck).filter(v=>v==="oui"||v==="non").length;
   return `<div class="v2sec"><h3>Visite</h3><div data-pwbox="${esc(typeof pwKey==="function"?pwKey(b):"")}"><div class="v2f"><label for="v2trv">Travaux après visite (devis, constat)</label><span class="inp"><input id="v2trv" data-pw="travaux" type="number" min="0" step="500" value="${tv&&tv.src==="saisi"?Math.round(tv.v):""}" placeholder="${tv?Math.round(tv.est):""}"><span>€</span></span></div>
    <p class="v2sub" style="margin:2px 0 0">Estimation avant visite : ${tv?eur(tv.est):"n.d."}. La valeur saisie remplace l'estimation pour vous deux.</p>
    <p style="margin:0" data-pwres>Rendement après visite : <b class="mono" style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b> <span class="v2sub">· cash-flow ${sgn(y.cf)}/mois</span></p></div>
-   <div class="v2ck">${CK.map((t,i)=>`<label><input type="checkbox" data-v2ck="${esc(id)}|${i}"${ck[i]?" checked":""}>${t}</label>`).join("")}</div>${b.kind==="b"?`<div><button type="button" class="v2btn" data-visit="${esc(b.id)}">Ouvrir la grille de visite complète</button></div>`:""}</div>`;}
+   ${bb?`<p style="margin:0">Grille de visite : <b class="mono">${nV}/${nT}</b> points vérifiés${nKo?` · <span style="color:var(--bad);font-weight:700">${nKo} problème${nKo>1?"s":""}</span>`:nOk?" · rien d'inquiétant":""}.</p><div><button type="button" class="v2btn" data-visit="${esc(bb.id)}">Ouvrir la grille de visite (${nT} points, à deux)</button></div>`
+    :`<p class="v2sub" style="margin:0">La grille de visite (${nT} points, documents à demander) se remplit à deux sur un bien suivi.</p><div><button type="button" class="v2btn" data-v2star="${esc(b.ville)}|${esc(b.suf||"")}">☆ Suivre ce bien</button></div>`}</div>`;}
  function ficheBien(sel){const R=bienOfSel(sel); if(!R) return null; const b=R.b, id=R.kind==="b"?"b"+b.id:sel, r=calcBien(b), x=r.x, z=irr3(x)||{}, t=r.t, fx=ficx(R.kind==="v"?R.suf:(bienSuf(b)||""))||{};
   const {S,attn}=secs(bienFicheBody(b,{noHead:true}));
   const lo=-4,hi=12,p=v=>Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100)), c=cv(colIrr(x.irr)), [bc,bt]=bank(x.ratio);
@@ -4167,7 +4272,7 @@ if(!readHash()) render();
    <div class="v2chips"><span class="v2pill ${bc==="p-ok"?"ok":bc==="p-warn"?"warn":"bad"}">Banque : ${bt.toLowerCase()} · ${Math.round(x.ratio*100)} %</span>${dpe?`<span class="v2pill ${"FG".includes(dpe)?"bad":dpe==="E"?"warn":""}">DPE ${dpe}${dpe==="G"?" · location interdite":dpe==="F"?" · interdite en 2028":dpe==="E"?" · interdite en 2034":""}</span>`:""}${R.kind==="v"?ficheBadges(R.suf)||"":""}</div>
    <div class="v2bar">${R.kind==="v"?`<button type="button" class="v2btn${on?"":" pri"}" data-v2star="${R.ck}|${esc(R.suf)}" aria-pressed="${on}">${on?"★ Dans la shortlist":"☆ Ajouter à la shortlist"}</button>`:`${stPill(b)}<button type="button" class="v2btn sm" data-unshort="${esc(b.id)}">Retirer</button>`}${b.url?`<a class="v2btn sm" href="${esc(b.url)}" target="_blank" rel="noopener">Voir l'annonce ↗</a>`:""}${bb?`<button type="button" class="v2btn sm" data-fiche="${esc(bb.id)}">Fiche à emporter</button>`:""}</div>
    ${bb?`<div class="v2sec"><h3>À deux</h3><div class="v2vrow"><b>${esc(me||"Vous")}</b>${me?voteBtns(bb,me):`<span class="v2sub">indiquez votre prénom dans Nos biens</span>`}</div>${oth.map(o=>`<div class="v2vrow"><b>${esc(o)}</b>${voteTxt(bb,o)}</div>`).join("")}</div>`:""}`;
-  const extra={prix:prixNuage(b,t),achat:offre(b,id)+visite(b,id),bien:attn};
+  const extra={prix:prixNuage(b,t),achat:offre(b,id,bb)+visite(b,id,bb),bien:attn};
   return {title:`${keur(+b.prix)} · ${cityName(b.ville)}`,head,S,extra};}
  function ficheQV(sel){const [k,ck,code]=sel.split("|");
   if(k==="q"){const t=IR[ck]&&IR[ck].list.find(v=>v.code===code); if(!t) return null; const {S,attn}=secs(quartierFiche(t)); return {title:`${t.name} · ${cityName(ck)}`,head:`<h2 class="v2ft">${esc(t.name)}</h2><p class="v2sub">Quartier de ${esc(cityName(ck))} · un ${tyl().toLowerCase()} type de ${H.surface} m²</p>`,S,extra:{bien:attn},city:ck};}
@@ -4185,9 +4290,9 @@ if(!readHash()) render();
  function openSel(s,keepTab){V.sel=s; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
 
  /* ---------- dialogue des critères (premier lancement) ---------- */
- function critDlg(first){const d=document.createElement("div"); d.className="v2dlg"; const c=V.crit;
+ function critDlg(first){if(document.querySelector(".v2dlg")) return; const d=document.createElement("div"); d.className="v2dlg"; const c=critV();
   const n=()=>feed().filter(o=>o.x.cost<=+$("v2cB").value&&o.x.irr>=+$("v2cR").value&&(!$("v2cK").checked||bankOk(o.x.ratio))).length;
-  d.innerHTML=`<form aria-labelledby="v2cT"><h2 id="v2cT" class="v2h1">${first?"Que cherchez-vous ?":"Nos critères"}</h2><p class="v2sub">Ces critères filtrent la carte, le tableau et le nuage. Vous pourrez les changer à tout moment.</p>
+  d.innerHTML=`<form aria-labelledby="v2cT"><h2 id="v2cT" class="v2h1">${first?"Que cherchez-vous ?":"Nos critères"}</h2><p class="v2sub">Ces critères filtrent la carte, le tableau et le nuage${regShared()?", pour vous deux":""}. Vous pourrez les changer à tout moment.</p>
    <div class="v2f"><label>Type de bien</label><span class="v2seg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${H.type===k}">${T.lab}</button>`).join("")}</span></div>
    <div class="v2f"><label for="v2cB">Budget tout compris : <b class="mono" id="v2cBv" style="color:var(--fg)"></b></label><input type="range" id="v2cB" min="40000" max="250000" step="5000" value="${c.budget}"></div>
    <div class="v2f"><label for="v2cR">Rendement minimum sur 15 ans : <b class="mono" id="v2cRv" style="color:var(--fg)"></b></label><input type="range" id="v2cR" min="-3" max="8" step="0.5" value="${c.rmin}"></div>
@@ -4197,19 +4302,22 @@ if(!readHash()) render();
   document.body.appendChild(d); const up=()=>{$("v2cBv").textContent=keur(+$("v2cB").value); $("v2cRv").textContent=fr(+$("v2cR").value)+" %"; $("v2cN").textContent=n();};
   ["v2cB","v2cR","v2cK"].forEach(i=>$(i).addEventListener("input",up)); up();
   d.addEventListener("click",e=>{if(e.target.closest("[data-type]")) setTimeout(()=>{FEED=null; d.querySelectorAll("[data-type]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.type===H.type))); up();},0); if(e.target.closest("[data-v2cx]")) d.remove();});
-  d.querySelector("form").addEventListener("submit",e=>{e.preventDefault(); V.crit={budget:+$("v2cB").value,rmin:+$("v2cR").value,bank:$("v2cK").checked,done:true}; V.vue="crit"; save(); d.remove(); refresh();});
+  d.querySelector("form").addEventListener("submit",e=>{e.preventDefault(); NOSCRIT={budget:+$("v2cB").value,rmin:+$("v2cR").value,bank:$("v2cK").checked}; saveCrit(); V.vue="crit"; save(); d.remove(); refresh();});
   $("v2cB").focus();}
 
  /* ---------- affichage ---------- */
  function paint(k){if(k==="annonces") pAnnonces(); else if(k==="villes") pVilles(); else if(k==="biens") pBiens(); else if(k==="budget") pBudget(); else {mapList(); mapLegend(); drawMap();}}
  function show(){TABS.forEach(([k])=>{$("v2p-"+k).hidden=k!==V.tab;}); top(); paint(V.tab); fiche();
   if(V.tab==="carte") leaflet(()=>{mapInit(); requestAnimationFrame(()=>M&&M.invalidateSize());});}
- let RQ=0; function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{FEED=null; top(); paint(V.tab); fiche();});}
+ /* une relecture de la liste commune (toutes les 20 s) ne repeint pas la page pendant qu'on tape dans un champ : elle attend qu'on en sorte */
+ let RQ=0, RWAIT=false; const typing=()=>{const a=document.activeElement; return !!(a&&app.contains(a)&&a.matches("input:not([type=range]):not([type=checkbox]),select,textarea"));};
+ function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{FEED=null; if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche();});}
+ app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
  document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
-  if(d.v2scn){H.pess=d.v2scn==="prudent"; H.fav=d.v2scn==="favorable"; const p=$("f-pess"); if(p) p.checked=H.pess; if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render(); return;}
+  if(d.v2scn){H.pess=d.v2scn==="prudent"; H.fav=d.v2scn==="favorable"; try{localStorage.setItem("scn",d.v2scn);}catch(_){} const p=$("f-pess"); if(p) p.checked=H.pess; if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render(); return;}
   if(d.v2vue){V.vue=d.v2vue; V.n=60; save(); refresh(); if(V.tab==="carte") drawMap(); return;}
   if(d.v2av){V.aview=d.v2av; save(); refresh(); return;}
   if(d.v2cv){V.cview=d.v2cv; save(); refresh(); return;}
@@ -4220,6 +4328,9 @@ if(!readHash()) render();
   if(d.v2ft){V.ftab=d.v2ft; save(); fiche(); const f=document.querySelector(`[data-v2ft="${d.v2ft}"]`); if(f) f.focus(); return;}
   if(d.v2close!=null){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); return;}
   if(d.v2crit!=null){critDlg(false); return;}
+  if(d.v2reset!=null){if(confirm(regShared()?"Revenir aux valeurs par défaut pour vous deux ? Vos critères et vos biens ne changent pas.":"Revenir aux valeurs par défaut ? Vos critères et vos biens ne changent pas.")) regReset(); return;}
+  if(d.v2offkeep){const [k,ck,...r]=d.v2offkeep.split("|"), suf=r.join("|"), P=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!P) return; const pr=Math.round(P[2]*(OFFT[d.v2offkeep]??100)/100/500)*500;
+   Promise.resolve(mStar(ck,suf)).then(()=>setTimeout(()=>{const b=bienOf(VTURL+suf); if(b){delete OFFT[d.v2offkeep]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}},600)); return;}
   if(d.v2min!=null){V.min=!V.min; save(); mapList(); return;}
   if(d.v2nom!=null){const n=($("v2nom").value||"").trim(); if(n){try{localStorage.setItem("biens-nom",n);}catch(_){} refresh();} return;}
   if(d.v2share!=null){const n=($("v2nom2").value||"").trim(), c=($("v2code").value||"").trim(); try{localStorage.setItem("biens-nom",n); localStorage.setItem("biens-code",c);}catch(_){} location.reload(); return;}
@@ -4228,13 +4339,14 @@ if(!readHash()) render();
  document.addEventListener("keydown",e=>{const t=e.target; if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-v2open],[data-v2city]")&&!t.matches("button")){e.preventDefault(); t.click();}
   if(e.key==="Escape"&&V.sel&&!document.querySelector(".v2dlg")&&$("visitPanel").hidden&&$("fichePanel").hidden){V.sel=null; fiche(); paint(V.tab);}});
  document.addEventListener("input",e=>{const t=e.target, d=t.dataset; if(!d) return;
-  if(d.v2off){V.loc[d.v2off+"|o"]=+t.value; save(); const y=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=y; const s=$("v2off"); if(s) s.focus();}});
+  /* curseur d'offre : seuls les chiffres autour changent (le curseur reste sous le doigt) */
+  if(d.v2off){OFFT[d.v2off]=+t.value; const R=V.sel&&bienOfSel(V.sel); if(!R) return; const b=R.b, tmp=document.createElement("div");
+   tmp.innerHTML=offre(b,R.kind==="b"?"b"+b.id:V.sel,R.kind==="b"?b:R.ex); const nw=tmp.querySelectorAll(".v2offx"), old=$("v2fiche").querySelectorAll(".v2offx");
+   if(nw.length===old.length) old.forEach((o,i)=>{o.innerHTML=nw[i].innerHTML;});}});
  document.addEventListener("change",e=>{const t=e.target, d=t.dataset; if(!d) return;
-  if(d.v2h){const v=+t.value; if(isFinite(v)){H[d.v2h]=v; if(typeof saveHyp==="function") saveHyp(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}}
+  if(d.v2h){const v=+t.value; if(isFinite(v)){H[d.v2h]=v; if(TYK.includes(d.v2h)) saveTyv(d.v2h); else saveHyp(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}}
   else if(d.v2fin){H[d.v2fin]=d.v2fin==="regime"?t.value:+t.value; if(typeof saveFin==="function") saveFin(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}
-  else if(d.v2trv){V.loc[d.v2trv+"|t"]=+t.value; save(); const y=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=y;}
-  else if(d.v2cpd){V.loc[d.v2cpd+"|c"]=t.value; save(); const y=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=y;}
-  else if(d.v2ck){const [id,i]=d.v2ck.split("|"), k=id+"|k"; V.loc[k]=V.loc[k]||{}; V.loc[k][i]=t.checked; save();}});
+  else if(d.v2offb){const b=BIENS.find(x=>x.id===d.v2offb); if(!b) return; const pr=Math.round(+b.prix*(+t.value)/100/500)*500; delete OFFT[d.v2off]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}});
  /* l'app recalcule (type, scénario, hypothèses, liste partagée, annonces reçues) : la v2 suit */
  const _render=render; render=function(){_render.apply(this,arguments); refresh(); if(V.tab==="carte") drawMap();};
  /* renderBiens est déjà enveloppé par l'interface mobile (window[fn].orig) : on garde ce lien */
@@ -4243,7 +4355,8 @@ if(!readHash()) render();
 
  /* ---------- départ ---------- */
  show();
- if(!V.crit.done) setTimeout(()=>critDlg(true),300);
+ let CRITASK=false; const askCrit=()=>{if(CRITASK) return; CRITASK=true; if(!NOSCRIT) critDlg(true);};
+ if(REGREADY) setTimeout(askCrit,300); else {document.addEventListener("reglages",()=>setTimeout(askCrit,300),{once:true}); setTimeout(askCrit,6000);}
 })();
 </script>
 </body></html>

@@ -1,6 +1,6 @@
 /* ---------- choix du type de bien (ordinateur et téléphone) ---------- */
 function typeSeg(){return `<span class="seg2 typeseg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${H.type===k}" title="${esc(T.un)}">${T.lab}</button>`).join("")}</span>`;}
-function setType(k,quiet){if(!TYPES[k]) k="studio"; Object.assign(H,{type:k},typeDefaults(k));
+function setType(k,quiet){if(!TYPES[k]) k="studio"; Object.assign(H,{type:k},typeVals(k));
  ["surface","meubles","travaux","copro"].forEach(f=>{const el=document.getElementById("f-"+f); if(el) el.value=H[f];});
  try{localStorage.setItem("type",k);}catch(_){}
  if(typeof RBL!=="undefined") RBL.clear(); if(typeof VC!=="undefined") VC.clear(); if(typeof QBOXK!=="undefined") QBOXK=null;
