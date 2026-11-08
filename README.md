@@ -10,7 +10,7 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 |---|---|
 | `src/head.html`, `src/body.html`, `src/styles.css` | squelette et styles de la page |
 | `src/js/` | le code, découpé par thème ; les fichiers sont assemblés dans l'ordre de leur numéro |
-| `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour (`annoncesdata.js`), historique des prix (`historique.js`), secteurs Bien'ici → IRIS des nouvelles villes |
+| `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour (`annoncesdata.js`), historique des prix (`historique.js`), secteurs Bien'ici → IRIS (`secteurs-nouvelles-villes.json` : toutes les villes sauf Le Mans et Saint-Nazaire, dont la carte est d'origine) |
 | `mcp/` | serveur MCP : brancher l'outil sur une IA (voir `mcp/README.md`) |
 | `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE, étage, position) |
 | `data/fiches/` | fiches complètes des annonces, une par ville, lues une seule fois par annonce |
