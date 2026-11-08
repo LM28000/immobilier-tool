@@ -642,6 +642,12 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 @media (max-width:860px){#v2map .maplibregl-ctrl-attrib{font-size:10px}}
 /* dans une fiche de ville, « toutes les annonces » et « voir les quartiers » sont déjà sur la carte à côté */
 #v2fiche [data-annall],#v2fiche [data-zq]{display:none}
+/* associés : une carte par personne */
+.v2assoc{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.v2as{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.v2as>b{font-size:14px}
+.v2as .v2grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+@media (max-width:860px){.v2assoc{grid-template-columns:1fr}}
 </style>
 <!-- L'interface est construite par src/v2/v2.js. Ici seulement ce qu'elle réutilise : le formulaire d'ajout d'un bien,
      la méthode et les sources (montrées dans l'onglet Budget), la grille de visite et la fiche à emporter. -->
@@ -806,15 +812,34 @@ const tyPl=k=>{const s=tyOf(k||H.type).pl; return s.charAt(0).toUpperCase()+s.sl
    - revente : plus-value des particuliers, 19 % + 17,2 %, abattements pour durée de détention ;
      depuis 2025, les amortissements du bâti déduits au réel sont réintégrés dans la plus-value. */
 const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5};
-const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true};
+const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true, nomA:"", nomB:""};
 Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
+/* ---------- associés : de 1 à 6 personnes qui achètent ensemble ----------
+   Chacune a sa part du bien (part des loyers, des charges, de la mensualité et de l'impôt), ses revenus, ses autres crédits,
+   sa tranche d'impôt et son assurance de prêt (taux et quotité). La banque regarde l'endettement de l'ensemble ; celui de chacun
+   est donné aussi. Les anciens réglages à deux (salaires, pretEtud, tmiA, tmiB, partA, assurA…) en sont tirés : le serveur MCP les lit encore. */
+const TMIS=[0,11,30,41,45];
+const assoc0=n=>({nom:"",part:100/n,revenus:Math.round(2500/n),credits:0,tmi:0,assur:0.20,quot:100});
+function assocNorm(){let A=Array.isArray(H.assoc)?H.assoc.filter(a=>a&&typeof a==="object").slice(0,6):[]; if(!A.length) A=[assoc0(1)];
+ A=A.map(a=>({nom:String(a.nom||"").slice(0,30),part:Math.max(0,+a.part||0),revenus:Math.max(0,+a.revenus||0),credits:Math.max(0,+a.credits||0),tmi:TMIS.includes(+a.tmi)?+a.tmi:0,assur:Math.max(0,+a.assur||0),quot:Math.min(100,Math.max(0,a.quot==null?100:+a.quot||0))}));
+ const t=A.reduce((s,a)=>s+a.part,0); A.forEach(a=>{a.part=t>0?a.part/t*100:100/A.length;}); H.assoc=A;
+ const B=A[1]||{tmi:A[0].tmi,assur:0,quot:0,nom:""};
+ Object.assign(H,{salaires:A.reduce((s,a)=>s+a.revenus,0),pretEtud:A.reduce((s,a)=>s+a.credits,0),tmiA:A[0].tmi,tmiB:B.tmi,partA:A[0].part,assurA:A[0].assur,quotA:A[0].quot,assurB:B.assur,quotB:B.quot,nomA:A[0].nom,nomB:B.nom});}
+/* réglages venus d'ailleurs sous l'ancienne forme (serveur MCP) : répartis sur les associés */
+function assocFromLegacy(h){if(!h||!Array.isArray(H.assoc)) return; const A=H.assoc, sc=(k,f)=>{if(typeof h[k]!=="number") return; const t=A.reduce((s,a)=>s+a[f],0); A.forEach(a=>{a[f]=t>0?a[f]/t*h[k]:h[k]/A.length;});};
+ sc("salaires","revenus"); sc("pretEtud","credits"); if(h.tmiA!=null&&A[0]) A[0].tmi=+h.tmiA; if(h.tmiB!=null&&A[1]) A[1].tmi=+h.tmiB; assocNorm();}
 (function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){
   if(!s.v2){if(s.tmiB===11) delete s.tmiB; if(s.compta===300) delete s.compta; if(s.cfe===200) delete s.cfe;} // anciens réglages par défaut
-  ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});}
- const m=localStorage.getItem("chiffres"); if(m) H.net=m!=="brut";}catch(_){}})();
-function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
-const insRate=()=>(H.assurA*H.quotA+H.assurB*H.quotB)/100;          // % du capital par an
-const taxRate=()=>((H.tmiA+FISC.ps)*H.partA+(H.tmiB+FISC.ps)*(100-H.partA))/1e4; // taux moyen du foyer « à deux »
+  ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta","nomA","nomB"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});
+  if(Array.isArray(s.assoc)) H.assoc=s.assoc;}
+ const m=localStorage.getItem("chiffres"); if(m) H.net=m!=="brut";}catch(_){}
+ /* première fois : les deux personnes d'avant deviennent deux associés, mêmes chiffres (revenus du foyer partagés selon la part) */
+ if(!Array.isArray(H.assoc)){const pa=Math.min(100,Math.max(0,+H.partA||50)); H.assoc=[{nom:H.nomA||"",part:pa,revenus:H.salaires*pa/100,credits:H.pretEtud/2,tmi:H.tmiA,assur:H.assurA,quot:H.quotA},{nom:H.nomB||"",part:100-pa,revenus:H.salaires*(100-pa)/100,credits:H.pretEtud/2,tmi:H.tmiB,assur:H.assurB,quot:H.quotB}];}
+ assocNorm();})();
+HDEF.assoc=[assoc0(2),assoc0(2)];
+function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,regime:H.regime,cfe:H.cfe,compta:H.compta,assoc:H.assoc,nomA:H.nomA,nomB:H.nomB,tmiA:H.tmiA,tmiB:H.tmiB,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
+const insRate=()=>H.assoc.reduce((s,a)=>s+a.assur*a.quot,0)/100;          // % du capital par an : assurance de chaque emprunteur sur sa quotité
+const taxRate=()=>H.assoc.reduce((s,a)=>s+(a.tmi+FISC.ps)*a.part,0)/1e4; // taux moyen : chacun paie l'impôt sur sa part, à sa tranche
 
 // abattements pour durée de détention (plus-value des particuliers)
 function abatPV(y){const ir=y<6?0:y>=22?1:0.06*(y-5); let ps=y<6?0:y<=21?0.0165*(y-5):y===22?0.0165*16+0.016:Math.min(1,0.0165*16+0.016+0.09*(y-22)); return [Math.min(ir,1),Math.min(ps,1)];}
@@ -847,7 +872,8 @@ function calc(c){
  if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
   const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
  const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
- const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
+ const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);   /* endettement de l'ensemble des associés (ce que la banque regarde) */
+ const ratios=H.assoc.map(a=>{const w=a.part/100, d=a.revenus+rentHC*0.7*w; return d>0?(mens*w+a.credits)/d:null;});   /* et celui de chacun, sur sa part */
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
@@ -871,8 +897,8 @@ function calc(c){
  let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
  const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], cfBrut=rentEff-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
  const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
- const wA=(H.tmiA+FISC.ps)*H.partA, wB=(H.tmiB+FISC.ps)*(100-H.partA), impA=imp1*wA/(wA+wB||1);
- return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
+ const W=H.assoc.map(a=>(a.tmi+FISC.ps)*a.part), Ws=W.reduce((s,w)=>s+w,0)||1, imps=W.map(w=>imp1*w/Ws), impA=imps[0];
+ return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
 
@@ -1055,9 +1081,6 @@ let LASTUSER=0; ["pointerdown","keydown"].forEach(ev=>addEventListener(ev,()=>{L
 
 
 /* ---------- financement : réglages, détail du prêt, part de chacun, scénarios ---------- */
-Object.assign(H,{nomA:"", nomB:""});
-(function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){if(s.nomA) H.nomA=s.nomA; if(s.nomB) H.nomB=s.nomB;}}catch(_){}})();
-const _saveFin=saveFin; saveFin=function(){_saveFin(); try{const s=JSON.parse(localStorage.getItem("fin")||"{}"); s.nomA=H.nomA; s.nomB=H.nomB; localStorage.setItem("fin",JSON.stringify(s));}catch(_){}};
 const REG={auto:"le plus avantageux",micro:"micro-BIC",reel:"réel"};
 
 /* scénarios « et si » */
@@ -1094,7 +1117,7 @@ function irrSpan(x){const o=irr3(x); if(!o) return ""; const f=v=>v==null?"n.d."
 function taxLine(x){const cfe=x.fees1-(x.regime==="reel"?H.compta:0), comp=x.regime==="reel"?H.compta:0, m=v=>eur(v/12);
  return `<details class="b2n"><summary><span>Du brut au net</span><span class="mono"><span class="${x.cfBrut>=0?"pos":"neg"}">${sgn(x.cfBrut)}</span> → <span class="${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}</span>/mois</span></summary>
   <div class="trow"><span>Cash-flow avant impôts</span><b class="mono">${sgn(x.cfBrut)}/mois</b></div>
-  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, TMI ${H.tmiA} % et ${H.tmiB} % + prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
+  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, TMI ${H.assoc.length>1?H.assoc.map(a=>a.tmi+" %").join(", "):H.assoc[0].tmi+" %"} + prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
   <div class="trow"><span>CFE${cfe?"":" (exonérée sous 5 000 € de recettes)"}</span><b class="mono">−${m(cfe)}</b></div>
   ${comp?`<div class="trow"><span>Comptable (régime réel)</span><b class="mono">−${m(comp)}</b></div>`:""}
   <div class="trow tot"><span>Cash-flow net</span><b class="mono ${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}/mois</b></div>
@@ -1289,7 +1312,7 @@ document.addEventListener("change",async e=>{const i=e.target.closest&&e.target.
    Au premier passage, la ligne est créée avec les réglages de la personne qui ouvre ; l'autre reçoit ensuite ces valeurs et un message
    dit lesquelles ont remplacé les siennes. Une ligne créée avec les valeurs d'exemple (exemple: true) ne remplace pas de vraies
    valeurs : la personne qui en a les envoie à la place. */
-const FINK=["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta","nomA","nomB"];
+const FINK=["garantie","regime","cfe","compta"];   /* et les associés (H.assoc), à part */
 const CRIT0={budget:90000,rmin:3,bank:true};
 let NOSCRIT=null; try{const c=JSON.parse(localStorage.getItem("crit")||"null"); if(c&&typeof c==="object"&&!Array.isArray(c)) NOSCRIT=c;}catch(_){}
 let REGL=null, REGREADY=false, REGNEW=false, REGT=0, REGIN=false;
@@ -1297,10 +1320,10 @@ const critV=()=>Object.assign({},CRIT0,NOSCRIT||{});
 const regShared=()=>!!(typeof DB!=="undefined"&&DB&&!DB.local);
 function regLab(k){const L={surcote:"prix payé vs prix moyen",loyerAdj:"loyer obtenu",taux:"taux du crédit",tmiA:"tranche d'impôt 1",tmiB:"tranche d'impôt 2",regime:"régime fiscal",
   assurA:"assurance du prêt 1",assurB:"assurance du prêt 2",quotA:"quotité 1",quotB:"quotité 2",garantie:"garantie du prêt",cfe:"CFE",compta:"comptable",nomA:"prénom 1",nomB:"prénom 2",
-  budget:"budget",rmin:"rendement minimum",bank:"banque"};
+  budget:"budget",rmin:"rendement minimum",bank:"banque",assoc:"associés"};
  return L[k]||((hypDefs.find(d=>d[0]===k)||[])[1]||k).toLowerCase();}
 function saveCrit(){try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){} regPush();}
-function regVals(){const hyp={}, fin={}; HYPK.forEach(k=>{hyp[k]=H[k];}); FINK.forEach(k=>{if(H[k]!=null&&H[k]!=="") fin[k]=H[k];});
+function regVals(){const hyp={}, fin={}; HYPK.forEach(k=>{hyp[k]=H[k];}); FINK.forEach(k=>{if(H[k]!=null&&H[k]!=="") fin[k]=H[k];}); fin.assoc=JSON.parse(JSON.stringify(H.assoc));
  return {hyp,fin,tyv:JSON.parse(JSON.stringify(TYV)),crit:NOSCRIT?Object.assign({},NOSCRIT):null};}
 /* qui a modifié les réglages communs, et quand (onglet Budget) */
 function regInfo(){if(!regShared()) return null; const d=REGL&&REGL.data||{}; return {par:d.par||"",le:d.le||"",pret:REGREADY};}
@@ -1315,7 +1338,7 @@ function regTake(docs){const out=[], R=[];
  const first=!REGREADY; REGREADY=true;
  if(R[0]&&first&&R[0].data.exemple===true&&HYPOK){REGL=R[0]; REGNEW=false; regPush();}
  else if(R[0]){REGL=R[0]; REGNEW=false; regApply(R[0].data,first);
-  if((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)) regPush();}
+  if((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)||!(R[0].data.fin&&R[0].data.fin.assoc)) regPush();}
  else if(!REGNEW){REGNEW=true; setTimeout(regSend,0);}
  if(first) document.dispatchEvent(new Event("reglages"));
  return out;}
@@ -1326,6 +1349,8 @@ function regApply(d,first){const ch=[];
  try{
   if(d.hyp&&typeof d.hyp==="object") HYPK.forEach(k=>{if(typeof d.hyp[k]==="number") setK(k,d.hyp[k]);});
   if(d.fin&&typeof d.fin==="object") FINK.forEach(k=>{const v=d.fin[k]; if(typeof v==="number"||(typeof v==="string"&&v.length<=40)) setK(k,v);});
+  if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){if(JSON.stringify(d.fin.assoc)!==JSON.stringify(H.assoc)){H.assoc=JSON.parse(JSON.stringify(d.fin.assoc)); assocNorm(); ch.push("assoc");}}
+  else if(d.hyp) assocFromLegacy({salaires:d.hyp.salaires,pretEtud:d.hyp.pretEtud});   /* réglages communs d'avant les associés : revenus et crédits répartis */
   if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&JSON.stringify(d.tyv)!==JSON.stringify(TYV)){
    TYV=JSON.parse(JSON.stringify(d.tyv)); saveTyvLocal(); const v=typeVals(H.type); TYK.forEach(k=>setK(k,v[k]));}
   if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&JSON.stringify(d.crit)!==JSON.stringify(NOSCRIT)){
@@ -1352,7 +1377,9 @@ async function regSend(){if(!regShared()) return; if(!REGREADY){REGT=setTimeout(
  catch(e){toast("Réglages non partagés ("+(e&&e.code||"erreur")+") : ils restent dans ce navigateur.");}}
 
 /* revenir aux valeurs de départ (pour vous deux) */
-function regReset(){HYPK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];}); FINK.forEach(k=>{if(k!=="nomA"&&k!=="nomB"&&HDEF[k]!=null) H[k]=HDEF[k];});
+function regReset(){HYPK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];}); FINK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];});
+ /* associés : mêmes prénoms et même nombre, revenus du défaut partagés, tranches et assurances par défaut */
+ const n=H.assoc.length; H.assoc=H.assoc.map(a=>Object.assign(assoc0(n),{nom:a.nom})); assocNorm();
  TYV={}; saveTyvLocal(); Object.assign(H,typeVals(H.type));
  REGIN=true; try{saveHyp(); saveFin();}finally{REGIN=false;} regPush();
  [typeof CALCC!=="undefined"&&CALCC,typeof VC!=="undefined"&&VC,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear()); render();}
@@ -1900,7 +1927,7 @@ const TIPS={
  loyer:()=>`Loyer hors charges que l'on peut espérer : loyer médian des studios du quartier (ou de la ville), ramené à la surface du bien, moins les ${eur(H.chLoc)} de charges payées par le locataire.`,
  cf:()=>`Ce qui reste (ou manque) chaque mois à vous deux : loyer encaissé, mois vides déduits − mensualité et assurance du prêt − charges (copro, taxe foncière, assurance PNO, entretien).${H.net?" En net : aussi les impôts sur les loyers, la CFE et le comptable.":" En brut : avant impôts et frais fiscaux."}`,
  irr:()=>`Rendement annuel de votre apport sur 15 ans, revente comprise : il compte tout ce que vous mettez et récupérez, comme un taux d'épargne. ${H.net?"Net : après impôts sur les loyers, CFE, comptable et impôt sur la plus-value.":"Brut : avant impôts et frais fiscaux."} Repères : livret A 1,7 %, LEP 2,5 %.`,
- banque:()=>`Taux d'endettement estimé : (mensualité + prêt étudiant de ${eur(H.pretEtud)}) ÷ (salaires de ${eur(H.salaires)} + 70 % du loyer). Les banques vont en général jusqu'à 35 %. Passe ≤ 33 %, Limite entre 33 et 35 %, Trop haut au-delà.`,
+ banque:()=>`Taux d'endettement estimé de l'ensemble des associés : (mensualité + autres crédits de ${eur(H.pretEtud)}) ÷ (revenus de ${eur(H.salaires)} + 70 % du loyer). Les banques vont en général jusqu'à 35 %. Passe ≤ 33 %, Limite entre 33 et 35 %, Trop haut au-delà.`,
  vac:()=>`Mois sans locataire par an retenus dans le calcul. Avec « Vacance selon l'emplacement » : 0,5 mois à 10 min à pied ou moins de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 50 min et plus.`,
  autof:()=>`Prix d'achat maximum pour que le loyer paie tout chaque mois (cash-flow ${H.net?"net":"brut"} ≥ 0 €), avec vos réglages actuels.`,
  r7:()=>`Prix d'achat maximum pour que votre apport rapporte 7 % par an sur 15 ans, revente comprise (${H.net?"après impôts":"avant impôts"}).`,
@@ -2514,10 +2541,11 @@ render();
 
  /* ---------- onglet Nos biens : avis à deux ---------- */
  const VOT=[["o","Garder"],["m","À voir"],["n","Passer"]];
- function people(){const me=myName()||"", s=new Set(); BIENS.forEach(b=>{if(b.par) s.add(b.par); Object.keys(b.votes||{}).forEach(k=>s.add(k)); Object.keys((b.visite||{}).avis||{}).forEach(k=>s.add(k));}); s.delete(me); s.delete(""); return [me,[...s].slice(0,2)];}
+ function people(){const me=myName()||"", s=new Set(H.assoc.map(a=>a.nom).filter(Boolean)); BIENS.forEach(b=>{if(b.par) s.add(b.par); Object.keys(b.votes||{}).forEach(k=>s.add(k)); Object.keys((b.visite||{}).avis||{}).forEach(k=>s.add(k));}); s.delete(me); s.delete(""); return [me,[...s].slice(0,5)];}
  const voteBtns=(b,who,dis)=>`<span class="v2vote">${VOT.map(([c,l])=>`<button type="button" class="${c}" data-v2vote="${esc(b.id)}|${c}" aria-pressed="${(b.votes||{})[who]===c}"${dis?" disabled":""}>${l}</button>`).join("")}</span>`;
  const voteTxt=(b,who)=>{const v=(b.votes||{})[who]; return v?`<span class="v2pill ${v==="o"?"ok":v==="m"?"warn":"bad"}">${VOT.find(x=>x[0]===v)[1]}</span>`:`<span class="v2sub">pas encore d'avis</span>`;};
- function etat(b,me,oth){const a=(b.votes||{})[me], c=oth.map(n=>(b.votes||{})[n]).filter(Boolean); if(!a||!c.length) return ["att","en attente"]; return c.every(x=>x===a)?["acc","d'accord"]:["des","à trancher"];}
+ /* d'accord : tout le monde a voté pareil ; à trancher : un avis diffère ; sinon on attend des avis */
+ function etat(b,me,oth){const v=b.votes||{}, a=v[me], c=oth.map(n=>v[n]).filter(Boolean); if(!a||!c.length) return ["att","en attente"]; if(c.some(x=>x!==a)) return ["des","à trancher"]; return c.length===oth.length?["acc","d'accord"]:["att","en attente"];}
  function pBiens(){const el=$("v2p-biens"), [me,oth]=people(), L0=BIENS.filter(b=>!isOut(b)).map(b=>({b,r:calcBien(b),e:etat(b,me,oth)}));
   const ord={des:0,att:1,acc:2}; L0.sort((p,q)=>ord[p.e[0]]-ord[q.e[0]]||((q.r.x.irr??-99)-(p.r.x.irr??-99)));
   const n={acc:0,des:0,att:0}; L0.forEach(o=>n[o.e[0]]++);
@@ -2538,24 +2566,38 @@ render();
    return `<tr><th scope="row">${l}</th>${R.map((r,i)=>{const v=vals[i]; return `<td class="${g?"r mono":""}">${g?(v==null||!isFinite(v)?"n.d.":(best!=null&&v===best?`<b>${f(v)}</b>`:f(v))):f(r)}</td>`;}).join("")}</tr>`;}).join("");
   return `<div class="v2card"><div class="v2bar"><h2>Comparaison</h2><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2cmpx>Effacer la sélection</button></div><div class="v2tw"><table class="v2t v2cmpt"><thead><tr><th></th>${R.map(r=>`<th><button type="button" data-v2open="b|${esc(r.b.id)}">${esc(r.b.titre||"Bien")}</button></th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div><p class="v2sub">En gras : la meilleure valeur de la ligne.</p></div>`;}
  /* qui vous êtes et le code commun : une seule carte, en tête tant qu'il manque l'un des deux */
- function ident(me,first){return `<div class="v2card"><h2>${first?"Vous deux":"Liste commune"}</h2><p class="v2sub">${sbCode()?`Partagée avec le code commun, sous le prénom « ${esc(me||"?")} » : biens, avis et réglages sont communs.`:"Votre prénom distingue vos avis de ceux de l'autre. Avec le même code commun, vous partagez la liste, les avis et les réglages ; sans code, tout reste dans ce navigateur."}</p><div class="v2grid v2f"><div><label for="v2nom2">Prénom</label><input type="text" id="v2nom2" maxlength="30" value="${esc(me)}" placeholder="Prénom"></div><div><label for="v2code">Code commun (le même pour vous deux)</label><input type="text" id="v2code" maxlength="60" value="${esc(sbCode())}" autocomplete="off" spellcheck="false"></div></div><div><button type="button" class="v2btn${first?" pri":""}" data-v2share>Enregistrer</button></div></div>`;}
+ function ident(me,first){return `<div class="v2card"><h2>${first?(H.assoc.length>2?"Vous "+H.assoc.length:"Vous deux"):"Liste commune"}</h2><p class="v2sub">${sbCode()?`Partagée avec le code commun, sous le prénom « ${esc(me||"?")} » : biens, avis et réglages sont communs.`:"Votre prénom distingue vos avis de ceux de l'autre. Avec le même code commun, vous partagez la liste, les avis et les réglages ; sans code, tout reste dans ce navigateur."}</p><div class="v2grid v2f"><div><label for="v2nom2">Prénom</label><input type="text" id="v2nom2" maxlength="30" value="${esc(me)}" placeholder="Prénom"></div><div><label for="v2code">Code commun (le même pour ${nous()})</label><input type="text" id="v2code" maxlength="60" value="${esc(sbCode())}" autocomplete="off" spellcheck="false"></div></div><div><button type="button" class="v2btn${first?" pri":""}" data-v2share>Enregistrer</button></div></div>`;}
 
  /* ---------- onglet Budget : critères, scénario, hypothèses ---------- */
  function sensi(){const c=C.find(v=>v.k===(V.city||"lemans"))||C[0], base=calc(c).irr, T=[["Hausse des prix",{px:0},{px:2},"0 % / 2 % par an"],["Loyer",{loyerAdj:H.loyerAdj-7},{loyerAdj:H.loyerAdj+7},"−7 % / +7 %"],["Vacance",{vacance:H.vacance+1},{vacance:Math.max(0,H.vacance-0.5)},"+1 mois / −½ mois"],["Hausse des loyers",{ly:H.ly-1},{ly:H.ly+0.5},`${fr(H.ly-1)} % / ${fr(H.ly+0.5)} % par an`],["Taux du crédit",{taux:H.taux+0.45},{taux:H.taux-0.45},`${fr(H.taux+0.45,2)} % / ${fr(H.taux-0.45,2)} %`],["Frais à la revente",{fraisVente:H.fraisVente+2},{fraisVente:Math.max(0,H.fraisVente-1)},`${fr(H.fraisVente+2)} % / ${fr(Math.max(0,H.fraisVente-1))} %`]];
   const run=m=>{const s={}; Object.keys(m).forEach(k=>{s[k]=H[k]; H[k]=m[k];}); const v=calc(c).irr; Object.assign(H,s); return v;};
   return `<p class="v2sub">${tyl()} à ${esc(c.name)}, ${pctS(base)} en ${scn()} :</p><div class="v2tw"><table class="v2t"><thead><tr><th>Hypothèse</th><th>Variation</th><th class="r">Rendement</th></tr></thead><tbody>${T.map(([l,a,b,t])=>`<tr><td>${l}</td><td>${t}</td><td class="r mono">${pctS(run(a))} / ${pctS(run(b))}</td></tr>`).join("")}</tbody></table></div>`;}
+ /* ---------- associés (1 à 6) : réglage dans Budget, détail dans « Le calcul » ---------- */
+ const nous=()=>H.assoc.length>2?`vous ${H.assoc.length}`:"vous deux";
+ const anom=(a,i)=>esc(a.nom||`Associé ${i+1}`);
+ /* cash-flow d'un associé : sa part du cash-flow avant impôt, moins son impôt (à sa tranche) et sa part des frais */
+ const cfOf=(x,i)=>{const w=H.assoc[i].part/100; return x.net?x.cfBrut*w-(((x.imps||[])[i]||0)+x.fees1*w)/12:x.cfBrut*w;};
+ function assocCard(){const A=H.assoc, n=A.length, c=C.find(v=>v.k===(V.city||"lemans"))||C[0], x=calc(c);
+  const fld=(i,k,l,u,st,v)=>`<div><label for="v2a-${i}-${k}">${l}${u?` <span class="v2sub">(${u})</span>`:""}</label><input type="${k==="nom"?"text":"number"}" id="v2a-${i}-${k}" data-v2as="${i}|${k}"${k==="nom"?' maxlength="30" placeholder="Prénom"':` step="${st}" min="0"`} value="${esc(String(v))}"></div>`;
+  return `<div class="v2card"><div class="v2bar"><h2>Associés</h2><span class="v2sp"></span><span class="v2sub">Nombre</span><span class="v2seg" role="group" aria-label="Nombre d'associés">${[1,2,3,4,5,6].map(k=>`<button type="button" data-v2nas="${k}" aria-pressed="${n===k}">${k}</button>`).join("")}</span></div>
+   <p class="v2sub">Chacun reçoit sa part des loyers, paie sa part de la mensualité et des charges, et l'impôt sur sa part à sa propre tranche. Les parts sont ramenées à 100 %.</p>
+   <div class="v2assoc">${A.map((a,i)=>`<div class="v2as"><b>${anom(a,i)} · ${fr(a.part,0)} %</b><div class="v2grid v2f">${fld(i,"nom","Prénom","","",a.nom)}${fld(i,"part","Part du bien","%",5,Math.round(a.part*10)/10)}${fld(i,"revenus","Revenus nets","€/mois",50,Math.round(a.revenus))}${fld(i,"credits","Autres crédits","€/mois",10,Math.round(a.credits))}<div><label for="v2a-${i}-tmi">Tranche d'impôt</label><select id="v2a-${i}-tmi" data-v2as="${i}|tmi">${TMIS.map(t=>`<option value="${t}"${a.tmi===t?" selected":""}>${t} %</option>`).join("")}</select></div>${fld(i,"assur","Assurance de prêt","%/an",0.01,a.assur)}${fld(i,"quot","Quotité assurée","%",10,a.quot)}</div><p class="v2sub">Endettement sur sa part : <b>${x.ratios&&x.ratios[i]!=null?pct(x.ratios[i]*100,0):"n.d."}</b> · cash-flow ${sgn(cfOf(x,i))}/mois (${tyl().toLowerCase()} type à ${esc(c.name)})</p></div>`).join("")}</div>
+   <p class="v2sub">Pour la banque, endettement de l'ensemble : <b>${pct(x.ratio*100,0)}</b> (revenus ${eur(H.salaires)}/mois, autres crédits ${eur(H.pretEtud)}/mois).</p></div>`;}
+ function assocDetail(x){const A=H.assoc; if(A.length<2) return "";
+  return `<div class="v2sec"><h3>Par associé</h3><div class="v2tw"><table class="v2t v2tight"><thead><tr><th>Associé</th><th class="r">Part</th><th class="r">Mensualité</th><th class="r">Impôt an 1</th><th class="r">Cash-flow</th><th class="r">Endettement</th></tr></thead><tbody>${A.map((a,i)=>`<tr><td>${anom(a,i)}</td><td class="r mono">${fr(a.part,0)} %</td><td class="r mono">${eur(x.mens*a.part/100)}</td><td class="r mono">${eur((x.imps||[])[i]||0)}</td><td class="r mono" style="color:${cfC(cfOf(x,i))}">${sgn(cfOf(x,i))}</td><td class="r mono">${x.ratios&&x.ratios[i]!=null?pct(x.ratios[i]*100,0):"n.d."}</td></tr>`).join("")}</tbody></table></div><p class="v2sub">Par mois, sauf l'impôt (par an). La banque regarde l'endettement de l'ensemble : ${pct(x.ratio*100,0)}.</p></div>`;}
  function defOf(k){return TYK.includes(k)?typeDefaults(H.type)[k]:HDEF[k];}
  const HOLD=document.createElement("div"); HOLD.hidden=true; HOLD.id="v2hold"; app.appendChild(HOLD);   /* range les blocs de l'app montrés dans une page avant qu'elle ne soit redessinée */
- function pBudget(){document.querySelectorAll("#v2p-budget .v2src").forEach(n=>HOLD.appendChild(n)); const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK,...TYK,"tmiA","tmiB","regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
+ function pBudget(){document.querySelectorAll("#v2p-budget .v2src").forEach(n=>HOLD.appendChild(n)); const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK.filter(k=>k!=="salaires"&&k!=="pretEtud"),...TYK,"regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
   f=(k,l,u,st)=>{const d=defOf(k), ch=d!=null&&H[k]!==d; return `<div class="${ch?"v2chg":""}"><label for="v2h-${k}">${l} <span class="v2sub">(${u})</span></label><input type="number" id="v2h-${k}" data-v2h="${k}" step="${st}" value="${H[k]}">${ch?`<small class="v2def">défaut : ${d>=1000?nf(d):String(d).replace(".",",")}</small>`:""}</div>`;};
   el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Budget et hypothèses</h1><span class="v2sp"></span>${nch?`<button type="button" class="v2btn sm" data-v2reset>Revenir aux valeurs par défaut (${nch} changée${nch>1?"s":""})</button>`:""}</div>
-   <p class="v2sub v2regnote">${ri?`Communs à vous deux : un changement ici change les chiffres de l'autre.${ri.par?` Dernière modification par ${esc(ri.par)}${ri.le?" le "+esc(dateTxt(ri.le.slice(0,10))):""}.`:""}`:"Pas encore partagés : sans code commun (onglet Nos biens), ces réglages restent dans ce navigateur."} Les valeurs différentes du défaut sont signalées.</p>
+   <p class="v2sub v2regnote">${ri?`Communs à ${nous()} : un changement ici change les chiffres des autres.${ri.par?` Dernière modification par ${esc(ri.par)}${ri.le?" le "+esc(dateTxt(ri.le.slice(0,10))):""}.`:""}`:"Pas encore partagés : sans code commun (onglet Nos biens), ces réglages restent dans ce navigateur."} Les valeurs différentes du défaut sont signalées.</p>
    <div class="v2card"><h2>Nos critères</h2><p class="v2sub" style="font-size:15px;color:var(--fg)">${tyl()} · budget tout compris jusqu'à <b>${keur(cr.budget)}</b> · rendement au moins <b>${fr(cr.rmin)} %</b> · ${cr.bank?"la banque doit suivre":"avec ou sans la banque"}</p><div><button type="button" class="v2btn" data-v2crit>Modifier les critères</button></div></div>
    <div class="v2card"><h2>Scénario affiché partout (le vôtre)</h2>${scnSeg()}<p class="v2sub">Ce choix ne change que votre écran. Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : l'inverse. Le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.</p></div>
-   <div class="v2card"><h2>Le crédit et le foyer</h2><div class="v2grid v2f">${f("apport","Apport","€",500)}${f("taux","Taux du crédit","%",0.05)}${f("duree","Durée","ans",1)}${f("salaires","Revenus nets du foyer","€/mois",50)}${f("pretEtud","Autres crédits en cours","€/mois",10)}${f("notaire","Frais de notaire","%",0.5)}</div></div>
+   <div class="v2card"><h2>Le crédit</h2><div class="v2grid v2f">${f("apport","Apport (ensemble)","€",500)}${f("taux","Taux du crédit","%",0.05)}${f("duree","Durée","ans",1)}${f("notaire","Frais de notaire","%",0.5)}</div></div>
+   ${assocCard()}
    <div class="v2card"><h2>Le bien et sa location</h2><p class="v2sub">Valeurs par défaut pour tous les ${typl()} (chaque type garde les siennes).${(()=>{const n=BIENS.filter(b=>!isOut(b)&&(+b.travaux>0||+b.meubles>0)).length; return n?` Meubles ou travaux remplacés par une valeur saisie dans ${n} bien${n>1?"s":""} suivi${n>1?"s":""}.`:"";})()}</p><div class="v2grid v2f">${f("surface","Surface type","m²",1)}${f("surcote","Prix payé vs prix moyen","%",5)}${f("loyerAdj","Loyer obtenu vs loyer médian","%",5)}${f("vacance","Vacance","mois/an",0.5)}${f("chLoc","Charges payées par le locataire","€/mois",5)}${f("copro","Charges de copro (votre part)","€/mois",1)}${f("grosTrav","Gros travaux copro (provision)","€/m²/an",1)}${f("autres","Assurance PNO, entretien","€/mois",5)}${f("meubles","Meubles","€",250)}${f("travaux","Petits travaux","€",250)}</div></div>
    <div class="v2card"><h2>Le long terme</h2><div class="v2grid v2f">${f("px","Hausse des prix","%/an",0.5)}${f("ly","Hausse des loyers","%/an",0.5)}${f("fraisVente","Frais à la revente","%",0.5)}</div></div>
-   <div class="v2card"><h2>Impôts</h2><div class="v2grid v2f"><div><label for="v2-reg">Régime</label><select id="v2-reg" data-v2fin="regime">${[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]].map(([k,l])=>`<option value="${k}"${H.regime===k?" selected":""}>${l}</option>`).join("")}</select></div>${["tmiA","tmiB"].map((k,i)=>`<div><label for="v2-${k}">Tranche d'imposition ${i?"de votre binôme":"de l'un"}</label><select id="v2-${k}" data-v2fin="${k}">${[0,11,30,41,45].map(t=>`<option value="${t}"${H[k]===t?" selected":""}>${t} %</option>`).join("")}</select></div>`).join("")}</div></div>
+   <div class="v2card"><h2>Impôts</h2><div class="v2grid v2f"><div><label for="v2-reg">Régime</label><select id="v2-reg" data-v2fin="regime">${[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]].map(([k,l])=>`<option value="${k}"${H.regime===k?" selected":""}>${l}</option>`).join("")}</select></div></div><p class="v2sub">La tranche d'impôt de chacun se règle dans Associés.</p></div>
    <div class="v2card"><h2>Ce qui pèse le plus</h2>${sensi()}</div>
    <div class="v2card"><h2>Méthode et sources</h2><p class="v2sub">Ce sont des estimations, pas un conseil financier, fiscal ni bancaire : vérifiez chaque chiffre (notaire, banque, comptable) avant de signer. Ventes réelles DVF, carte des loyers de l'État et annonces de location meublée, Insee, Géorisques, OpenStreetMap, ADEME (DPE), annonces Bien'ici relevées chaque soir.</p><div id="v2srcslot"></div><p class="v2sub">Code : <a href="https://github.com/LM28000/immobilier-tool" target="_blank" rel="noopener">github.com/LM28000/immobilier-tool</a></p></div></div>`;
   /* méthode, sources et fraîcheur des données (blocs de body.html), rangés dans la carte Sources */
@@ -2578,15 +2620,15 @@ render();
   const keep=OFFT[id]!=null&&prix!==sv, cpd=bb&&bb.suivi&&bb.suivi.compromis||"";
   const rows=[100,97.5,95,92.5,90,87.5,85].map(p=>{const pr=Math.round(P*p/100/500)*500, z=calcBien(Object.assign({},b,{prix:pr})).x; return `<tr${pr===prix?' class="on"':""}><td class="r mono">${eur(pr)}<small class="v2sub" style="display:block;font-size:11.5px">${p===100?"affiché":"−"+fr(100-p,1)+" %"}</small></td><td class="r mono" style="color:${cv(colIrr(z.irr))};font-weight:700">${pctS(z.irr)}</td><td class="r mono" style="color:${cfC(z.cf)}">${sgn(z.cf)}</td><td class="r mono">${eur(z.mens)}</td></tr>`;}).join("");
   return `<div class="v2sec"><h3>Faire une offre</h3><div class="v2f"><label for="v2off" class="v2offx">Prix proposé : <b class="mono" style="color:var(--fg)">${eur(prix)}</b> (${pc>=100?"prix affiché":"−"+fr(100-pc,1)+" %"})</label><input type="range" id="v2off" min="70" max="100" step="0.5" value="${Math.max(70,Math.min(100,pc))}" data-v2off="${esc(id)}"${bb?` data-v2offb="${esc(bb.id)}"`:""}></div>
-   <p class="v2sub v2offx" style="margin:0">${bb?(sv&&!keep?`Offre enregistrée pour vous deux : <b class="mono">${eur(sv)}</b>.`:keep?"Lâchez le curseur : l'offre est enregistrée pour vous deux.":"Choisissez un prix : il sera enregistré pour vous deux."):`Essai seulement. <button type="button" class="v2btn sm" data-v2offkeep="${esc(id)}">Garder cette offre (suit le bien)</button>`}</p>
+   <p class="v2sub v2offx" style="margin:0">${bb?(sv&&!keep?`Offre enregistrée pour ${nous()} : <b class="mono">${eur(sv)}</b>.`:keep?`Lâchez le curseur : l'offre est enregistrée pour ${nous()}.`:`Choisissez un prix : il sera enregistré pour ${nous()}.`):`Essai seulement. <button type="button" class="v2btn sm" data-v2offkeep="${esc(id)}">Garder cette offre (suit le bien)</button>`}</p>
    <div class="v2kp v2offx"><div class="v2k"><span>Rendement 15 ans à ce prix</span><b style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b><small>${scn()}</small></div><div class="v2k"><span>Cash-flow · mensualité</span><b style="color:${cfC(y.cf)}">${sgn(y.cf)}</b><small>mensualité ${eur(y.mens)}</small></div></div>
    <div class="v2tw v2offx"><table class="v2t v2tight"><thead><tr><th class="r">Offre</th><th class="r">Rendement 15 ans</th><th class="r">Cash-flow</th><th class="r">Mensualité</th></tr></thead><tbody>${rows}</tbody></table></div>
-   ${bb?`<div class="v2f"><label for="v2cpd">Date du compromis</label><input type="date" id="v2cpd" value="${esc(cpd)}" data-suivi="${esc(bb.id)}|compromis"></div>${cpd?`<ol style="margin:0;padding-left:20px;line-height:1.8">${suiviSteps(bb).filter(x=>x.d&&x.k!=="offre"&&x.k!=="reponse").map(x=>`<li>${esc(x.l)} : ${esc(dateTxt(x.d))}</li>`).join("")}</ol>`:`<p class="v2sub">Indiquez la date du compromis pour voir les échéances jusqu'à l'acte (communes à vous deux, comme dans le suivi de l'achat).</p>`}`:""}</div>`;}
+   ${bb?`<div class="v2f"><label for="v2cpd">Date du compromis</label><input type="date" id="v2cpd" value="${esc(cpd)}" data-suivi="${esc(bb.id)}|compromis"></div>${cpd?`<ol style="margin:0;padding-left:20px;line-height:1.8">${suiviSteps(bb).filter(x=>x.d&&x.k!=="offre"&&x.k!=="reponse").map(x=>`<li>${esc(x.l)} : ${esc(dateTxt(x.d))}</li>`).join("")}</ol>`:`<p class="v2sub">Indiquez la date du compromis pour voir les échéances jusqu'à l'acte (communes à ${nous()}, comme dans le suivi de l'achat).</p>`}`:""}</div>`;}
  /* la visite : les points de la grille de visite de nos biens (visite.check), communs à deux */
  function visite(b,id,bb){const r=calcBien(b), y=r.x, tv=r.V?r.V.travaux:null, ck=bb&&(bb.visite||{}).check||{};
   const nT=CHECK.reduce((s,g)=>s+g[1].length,0), nOk=Object.values(ck).filter(v=>v==="oui").length, nKo=Object.values(ck).filter(v=>v==="non").length, nV=Object.values(ck).filter(v=>v==="oui"||v==="non").length;
   return `<div class="v2sec"><h3>Visite</h3><p style="margin:0">Travaux : <b class="mono">${tv?eur(tv.v):"n.d."}</b> <span class="v2sub">(${tv&&tv.src==="saisi"?"saisis, au lieu de "+eur(tv.est)+" estimés":"estimés avant visite"})</span> · rendement 15 ans <b class="mono" style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b></p>
-   <p class="v2sub" style="margin:0">Après la visite, remplacez l'estimation par le devis ou votre constat : la valeur vaut pour vous deux. <button type="button" class="v2btn sm" data-v2ft="calc" data-v2focus="pw-travaux">Modifier les travaux</button></p>
+   <p class="v2sub" style="margin:0">Après la visite, remplacez l'estimation par le devis ou votre constat : la valeur vaut pour ${nous()}. <button type="button" class="v2btn sm" data-v2ft="calc" data-v2focus="pw-travaux">Modifier les travaux</button></p>
    ${bb?`<p style="margin:0">Grille de visite : <b class="mono">${nV}/${nT}</b> points vérifiés${nKo?` · <span style="color:var(--bad);font-weight:700">${nKo} problème${nKo>1?"s":""}</span>`:nOk?" · rien d'inquiétant":""}.</p><div><button type="button" class="v2btn" data-visit="${esc(bb.id)}">Ouvrir la grille de visite (${nT} points, à deux)</button></div>`
     :`<p class="v2sub" style="margin:0">La grille de visite (${nT} points, documents à demander) se remplit à deux sur un bien suivi.</p><div><button type="button" class="v2btn" data-v2star="${esc(b.ville)}|${esc(b.suf||"")}">☆ Suivre ce bien</button></div>`}</div>`;}
  function ficheBien(sel){const R=bienOfSel(sel); if(!R) return null; const b=R.b, id=R.kind==="b"?"b"+b.id:sel, r=calcBien(b), x=r.x, z=irr3(x)||{}, t=r.t, fx=ficx(R.kind==="v"?R.suf:(bienSuf(b)||""))||{};
@@ -2598,11 +2640,11 @@ render();
   const chips=`${bc!=="p-ok"?`<span class="v2pill ${bc==="p-warn"?"warn":"bad"}" title="part des revenus prise par les crédits">Banque : ${bt.toLowerCase()} · ${Math.round(x.ratio*100)} % des revenus</span>`:""}${dpe?`<span class="v2pill ${"FG".includes(dpe)?"bad":dpe==="E"?"warn":""}">DPE ${dpe}${dpe==="G"?" · location interdite":dpe==="F"?" · interdite en 2028":dpe==="E"?" · interdite en 2034":""}</span>`:""}${R.kind==="v"?ficheBadges(R.suf,true)||"":""}`;
   const head=`<div class="v2fhd">${ph?`<img class="v2fth" src="${esc(ph)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="v2fhdt"><h2 class="v2ft">${keur(+b.prix)} · ${esc(tit)}</h2><p class="v2sub">${esc(cityName(b.ville))}${qn?" · quartier "+esc(qn):""}${ann&&qn&&ann!==qn?` <span title="nom du secteur dans l'annonce">(« ${esc(ann)} » dans l'annonce)</span>`:""} · ${eur(+b.prix/(+b.surface||1))}/m² ${R.kind==="v"?_vuBadgesF("v",R.ck,R.suf):""}</p></div></div>
    <div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${c}">${pctS(x.irr)}</b><div class="v2bigbar" aria-hidden="true">${z.prudent!=null?`<i style="left:${p(z.prudent)}%;width:${p(z.favorable)-p(z.prudent)}%;background:${c}"></i>`:""}<b style="left:${p(x.irr)}%;background:${c}"></b></div><small>prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}</small></div>
-    <div class="v2k"><span>Cash-flow à deux</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois · loyer ${eur(x.rentHC)} HC</small></div><div class="v2k"><span>Mensualité</span><b>${eur(x.mens)}</b><small>budget ${keur(x.cost)} tout compris</small></div></div>
+    <div class="v2k"><span>Cash-flow${H.assoc.length>1?" à "+H.assoc.length:""}</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois · loyer ${eur(x.rentHC)} HC</small></div><div class="v2k"><span>Mensualité</span><b>${eur(x.mens)}</b><small>budget ${keur(x.cost)} tout compris</small></div></div>
    ${chips?`<div class="v2chips">${chips}</div>`:""}
    <div class="v2bar">${R.kind==="v"?`<button type="button" class="v2btn${on?"":" pri"}" data-v2star="${R.ck}|${esc(R.suf)}" aria-pressed="${on}">${on?"★ Dans la shortlist":"☆ Ajouter à la shortlist"}</button>`:`${stPill(b)}<button type="button" class="v2btn sm" data-unshort="${esc(b.id)}">Retirer</button>`}${b.url?`<a class="v2btn sm" href="${esc(b.url)}" target="_blank" rel="noopener">Voir l'annonce ↗</a>`:""}${bb?`<button type="button" class="v2btn sm" data-fiche="${esc(bb.id)}">Fiche à emporter</button>`:""}</div>
    ${bb?`<div class="v2sec"><h3>À deux</h3><div class="v2vrow"><b>${esc(me||"Vous")}</b>${me?voteBtns(bb,me):`<span class="v2sub">indiquez votre prénom dans Nos biens</span>`}</div>${oth.map(o=>`<div class="v2vrow"><b>${esc(o)}</b>${voteTxt(bb,o)}</div>`).join("")}</div>`:""}`;
-  const extra={prix:prixNuage(b,t),achat:offre(b,id,bb)+visite(b,id,bb),bien:attn};
+  const extra={prix:prixNuage(b,t),achat:offre(b,id,bb)+visite(b,id,bb),bien:attn,calc:assocDetail(x)};
   return {title:`${keur(+b.prix)} · ${cityName(b.ville)}`,head,S,extra};}
  const dl=L=>`<dl class="v2dl">${L.filter(Boolean).map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>`;
  function ficheQV(sel){const [k,ck,code]=sel.split("|");
@@ -2639,7 +2681,7 @@ render();
  /* ---------- dialogue des critères (premier lancement) ---------- */
  function critDlg(first){if(document.querySelector(".v2dlg")) return; const d=document.createElement("div"); d.className="v2dlg"; const c=critV();
   const n=()=>feed().filter(o=>o.x.cost<=+$("v2cB").value&&o.x.irr>=+$("v2cR").value&&(!$("v2cK").checked||bankOk(o.x.ratio))).length;
-  d.innerHTML=`<form aria-labelledby="v2cT"><h2 id="v2cT" class="v2h1">${first?"Que cherchez-vous ?":"Nos critères"}</h2><p class="v2sub">Ces critères filtrent la carte, le tableau et le nuage${regShared()?", pour vous deux":""}. Vous pourrez les changer à tout moment.</p>
+  d.innerHTML=`<form aria-labelledby="v2cT"><h2 id="v2cT" class="v2h1">${first?"Que cherchez-vous ?":"Nos critères"}</h2><p class="v2sub">Ces critères filtrent la carte, le tableau et le nuage${regShared()?", pour "+nous():""}. Vous pourrez les changer à tout moment.</p>
    <div class="v2f"><label>Type de bien</label><span class="v2seg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${H.type===k}">${T.lab}</button>`).join("")}</span></div>
    <div class="v2f"><label for="v2cB">Budget tout compris : <b class="mono" id="v2cBv" style="color:var(--fg)"></b></label><input type="range" id="v2cB" min="40000" max="250000" step="5000" value="${c.budget}"></div>
    <div class="v2f"><label for="v2cR">Rendement 15 ans minimum : <b class="mono" id="v2cRv" style="color:var(--fg)"></b></label><input type="range" id="v2cR" min="-3" max="8" step="0.5" value="${c.rmin}"></div>
@@ -2662,7 +2704,7 @@ render();
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
   if(d.v2scn){H.pess=d.v2scn==="prudent"; H.fav=d.v2scn==="favorable"; try{localStorage.setItem("scn",d.v2scn);}catch(_){} const p=$("f-pess"); if(p) p.checked=H.pess; if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render(); return;}
@@ -2684,7 +2726,8 @@ render();
   if(d.v2add!=null){addDlg(); return;}
   if(d.v2addx!=null){addClose(); return;}
   if(d.v2cmpx!=null){CMPS.clear(); refresh(); return;}
-  if(d.v2reset!=null){if(confirm(regShared()?"Revenir aux valeurs par défaut pour vous deux ? Vos critères et vos biens ne changent pas.":"Revenir aux valeurs par défaut ? Vos critères et vos biens ne changent pas.")) regReset(); return;}
+  if(d.v2nas){const k=+d.v2nas, A=H.assoc.slice(0,k); while(A.length<k) A.push(assoc0(k)); A.forEach(a=>{a.part=100/k;}); H.assoc=A; assocNorm(); saveFin(); CALCC.clear(); VC.clear(); render(); return;}
+  if(d.v2reset!=null){if(confirm(regShared()?`Revenir aux valeurs par défaut pour ${nous()} ? Vos critères et vos biens ne changent pas.`:"Revenir aux valeurs par défaut ? Vos critères et vos biens ne changent pas.")) regReset(); return;}
   if(d.v2offkeep){const [k,ck,...r]=d.v2offkeep.split("|"), suf=r.join("|"), P=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!P) return; const pr=Math.round(P[2]*(OFFT[d.v2offkeep]??100)/100/500)*500;
    Promise.resolve(mStar(ck,suf)).then(()=>setTimeout(()=>{const b=bienOf(VTURL+suf); if(b){delete OFFT[d.v2offkeep]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}},600)); return;}
   if(d.v2min!=null){V.min=!V.min; save(); mapList(); return;}
@@ -2702,6 +2745,7 @@ render();
    if(nw.length===old.length) old.forEach((o,i)=>{o.innerHTML=nw[i].innerHTML;});}});
  document.addEventListener("change",e=>{const t=e.target, d=t.dataset; if(!d) return;
   if(d.v2h){const v=+t.value; if(isFinite(v)){H[d.v2h]=v; if(TYK.includes(d.v2h)) saveTyv(d.v2h); else saveHyp(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}}
+  else if(d.v2as){const [i,k]=d.v2as.split("|"), a=H.assoc[+i]; if(!a) return; a[k]=k==="nom"?t.value.trim():+t.value; assocNorm(); saveFin(); CALCC.clear(); VC.clear(); render();}
   else if(d.v2fin){H[d.v2fin]=d.v2fin==="regime"?t.value:+t.value; if(typeof saveFin==="function") saveFin(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}
   else if(d.v2cmp){if(t.checked){if(CMPS.size>=4){t.checked=false; toast("Quatre biens au plus."); return;} CMPS.add(d.v2cmp);} else CMPS.delete(d.v2cmp); refresh();}
   else if(d.v2offb){const b=BIENS.find(x=>x.id===d.v2offb); if(!b) return; const pr=Math.round(+b.prix*(+t.value)/100/500)*500; delete OFFT[d.v2off]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}});

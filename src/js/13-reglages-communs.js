@@ -7,7 +7,7 @@
    Au premier passage, la ligne est créée avec les réglages de la personne qui ouvre ; l'autre reçoit ensuite ces valeurs et un message
    dit lesquelles ont remplacé les siennes. Une ligne créée avec les valeurs d'exemple (exemple: true) ne remplace pas de vraies
    valeurs : la personne qui en a les envoie à la place. */
-const FINK=["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta","nomA","nomB"];
+const FINK=["garantie","regime","cfe","compta"];   /* et les associés (H.assoc), à part */
 const CRIT0={budget:90000,rmin:3,bank:true};
 let NOSCRIT=null; try{const c=JSON.parse(localStorage.getItem("crit")||"null"); if(c&&typeof c==="object"&&!Array.isArray(c)) NOSCRIT=c;}catch(_){}
 let REGL=null, REGREADY=false, REGNEW=false, REGT=0, REGIN=false;
@@ -15,10 +15,10 @@ const critV=()=>Object.assign({},CRIT0,NOSCRIT||{});
 const regShared=()=>!!(typeof DB!=="undefined"&&DB&&!DB.local);
 function regLab(k){const L={surcote:"prix payé vs prix moyen",loyerAdj:"loyer obtenu",taux:"taux du crédit",tmiA:"tranche d'impôt 1",tmiB:"tranche d'impôt 2",regime:"régime fiscal",
   assurA:"assurance du prêt 1",assurB:"assurance du prêt 2",quotA:"quotité 1",quotB:"quotité 2",garantie:"garantie du prêt",cfe:"CFE",compta:"comptable",nomA:"prénom 1",nomB:"prénom 2",
-  budget:"budget",rmin:"rendement minimum",bank:"banque"};
+  budget:"budget",rmin:"rendement minimum",bank:"banque",assoc:"associés"};
  return L[k]||((hypDefs.find(d=>d[0]===k)||[])[1]||k).toLowerCase();}
 function saveCrit(){try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){} regPush();}
-function regVals(){const hyp={}, fin={}; HYPK.forEach(k=>{hyp[k]=H[k];}); FINK.forEach(k=>{if(H[k]!=null&&H[k]!=="") fin[k]=H[k];});
+function regVals(){const hyp={}, fin={}; HYPK.forEach(k=>{hyp[k]=H[k];}); FINK.forEach(k=>{if(H[k]!=null&&H[k]!=="") fin[k]=H[k];}); fin.assoc=JSON.parse(JSON.stringify(H.assoc));
  return {hyp,fin,tyv:JSON.parse(JSON.stringify(TYV)),crit:NOSCRIT?Object.assign({},NOSCRIT):null};}
 /* qui a modifié les réglages communs, et quand (onglet Budget) */
 function regInfo(){if(!regShared()) return null; const d=REGL&&REGL.data||{}; return {par:d.par||"",le:d.le||"",pret:REGREADY};}
@@ -33,7 +33,7 @@ function regTake(docs){const out=[], R=[];
  const first=!REGREADY; REGREADY=true;
  if(R[0]&&first&&R[0].data.exemple===true&&HYPOK){REGL=R[0]; REGNEW=false; regPush();}
  else if(R[0]){REGL=R[0]; REGNEW=false; regApply(R[0].data,first);
-  if((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)) regPush();}
+  if((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)||!(R[0].data.fin&&R[0].data.fin.assoc)) regPush();}
  else if(!REGNEW){REGNEW=true; setTimeout(regSend,0);}
  if(first) document.dispatchEvent(new Event("reglages"));
  return out;}
@@ -44,6 +44,8 @@ function regApply(d,first){const ch=[];
  try{
   if(d.hyp&&typeof d.hyp==="object") HYPK.forEach(k=>{if(typeof d.hyp[k]==="number") setK(k,d.hyp[k]);});
   if(d.fin&&typeof d.fin==="object") FINK.forEach(k=>{const v=d.fin[k]; if(typeof v==="number"||(typeof v==="string"&&v.length<=40)) setK(k,v);});
+  if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){if(JSON.stringify(d.fin.assoc)!==JSON.stringify(H.assoc)){H.assoc=JSON.parse(JSON.stringify(d.fin.assoc)); assocNorm(); ch.push("assoc");}}
+  else if(d.hyp) assocFromLegacy({salaires:d.hyp.salaires,pretEtud:d.hyp.pretEtud});   /* réglages communs d'avant les associés : revenus et crédits répartis */
   if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&JSON.stringify(d.tyv)!==JSON.stringify(TYV)){
    TYV=JSON.parse(JSON.stringify(d.tyv)); saveTyvLocal(); const v=typeVals(H.type); TYK.forEach(k=>setK(k,v[k]));}
   if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&JSON.stringify(d.crit)!==JSON.stringify(NOSCRIT)){
@@ -70,7 +72,9 @@ async function regSend(){if(!regShared()) return; if(!REGREADY){REGT=setTimeout(
  catch(e){toast("Réglages non partagés ("+(e&&e.code||"erreur")+") : ils restent dans ce navigateur.");}}
 
 /* revenir aux valeurs de départ (pour vous deux) */
-function regReset(){HYPK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];}); FINK.forEach(k=>{if(k!=="nomA"&&k!=="nomB"&&HDEF[k]!=null) H[k]=HDEF[k];});
+function regReset(){HYPK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];}); FINK.forEach(k=>{if(HDEF[k]!=null) H[k]=HDEF[k];});
+ /* associés : mêmes prénoms et même nombre, revenus du défaut partagés, tranches et assurances par défaut */
+ const n=H.assoc.length; H.assoc=H.assoc.map(a=>Object.assign(assoc0(n),{nom:a.nom})); assocNorm();
  TYV={}; saveTyvLocal(); Object.assign(H,typeVals(H.type));
  REGIN=true; try{saveHyp(); saveFin();}finally{REGIN=false;} regPush();
  [typeof CALCC!=="undefined"&&CALCC,typeof VC!=="undefined"&&VC,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear()); render();}

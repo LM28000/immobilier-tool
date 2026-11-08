@@ -55,4 +55,13 @@ const b2 = E(`normBien("x1",{ville:"atlantis",prix:"abc"})`);
 ok('bien illisible : gardé et signalé', b2.bad === true && /illisible/.test(b2.titre) && b2.ville === 'lemans');
 ok('shortlist : retrait conservé, absent laissé absent', E(`normBien("a",{ville:"lemans",prix:1e4,surface:20,short:false}).short`) === false && E(`"short" in normBien("a",{ville:"lemans",prix:1e4,surface:20})`) === false);
 
+// associés : deux personnes d'avant → deux associés, mêmes chiffres ; trois associés, chacun à sa tranche
+ok('associés : deux par défaut, assurance et impôt inchangés', E('H.assoc.length') === 2 && near(E('insRate()'), 0.4, 1e-9) && near(E('taxRate()'), 0.186, 1e-9));
+const as3 = E(`(()=>{const s=JSON.stringify(H.assoc); H.assoc=[{nom:"A",part:50,revenus:2000,credits:100,tmi:30,assur:0.3,quot:100},{nom:"B",part:30,revenus:1500,credits:0,tmi:11,assur:0.2,quot:50},{nom:"C",part:20,revenus:1000,credits:0,tmi:0,assur:0.1,quot:50}]; assocNorm(); CALCC.clear();
+ const x=calc(C[0]), r={n:H.assoc.length,sal:H.salaires,cred:H.pretEtud,tr:taxRate(),ir:insRate(),imp:x.imp1,imps:x.imps,ratios:x.ratios,ratio:x.ratio}; H.assoc=JSON.parse(s); assocNorm(); CALCC.clear(); return r;})()`);
+ok('associés : trois, revenus et crédits additionnés', as3.n === 3 && as3.sal === 4500 && as3.cred === 100, JSON.stringify(as3));
+ok('associés : impôt au taux moyen des parts', near(as3.tr, ((30 + 18.6) * 50 + (11 + 18.6) * 30 + (0 + 18.6) * 20) / 1e4, 1e-9) && near(as3.ir, (0.3 * 100 + 0.2 * 50 + 0.1 * 50) / 100, 1e-9));
+ok('associés : l\'impôt de chacun fait le total, un endettement par personne', as3.imps.length === 3 && near(as3.imps.reduce((a, b) => a + b, 0), as3.imp, 1e-6) && as3.ratios.length === 3 && as3.ratios.every(r => r > 0));
+ok('associés : réglage du serveur MCP réparti', E(`(()=>{const s=JSON.stringify(H.assoc); assocFromLegacy({salaires:4000,tmiB:41}); const r=[H.salaires,H.assoc[1].tmi]; H.assoc=JSON.parse(s); assocNorm(); return r;})()`).join() === '4000,41');
+
 console.log(`\n${n - bad}/${n} tests unitaires réussis`); process.exit(bad ? 1 : 0);

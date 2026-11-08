@@ -204,3 +204,9 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 @media (max-width:860px){#v2map .maplibregl-ctrl-attrib{font-size:10px}}
 /* dans une fiche de ville, « toutes les annonces » et « voir les quartiers » sont déjà sur la carte à côté */
 #v2fiche [data-annall],#v2fiche [data-zq]{display:none}
+/* associés : une carte par personne */
+.v2assoc{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.v2as{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.v2as>b{font-size:14px}
+.v2as .v2grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+@media (max-width:860px){.v2assoc{grid-template-columns:1fr}}

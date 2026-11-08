@@ -113,6 +113,11 @@ async function mlRoutes(p) {
     await tick(A.p); await A.p.waitForTimeout(1200);
     ok('v2 commun · un changement de l\'autre arrive (taux, meubles du type)', await A.p.evaluate(() => H.taux === 3.5 && H.meubles === 4000), await A.p.evaluate(() => H.taux + ' / ' + H.meubles));
     ok('v2 commun · message nommant qui a modifié', await A.p.evaluate(() => /Camille a modifié les réglages communs/.test((document.getElementById('toast') || {}).textContent || '')));
+    // associés : Camille passe à trois associés et nomme le troisième, Louis le reçoit
+    await B.p.evaluate(() => document.querySelector('[data-v2nas="3"]').click()); await B.p.waitForTimeout(500);
+    await B.p.evaluate(() => { const i = document.getElementById('v2a-2-nom'); i.value = 'Sam'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await B.p.waitForTimeout(1800);
+    await tick(A.p); await A.p.waitForTimeout(1200);
+    ok('v2 commun · associés : trois, partagés, parts à 100 %', await A.p.evaluate(() => H.assoc.length === 3 && H.assoc[2].nom === 'Sam' && Math.abs(H.assoc.reduce((s, a) => s + a.part, 0) - 100) < 1e-6), await A.p.evaluate(() => JSON.stringify(H.assoc.map(a => [a.nom, a.part]))));
     await A.p.reload(); await A.p.waitForTimeout(2500);
     ok('v2 commun · meubles du type gardés après rechargement', await A.p.evaluate(() => H.meubles === 4000));
     // offre : suivre une annonce puis choisir un prix, l'autre le voit

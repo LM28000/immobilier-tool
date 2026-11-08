@@ -27,7 +27,7 @@ async function getPage() {
   await page.route("**/*", r => r.request().url().startsWith("file:") ? r.continue() : r.abort());   // calcul seul : aucun appel réseau
   await page.goto("file://" + PAGE); await page.waitForFunction(() => typeof calcBien === "function" && typeof IR === "object", null, {timeout: 20000});
   loadedAt = mt;
-  const hyp = lireHyp(); if (Object.keys(hyp).length) await page.evaluate(h => { Object.assign(H, h); if (h.type) setType(h.type, true); CALCC.clear(); VC.clear(); Object.keys(TGC).forEach(k => delete TGC[k]); }, hyp);
+  const hyp = lireHyp(); if (Object.keys(hyp).length) await page.evaluate(h => { Object.assign(H, h); if (typeof assocFromLegacy === "function") assocFromLegacy(h); if (h.type) setType(h.type, true); CALCC.clear(); VC.clear(); Object.keys(TGC).forEach(k => delete TGC[k]); }, hyp);
   log("page chargée", new Date(mt).toISOString());
   return page;
 }
@@ -120,7 +120,7 @@ function sb() { const s = fs.readFileSync(path.join(R, "src/js/21-shortlist-part
   let code = process.env.SB_GROUPE || ""; try { code = code || fs.readFileSync(path.join(CFG, "groupe"), "utf8").trim(); } catch {}
   if (!m || code.length < 12) throw new Error("liste commune indisponible : code de groupe absent (~/.config/immobilier-tool/groupe)");
   return {base: m[1].replace(/\/$/, "") + "/rest/v1/biens", h: {apikey: m[2], "x-groupe": code, "Content-Type": "application/json"}, code}; }
-async function sbGet() { const {base, h} = sb(); const r = await fetch(base + "?select=id,data,created_at&order=created_at.desc&limit=500", {headers: h}); if (!r.ok) throw new Error("Supabase : HTTP " + r.status); return r.json(); }
+async function sbGet() { const {base, h} = sb(); const r = await fetch(base + "?select=id,data,created_at&order=created_at.desc&limit=500", {headers: h}); if (!r.ok) throw new Error("Supabase : HTTP " + r.status); return (await r.json()).filter(x => !(x.data && x.data.kind === "reglages")); }   // la ligne des réglages communs n'est pas un bien
 server.registerTool("nos_biens", {title: "Nos biens", description: "La liste partagée « Nos biens » : statut (à voir, visité, offre faite, compromis, acheté, écarté), calcul, prix à viser, visite et suivi de l'achat.", inputSchema: {inclure_ecartes: z.boolean().optional()}},
   wrap(async ({inclure_ecartes}) => { const rows = await sbGet(); await aides();
     return run(([rows, all]) => rows.map(x => normBien(x.id, x.data)).filter(b => all || !isOut(b)).map(b => { const r = calcBien(b), x = r.x, lv = (() => { try { return priceLevels(b); } catch { return null; } })(), nx = ["offre faite", "compromis", "acheté"].includes(b.statut) ? suiviNext(b) : null;

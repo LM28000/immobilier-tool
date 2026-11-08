@@ -1,7 +1,4 @@
 /* ---------- financement : réglages, détail du prêt, part de chacun, scénarios ---------- */
-Object.assign(H,{nomA:"", nomB:""});
-(function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){if(s.nomA) H.nomA=s.nomA; if(s.nomB) H.nomB=s.nomB;}}catch(_){}})();
-const _saveFin=saveFin; saveFin=function(){_saveFin(); try{const s=JSON.parse(localStorage.getItem("fin")||"{}"); s.nomA=H.nomA; s.nomB=H.nomB; localStorage.setItem("fin",JSON.stringify(s));}catch(_){}};
 const REG={auto:"le plus avantageux",micro:"micro-BIC",reel:"réel"};
 
 /* scénarios « et si » */
@@ -38,7 +35,7 @@ function irrSpan(x){const o=irr3(x); if(!o) return ""; const f=v=>v==null?"n.d."
 function taxLine(x){const cfe=x.fees1-(x.regime==="reel"?H.compta:0), comp=x.regime==="reel"?H.compta:0, m=v=>eur(v/12);
  return `<details class="b2n"><summary><span>Du brut au net</span><span class="mono"><span class="${x.cfBrut>=0?"pos":"neg"}">${sgn(x.cfBrut)}</span> → <span class="${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}</span>/mois</span></summary>
   <div class="trow"><span>Cash-flow avant impôts</span><b class="mono">${sgn(x.cfBrut)}/mois</b></div>
-  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, TMI ${H.tmiA} % et ${H.tmiB} % + prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
+  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, TMI ${H.assoc.length>1?H.assoc.map(a=>a.tmi+" %").join(", "):H.assoc[0].tmi+" %"} + prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
   <div class="trow"><span>CFE${cfe?"":" (exonérée sous 5 000 € de recettes)"}</span><b class="mono">−${m(cfe)}</b></div>
   ${comp?`<div class="trow"><span>Comptable (régime réel)</span><b class="mono">−${m(comp)}</b></div>`:""}
   <div class="trow tot"><span>Cash-flow net</span><b class="mono ${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}/mois</b></div>

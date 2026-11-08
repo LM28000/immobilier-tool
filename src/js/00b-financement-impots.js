@@ -7,15 +7,34 @@
    - revente : plus-value des particuliers, 19 % + 17,2 %, abattements pour durée de détention ;
      depuis 2025, les amortissements du bâti déduits au réel sont réintégrés dans la plus-value. */
 const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5};
-const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true};
+const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true, nomA:"", nomB:""};
 Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
+/* ---------- associés : de 1 à 6 personnes qui achètent ensemble ----------
+   Chacune a sa part du bien (part des loyers, des charges, de la mensualité et de l'impôt), ses revenus, ses autres crédits,
+   sa tranche d'impôt et son assurance de prêt (taux et quotité). La banque regarde l'endettement de l'ensemble ; celui de chacun
+   est donné aussi. Les anciens réglages à deux (salaires, pretEtud, tmiA, tmiB, partA, assurA…) en sont tirés : le serveur MCP les lit encore. */
+const TMIS=[0,11,30,41,45];
+const assoc0=n=>({nom:"",part:100/n,revenus:Math.round(2500/n),credits:0,tmi:0,assur:0.20,quot:100});
+function assocNorm(){let A=Array.isArray(H.assoc)?H.assoc.filter(a=>a&&typeof a==="object").slice(0,6):[]; if(!A.length) A=[assoc0(1)];
+ A=A.map(a=>({nom:String(a.nom||"").slice(0,30),part:Math.max(0,+a.part||0),revenus:Math.max(0,+a.revenus||0),credits:Math.max(0,+a.credits||0),tmi:TMIS.includes(+a.tmi)?+a.tmi:0,assur:Math.max(0,+a.assur||0),quot:Math.min(100,Math.max(0,a.quot==null?100:+a.quot||0))}));
+ const t=A.reduce((s,a)=>s+a.part,0); A.forEach(a=>{a.part=t>0?a.part/t*100:100/A.length;}); H.assoc=A;
+ const B=A[1]||{tmi:A[0].tmi,assur:0,quot:0,nom:""};
+ Object.assign(H,{salaires:A.reduce((s,a)=>s+a.revenus,0),pretEtud:A.reduce((s,a)=>s+a.credits,0),tmiA:A[0].tmi,tmiB:B.tmi,partA:A[0].part,assurA:A[0].assur,quotA:A[0].quot,assurB:B.assur,quotB:B.quot,nomA:A[0].nom,nomB:B.nom});}
+/* réglages venus d'ailleurs sous l'ancienne forme (serveur MCP) : répartis sur les associés */
+function assocFromLegacy(h){if(!h||!Array.isArray(H.assoc)) return; const A=H.assoc, sc=(k,f)=>{if(typeof h[k]!=="number") return; const t=A.reduce((s,a)=>s+a[f],0); A.forEach(a=>{a[f]=t>0?a[f]/t*h[k]:h[k]/A.length;});};
+ sc("salaires","revenus"); sc("pretEtud","credits"); if(h.tmiA!=null&&A[0]) A[0].tmi=+h.tmiA; if(h.tmiB!=null&&A[1]) A[1].tmi=+h.tmiB; assocNorm();}
 (function(){try{const s=JSON.parse(localStorage.getItem("fin")||"null"); if(s){
   if(!s.v2){if(s.tmiB===11) delete s.tmiB; if(s.compta===300) delete s.compta; if(s.cfe===200) delete s.cfe;} // anciens réglages par défaut
-  ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});}
- const m=localStorage.getItem("chiffres"); if(m) H.net=m!=="brut";}catch(_){}})();
-function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,tmiA:H.tmiA,tmiB:H.tmiB,regime:H.regime,cfe:H.cfe,compta:H.compta,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
-const insRate=()=>(H.assurA*H.quotA+H.assurB*H.quotB)/100;          // % du capital par an
-const taxRate=()=>((H.tmiA+FISC.ps)*H.partA+(H.tmiB+FISC.ps)*(100-H.partA))/1e4; // taux moyen du foyer « à deux »
+  ["garantie","assurA","quotA","assurB","quotB","tmiA","tmiB","regime","cfe","compta","nomA","nomB"].forEach(k=>{if(s[k]!=null) H[k]=s[k];});
+  if(Array.isArray(s.assoc)) H.assoc=s.assoc;}
+ const m=localStorage.getItem("chiffres"); if(m) H.net=m!=="brut";}catch(_){}
+ /* première fois : les deux personnes d'avant deviennent deux associés, mêmes chiffres (revenus du foyer partagés selon la part) */
+ if(!Array.isArray(H.assoc)){const pa=Math.min(100,Math.max(0,+H.partA||50)); H.assoc=[{nom:H.nomA||"",part:pa,revenus:H.salaires*pa/100,credits:H.pretEtud/2,tmi:H.tmiA,assur:H.assurA,quot:H.quotA},{nom:H.nomB||"",part:100-pa,revenus:H.salaires*(100-pa)/100,credits:H.pretEtud/2,tmi:H.tmiB,assur:H.assurB,quot:H.quotB}];}
+ assocNorm();})();
+HDEF.assoc=[assoc0(2),assoc0(2)];
+function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,regime:H.regime,cfe:H.cfe,compta:H.compta,assoc:H.assoc,nomA:H.nomA,nomB:H.nomB,tmiA:H.tmiA,tmiB:H.tmiB,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
+const insRate=()=>H.assoc.reduce((s,a)=>s+a.assur*a.quot,0)/100;          // % du capital par an : assurance de chaque emprunteur sur sa quotité
+const taxRate=()=>H.assoc.reduce((s,a)=>s+(a.tmi+FISC.ps)*a.part,0)/1e4; // taux moyen : chacun paie l'impôt sur sa part, à sa tranche
 
 // abattements pour durée de détention (plus-value des particuliers)
 function abatPV(y){const ir=y<6?0:y>=22?1:0.06*(y-5); let ps=y<6?0:y<=21?0.0165*(y-5):y===22?0.0165*16+0.016:Math.min(1,0.0165*16+0.016+0.09*(y-22)); return [Math.min(ir,1),Math.min(ps,1)];}
@@ -48,7 +67,8 @@ function calc(c){
  if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
   const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
  const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
- const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
+ const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);   /* endettement de l'ensemble des associés (ce que la banque regarde) */
+ const ratios=H.assoc.map(a=>{const w=a.part/100, d=a.revenus+rentHC*0.7*w; return d>0?(mens*w+a.credits)/d:null;});   /* et celui de chacun, sur sa part */
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
@@ -72,8 +92,8 @@ function calc(c){
  let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
  const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], cfBrut=rentEff-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
  const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
- const wA=(H.tmiA+FISC.ps)*H.partA, wB=(H.tmiB+FISC.ps)*(100-H.partA), impA=imp1*wA/(wA+wB||1);
- return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
+ const W=H.assoc.map(a=>(a.tmi+FISC.ps)*a.part), Ws=W.reduce((s,w)=>s+w,0)||1, imps=W.map(w=>imp1*w/Ws), impA=imps[0];
+ return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
 
