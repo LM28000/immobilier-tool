@@ -68,7 +68,8 @@ function homeHtml(){const mob=typeof MOBON!=="undefined"&&MOBON, L=BIENS.filter(
 const chevH=`<span class="hch" aria-hidden="true">›</span>`;
 
 /* ordinateur : bloc en tête de page */
-function homeRender(){if(typeof MOBON!=="undefined"&&MOBON) return; const el=document.getElementById("homePanel"); if(!el) return; try{el.innerHTML=`<h2 class="hh0">Où on en est</h2>${homeHtml()}`;}catch(err){el.innerHTML="";}}
+/* sur ordinateur, pas d'accueil « Où on en est » (retiré à la demande, novembre 2026) : la page s'ouvre sur l'explorateur */
+function homeRender(){}
 /* téléphone : écran Accueil */
 function mAccRender(){if(typeof MOBON==="undefined"||!MOBON) return; const el=document.getElementById("mAcc"); if(!el) return; try{el.innerHTML=homeHtml();}catch(err){el.innerHTML=`<p class="msub">Accueil indisponible.</p>`;}}
 const _renderH=render; render=function(){_renderH.apply(this,arguments); homeRender(); if(typeof MOBON!=="undefined"&&MOBON&&MS==="accueil") mAccRender();};
@@ -81,8 +82,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
 document.addEventListener("change",e=>{const f=e.target.closest&&e.target.closest("[data-vrdv]"); if(!f) return; const b=BIENS.find(x=>x.id===f.dataset.vrdv); if(!b) return; const v=Object.assign({},b.visite||{}); if(f.value) v.rdv=f.value; else delete v.rdv; updBien(b.id,{visite:v});});
 
 /* ordinateur large (maquettes) : barre latérale avec les 5 rubriques, la rubrique visible est surlignée */
-(function sideNav(){const N=[["homePanel","Où on en est",`<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/>`],
-  ["mapSec","Explorer",`<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>`],
+(function sideNav(){const N=[["mapSec","Explorer",`<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>`],
   ["tab-ann","Annonces",`<rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/>`],
   ["tab-biens","Nos biens",`<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>`],
   ["setPanel","Budget",`<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/>`]];
@@ -95,6 +95,6 @@ document.addEventListener("change",e=>{const f=e.target.closest&&e.target.closes
   const el=target(id); if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});});
  const mark=()=>{let cur=null, best=-1e9; for(const [id] of N){const el=target(id); if(!el) continue; const t=el.getBoundingClientRect().top; if(t<innerHeight*0.4&&t>best){best=t; cur=id;}}   /* la rubrique dont le haut est passé le plus récemment */
   if(cur==="tabsSec"||(cur&&cur.startsWith("tab-"))){const sel=document.querySelector('[role="tab"][aria-selected="true"]'); cur=sel&&sel.id==="tab-biens"?"tab-biens":"tab-ann";}
-  nav.querySelectorAll("[data-side]").forEach(a=>a.setAttribute("aria-current",a.dataset.side===(cur||"homePanel")?"location":"false"));};
+  nav.querySelectorAll("[data-side]").forEach(a=>a.setAttribute("aria-current",a.dataset.side===(cur||"mapSec")?"location":"false"));};
  addEventListener("scroll",()=>requestAnimationFrame(mark),{passive:true}); setTimeout(mark,500);
  setTimeout(()=>{const f=document.getElementById("sideFresh"); if(f) f.textContent=ADS.date?`Annonces relevées le ${ADS.date} · 5 villes sur 13`:"";},600);})();

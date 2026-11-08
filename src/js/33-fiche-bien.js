@@ -8,7 +8,7 @@ function bienFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class
  return `${ph?`<img class="adph" src="${esc(ph)}" alt="Photo de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
  <div class="dh"><h3 style="font-size:1.15rem;margin:0;display:flex;gap:6px;align-items:center"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button>${esc(b.titre||"Bien sans nom")}</h3>${stPill(b)}</div>
  <p class="sub" style="margin:2px 0 10px">${c.name}${b.quartier?" · quartier "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché · ${eur(r.pm2)}/m²${b.par?` · ajouté par ${esc(b.par)}`:""} ${s?vuBadges("v",b.ville,s):""}${v&&v.gone?` <span class="hb old">annonce retirée le ${dm(v.gone)}</span>`:""}</p>
- ${out?`<p class="outline">Bien écarté : hors shortlist et hors carte, gardé dans « Nos biens ». <button type="button" class="lnk" data-reshort="${b.id}">Le remettre dans la shortlist</button></p>`:""}
+ ${out?`<p class="outline">Retiré de la shortlist. <button type="button" class="lnk" data-reshort="${b.id}">L'y remettre</button></p>`:""}
  <div class="big4"><div><span>Budget tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer ${+b.loyer>0?"visé":"estimé"} HC</span><b>${eur(x.rentHC)}</b></div>
   <div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b>${altCf(x)}</div><div><span>15 ans ${mlab()}</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b>${altIrr(x)}</div></div>
  <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
@@ -27,8 +27,12 @@ document.addEventListener("click",e=>{const u=e.target.closest&&e.target.closest
  if(u.dataset.gotab){showTab(u.dataset.gotab); document.getElementById("p-biens").scrollIntoView({behavior:"smooth",block:"start"}); return;}
  const id=u.dataset.unshort||u.dataset.reshort, b=BIENS.find(x=>x.id===id); if(!b) return;
  const prev=b.statut||"à voir";
- if(u.dataset.unshort){updBien(id,{statut:"écarté",short:true}); toast(`« ${b.titre||"Bien"} » écarté : retiré de la shortlist, gardé dans « Nos biens ».`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});}
+ if(u.dataset.unshort){retirer(b); return;}
  else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Remis dans la shortlist.");}});
 const isOut=b=>b.statut==="écarté"||b.short===false;
-let SHOWOUT=false;
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-showout]"); if(!t) return; e.preventDefault(); SHOWOUT=!SHOWOUT; renderBiens();});
+/* retirer de la shortlist : un bien venu d'une annonce est caché (l'annonce revient dans la liste, et ses notes reviennent si on la rajoute) ;
+   un bien saisi à la main, qui n'a pas d'annonce où revenir, est supprimé. Les deux s'annulent depuis le message. */
+async function retirer(b){const prev=b.statut||"à voir", t=b.titre||"Bien";
+ if(b.url){await updBien(b.id,{statut:"écarté",short:true}); toast(`« ${t} » retiré : l'annonce revient dans la liste des annonces.`,{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})}); return;}
+ const keep={...b}; delete keep.id;
+ try{await DB.collection("biens").doc(b.id).delete(); toast(`« ${t} » supprimé.`,{label:"Annuler",fn:async()=>{try{await DB.collection("biens").add(keep); toast("Bien restauré.");}catch(_){toast("Restauration impossible.");}}});}catch(err){toast("Suppression refusée ("+(err&&err.code||"erreur")+").");}}

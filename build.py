@@ -87,16 +87,20 @@ def lrc0():
     def rexp(ck):
         if ck not in LOY.get("c3", {}) or ck not in LOY.get("c", {}): return 0.6
         return min(0.9, max(0.4, 1 + math.log(LOY["c3"][ck] / LOY["c"][ck][0]) / math.log(sref[1] / sref[0])))
-    out = {}
+    out = {}; med = statistics.median
     for ty in ("studio", "t2", "t3"):
-        v = {}
+        v, R = {}, {}
         for ck, V in ads.items():
             if not isinstance(V, dict) or ck not in C: continue
             b = V if ty == "studio" else (V.get("t") or {}).get(ty) or {}
             rent, m2 = C[ck]; T = SURF[ty]
-            r = sorted(a[2] / (rent * (T / m2) ** rexp(ck) * (a[0] / T) ** EXPT[ty]) for a in b.get("ads", []) if a[0] > 0 and a[2] > 0 and not (FICX.get(str(a[4]).split("/")[-1]) or {}).get("coloc"))
-            if len(r) >= 15: v[ck] = round(min(1.2, max(0.7, statistics.median(r))), 3)
-        out[ty] = {"v": v, "tous": round(statistics.median(v.values()), 3) if v else 1}
+            R[ck] = [(bool(a[3]), a[2] / (rent * (T / m2) ** rexp(ck) * (a[0] / T) ** EXPT[ty])) for a in b.get("ads", []) if a[0] > 0 and a[2] > 0 and not (FICX.get(str(a[4]).split("/")[-1]) or {}).get("coloc")]
+        # meublé : une location vide compte pour son loyer × l'écart meublé / vide du type
+        pm = [med([x for m, x in r if m]) / med([x for m, x in r if not m]) for r in R.values() if sum(m for m, _ in r) >= 5 and sum(not m for m, _ in r) >= 5]
+        prime = round(med(pm), 3) if pm else 1.1
+        for ck, r in R.items():
+            if len(r) >= 15: v[ck] = round(min(1.2, max(0.7, med([x if m else x * prime for m, x in r]))), 3)
+        out[ty] = {"v": v, "prime": prime, "tous": round(med(v.values()), 3) if v else 1}
     return out
 import re, statistics
 LRC0 = lrc0()

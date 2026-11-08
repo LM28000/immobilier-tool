@@ -13,6 +13,7 @@ const TIPS={
  b2n:()=>`Le passage du chiffre brut (avant impôts) au chiffre net : impôts sur les loyers, CFE, comptable si régime réel, et impôt sur la plus-value à la revente.`,
  pm2:()=>`Prix affiché divisé par la surface. Pour un studio, le prix au m² est en général 10 à 20 % plus élevé que la moyenne des appartements du quartier.`,
  etsi:()=>`Testez une hypothèse sans toucher à vos réglages : la colonne « Et si… » se remplit dès qu'une case est cochée. La durée de revente s'applique aux deux colonnes.`,
+ scn3:()=>`Le même calcul dans deux autres scénarios. Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : loyer +5 %, un demi-mois vide de moins, prix +${fr(H.px+0.5,1)} %/an. Ces trois hypothèses font l'essentiel de l'écart ; le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.`,
  pess:()=>`Loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +${fr(H.px,1)} %. Le taux ne change pas : il est fixé à la signature.`,
  vacq:()=>`Ajuste les mois vides selon le temps de marche réel (par les rues, OpenStreetMap) jusqu'à la gare, l'université ou le centre : 1 mois à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus. Décoché : ${fr(H.vacance,1)} mois partout.`,
  dvf:()=>`Le prix d'achat vient des logements du type choisi (même nombre de pièces) réellement vendus en 2023-2025 (DVF), dans le quartier quand il en a, sinon dans la ville. Décoché : prix moyen des appartements + surcote.`,
@@ -30,7 +31,7 @@ const TIPS={
  chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, entretien des parties communes, ordures ménagères).`,
  copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire).`,
  dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
- statut:()=>`Où vous en êtes avec ce bien. « Écarté » le retire de la shortlist et de la carte ; il reste dans « Nos biens ».`};
+ statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de la shortlist (×) : l'annonce revient dans la liste des annonces.`};
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];

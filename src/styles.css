@@ -781,7 +781,6 @@ details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 
 /* accueil « Où on en est » (ordinateur et téléphone) */
 .mdot.st4{background:var(--accent)} .mdot.st5{background:var(--ok)}
-#homePanel:empty{display:none}
 .hh0{margin:0 0 12px}
 .hstep{background:var(--accent);color:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;max-width:640px}
 .hst{font-size:.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
@@ -822,3 +821,6 @@ div.hrow{cursor:default}
 #sideNav svg{width:20px!important;height:20px!important;flex:none}
 .hstep .htitle{text-transform:none;letter-spacing:0;font-size:1.25rem;margin:0;color:#fff}
 .hrow{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;width:100%;box-sizing:border-box;text-align:left}
+/* fourchette des trois scénarios, sous le rendement */
+small.alt.irr3{display:block;margin-top:2px;font-family:inherit;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
+small.alt.irr3 .tipb{vertical-align:middle}

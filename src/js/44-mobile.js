@@ -195,7 +195,7 @@ function mBienDetail(id){const b=BIENS.find(x=>x.id===id); if(!b) return;
 
 /* ajouter / retirer de la shortlist */
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
- if(b&&!isOut(b)){const prev=b.statut||"à voir"; await updBien(b.id,{statut:"écarté"}); toast("Retiré de la shortlist.",{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})}); return;}
+ if(b&&!isOut(b)){await retirer(b); return;}
  if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
@@ -209,10 +209,10 @@ function mShortRender(){if(!MOBON) return; MSLATE=[]; const all=BIENS.filter(b=>
  document.getElementById("mSCount").textContent=all.length?`${all.length} bien${all.length>1?"s":""} · glisser une ligne vers la gauche pour changer son statut`:"";
  document.getElementById("mSFil").innerHTML=MST.map(([k,l])=>{const n=k==="tous"?all.length:all.filter(b=>(b.statut||"à voir")===k).length; return `<button type="button" class="mchip${MSF.st===k?" on":""}" data-msf="${k}">${l} <small>${n}</small></button>`;}).join("");
  const row=({b,r})=>{const x=r.x, ph=bienPhoto(b,200,200), lv=tgReady(b)?(()=>{try{return priceLevels(b);}catch(_){return null;}})():(MSLATE.push(b),null), st=b.statut||"à voir", nx=nextStatut(st);
-  return `<div class="msw" data-mswid="${b.id}"><div class="mswa"><button type="button" class="mswb next" data-stset="${b.id}|${nx}">${nx==="offre faite"?"Offre":nx[0].toUpperCase()+nx.slice(1)}</button><button type="button" class="mswb red" data-unshort="${b.id}">Écarter</button></div>
+  return `<div class="msw" data-mswid="${b.id}"><div class="mswa"><button type="button" class="mswb next" data-stset="${b.id}|${nx}">${nx==="offre faite"?"Offre":nx[0].toUpperCase()+nx.slice(1)}</button><button type="button" class="mswb red" data-unshort="${b.id}">Retirer</button></div>
    <div class="mswc" data-mad="b|${b.ville}|${b.id}"><span class="mth">${imgTag(ph,"")}</span><span class="mst"><b>${b.fav?"★ ":""}${mEsc(b.titre||"Bien")}</b><small>${mEsc(cityName(b.ville))} · ${keur(+b.prix)}${lv?` · cible ${keur(lv.cible)}`:""}</small><small><b style="color:${colIrr(x.irr)}">${irrTxt(x)}</b> · <span class="${mcfc(x.cf)}">${sgn(x.cf)}/mois</span> · <i class="mdot ${STC[st]||"st0"}"></i>${st}</small></span>${chev}</div></div>`;};
  document.getElementById("mShort").innerHTML=(L.length?`<div class="mgroup mswl">${L.map(row).join("")}</div>`:`<div class="mempty">${all.length?"Aucun bien avec ce statut.":"Aucun bien pour l'instant.<br>Touchez ☆ sur une annonce pour l'ajouter."}</div>`)
-  +`<div class="mgroup"><button type="button" class="mrow" data-mgo="addbien">Ajouter un bien à la main${chev}</button>${out.length?`<button type="button" class="mrow" data-mgo="out"><span>Biens écartés</span><span class="mval">${out.length}</span>${chev}</button>`:""}<button type="button" class="mrow" data-mgo="share">Liste commune et partage${chev}</button>${CMP.length?`<button type="button" class="mrow" data-mgo="cmp"><span>Comparer</span><span class="mval">${CMP.length}</span>${chev}</button>`:""}</div>`; if(MSLATE.length){clearTimeout(MSLT); const L=MSLATE.slice(); MSLT=setTimeout(()=>{let k=0; const step=()=>{if(k<L.length){try{targetsFor(L[k]);}catch(_){} k++; setTimeout(step,0);} else if(MS==="short") mShortRender();}; step();},60);}}
+  +`<div class="mgroup"><button type="button" class="mrow" data-mgo="addbien">Ajouter un bien à la main${chev}</button><button type="button" class="mrow" data-mgo="share">Liste commune et partage${chev}</button>${CMP.length?`<button type="button" class="mrow" data-mgo="cmp"><span>Comparer</span><span class="mval">${CMP.length}</span>${chev}</button>`:""}</div>`; if(MSLATE.length){clearTimeout(MSLT); const L=MSLATE.slice(); MSLT=setTimeout(()=>{let k=0; const step=()=>{if(k<L.length){try{targetsFor(L[k]);}catch(_){} k++; setTimeout(step,0);} else if(MS==="short") mShortRender();}; step();},60);}}
 /* glisser pour agir */
 (function(){let row=null,x0=0,y0=0,dx=0,dir=null,open=null;
  const W=172, close=r=>{if(r){r.querySelector(".mswc").style.transform=""; r.classList.remove("open");} if(open===r) open=null;};
@@ -252,7 +252,6 @@ function mGo(k){const tb=id=>document.getElementById(id);
  else if(k==="biens"){showTab("tab-biens"); mPushEl("Tous nos biens",tb("p-biens"),{back:"Retour"}); mDraw("renderBiens");}
  else if(k==="addbien"){showTab("tab-biens"); mPushEl("Ajouter un bien",tb("biensForm"),{back:"Shortlist"});}
  else if(k==="share"){mPushEl("Liste commune",tb("shareBox"),{back:"Shortlist"}); const s=STACK[STACK.length-1].s.querySelector(".mpin"); const xf=document.querySelector("details.xfer"); if(xf){mTake(xf,s); STACK[STACK.length-1].els.push(xf);}}
- else if(k==="out"){SHOWOUT=true; showTab("tab-biens"); mPushEl("Biens écartés",tb("biensList"),{back:"Shortlist",onpop:()=>{SHOWOUT=false;}}); mDraw("renderBiens");}
  else if(k==="meth"){mPushEl("Comment c'est calculé",document.querySelector("dl.fmeth"),{back:"Plus"});}
  else if(k==="src"){renderFresh(); mPushEl("Sources",tb("freshBox"),{back:"Plus"});}
  else if(k==="hyp"){mPushEl("Hypothèses",tb("hypFields"),{back:"Budget",onpop:mBudgetRender});}

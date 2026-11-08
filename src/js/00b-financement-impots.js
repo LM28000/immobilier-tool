@@ -30,8 +30,8 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
  return {M,Y,months:m};}
 
 function calc(c){
- const S=c._s||{}, pe=H.pess;
- const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?0.5:0), px=pe?Math.min(H.px,0.5):H.px, la=H.loyerAdj+(pe?-5:0)+(S.loyer?-5:0), HZ=S.hz||15;
+ const S=c._s||{}, pe=H.pess, fa=H.fav&&!pe; /* fa : scénario favorable, miroir du prudent (loyer +5 %, ½ mois vide de moins, prix +0,5 %/an) */
+ const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
@@ -101,4 +101,7 @@ function studioPm2(ck,t,tk){const c=C.find(v=>v.k===ck); if(!c) return 0; tk=tk|
 
 /* ---------- mémoire des calculs : même ville, même bien, mêmes réglages → même résultat ---------- */
 const CALCC=new Map();
-const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};
+const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); Object.defineProperty(r,"_c",{value:c}); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};
+/* les trois scénarios d'un même calcul : prudent (H.pess), central, favorable (H.fav) */
+function irr3(x){const c=x&&x._c; if(!c) return null; const p0=H.pess, f0=H.fav, o={};
+ try{H.fav=false; H.pess=true; o.prudent=calc(c).irr; H.pess=false; o.central=calc(c).irr; H.fav=true; o.favorable=calc(c).irr;}finally{H.pess=p0; H.fav=f0;} return o;}

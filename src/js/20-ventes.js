@@ -6,7 +6,8 @@ function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[secto
 function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.filter(a=>!estDoublon(a[3])).map(a=>({ck,a,r:venteCalc(ck,a)})));
-const isAdded=url=>BIENS.some(b=>b.url===url);
+/* une annonce retirée de la shortlist redevient une annonce comme les autres (son bien est gardé caché, avec ses notes et sa visite, et revient si on la rajoute) */
+const isAdded=url=>BIENS.some(b=>b.url===url&&!isOut(b));
 function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}" aria-label="Ajouter à nos biens">+${big?" Ajouter à nos biens":`<span class="lbl"> Ajouter</span>`}</button>`;}
 function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99));
  return `<div class="scrollbox"><table class="adt vt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
@@ -20,6 +21,8 @@ function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) ret
  return fRows([["À vendre en ligne",`${tyN(A.ventes.length)} · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
+ const old=BIENS.find(x=>x.url===VTURL+suf);
+ if(old){b.disabled=true; await updBien(old.id,{statut:old.statut==="écarté"?"à voir":old.statut,short:true}); toast(`« ${old.titre||"Bien"} » remis dans nos biens, avec ses notes.`); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  b.disabled=true; b.textContent="ajout…";
  try{await DB.collection("biens").add(bien); b.outerHTML=`<span class="pill p-ok">ajouté</span>`; toast(`« ${vb.titre} » ajouté à nos biens.`);}catch(err){b.disabled=false; b.textContent="+ Ajouter"; toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}});
@@ -40,7 +43,7 @@ function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) ret
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-sim]"); if(!b) return; e.preventDefault(); const [ck,code]=b.dataset.sim.split("|"); simHere(ck,code);});
 
 /* ---------- statuts, favoris, auteur ---------- */
-const STATUTS=["à voir","visité","offre faite","compromis","acheté","écarté"];
+const STATUTS=["à voir","visité","offre faite","compromis","acheté"]; /* « écarté » n'est plus proposé : on retire de la shortlist (bouton ×) */
 function myName(){try{return localStorage.getItem("biens-nom")||"";}catch(_){return "";}}
 async function updBien(id,patch){try{await DB.collection("biens").doc(id).update(patch);}catch(err){toast("Modification refusée ("+(err&&err.code||"erreur")+").");}}
 const STC={"à voir":"st0","visité":"st1","offre faite":"st2","compromis":"st4","acheté":"st5","écarté":"st3"};
@@ -54,7 +57,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   m.innerHTML=STATUTS.map(s=>`<button type="button" role="menuitemradio" aria-checked="${(b.statut||"à voir")===s}" class="stp ${STC[s]}" data-stset="${b.id}|${s}"><i></i>${s}</button>`).join("");
   document.body.appendChild(m); const r=t.getBoundingClientRect(), mh=m.offsetHeight, mw=m.offsetWidth; m.style.left=Math.max(8,Math.min(r.left,innerWidth-mw-8))+"px"; m.style.top=(r.bottom+mh+8>innerHeight?r.top-mh-4:r.bottom+4)+"px"; STY=scrollY; t.setAttribute("aria-expanded","true"); return;}
  const [id,nx]=t.dataset.stset.split("|"), b=BIENS.find(x=>x.id===id); closeStMenus(); if(!b) return; const prev=b.statut||"à voir"; if(prev===nx) return;
- updBien(id,{statut:nx}); toast(nx==="écarté"?"Bien écarté : il quitte la shortlist et la carte, et reste dans « Nos biens ».":`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
+ updBien(id,{statut:nx}); toast(`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
 addEventListener("keydown",e=>{if(e.key==="Escape") closeStMenus();});
 document.addEventListener("click",e=>{const f=e.target.closest&&e.target.closest("[data-fav]"); if(!f) return; e.preventDefault(); const b=BIENS.find(x=>x.id===f.dataset.fav); if(b) updBien(b.id,{fav:!b.fav});});
 

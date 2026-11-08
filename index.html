@@ -788,7 +788,6 @@ details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 
 /* accueil « Où on en est » (ordinateur et téléphone) */
 .mdot.st4{background:var(--accent)} .mdot.st5{background:var(--ok)}
-#homePanel:empty{display:none}
 .hh0{margin:0 0 12px}
 .hstep{background:var(--accent);color:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;max-width:640px}
 .hst{font-size:.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
@@ -829,6 +828,9 @@ div.hrow{cursor:default}
 #sideNav svg{width:20px!important;height:20px!important;flex:none}
 .hstep .htitle{text-transform:none;letter-spacing:0;font-size:1.25rem;margin:0;color:#fff}
 .hrow{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;width:100%;box-sizing:border-box;text-align:left}
+/* fourchette des trois scénarios, sous le rendement */
+small.alt.irr3{display:block;margin-top:2px;font-family:inherit;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
+small.alt.irr3 .tipb{vertical-align:middle}
 </style>
 
 <div class="wrap">
@@ -838,7 +840,6 @@ div.hrow{cursor:default}
     <p id="heroTxt">Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans treize villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour.</p>
   </header>
 
-  <section class="panel" id="homePanel"></section>
 
   <section class="panel" id="shortPanel">
     <h2>Notre shortlist</h2>
@@ -1006,7 +1007,7 @@ div.hrow{cursor:default}
         <dt>Vie de quartier</dt><dd>Note sur 10 d'après la distance du centre du quartier au supermarché ou à la supérette le plus proche (poids 3), à la boulangerie (1,5), à la pharmacie (1), à la laverie (1), à la salle de sport (0,5) et le nombre de cafés, restos et bars à moins de 500 m (2, plein à 10). Plein score à 250 m ou moins, zéro au-delà de 1,2 km, à vol d'oiseau depuis le centre du quartier. Données OpenStreetMap, parfois incomplètes.</dd>
         <dt>Charges</dt><dd>Copropriété (part propriétaire), assurance PNO et entretien, taxe foncière au taux 2025 de la ville (hors ordures ménagères, payées par le locataire).</dd>
         <dt>Impôts</dt><dd>Régime le plus avantageux entre micro-BIC (50 % des loyers imposés) et réel (charges, intérêts et amortissements déduits), selon la tranche de chacun et les prélèvements sociaux de 18,6 %. CFE et comptable (au réel) comptés. À la revente : impôt sur la plus-value avec abattements pour durée de détention, amortissements réintégrés.</dd>
-        <dt>Rendement 15 ans</dt><dd>Rendement annuel de l'apport, revente comprise (taux de rendement interne). Brut : avant impôts et frais fiscaux ; net : après. Après frais de revente (5 % par défaut, réglable dans « Plus d'hypothèses »).</dd>
+        <dt>Rendement 15 ans</dt><dd>Rendement annuel de l'apport, revente comprise (taux de rendement interne). Brut : avant impôts et frais fiscaux ; net : après. Après frais de revente (3 % par défaut, réglable dans « Plus d'hypothèses »).</dd>
         <dt>Banque</dt><dd>(Mensualité + prêt étudiant) ÷ (salaires + 70 % du loyer). Passe jusqu'à 33 %, limite jusqu'à 35 %.</dd>
         <dt>Quartiers</dt><dd>Contours IRIS de l'Insee. Étiquettes calculées : « centre-ville », « près de la gare » ou « près de la fac » à 10 min ou moins, « quartier prioritaire » d'après la liste officielle 2024.</dd>
         <dt>Trajets</dt><dd>Depuis Laval et Nantes : temps en voiture estimé depuis la distance (×1,2 à 105 km/h). Depuis Paris : meilleur train direct ou avec une correspondance. Repères et lignes de train approximatifs.</dd>
@@ -1065,15 +1066,15 @@ const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]]
  [[48.86,2.35],[47.90,1.91],[47.59,1.335],[47.39,0.69],[47.26,-0.08],[47.47,-0.55]],[[48.86,2.35],[47.79,1.07],[47.39,0.69],[46.58,0.34]],
  [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
  [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
-const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:5,pess:false,vacQ:true,dvf:true};
+const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,pess:false,vacQ:true,dvf:true};
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
  ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
  ["salaires","Revenus nets du foyer","€/mois",50],["pretEtud","Autres crédits en cours","€/mois",10],["fraisVente","Frais à la revente","%",0.5]];
 /* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) */
 const HYPK=["apport","duree","notaire","chLoc","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
-let HYPOK=false; try{const s=JSON.parse(localStorage.getItem("hyp")||"null"); if(s&&typeof s==="object"){HYPK.forEach(k=>{if(typeof s[k]==="number"&&isFinite(s[k])) H[k]=s[k];}); HYPOK=s.salaires!=null;}}catch(_){}
-function saveHyp(){try{const s={}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true;}
+let HYPOK=false; try{const s=JSON.parse(localStorage.getItem("hyp")||"null"); if(s&&typeof s==="object"){if(!s.v2&&s.fraisVente===5) delete s.fraisVente; /* ancienne valeur par défaut (5 %, novembre 2026), trop prudente */ HYPK.forEach(k=>{if(typeof s[k]==="number"&&isFinite(s[k])) H[k]=s[k];}); HYPOK=s.salaires!=null;}}catch(_){}
+function saveHyp(){try{const s={v2:1}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true;}
 let SEL="lemans";
 
 const eur=v=>Math.round(v).toLocaleString("fr-FR")+" €";
@@ -1148,8 +1149,8 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
  return {M,Y,months:m};}
 
 function calc(c){
- const S=c._s||{}, pe=H.pess;
- const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:(c.vac!=null?c.vac:H.vacance)+(pe?0.5:0), px=pe?Math.min(H.px,0.5):H.px, la=H.loyerAdj+(pe?-5:0)+(S.loyer?-5:0), HZ=S.hz||15;
+ const S=c._s||{}, pe=H.pess, fa=H.fav&&!pe; /* fa : scénario favorable, miroir du prudent (loyer +5 %, ½ mois vide de moins, prix +0,5 %/an) */
+ const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
@@ -1219,7 +1220,10 @@ function studioPm2(ck,t,tk){const c=C.find(v=>v.k===ck); if(!c) return 0; tk=tk|
 
 /* ---------- mémoire des calculs : même ville, même bien, mêmes réglages → même résultat ---------- */
 const CALCC=new Map();
-const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};
+const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); Object.defineProperty(r,"_c",{value:c}); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};
+/* les trois scénarios d'un même calcul : prudent (H.pess), central, favorable (H.fav) */
+function irr3(x){const c=x&&x._c; if(!c) return null; const p0=H.pess, f0=H.fav, o={};
+ try{H.fav=false; H.pess=true; o.prudent=calc(c).irr; H.pess=false; o.central=calc(c).irr; H.fav=true; o.favorable=calc(c).irr;}finally{H.pess=p0; H.fav=f0;} return o;}
 
 /* ---------- carte ---------- */
 const MP={lon0:-2.9,lat1:49.45,k:Math.cos(47.7*Math.PI/180)};
@@ -1301,7 +1305,7 @@ const IRIS={"lemans":{"txt":"Z.A. Zone commerciale sud|2601|A|2212,479727 -39,-1
 const ADSRAW={"date":"7 novembre 2026","iso":"2026-11-07","prive":true};
 const FICX={};
 const EXPT={"studio":0.246,"t2":0.386,"t3":0.487};
-const LRC0={"studio":{"v":{"lemans":0.95,"stnazaire":0.942,"angers":1.004,"caen":0.96,"orleans":0.974},"tous":0.96},"t2":{"v":{"lemans":0.856,"stnazaire":0.773,"angers":0.862,"caen":0.878,"orleans":0.853},"tous":0.856},"t3":{"v":{"lemans":0.854,"stnazaire":0.745,"angers":0.851,"caen":0.884,"orleans":0.824},"tous":0.851}};
+const LRC0={"studio":{"v":{"lemans":0.995,"stnazaire":0.997,"angers":1.051,"caen":1.047,"orleans":1.017},"prime":1.096,"tous":1.017},"t2":{"v":{"lemans":0.921,"stnazaire":0.859,"angers":0.953,"caen":0.971,"orleans":0.94},"prime":1.129,"tous":0.94},"t3":{"v":{"lemans":0.919,"stnazaire":0.82,"angers":0.918,"caen":0.971,"orleans":0.894},"prime":1.1,"tous":0.918}};
 const FICHES=null;
 /* annonces du type choisi : ADSRAW[ville] = {ads, ventes (studios), map, t:{t2:{ads, ventes}, t3:{...}}} ; ADS[ville] = la vue du type courant (même forme pour tous les types) */
 /* chambres en colocation (d'après la fiche de l'annonce) écartées des loyers de comparaison */
@@ -1313,14 +1317,18 @@ const ADS=new Proxy(ADSRAW,{get(o,k){const v=o[k]; if(!v||typeof v!=="object"||!
  const key=k+"|"+ty; if(!ADSV[key]){const x=v.t&&v.t[ty]||{}; ADSV[key]={map:v.map,ads:x.ads||[],ventes:x.ventes||[]};} return ADSV[key];}});
 
 /* loyer de la ville recalé sur les annonces de location : par ville et par type, médiane de (loyer demandé ÷ loyer du modèle à la même surface)
-   dès 15 annonces (colocations exclues), bornée 0,7–1,2 ; une ville sans annonces prend la médiane des villes relevées. */
+   dès 15 annonces (colocations exclues), bornée 0,7–1,2 ; une ville sans annonces prend la médiane des villes relevées.
+   Le calcul suppose un meublé : une location vide compte pour son loyer × l'écart meublé / vide du type
+   (médiane, sur les villes qui ont au moins 5 annonces de chaque, du rapport des deux médianes ; 1,1 à défaut). */
 let LRC={};
 function loyerRecal(){const out={}, med=a=>{const b=[...a].sort((x,y)=>x-y), m=b.length>>1; return b.length?(b.length%2?b[m]:(b[m-1]+b[m])/2):null;};
- for(const ty of ["studio","t2","t3"]){const T=tyOf(ty), v={}, n={};
+ for(const ty of ["studio","t2","t3"]){const T=tyOf(ty), v={}, n={}, R={};
   Object.entries(ADSRAW).forEach(([ck,V])=>{if(!V||typeof V!=="object"||!V.map) return; const c=C.find(x=>x.k===ck); if(!c) return; const L=ty==="studio"?V.ads:((V.t||{})[ty]||{}).ads;
-   const r=(L||[]).filter(a=>a[0]>0&&a[2]>0).map(a=>a[2]/(c.rent*Math.pow(T.surf/c.rentM2,rentExp(ck))*Math.pow(a[0]/T.surf,expT(ty))));
-   if(r.length>=15){v[ck]=Math.round(Math.min(1.2,Math.max(0.7,med(r)))*1000)/1000; n[ck]=r.length;}});
-  const all=Object.values(v); out[ty]={v,n,tous:all.length?Math.round(med(all)*1000)/1000:1};}
+   R[ck]=(L||[]).filter(a=>a[0]>0&&a[2]>0).map(a=>[!!a[3],a[2]/(c.rent*Math.pow(T.surf/c.rentM2,rentExp(ck))*Math.pow(a[0]/T.surf,expT(ty)))]);});
+  const pm=[]; Object.values(R).forEach(r=>{const m=r.filter(x=>x[0]).map(x=>x[1]), w=r.filter(x=>!x[0]).map(x=>x[1]); if(m.length>=5&&w.length>=5) pm.push(med(m)/med(w));});
+  const prime=pm.length?Math.round(med(pm)*1000)/1000:1.1;
+  Object.entries(R).forEach(([ck,r])=>{if(r.length>=15){v[ck]=Math.round(Math.min(1.2,Math.max(0.7,med(r.map(x=>x[0]?x[1]:x[1]*prime))))*1000)/1000; n[ck]=r.length;}});
+  const all=Object.values(v); out[ty]={v,n,prime,tous:all.length?Math.round(med(all)*1000)/1000:1};}
  /* page publique sans annonces : facteurs calculés au build (LRC0) */
  if(!Object.values(out).some(o=>Object.keys(o.v).length)&&typeof LRC0!=="undefined") Object.assign(out,LRC0);
  LRC=out; if(typeof CALCC!=="undefined") CALCC.clear();}
@@ -1747,7 +1755,11 @@ function scnBien(b){const f=s=>{const sc=s||{hz:SCN.hz}, x=calcBien(b,sc).x, pr=
 /* ligne « après impôts » des fiches */
 const mlab=()=>H.net?"net":"brut";
 function altCf(x,short){const o=x.net?x.cfBrut:x.cfNet; return `<small class="alt">${short?"":x.net?"avant impôts ":"après impôts "}${short?(x.net?"brut ":"net "):""}${sgn(o)}</small>`;}
-function altIrr(x,short){const o=x.net?x.irrBrut:x.irrNet; return `<small class="alt">${short?"":x.net?"avant impôts ":"après impôts "}${short?(x.net?"brut ":"net "):""}${o==null?"n.d.":pct(o)}</small>`;}
+function altIrr(x,short){const o=x.net?x.irrBrut:x.irrNet; return `<small class="alt">${short?"":x.net?"avant impôts ":"après impôts "}${short?(x.net?"brut ":"net "):""}${o==null?"n.d.":pct(o)}</small>${short?"":irrSpan(x)}`;}
+/* fourchette : les deux autres scénarios que celui affiché */
+function irrSpan(x){const o=irr3(x); if(!o) return ""; const f=v=>v==null?"n.d.":pct(v), cur=H.pess?"prudent":"central";
+ const l=[["prudent","prudent"],["central","central"],["favorable","favorable"]].filter(([k])=>k!==cur).map(([k,t])=>`${t} ${f(o[k])}`).join(" · ");
+ return `<small class="alt irr3">${l}${typeof tipBtn==="function"?" "+tipBtn("scn3"):""}</small>`;}
 function taxLine(x){const cfe=x.fees1-(x.regime==="reel"?H.compta:0), comp=x.regime==="reel"?H.compta:0, m=v=>eur(v/12);
  return `<details class="b2n"><summary><span>Du brut au net</span><span class="mono"><span class="${x.cfBrut>=0?"pos":"neg"}">${sgn(x.cfBrut)}</span> → <span class="${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}</span>/mois</span></summary>
   <div class="trow"><span>Cash-flow avant impôts</span><b class="mono">${sgn(x.cfBrut)}/mois</b></div>
@@ -1896,14 +1908,13 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
  if(!BIENS.length){box.innerHTML=`<p class="sub">Aucun bien pour l'instant. Ajoutez une annonce de vente repérée : le calcul reprend vos réglages et le loyer du quartier.</p>`; return;}
- const nOut=BIENS.filter(isOut).length, rows=BIENS.filter(b=>SHOWOUT||!isOut(b)).map(b=>({b,r:calcBien(b)})).sort((a,b)=>((isOut(a.b)?1:0)-(isOut(b.b)?1:0))||((b.r.x.irr??-99)-(a.r.x.irr??-99)));
+ const rows=BIENS.filter(b=>!isOut(b)).map(b=>({b,r:calcBien(b)})).sort((a,b)=>((isOut(a.b)?1:0)-(isOut(b.b)?1:0))||((b.r.x.irr??-99)-(a.r.x.irr??-99)));
  box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Bien</th><th class="r">Prix</th><th class="r">€/m²</th><th class="r">Loyer HC</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th>Banque</th><th>DPE</th><th></th></tr></thead><tbody>${rows.map(({b,r})=>{const [bc,bt]=bank(r.x.ratio), qp=r.t&&r.t.price, dif=qp?(r.pm2/(studioPm2(b.ville,r.t,b.type||typeFor(b.surface,b.pieces))*pm2Adj(b.type||typeFor(b.surface,b.pieces),+b.surface||22))-1)*100:null, bad=/[FG]/.test(b.dpe||"");
   return `<tr data-id="${esc(b.id)}" class="${isOut(b)?"off":""}"><td><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="Favori">${b.fav?"★":"☆"}</button> <button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button>${b.url?` · <a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<div class="sub" style="margin:0">${C.find(v=>v.k===b.ville).name}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m²${b.par?" · par "+esc(b.par):""}${b.notes?" · "+esc(b.notes):""}</div>${stPill(b)}</td>
    <td class="r mono">${eur(+b.prix)}</td><td class="r mono">${eur(r.pm2)}${dif!=null?`<div class="sub" style="margin:0">${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs quartier</div>`:""}</td><td class="r mono">${eur(r.x.rentHC)}${+b.loyer>0?"":"<sup>*</sup>"}</td>
    <td class="r mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}</td><td><span class="pill ${bc}">${bt}</span></td>
    <td>${b.dpe?`<span class="pill ${bad?"p-bad":"p-n"}">${b.dpe}${bad?" · interdit bientôt":""}</span>`:"—"}</td>
    <td style="white-space:nowrap">${isOut(b)?`<button type="button" class="btn ghost sm" data-reshort="${b.id}">↩ Shortlist</button> `:""}<button type="button" class="btn sm" data-visit="${b.id}">Visite${visitScore(b)!=null?" · "+fr(visitScore(b),1)+"/5":""}</button> <button type="button" class="btn ghost sm" data-fiche="${b.id}" title="Fiche imprimable pour la visite">À emporter</button> ${cmpBtn({kind:"b",id:b.id})} <button type="button" class="lnk" data-del="${b.id}">supprimer</button></td></tr>`;}).join("")}</tbody></table></div>
-  ${nOut?`<p style="margin:8px 0"><button type="button" class="btn ghost sm" data-showout>${SHOWOUT?"Masquer les écartés":`Voir les écartés (${nOut})`}</button></p>`:""}
   <p class="sub"><sup>*</sup> loyer estimé (médiane du quartier ou de la ville). Les prix d'annonce incluent en général les frais d'agence ; le notaire, les meubles et les petits travaux sont ajoutés comme pour la ville.</p>`;
  box.querySelectorAll("[data-del]").forEach(btn=>btn.addEventListener("click",async()=>{const old=BIENS.find(x=>x.id===btn.dataset.del); if(!old) return; const {id,by,...keep}=old;
   try{await DB.collection("biens").doc(btn.dataset.del).delete(); toast(`« ${old.titre||"Bien"} » supprimé.`,{label:"Annuler",fn:async()=>{try{await DB.collection("biens").add(keep); toast("Bien restauré.");}catch(_){toast("Restauration impossible.");}}});}catch(e){st.textContent="Suppression refusée : il faut un accès en modification à la page.";}}));}
@@ -1964,7 +1975,8 @@ function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[secto
 function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.filter(a=>!estDoublon(a[3])).map(a=>({ck,a,r:venteCalc(ck,a)})));
-const isAdded=url=>BIENS.some(b=>b.url===url);
+/* une annonce retirée de la shortlist redevient une annonce comme les autres (son bien est gardé caché, avec ses notes et sa visite, et revient si on la rajoute) */
+const isAdded=url=>BIENS.some(b=>b.url===url&&!isOut(b));
 function addBtn(ck,a,big){const u=VTURL+a[3]; return isAdded(u)?`<span class="pill p-ok">✓ dans nos biens</span>`:`<button type="button" class="btn${big?"":" sm"} addv" data-addv="${ck}|${esc(a[3])}" aria-label="Ajouter à nos biens">+${big?" Ajouter à nos biens":`<span class="lbl"> Ajouter</span>`}</button>`;}
 function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99));
  return `<div class="scrollbox"><table class="adt vt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
@@ -1978,6 +1990,8 @@ function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) ret
  return fRows([["À vendre en ligne",`${tyN(A.ventes.length)} · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
+ const old=BIENS.find(x=>x.url===VTURL+suf);
+ if(old){b.disabled=true; await updBien(old.id,{statut:old.statut==="écarté"?"à voir":old.statut,short:true}); toast(`« ${old.titre||"Bien"} » remis dans nos biens, avec ses notes.`); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  b.disabled=true; b.textContent="ajout…";
  try{await DB.collection("biens").add(bien); b.outerHTML=`<span class="pill p-ok">ajouté</span>`; toast(`« ${vb.titre} » ajouté à nos biens.`);}catch(err){b.disabled=false; b.textContent="+ Ajouter"; toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}});
@@ -1998,7 +2012,7 @@ function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) ret
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-sim]"); if(!b) return; e.preventDefault(); const [ck,code]=b.dataset.sim.split("|"); simHere(ck,code);});
 
 /* ---------- statuts, favoris, auteur ---------- */
-const STATUTS=["à voir","visité","offre faite","compromis","acheté","écarté"];
+const STATUTS=["à voir","visité","offre faite","compromis","acheté"]; /* « écarté » n'est plus proposé : on retire de la shortlist (bouton ×) */
 function myName(){try{return localStorage.getItem("biens-nom")||"";}catch(_){return "";}}
 async function updBien(id,patch){try{await DB.collection("biens").doc(id).update(patch);}catch(err){toast("Modification refusée ("+(err&&err.code||"erreur")+").");}}
 const STC={"à voir":"st0","visité":"st1","offre faite":"st2","compromis":"st4","acheté":"st5","écarté":"st3"};
@@ -2012,14 +2026,14 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   m.innerHTML=STATUTS.map(s=>`<button type="button" role="menuitemradio" aria-checked="${(b.statut||"à voir")===s}" class="stp ${STC[s]}" data-stset="${b.id}|${s}"><i></i>${s}</button>`).join("");
   document.body.appendChild(m); const r=t.getBoundingClientRect(), mh=m.offsetHeight, mw=m.offsetWidth; m.style.left=Math.max(8,Math.min(r.left,innerWidth-mw-8))+"px"; m.style.top=(r.bottom+mh+8>innerHeight?r.top-mh-4:r.bottom+4)+"px"; STY=scrollY; t.setAttribute("aria-expanded","true"); return;}
  const [id,nx]=t.dataset.stset.split("|"), b=BIENS.find(x=>x.id===id); closeStMenus(); if(!b) return; const prev=b.statut||"à voir"; if(prev===nx) return;
- updBien(id,{statut:nx}); toast(nx==="écarté"?"Bien écarté : il quitte la shortlist et la carte, et reste dans « Nos biens ».":`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
+ updBien(id,{statut:nx}); toast(`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
 addEventListener("keydown",e=>{if(e.key==="Escape") closeStMenus();});
 document.addEventListener("click",e=>{const f=e.target.closest&&e.target.closest("[data-fav]"); if(!f) return; e.preventDefault(); const b=BIENS.find(x=>x.id===f.dataset.fav); if(b) updBien(b.id,{fav:!b.fav});});
 
 
 /* ---------- shortlist et bonnes affaires ---------- */
 function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v.k===b.ville);
- const ph=bienPhoto(b,480,240); return `<div class="bcard${b.statut==="écarté"?" off":""}">${ph?`<button type="button" class="bph" data-openad="b|${b.ville}|${b.id}" aria-label="Ouvrir la fiche"><img src="${esc(ph)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()"></button>`:""}<div class="bch"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button><button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button><button type="button" class="unshort" data-unshort="${b.id}" aria-label="Écarter ce bien" title="Écarter (retirer de la shortlist)">×</button></div>
+ const ph=bienPhoto(b,480,240); return `<div class="bcard${b.statut==="écarté"?" off":""}">${ph?`<button type="button" class="bph" data-openad="b|${b.ville}|${b.id}" aria-label="Ouvrir la fiche"><img src="${esc(ph)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()"></button>`:""}<div class="bch"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button><button type="button" class="btitle" data-openad="b|${b.ville}|${b.id}" title="Ouvrir la fiche complète">${esc(b.titre||"Bien sans nom")}</button><button type="button" class="unshort" data-unshort="${b.id}" aria-label="Retirer de la shortlist" title="Retirer de la shortlist">×</button></div>
   <div class="sub" style="margin:0">${c?c.name:""}${b.quartier?" · "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)}${b.par?` · ajouté par ${esc(b.par)}`:""}</div>
   <div class="bcn"><span><small>Cash-flow ${mlab()}</small><b class="mono ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</b>${altCf(r.x,1)}</span><span><small>15 ans ${mlab()}</small><b class="mono" style="color:${colIrr(r.x.irr)}">${r.x.irr==null?"n.d.":pct(r.x.irr)}</b>${altIrr(r.x,1)}</span></div>
   <div class="bcf"><button type="button" class="btn sm" data-openad="b|${b.ville}|${b.id}">Détail</button>${stPill(b)}<span class="pill ${bc}" title="Avis probable de la banque">${bt}</span>${visitFlags(b)?`<span class="pill p-bad" title="Points négatifs relevés en visite">${visitFlags(b)} ✗</span>`:""}</div>
@@ -2027,7 +2041,7 @@ function bienCard(b){const r=calcBien(b), [bc,bt]=bank(r.x.ratio), c=C.find(v=>v
   <div class="bcf">${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener">annonce</a>`:""}<button type="button" class="lnk" data-visit="${b.id}">visite${visitScore(b)!=null?" "+fr(visitScore(b),1)+"/5":""}</button>${cmpBtn({kind:"b",id:b.id})}</div></details></div>`;}
 function renderShort(){const sl=document.getElementById("shortList"), dl=document.getElementById("dealsList"); if(!sl) return;
  const inShort=b=>!isOut(b), out=BIENS.filter(b=>!inShort(b)).length, mine=BIENS.filter(inShort).map(b=>({b,r:calcBien(b)})).sort((x,y)=>(y.b.fav-x.b.fav)||((y.r.x.irr??-99)-(x.r.x.irr??-99))).slice(0,12);
- sl.innerHTML=(mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien dans la shortlist.</p>`); document.getElementById("shortOut").innerHTML=out?`<p class="sub shortout" style="margin:6px 0 0"><button type="button" class="lnk" data-gotab="tab-biens">${out} bien${out>1?"s":""} écarté${out>1?"s":""}, gardé${out>1?"s":""} dans « Nos biens » →</button></p>`:""; if(!BIENS.length) sl.innerHTML=`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
+ sl.innerHTML=(mine.length?mine.map(o=>bienCard(o.b)).join(""):`<p class="sub" style="margin:0">Aucun bien dans la shortlist.</p>`); document.getElementById("shortOut").innerHTML=""; if(!BIENS.length) sl.innerHTML=`<p class="sub" style="margin:0">Aucun bien pour l'instant. Ajoutez-en un depuis les ventes ci-dessous, depuis la fiche d'un quartier ou depuis l'onglet « Nos biens ».</p>`;
  const deals=allVentes().filter(v=>v.r.x.irr!=null&&bankOk(v.r.x.ratio)&&!isAdded(VTURL+v.a[3])&&!horsCalcul(v.a[3])).sort((x,y)=>y.r.x.irr-x.r.x.irr).slice(0,12);
  dl.innerHTML=deals.length?deals.map(({ck,a,r})=>`<div class="bcard deal">${a[4]?`<img class="dealph" src="${esc(photoUrl(a[3],a[4],480,260))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="bch"><b>Studio ${String(a[0]).replace(".",",")} m²</b><span class="pill p-n">${C.find(c=>c.k===ck).name}</span></div>
   <div class="sub" style="margin:0">${esc(a[1]||"secteur non précisé")} · ${keur(a[2])} · ${eur(a[2]/a[0])}/m²</div>
@@ -2587,7 +2601,7 @@ function bienFiche(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class
  return `${ph?`<img class="adph" src="${esc(ph)}" alt="Photo de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
  <div class="dh"><h3 style="font-size:1.15rem;margin:0;display:flex;gap:6px;align-items:center"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button>${esc(b.titre||"Bien sans nom")}</h3>${stPill(b)}</div>
  <p class="sub" style="margin:2px 0 10px">${c.name}${b.quartier?" · quartier "+esc(b.quartier):""} · ${b.surface} m² · ${keur(+b.prix)} affiché · ${eur(r.pm2)}/m²${b.par?` · ajouté par ${esc(b.par)}`:""} ${s?vuBadges("v",b.ville,s):""}${v&&v.gone?` <span class="hb old">annonce retirée le ${dm(v.gone)}</span>`:""}</p>
- ${out?`<p class="outline">Bien écarté : hors shortlist et hors carte, gardé dans « Nos biens ». <button type="button" class="lnk" data-reshort="${b.id}">Le remettre dans la shortlist</button></p>`:""}
+ ${out?`<p class="outline">Retiré de la shortlist. <button type="button" class="lnk" data-reshort="${b.id}">L'y remettre</button></p>`:""}
  <div class="big4"><div><span>Budget tout compris</span><b>${keur(x.cost)}</b></div><div><span>Loyer ${+b.loyer>0?"visé":"estimé"} HC</span><b>${eur(x.rentHC)}</b></div>
   <div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}/mois</b>${altCf(x)}</div><div><span>15 ans ${mlab()}</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b>${altIrr(x)}</div></div>
  <p style="margin:8px 0"><span class="pill ${bc}">Banque : ${bt} · ${pct(x.ratio*100,0)}</span> <span class="sub">${fr(r.vac,1)} mois vide${r.vac>=2?"s":""} par an retenu${r.vac>=2?"s":""}</span></p>
@@ -2606,11 +2620,15 @@ document.addEventListener("click",e=>{const u=e.target.closest&&e.target.closest
  if(u.dataset.gotab){showTab(u.dataset.gotab); document.getElementById("p-biens").scrollIntoView({behavior:"smooth",block:"start"}); return;}
  const id=u.dataset.unshort||u.dataset.reshort, b=BIENS.find(x=>x.id===id); if(!b) return;
  const prev=b.statut||"à voir";
- if(u.dataset.unshort){updBien(id,{statut:"écarté",short:true}); toast(`« ${b.titre||"Bien"} » écarté : retiré de la shortlist, gardé dans « Nos biens ».`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});}
+ if(u.dataset.unshort){retirer(b); return;}
  else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Remis dans la shortlist.");}});
 const isOut=b=>b.statut==="écarté"||b.short===false;
-let SHOWOUT=false;
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-showout]"); if(!t) return; e.preventDefault(); SHOWOUT=!SHOWOUT; renderBiens();});
+/* retirer de la shortlist : un bien venu d'une annonce est caché (l'annonce revient dans la liste, et ses notes reviennent si on la rajoute) ;
+   un bien saisi à la main, qui n'a pas d'annonce où revenir, est supprimé. Les deux s'annulent depuis le message. */
+async function retirer(b){const prev=b.statut||"à voir", t=b.titre||"Bien";
+ if(b.url){await updBien(b.id,{statut:"écarté",short:true}); toast(`« ${t} » retiré : l'annonce revient dans la liste des annonces.`,{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})}); return;}
+ const keep={...b}; delete keep.id;
+ try{await DB.collection("biens").doc(b.id).delete(); toast(`« ${t} » supprimé.`,{label:"Annuler",fn:async()=>{try{await DB.collection("biens").add(keep); toast("Bien restauré.");}catch(_){toast("Restauration impossible.");}}});}catch(err){toast("Suppression refusée ("+(err&&err.code||"erreur")+").");}}
 
 /* ---------- carte : pastilles de prix des ventes ---------- */
 const VST={k:null,m:{}};
@@ -2644,7 +2662,7 @@ function renderWhere(qm){const back=document.getElementById("zAll"), here=docume
  document.getElementById("zHome").disabled=V.k<KMIN()*1.05;}
 
 /* ---------- navigation entre annonces (boutons, clavier, glisser) ---------- */
-function adSeq(ad){if(ad.kind==="b") return BIENS.filter(b=>!isOut(b)).concat(SHOWOUT||isOut(BIENS.find(b=>b.id===ad.suf)||{})?BIENS.filter(isOut):[]).map(b=>b.id); const A=ADS[ad.ck]; if(!A) return [];
+function adSeq(ad){if(ad.kind==="b") return BIENS.filter(b=>!isOut(b)).concat(isOut(BIENS.find(b=>b.id===ad.suf)||{})?BIENS.filter(b=>b.id===ad.suf):[]).map(b=>b.id); const A=ADS[ad.ck]; if(!A) return [];
  return ad.kind==="v"?(A.ventes||[]).map(a=>({a,r:venteCalc(ad.ck,a)})).sort((x,y)=>(y.r.x.irr??-99)-(x.r.x.irr??-99)).map(o=>o.a[3]):(A.ads||[]).map(a=>a[4]);}
 function adNav(ad){const q=adSeq(ad), i=q.indexOf(ad.suf); if(q.length<2||i<0) return "";
  return `<span class="adnav" role="group" aria-label="Autres annonces"><button type="button" class="btn ghost sm" data-adstep="-1" aria-label="Annonce précédente" title="Précédente (←)">‹</button><span class="mono">${i+1}/${q.length}</span><button type="button" class="btn ghost sm" data-adstep="1" aria-label="Annonce suivante" title="Suivante (→)">›</button></span>`;}
@@ -2777,6 +2795,7 @@ const TIPS={
  b2n:()=>`Le passage du chiffre brut (avant impôts) au chiffre net : impôts sur les loyers, CFE, comptable si régime réel, et impôt sur la plus-value à la revente.`,
  pm2:()=>`Prix affiché divisé par la surface. Pour un studio, le prix au m² est en général 10 à 20 % plus élevé que la moyenne des appartements du quartier.`,
  etsi:()=>`Testez une hypothèse sans toucher à vos réglages : la colonne « Et si… » se remplit dès qu'une case est cochée. La durée de revente s'applique aux deux colonnes.`,
+ scn3:()=>`Le même calcul dans deux autres scénarios. Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : loyer +5 %, un demi-mois vide de moins, prix +${fr(H.px+0.5,1)} %/an. Ces trois hypothèses font l'essentiel de l'écart ; le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.`,
  pess:()=>`Loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +${fr(H.px,1)} %. Le taux ne change pas : il est fixé à la signature.`,
  vacq:()=>`Ajuste les mois vides selon le temps de marche réel (par les rues, OpenStreetMap) jusqu'à la gare, l'université ou le centre : 1 mois à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus. Décoché : ${fr(H.vacance,1)} mois partout.`,
  dvf:()=>`Le prix d'achat vient des logements du type choisi (même nombre de pièces) réellement vendus en 2023-2025 (DVF), dans le quartier quand il en a, sinon dans la ville. Décoché : prix moyen des appartements + surcote.`,
@@ -2794,7 +2813,7 @@ const TIPS={
  chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, entretien des parties communes, ordures ménagères).`,
  copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire).`,
  dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
- statut:()=>`Où vous en êtes avec ce bien. « Écarté » le retire de la shortlist et de la carte ; il reste dans « Nos biens ».`};
+ statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de la shortlist (×) : l'annonce revient dans la liste des annonces.`};
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];
@@ -3019,7 +3038,7 @@ function mBienDetail(id){const b=BIENS.find(x=>x.id===id); if(!b) return;
 
 /* ajouter / retirer de la shortlist */
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
- if(b&&!isOut(b)){const prev=b.statut||"à voir"; await updBien(b.id,{statut:"écarté"}); toast("Retiré de la shortlist.",{label:"Annuler",fn:()=>updBien(b.id,{statut:prev})}); return;}
+ if(b&&!isOut(b)){await retirer(b); return;}
  if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
@@ -3033,10 +3052,10 @@ function mShortRender(){if(!MOBON) return; MSLATE=[]; const all=BIENS.filter(b=>
  document.getElementById("mSCount").textContent=all.length?`${all.length} bien${all.length>1?"s":""} · glisser une ligne vers la gauche pour changer son statut`:"";
  document.getElementById("mSFil").innerHTML=MST.map(([k,l])=>{const n=k==="tous"?all.length:all.filter(b=>(b.statut||"à voir")===k).length; return `<button type="button" class="mchip${MSF.st===k?" on":""}" data-msf="${k}">${l} <small>${n}</small></button>`;}).join("");
  const row=({b,r})=>{const x=r.x, ph=bienPhoto(b,200,200), lv=tgReady(b)?(()=>{try{return priceLevels(b);}catch(_){return null;}})():(MSLATE.push(b),null), st=b.statut||"à voir", nx=nextStatut(st);
-  return `<div class="msw" data-mswid="${b.id}"><div class="mswa"><button type="button" class="mswb next" data-stset="${b.id}|${nx}">${nx==="offre faite"?"Offre":nx[0].toUpperCase()+nx.slice(1)}</button><button type="button" class="mswb red" data-unshort="${b.id}">Écarter</button></div>
+  return `<div class="msw" data-mswid="${b.id}"><div class="mswa"><button type="button" class="mswb next" data-stset="${b.id}|${nx}">${nx==="offre faite"?"Offre":nx[0].toUpperCase()+nx.slice(1)}</button><button type="button" class="mswb red" data-unshort="${b.id}">Retirer</button></div>
    <div class="mswc" data-mad="b|${b.ville}|${b.id}"><span class="mth">${imgTag(ph,"")}</span><span class="mst"><b>${b.fav?"★ ":""}${mEsc(b.titre||"Bien")}</b><small>${mEsc(cityName(b.ville))} · ${keur(+b.prix)}${lv?` · cible ${keur(lv.cible)}`:""}</small><small><b style="color:${colIrr(x.irr)}">${irrTxt(x)}</b> · <span class="${mcfc(x.cf)}">${sgn(x.cf)}/mois</span> · <i class="mdot ${STC[st]||"st0"}"></i>${st}</small></span>${chev}</div></div>`;};
  document.getElementById("mShort").innerHTML=(L.length?`<div class="mgroup mswl">${L.map(row).join("")}</div>`:`<div class="mempty">${all.length?"Aucun bien avec ce statut.":"Aucun bien pour l'instant.<br>Touchez ☆ sur une annonce pour l'ajouter."}</div>`)
-  +`<div class="mgroup"><button type="button" class="mrow" data-mgo="addbien">Ajouter un bien à la main${chev}</button>${out.length?`<button type="button" class="mrow" data-mgo="out"><span>Biens écartés</span><span class="mval">${out.length}</span>${chev}</button>`:""}<button type="button" class="mrow" data-mgo="share">Liste commune et partage${chev}</button>${CMP.length?`<button type="button" class="mrow" data-mgo="cmp"><span>Comparer</span><span class="mval">${CMP.length}</span>${chev}</button>`:""}</div>`; if(MSLATE.length){clearTimeout(MSLT); const L=MSLATE.slice(); MSLT=setTimeout(()=>{let k=0; const step=()=>{if(k<L.length){try{targetsFor(L[k]);}catch(_){} k++; setTimeout(step,0);} else if(MS==="short") mShortRender();}; step();},60);}}
+  +`<div class="mgroup"><button type="button" class="mrow" data-mgo="addbien">Ajouter un bien à la main${chev}</button><button type="button" class="mrow" data-mgo="share">Liste commune et partage${chev}</button>${CMP.length?`<button type="button" class="mrow" data-mgo="cmp"><span>Comparer</span><span class="mval">${CMP.length}</span>${chev}</button>`:""}</div>`; if(MSLATE.length){clearTimeout(MSLT); const L=MSLATE.slice(); MSLT=setTimeout(()=>{let k=0; const step=()=>{if(k<L.length){try{targetsFor(L[k]);}catch(_){} k++; setTimeout(step,0);} else if(MS==="short") mShortRender();}; step();},60);}}
 /* glisser pour agir */
 (function(){let row=null,x0=0,y0=0,dx=0,dir=null,open=null;
  const W=172, close=r=>{if(r){r.querySelector(".mswc").style.transform=""; r.classList.remove("open");} if(open===r) open=null;};
@@ -3076,7 +3095,6 @@ function mGo(k){const tb=id=>document.getElementById(id);
  else if(k==="biens"){showTab("tab-biens"); mPushEl("Tous nos biens",tb("p-biens"),{back:"Retour"}); mDraw("renderBiens");}
  else if(k==="addbien"){showTab("tab-biens"); mPushEl("Ajouter un bien",tb("biensForm"),{back:"Shortlist"});}
  else if(k==="share"){mPushEl("Liste commune",tb("shareBox"),{back:"Shortlist"}); const s=STACK[STACK.length-1].s.querySelector(".mpin"); const xf=document.querySelector("details.xfer"); if(xf){mTake(xf,s); STACK[STACK.length-1].els.push(xf);}}
- else if(k==="out"){SHOWOUT=true; showTab("tab-biens"); mPushEl("Biens écartés",tb("biensList"),{back:"Shortlist",onpop:()=>{SHOWOUT=false;}}); mDraw("renderBiens");}
  else if(k==="meth"){mPushEl("Comment c'est calculé",document.querySelector("dl.fmeth"),{back:"Plus"});}
  else if(k==="src"){renderFresh(); mPushEl("Sources",tb("freshBox"),{back:"Plus"});}
  else if(k==="hyp"){mPushEl("Hypothèses",tb("hypFields"),{back:"Budget",onpop:mBudgetRender});}
@@ -3548,7 +3566,7 @@ bienFiche=function(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class
  return `${ph?`<img class="adph" src="${esc(ph)}" alt="Photo de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
  <div class="dh"><h3 style="font-size:1.15rem;margin:0;display:flex;gap:6px;align-items:center"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button>${esc(b.titre||"Bien sans nom")}</h3>${stPill(b)}</div>
  <p class="sub" style="margin:2px 0 8px">${b.surface} m² · ${keur(+b.prix)} affiché${b.par?` · ajouté par ${esc(b.par)}`:""} ${s?vuBadges("v",b.ville,s):""}</p>
- ${out?`<p class="outline">Bien écarté : hors shortlist et hors carte, gardé dans « Nos biens ». <button type="button" class="lnk" data-reshort="${b.id}">Le remettre dans la shortlist</button></p>`:""}
+ ${out?`<p class="outline">Retiré de la shortlist. <button type="button" class="lnk" data-reshort="${b.id}">L'y remettre</button></p>`:""}
  ${bienFicheBody(b,{title:b.titre||"Ce bien"})}
  <div class="adact many">${adNav({kind:"b",ck:b.ville,suf:b.id})}<button type="button" class="btn addv" data-visit="${b.id}">Visite${sc!=null?" · "+fr(sc,1)+"/5":""}</button><button type="button" class="btn ghost sm" data-fiche="${b.id}">Fiche à emporter</button>${cmpBtn({kind:"b",id:b.id})}${b.url?`<a class="btn ghost sm" href="${esc(b.url)}" target="_blank" rel="noopener">Annonce ↗</a>`:""}${out?"":`<button type="button" class="btn ghost sm" data-unshort="${b.id}">Écarter</button>`}</div>`;};
 
@@ -3643,7 +3661,8 @@ function homeHtml(){const mob=typeof MOBON!=="undefined"&&MOBON, L=BIENS.filter(
 const chevH=`<span class="hch" aria-hidden="true">›</span>`;
 
 /* ordinateur : bloc en tête de page */
-function homeRender(){if(typeof MOBON!=="undefined"&&MOBON) return; const el=document.getElementById("homePanel"); if(!el) return; try{el.innerHTML=`<h2 class="hh0">Où on en est</h2>${homeHtml()}`;}catch(err){el.innerHTML="";}}
+/* sur ordinateur, pas d'accueil « Où on en est » (retiré à la demande, novembre 2026) : la page s'ouvre sur l'explorateur */
+function homeRender(){}
 /* téléphone : écran Accueil */
 function mAccRender(){if(typeof MOBON==="undefined"||!MOBON) return; const el=document.getElementById("mAcc"); if(!el) return; try{el.innerHTML=homeHtml();}catch(err){el.innerHTML=`<p class="msub">Accueil indisponible.</p>`;}}
 const _renderH=render; render=function(){_renderH.apply(this,arguments); homeRender(); if(typeof MOBON!=="undefined"&&MOBON&&MS==="accueil") mAccRender();};
@@ -3656,8 +3675,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
 document.addEventListener("change",e=>{const f=e.target.closest&&e.target.closest("[data-vrdv]"); if(!f) return; const b=BIENS.find(x=>x.id===f.dataset.vrdv); if(!b) return; const v=Object.assign({},b.visite||{}); if(f.value) v.rdv=f.value; else delete v.rdv; updBien(b.id,{visite:v});});
 
 /* ordinateur large (maquettes) : barre latérale avec les 5 rubriques, la rubrique visible est surlignée */
-(function sideNav(){const N=[["homePanel","Où on en est",`<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/>`],
-  ["mapSec","Explorer",`<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>`],
+(function sideNav(){const N=[["mapSec","Explorer",`<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>`],
   ["tab-ann","Annonces",`<rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/>`],
   ["tab-biens","Nos biens",`<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>`],
   ["setPanel","Budget",`<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/>`]];
@@ -3670,7 +3688,7 @@ document.addEventListener("change",e=>{const f=e.target.closest&&e.target.closes
   const el=target(id); if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});});
  const mark=()=>{let cur=null, best=-1e9; for(const [id] of N){const el=target(id); if(!el) continue; const t=el.getBoundingClientRect().top; if(t<innerHeight*0.4&&t>best){best=t; cur=id;}}   /* la rubrique dont le haut est passé le plus récemment */
   if(cur==="tabsSec"||(cur&&cur.startsWith("tab-"))){const sel=document.querySelector('[role="tab"][aria-selected="true"]'); cur=sel&&sel.id==="tab-biens"?"tab-biens":"tab-ann";}
-  nav.querySelectorAll("[data-side]").forEach(a=>a.setAttribute("aria-current",a.dataset.side===(cur||"homePanel")?"location":"false"));};
+  nav.querySelectorAll("[data-side]").forEach(a=>a.setAttribute("aria-current",a.dataset.side===(cur||"mapSec")?"location":"false"));};
  addEventListener("scroll",()=>requestAnimationFrame(mark),{passive:true}); setTimeout(mark,500);
  setTimeout(()=>{const f=document.getElementById("sideFresh"); if(f) f.textContent=ADS.date?`Annonces relevées le ${ADS.date} · 5 villes sur 13`:"";},600);})();
 

@@ -78,9 +78,13 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.evaluate(() => { AD = null; QSEL = null; draw(); renderQBox(); });
     await p.click('#shortList [data-unshort]'); await p.waitForTimeout(300);
     ok(T('retirer de la shortlist'), await p.evaluate(() => BIENS[0].statut === 'écarté' && !document.querySelector('#shortList .bcard')));
+    ok(T('retiré : l\'annonce revient dans les annonces, sans catégorie « écartés »'), await p.evaluate(() => !isAdded(BIENS[0].url) && !/écarté/i.test(document.getElementById('shortOut').textContent + document.getElementById('biensList').textContent)));
     await p.click('#toast button'); await p.waitForTimeout(300);
     ok(T('annuler le retrait'), await p.evaluate(() => BIENS[0].statut === 'à voir' && !!document.querySelector('#shortList .bcard')));
     ok(T('prix à viser dans la shortlist'), await p.evaluate(() => !!document.querySelector('#shortList .btg')));
+    ok(T('trois scénarios : prudent < central < favorable'), await p.evaluate(() => { const o = irr3(calc(C[0])); return o && o.prudent < o.central && o.central < o.favorable && Math.abs(o.central - calc(C[0]).irr) < 1e-9; }));
+    ok(T('loyers recalés sur les meublés : écart meublé / vide mesuré'), await p.evaluate(() => ['studio', 't2', 't3'].every(t => LRC[t].prime > 1 && LRC[t].prime < 1.3)));
+    ok(T('frais de revente : 3 % par défaut'), await p.evaluate(() => H.fraisVente === 3));
     await scr('plus'); await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
     await p.click('#biensList [data-del]'); await p.waitForTimeout(300);
     const d0 = await p.evaluate(() => BIENS.length); await p.click('#toast button'); await p.waitForTimeout(400);
@@ -156,9 +160,10 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
   // accueil « Où on en est » et suivi de l'achat
   { const c = await b.newContext({viewport: {width: 1300, height: 900}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
     await p.goto(URL); await p.waitForTimeout(1000);
-    ok('ordi · accueil : étape 2 sur 6 sans bien suivi', await p.evaluate(() => /Étape 2 sur 6/.test(document.getElementById('homePanel').textContent) && document.querySelectorAll('#homePanel .hcity').length === 3));
+    ok('ordi · pas de carte « Où on en est »', await p.evaluate(() => !document.getElementById('homePanel') && !document.querySelector('[data-side=homePanel]') && document.querySelector('#sideNav [data-side]').dataset.side === 'mapSec'));
+    ok('accueil : étape 2 sur 6 sans bien suivi', await p.evaluate(() => /Étape 2 sur 6/.test(homeHtml())));
     await p.evaluate(async () => { await DB.collection('biens').add(Object.assign(venteBien('lemans', ADS.lemans.ventes[2]), {statut: 'offre faite', fav: false, ts: Date.now(), suivi: {offre: '2030-01-05'}})); }); await p.waitForTimeout(500);
-    ok('ordi · accueil : offre en cours, réponse attendue', await p.evaluate(() => /Étape 4 sur 6/.test(document.getElementById('homePanel').textContent) && /Réponse du vendeur/.test(document.getElementById('homePanel').textContent)));
+    ok('accueil : offre en cours, réponse attendue', await p.evaluate(() => /Étape 4 sur 6/.test(homeHtml()) && /Réponse du vendeur/.test(homeHtml())));
     await p.evaluate(() => openAd('b', BIENS[0].ville, BIENS[0].id)); await p.waitForTimeout(500);
     ok('ordi · fiche : rubrique suivi de l\'achat', await p.evaluate(() => !!document.querySelector('#qDetail .fsec[data-sec=suivi] .suivi')));
     await p.evaluate(() => { const i = document.querySelector('#qDetail [data-suivi$="|compromis"]'); i.value = '2030-01-20'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(600);
