@@ -52,7 +52,7 @@ function sbDB(code){const HD={apikey:SB.key,"x-groupe":code,"Content-Type":"appl
   doc:id=>({delete:async()=>{await chk(await fetch(base+"?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:HD})); tick();},
    update:async p=>{const cur=last.find(x=>x.id===id), b0=cur?cur.data:{}, mine=Object.assign({},b0,p); let theirs=b0;
     try{const r=await chk(await fetch(base0+"?select=data&id=eq."+encodeURIComponent(id),{headers:HD})); const j=await r.json(); if(j[0]&&j[0].data) theirs=j[0].data;}catch(_){}
-    const data=merge3(b0,mine,theirs);
+    const data=merge3(b0,mine,theirs); data.maj={par:myName()||"",le:new Date().toISOString()};   /* qui a modifié en dernier (« ce qui a bougé ») */
     await chk(await fetch(base+"?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:Object.assign({},HD,{Prefer:"return=minimal"}),body:JSON.stringify({data,updated_at:new Date().toISOString()})})); tick();}})};
  return {collection:()=>col,shared:true};}
 (function initShare(){const box=document.getElementById("shareBox"); if(!box) return;

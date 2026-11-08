@@ -48,6 +48,43 @@
  const starBtn=o=>{const on=inShort(o); return `<button type="button" class="v2star" data-v2star="${o.ck}|${esc(o.id)}" aria-pressed="${on}" aria-label="${on?"Retirer de":"Ajouter à"} la shortlist">${on?"★":"☆"}</button>`;};
  const key=o=>`v|${o.ck}|${o.id}`;
 
+ /* ---------- ce qui a bougé depuis votre dernière visite ----------
+    Annonces : la date de votre visite précédente (MSEEN, au jour près) et l'historique des relevés (apparue, baisse, retirée).
+    Nos biens : l'état de la liste commune à la fin de votre dernière journée de visite, gardé dans ce navigateur, comparé à l'état
+    actuel. Comptent les votes des autres et ce que les autres ont changé (maj.par, posé par la liste commune). */
+ const digest=b=>({st:b.statut,v:Object.assign({},b.votes||{}),o:+((b.visite||{}).offre)||0,tr:+b.travaux||0,c:((b.suivi||{}).compromis)||"",ck:Object.values((b.visite||{}).check||{}).filter(v=>v==="oui"||v==="non").length,av:Object.keys((b.visite||{}).avis||{}).length});
+ const VU=(()=>{const d=jourIso(); let s=null; try{s=JSON.parse(localStorage.getItem("v2vu")||"null");}catch(_){} if(!s||typeof s!=="object") return {day:d,ref:null,rt:null,last:null,lt:null};
+  return s.day===d?s:{day:d,ref:s.last||null,rt:s.lt||null,last:s.last||null,lt:s.lt||null};})();
+ function vuSnap(){if(!REGREADY) return; const o={}; BIENS.forEach(b=>{o[b.id]=digest(b);}); VU.last=o; VU.lt=new Date().toISOString(); try{localStorage.setItem("v2vu",JSON.stringify(VU));}catch(_){}}
+ let NEWS=null;
+ function bouge(){const me=myName()||"", since=MSEEN, ref=VU.ref, F=feed(), t=jourIso(), N={nw:[],dr:[],gone:[],them:[],due:[],reg:null,since,first:!since&&!ref};
+  if(since){N.nw=F.filter(o=>o.nw&&pass(o)); N.dr=F.filter(o=>o.v&&o.v.last&&o.v.last.d>since&&(pass(o)||inShort(o))).sort((a,b)=>b.v.last.amt-a.v.last.amt);}
+  BIENS.forEach(b=>{if(isOut(b)) return; const suf=bienSuf(b), e=suf&&hEntry(b.ville,suf);
+   if(since&&e&&e.g&&e.g>since) N.gone.push(b);
+   const nx=suiviNext(b); if(nx&&nx.d>=t&&nx.d<=addD(t,7)) N.due.push([b,nx]);
+   if(!ref) return; const r=ref[b.id], d=digest(b), by=(b.maj&&b.maj.par)||"";
+   if(!r){if(b.par&&b.par!==me) N.them.push([b,`${b.par} l'a ajouté`]); return;}
+   const vo=Object.keys(d.v).filter(k=>k&&k!==me&&(r.v||{})[k]!==d.v[k]).map(k=>`${k} vote « ${((VOT.find(x=>x[0]===d.v[k])||[])[1]||"").toLowerCase()} »`), ch=[];
+   if(by&&by!==me){if(d.st!==r.st) ch.push(`statut « ${d.st} »`); if(d.o!==r.o) ch.push(d.o?`offre ${keur(d.o)}`:"offre retirée"); if(d.tr!==r.tr) ch.push(`travaux ${keur(d.tr)}`);
+    if(d.c&&d.c!==r.c) ch.push(`compromis le ${dateTxt(d.c)}`); if(d.ck>r.ck) ch.push(`${d.ck-r.ck} point${d.ck-r.ck>1?"s":""} de visite`); if(d.av>r.av) ch.push("avis de visite");}
+   const all=vo.concat(ch.length?[`${by} : ${ch.join(", ")}`]:[]); if(all.length) N.them.push([b,all.join(" · ")]);});
+  const rd=REGL&&REGL.data; if(rd&&rd.par&&rd.par!==me&&VU.rt&&String(rd.le||"")>VU.rt) N.reg=rd.par;
+  return N;}
+ function newsHtml(N){const rows=[], row=(dat,ic,cls,t,s)=>`<div class="v2nrow" role="button" tabindex="0" ${dat}><i class="v2ni ${cls}" aria-hidden="true">${ic}</i><span><b>${t}</b>${s?`<small>${s}</small>`:""}</span></div>`;
+  const bl=b=>`${keur(+b.prix)} · ${esc(b.titre||"Bien")} · ${esc(cityName(b.ville))}`;
+  const cities=L=>{const by={}; L.forEach(o=>{by[o.ck]=(by[o.ck]||0)+1;}); const E=Object.entries(by).sort((a,b)=>b[1]-a[1]); return E.slice(0,4).map(([k,n])=>`${esc(cityName(k))} ${n}`).join(" · ")+(E.length>4?" …":"");};
+  N.them.slice(0,5).forEach(([b,t])=>rows.push(row(`data-v2open="b|${esc(b.id)}"`,"●","a",esc(t),bl(b))));
+  if(N.them.length>5) rows.push(row(`data-v2tab="biens"`,"+","a",`${N.them.length-5} autre${N.them.length>6?"s":""} bien${N.them.length>6?"s":""} modifié${N.them.length>6?"s":""}`,"onglet Nos biens"));
+  if(N.reg) rows.push(row(`data-v2tab="budget"`,"●","a",`${esc(N.reg)} a modifié les réglages communs`,"onglet Budget"));
+  N.due.slice(0,3).forEach(([b,x])=>rows.push(row(`data-v2open="b|${esc(b.id)}"`,"!","w",`${esc(x.l)} : ${esc(dateTxt(x.d))}`,bl(b))));
+  N.gone.forEach(b=>rows.push(row(`data-v2open="b|${esc(b.id)}"`,"×","x","Retiré de la vente",bl(b))));
+  if(N.nw.length) rows.push(row(`data-v2gonew="new"`,N.nw.length,"n",`${N.nw.length} nouvelle${N.nw.length>1?"s":""} annonce${N.nw.length>1?"s":""} pour nos critères`,cities(N.nw)));
+  if(N.dr.length) rows.push(row(`data-v2gonew="drop"`,"↓","d",`${N.dr.length} baisse${N.dr.length>1?"s":""} de prix`,N.dr.slice(0,2).map(o=>`${keur(o.a[2])} (−${keur(o.v.last.amt)}) · ${esc(cityName(o.ck))}`).join(" ; ")));
+  const h=N.since?`Depuis votre visite du ${dm(N.since)}`:"Ce qui a bougé";
+  const empty=N.first?"Première visite : à partir de votre prochaine journée, vous verrez ici les nouvelles annonces, les baisses de prix et ce que l'autre a fait.":`Rien de neuf depuis le ${dm(N.since||jourIso())}.`;
+  return `<section class="v2news" aria-label="Ce qui a bougé"><h2>${h}</h2>${rows.length?rows.join(""):`<p class="v2sub">${empty}</p>`}</section>`;}
+ const cityCnt=ck=>{const A=feed().filter(o=>o.ck===ck); return [A.filter(pass).length,A.length];};
+
  /* ---------- squelette ---------- */
  const TABS=[["carte","Carte"],["annonces","Annonces"],["villes","Villes"],["biens","Nos biens"],["budget","Budget"]];
  const ICO={carte:'<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>',annonces:'<path d="M4 6h16M4 12h16M4 18h10"/>',villes:'<path d="M4 20V9l5-3v14M9 20V4l6 3v13M15 20v-9l5 2v7M3 20h18"/>',biens:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>',budget:'<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/>'};
@@ -58,9 +95,10 @@
   <aside class="v2fiche" id="v2fiche" hidden aria-label="Fiche"></aside></div>
   <nav class="v2tabbar" id="v2tabbar" aria-label="Rubriques"></nav>`;
  document.body.appendChild(app);
- function top(){const nb=BIENS.filter(b=>!isOut(b)).length, t=(k,l)=>`${l}${k==="biens"&&nb?`<small>${nb}</small>`:""}`;
+ function top(){NEWS=bouge(); const [me,oth]=people(), att=new Set(BIENS.filter(b=>!isOut(b)&&etat(b,me,oth)[0]==="des").map(b=>b.id)); NEWS.them.forEach(([b])=>att.add(b.id));
+  const nb=att.size, t=(k,l)=>`${l}${k==="biens"&&nb?`<small title="à trancher ou modifiés par l'autre">${nb}</small>`:""}`;
   $("v2tabs").innerHTML=TABS.map(([k,l])=>`<button type="button" data-v2tab="${k}" aria-current="${V.tab===k?"page":"false"}">${t(k,l)}</button>`).join("");
-  $("v2tabbar").innerHTML=TABS.map(([k,l])=>`<button type="button" data-v2tab="${k}" aria-current="${V.tab===k?"page":"false"}"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</g></svg>${l}</button>`).join("");
+  $("v2tabbar").innerHTML=TABS.map(([k,l])=>`<button type="button" data-v2tab="${k}" aria-current="${V.tab===k?"page":"false"}"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</g></svg>${l}${k==="biens"&&nb?`<small class="v2bdg">${nb}</small>`:""}</button>`).join("");
   $("v2type").innerHTML=`<span class="v2seg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${H.type===k}">${T.lab}</button>`).join("")}</span>`;
   $("v2scn").innerHTML=scnSeg();}
  const scnSeg=()=>`<span class="v2seg" role="group" aria-label="Scénario">${[["prudent","Prudent"],["central","Central"],["favorable","Favorable"]].map(([k,l])=>`<button type="button" data-v2scn="${k}" aria-pressed="${scn()===k}">${l}</button>`).join("")}</span>`;
@@ -70,16 +108,22 @@
  function leaflet(cb){if(window.L) return cb(); if(LTRY) return; LTRY=true; const old=document.querySelector('script[src*="leaflet"]'); if(old){old.addEventListener("load",cb); return;} const s=document.createElement("script"); s.src=LEAFJS; s.onload=cb;
   s.onerror=()=>{$("v2map").innerHTML=`<p class="v2empty">La carte n'a pas pu se charger (hors ligne ?). Les annonces restent dans les onglets Annonces et Villes.</p>`;}; document.head.appendChild(s);}
  function mapInit(){if(M||!window.L) return; LF=window.L;   /* la copie de Leaflet de cette carte, même si une autre se charge ensuite */
-  M=LF.map("v2map",{zoomControl:false,minZoom:5,maxZoom:18}).setView([47.75,-0.6],7);
-  LF.control.zoom({position:"topright"}).addTo(M); LF.tileLayer(TILEURL(),{maxZoom:19,attribution:"© les contributeurs OpenStreetMap"}).addTo(M); LG=LF.layerGroup().addTo(M); setTimeout(()=>{M.invalidateSize(); drawMap(true);},0);}
+  /* zoom au quart de niveau : l'Ouest remplit mieux l'écran ; sur téléphone, pas de boutons de zoom (on pince), et l'attribution en haut, hors de la liste */
+  M=LF.map("v2map",{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:18,zoomSnap:.25}).setView([47.75,-0.6],7);
+  if(!PH()) LF.control.zoom({position:"topright"}).addTo(M); LF.control.attribution({position:PH()?"topright":"bottomright",prefix:false}).addTo(M);
+  LF.tileLayer(TILEURL(),{maxZoom:19,attribution:"© les contributeurs OpenStreetMap"}).addTo(M);
+  M.on("zoomend",()=>{if(!V.city&&PH()) drawMap();});   /* téléphone : les noms des villes apparaissent en zoomant */ LG=LF.layerGroup().addTo(M); setTimeout(()=>{M.invalidateSize(); drawMap(true);},0);}
  function cityBounds(ck){const ll=irisLL(ck), pts=[], walk=a=>{if(!Array.isArray(a)) return; if(typeof a[0]==="number"){if(isFinite(a[0])&&isFinite(a[1])) pts.push(a);} else a.forEach(walk);}; IR[ck].list.forEach(t=>walk(ll[t.i])); const b=pts.length?LF.latLngBounds(pts):null; return b&&b.isValid()?b:null;}
  const put=l=>{try{l.addTo(LG);}catch(_){}};
+ const sheetH=()=>{const l=$("v2mlist"); return l?l.offsetHeight:260;};   /* téléphone : la liste couvre le bas de la carte */
  /* pastilles en marqueurs HTML : elles suivent la carte sans passer par son moteur de dessin */
  const dot=(c,sz,ring,sel,op)=>LF.divIcon({className:"",iconSize:[sz,sz],html:`<span class="v2dot" style="width:${sz}px;height:${sz}px;background:${c};opacity:${op};${ring?"box-shadow:0 0 0 3px var(--accent);":""}${sel?"outline:3px solid var(--fg);outline-offset:1px;":""}"></span>`});   /* une couche qui refuse de s'ajouter ne bloque pas les autres */
  function drawMap(fit){if(!M) return; LG.clearLayers();
-  if(!V.city){const pts=[]; C.forEach(c=>{const x=calc(c), n=ADS[c.k]&&ADS[c.k].ventes?ADS[c.k].ventes.length:0; pts.push([c.lat,c.lon]);
-    const m0=LF.marker([c.lat,c.lon],{icon:dot(cv(colIrr(x.irr)),Math.round(n?18+Math.sqrt(n)*2.2:16),false,false,n?1:.6),keyboard:false}).bindTooltip(`${c.name} ${pctS(x.irr)}`,{permanent:true,direction:"top",className:"v2tip",offset:[0,-Math.round((n?18+Math.sqrt(n)*2.2:16)/2)]}).on("click",()=>goCity(c.k)); put(m0);});
-   if(fit||LCITY!==null) M.fitBounds(LF.latLngBounds(pts),{paddingTopLeft:[PH()?20:390,40],paddingBottomRight:[40,PH()?260:40]}); LCITY=null; return;}
+  if(!V.city){const pts=[], ph=PH(), lab=!ph||M.getZoom()>=7.75; C.forEach(c=>{const x=calc(c), [m]=cityCnt(c.k), col=cv(colIrr(x.irr)), sz=ph?Math.round(m?14+Math.sqrt(m)*2:11):Math.round(m?18+Math.sqrt(m)*3:14); pts.push([c.lat,c.lon]);
+    const m0=LF.marker([c.lat,c.lon],{icon:dot(col,sz,false,false,m?1:.45),keyboard:false,title:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères`}).on("click",()=>goCity(c.k));
+    if(lab) m0.bindTooltip(`${c.name} ${pctS(x.irr)}${m?` · ${m} ann.`:""}`,{permanent:true,direction:"top",className:"v2tip"+(m?"":" v2tipdim"),offset:[0,-Math.round(sz/2)]});
+    put(m0);});
+   if(fit||LCITY!==null) M.fitBounds(LF.latLngBounds(pts),{paddingTopLeft:[PH()?16:390,PH()?16:40],paddingBottomRight:[PH()?16:40,PH()?sheetH()+12:40]}); LCITY=null; return;}
   const ck=V.city, ll=irisLL(ck);
   IR[ck].list.forEach(t=>{const g=ll[t.i]; if(!g) return; const x=t.type==="H"?(QX[t.ck+t.i]||calcIris(t)):null;
    put(LF.polygon(g,{color:cv("var(--line)"),weight:1,fillColor:x&&x.irr!=null?cv(colIrr(x.irr)):"#9aa3ad",fillOpacity:x?.32:.1}).bindTooltip(`${t.name}${x&&x.irr!=null?" · "+pctS(x.irr):""}`,{sticky:true,className:"v2tip"}).on("click",()=>openSel(`q|${ck}|${t.code}`)));});
@@ -87,15 +131,15 @@
    const m=inShort(o)?LF.marker([o.f.la,o.f.lo],{icon:LF.divIcon({className:"",html:`<span class="v2pin" style="width:24px;height:24px">★</span>`,iconSize:[24,24]})})
     :LF.marker([o.f.la,o.f.lo],{icon:dot(c,sel?20:14,o.nw,sel,1),zIndexOffset:sel?1000:0,keyboard:false});
    put(m.bindTooltip(`${keur(o.a[2])} · ${pctS(o.x.irr)}`,{direction:"top",className:"v2tip"}).on("click",()=>openSel(key(o))));});
-  if(LCITY!==ck){const b=cityBounds(ck); if(b) M.fitBounds(b,{paddingTopLeft:[PH()?10:390,20],paddingBottomRight:[20,PH()?280:20]}); LCITY=ck;}}
+  if(LCITY!==ck){const b=cityBounds(ck); if(b) M.fitBounds(b,{paddingTopLeft:[PH()?10:390,20],paddingBottomRight:[PH()?10:20,PH()?sheetH()+10:20]}); LCITY=ck;}}
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0";
   const head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span>`:""}<span>${t}</span><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
-  if(!V.city){const rows=C.map(c=>({c,x:calc(c)})).sort((a,b)=>b.x.irr-a.x.irr);
-   el.innerHTML=head("L'Ouest",`<p class="v2sub">${tyl()} · ${C.length} villes · annonces relevées dans ${C.filter(c=>ADS[c.k]&&ADS[c.k].ventes).length}. Touchez une ville.</p>`)+`<div class="v2mrows">${rows.map(({c,x})=>{const n=ADS[c.k]&&ADS[c.k].ventes?ADS[c.k].ventes.length:0; return `<div class="v2row" role="button" tabindex="0" data-v2city="${c.k}" style="grid-template-columns:minmax(0,1fr) auto"><b>${esc(c.name)}</b><span class="v2rv" style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</span><span class="v2rs">${keur(x.bien)} · ${sgn(x.cf)}/mois · ${n?n+" annonces":"pas d'annonces relevées"}</span><span class="v2rs" style="text-align:right">${rng({x,z:irr3(x)||{}},70)}</span></div>`;}).join("")}</div>`; return;}
+  if(!V.city){const rows=C.map(c=>({c,x:calc(c),k:cityCnt(c.k)})).sort((a,b)=>b.x.irr-a.x.irr), tot=rows.reduce((s,r)=>s+r.k[0],0);
+   el.innerHTML=head("L'Ouest",`<p class="v2sub">${tyl()} · ${tot} annonce${tot>1?"s":""} pour nos critères, dans ${rows.filter(r=>r.k[0]).length} villes sur ${C.length}.</p>`)+`<div class="v2mrows">${newsHtml(NEWS||bouge())}<h2 class="v2mh2">Les villes · moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type</h2>${rows.map(({c,x,k:[m,n]})=>`<div class="v2row${m?"":" v2dim"}" role="button" tabindex="0" data-v2city="${c.k}" style="grid-template-columns:minmax(0,1fr) auto"><b>${esc(c.name)}</b><span class="v2rv" style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</span><span class="v2rs">${keur(x.cost)} tout compris · ${sgn(x.cf)}/mois</span><span class="v2rs" style="text-align:right">${rng({x,z:irr3(x)||{}},70)}</span><span class="v2rs v2match">${n?(m?`<b>${m}</b> annonce${m>1?"s":""} sur ${n} pour nos critères`:n>1?`aucune des ${n} annonces pour nos critères`:"son annonce ne correspond pas à nos critères"):"pas d'annonces relevées"}</span></div>`).join("")}</div>`; return;}
   const L0=market(V.city), lim=L0.slice(0,80);
   el.innerHTML=head(esc(cityName(V.city)),`<div class="v2chips">${vueChips(V.city)}</div><p class="v2sub">${L0.length} ${typl()} · triés par rendement ${scn()}</p>`)
    +`<div class="v2mrows">${lim.length?lim.map(o=>`<div class="v2row${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span style="color:var(--warn)">★</span>':""}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(o.t?o.t.name:o.a[1]||"")}${o.f.dpe?" · DPE "+o.f.dpe:""} · ${sgn(o.x.cf)}/mois</span><span style="text-align:right">${rng(o,64)}</span></div>`).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`}${L0.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L0.length}.</p>`:""}</div>`;}
- function mapLegend(){$("v2mleg").innerHTML=`<b>Rendement ${scn()}</b><span><i style="background:${cv("var(--bad)")}"></i>&lt; 2,5 %</span><span><i style="background:${cv("var(--warn)")}"></i>2,5–5</span><span><i style="background:${cv("var(--ok)")}"></i>≥ 5 %</span><span>anneau : nouvelle · ★ shortlist</span>`;}
+ function mapLegend(){$("v2mleg").innerHTML=`<b>Rendement ${scn()}</b><span><i style="background:${cv("var(--bad)")}"></i>&lt; 2,5 %</span><span><i style="background:${cv("var(--warn)")}"></i>2,5–5</span><span><i style="background:${cv("var(--ok)")}"></i>≥ 5 %</span><span>${V.city?"anneau : nouvelle · ★ shortlist":"taille : annonces pour nos critères"}</span>`;}
  function goCity(ck){V.city=ck||null; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}
 
  /* ---------- nuage (même échelle partout) ---------- */
@@ -131,9 +175,9 @@
    ${V.aview!=="nuage"&&L0.length>V.n?`<div class="v2more"><button type="button" class="v2btn" data-v2more>Afficher ${Math.min(60,L0.length-V.n)} de plus (${L0.length-V.n} restantes)</button></div>`:""}</div>`;}
 
  /* ---------- onglet Villes ---------- */
- function pVilles(){const el=$("v2p-villes"), R=C.map(c=>{const x=calc(c); return {c,x,z:irr3(x)||{},n:ADS[c.k]&&ADS[c.k].ventes?ADS[c.k].ventes.length:0};}).sort((a,b)=>b.x.irr-a.x.irr);
-  const body=V.cview==="nuage"?nuage({label:"Rendement des villes selon le nombre d'étudiants",x:[3.2,5],xt:[3.3,3.5,3.7,4,4.3,4.6,4.9],y:[-4,9],xf:v=>nf(Math.pow(10,v)/1000)+" k",yf:v=>fr(v,0)+" %",xl:"étudiants (échelle logarithmique)",yl:`rendement sur 15 ans · ${scn()}`,pts:R.map(r=>({x:Math.log10(r.c.students),y:r.x.irr,lo:r.z.prudent,hi:r.z.favorable,c:cv(colIrr(r.x.irr)),r:r.n?8:6,op:r.n?.95:.6,city:r.c.k,lab:r.c.name,t:`${r.c.name} · ${pctS(r.x.irr)}`}))})+`<div class="v2leg"><span>Grandes pastilles : annonces relevées</span><span>Trait : du prudent au favorable</span></div>`
-   :`<div class="v2tw"><table class="v2t"><thead><tr><th>Ville</th><th class="r">15 ans</th><th>Fourchette</th><th class="r">Cash-flow</th><th class="r">Prix</th><th class="r">Loyer HC</th><th class="r">Étudiants</th><th class="r">Annonces</th><th>Banque</th></tr></thead><tbody>${R.map(r=>{const [bc,bt]=bank(r.x.ratio); return `<tr data-v2city="${r.c.k}" tabindex="0"><td><b>${esc(r.c.name)}</b></td><td class="r mono" style="color:${cv(colIrr(r.x.irr))};font-weight:700">${pctS(r.x.irr)}</td><td>${rng(r)}</td><td class="r mono" style="color:${cfC(r.x.cf)}">${sgn(r.x.cf)}</td><td class="r mono">${keur(r.x.bien)}</td><td class="r mono">${eur(r.x.rentHC)}</td><td class="r mono">${nf(r.c.students)}</td><td class="r mono">${r.n||"—"}</td><td><span class="v2pill ${bc==="p-ok"?"ok":bc==="p-warn"?"warn":"bad"}">${bt}</span></td></tr>`;}).join("")}</tbody></table></div>`;
+ function pVilles(){const el=$("v2p-villes"), R=C.map(c=>{const x=calc(c), [m,n]=cityCnt(c.k); return {c,x,z:irr3(x)||{},m,n};}).sort((a,b)=>b.x.irr-a.x.irr);
+  const body=V.cview==="nuage"?nuage({label:"Rendement des villes selon le nombre d'étudiants",x:[3.2,5],xt:[3.3,3.5,3.7,4,4.3,4.6,4.9],y:[-4,9],xf:v=>nf(Math.pow(10,v)/1000)+" k",yf:v=>fr(v,0)+" %",xl:"étudiants (échelle logarithmique)",yl:`rendement sur 15 ans · ${scn()}`,pts:R.map(r=>({x:Math.log10(r.c.students),y:r.x.irr,lo:r.z.prudent,hi:r.z.favorable,c:cv(colIrr(r.x.irr)),r:r.m?8:6,op:r.m?.95:.55,city:r.c.k,lab:r.c.name,t:`${r.c.name} · ${pctS(r.x.irr)} · ${r.m} annonce${r.m>1?"s":""} pour nos critères`}))})+`<div class="v2leg"><span>Grandes pastilles : des annonces pour nos critères</span><span>Trait : du prudent au favorable</span></div>`
+   :`<div class="v2tw"><table class="v2t"><thead><tr><th>Ville</th><th class="r">15 ans</th><th>Fourchette</th><th class="r">Cash-flow</th><th class="r">Budget</th><th class="r">Loyer HC</th><th class="r">Étudiants</th><th class="r">Nos critères</th><th>Banque</th></tr></thead><tbody>${R.map(r=>{const [bc,bt]=bank(r.x.ratio); return `<tr data-v2city="${r.c.k}" tabindex="0"><td><b>${esc(r.c.name)}</b></td><td class="r mono" style="color:${cv(colIrr(r.x.irr))};font-weight:700">${pctS(r.x.irr)}</td><td>${rng(r)}</td><td class="r mono" style="color:${cfC(r.x.cf)}">${sgn(r.x.cf)}</td><td class="r mono" title="prix ${keur(r.x.bien)} + notaire, meubles et travaux">${keur(r.x.cost)}</td><td class="r mono">${eur(r.x.rentHC)}</td><td class="r mono">${nf(r.c.students)}</td><td class="r mono">${r.n?`${r.m} / ${r.n}`:"—"}</td><td><span class="v2pill ${bc==="p-ok"?"ok":bc==="p-warn"?"warn":"bad"}">${bt}</span></td></tr>`;}).join("")}</tbody></table></div>`;
   el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Villes</h1><span class="v2sub">${tyl()} type de ${H.surface} m² · ${eur(H.apport)} d'apport · scénario ${scn()}</span><span class="v2sp"></span><span class="v2seg" role="group" aria-label="Affichage"><button type="button" data-v2cv="tableau" aria-pressed="${V.cview!=="nuage"}">Tableau</button><button type="button" data-v2cv="nuage" aria-pressed="${V.cview==="nuage"}">Nuage</button></span></div>${body}<p class="v2sub">Touchez une ville pour l'ouvrir sur la carte, avec ses quartiers et ses annonces. Une ville sans annonces relevées est calculée sur ses ventes réelles et ses loyers.</p></div>`;}
 
  /* ---------- onglet Nos biens : avis à deux ---------- */
@@ -245,16 +289,17 @@
 
  /* ---------- affichage ---------- */
  function paint(k){if(k==="annonces") pAnnonces(); else if(k==="villes") pVilles(); else if(k==="biens") pBiens(); else if(k==="budget") pBudget(); else {mapList(); mapLegend(); drawMap();}}
- function show(){TABS.forEach(([k])=>{$("v2p-"+k).hidden=k!==V.tab;}); top(); paint(V.tab); fiche();
+ function show(){TABS.forEach(([k])=>{$("v2p-"+k).hidden=k!==V.tab;}); top(); paint(V.tab); fiche(); vuSnap();
   if(V.tab==="carte") leaflet(()=>{mapInit(); requestAnimationFrame(()=>M&&M.invalidateSize());});}
  /* une relecture de la liste commune (toutes les 20 s) ne repeint pas la page pendant qu'on tape dans un champ : elle attend qu'on en sorte */
  let RQ=0, RWAIT=false; const typing=()=>{const a=document.activeElement; return !!(a&&app.contains(a)&&a.matches("input:not([type=range]):not([type=checkbox]),select,textarea"));};
- function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{FEED=null; if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche();});}
+ function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{FEED=null; if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap();});}
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
+  if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
   if(d.v2scn){H.pess=d.v2scn==="prudent"; H.fav=d.v2scn==="favorable"; try{localStorage.setItem("scn",d.v2scn);}catch(_){} const p=$("f-pess"); if(p) p.checked=H.pess; if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render(); return;}
   if(d.v2vue){V.vue=d.v2vue; V.n=60; save(); refresh(); if(V.tab==="carte") drawMap(); return;}
   if(d.v2av){V.aview=d.v2av; save(); refresh(); return;}
@@ -274,7 +319,7 @@
   if(d.v2share!=null){const n=($("v2nom2").value||"").trim(), c=($("v2code").value||"").trim(); try{localStorage.setItem("biens-nom",n); localStorage.setItem("biens-code",c);}catch(_){} location.reload(); return;}
   if(d.v2city!=null&&!e.target.closest("[data-v2open]")){goCity(d.v2city); return;}
   if(d.v2open){if(e.target.closest("button,a,input,select,[data-stmenu]")&&!t.matches("button")) return; openSel(d.v2open); return;}});
- document.addEventListener("keydown",e=>{const t=e.target; if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-v2open],[data-v2city]")&&!t.matches("button")){e.preventDefault(); t.click();}
+ document.addEventListener("keydown",e=>{const t=e.target; if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-v2open],[data-v2city],[data-v2gonew],.v2nrow")&&!t.matches("button")){e.preventDefault(); t.click();}
   if(e.key==="Escape"&&V.sel&&!document.querySelector(".v2dlg")&&$("visitPanel").hidden&&$("fichePanel").hidden){V.sel=null; fiche(); paint(V.tab);}});
  document.addEventListener("input",e=>{const t=e.target, d=t.dataset; if(!d) return;
   /* curseur d'offre : seuls les chiffres autour changent (le curseur reste sous le doigt) */

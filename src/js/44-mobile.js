@@ -77,7 +77,7 @@ let MSEEN=null;           // date de la visite précédente (pour « nouveau »)
  else if(s.last!==today){MSEEN=s.last; localStorage.setItem("mvisit",JSON.stringify({last:today,prev:s.last}));}
  else MSEEN=s.prev;}catch(_){}})();
 function hEntry(ck,suf){return HIST[ck]&&HIST[ck].v&&HIST[ck].v[suf];}
-function isNewAd(ck,suf){const e=hEntry(ck,suf); if(!e) return false; if(MSEEN) return e.f>MSEEN; const v=vu("v",ck,suf); return !!(v&&v.isNew);}
+function isNewAd(ck,suf){const e=hEntry(ck,suf); if(!e) return false; if(MSEEN) return e.f>MSEEN&&e.f>(hStart(ck,"v")||""); const v=vu("v",ck,suf); return !!(v&&v.isNew);}
 function adInfo(ck,a){const r=venteCalc(ck,a), v=vu("v",ck,a[3]), t=venteIrisA(ck,a), d=t?demandOf(t):null; return {ck,a,r,x:r.x,v,t,d,nw:isNewAd(ck,a[3]),url:VTURL+a[3]};}
 function bienOf(url){return BIENS.find(b=>b.url===url)||null;}
 function mPhoto(ck,a,w,h){return a[4]?photoUrl(a[3],a[4],w,h):"";}

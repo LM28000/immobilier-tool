@@ -7,7 +7,7 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
  const b={id:sid,titre:str(r.titre,120),url:/^https?:\/\//i.test(url)?url:"",ville:okV?r.ville:C[0].k,quartier:str(r.quartier,80),secteur:str(r.secteur,80),
   prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),meubles:num(r.meubles),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
   notes:str(r.notes,200),statut:["à voir","visité","offre faite","compromis","acheté","écarté"].includes(r.statut)?r.statut:"à voir",fav:r.fav===true,par:str(r.par,30),ts:num(r.ts),
-  short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
+  short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80),maj:obj(r.maj)};
  Object.keys(b).forEach(k=>{if(b[k]===undefined) delete b[k];});
  if(TYPES[r.type]) b.type=r.type; if(+r.pieces>0) b.pieces=num(r.pieces); if(isFinite(+r.lat)&&r.lat!=null) b.lat=+r.lat; if(isFinite(+r.lon)&&r.lon!=null) b.lon=+r.lon;
  if(b.geo&&b.geo.foot&&!Array.isArray(b.geo.foot)) delete b.geo.foot;

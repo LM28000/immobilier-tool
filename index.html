@@ -1934,7 +1934,7 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
  const b={id:sid,titre:str(r.titre,120),url:/^https?:\/\//i.test(url)?url:"",ville:okV?r.ville:C[0].k,quartier:str(r.quartier,80),secteur:str(r.secteur,80),
   prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),meubles:num(r.meubles),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
   notes:str(r.notes,200),statut:["à voir","visité","offre faite","compromis","acheté","écarté"].includes(r.statut)?r.statut:"à voir",fav:r.fav===true,par:str(r.par,30),ts:num(r.ts),
-  short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
+  short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80),maj:obj(r.maj)};
  Object.keys(b).forEach(k=>{if(b[k]===undefined) delete b[k];});
  if(TYPES[r.type]) b.type=r.type; if(+r.pieces>0) b.pieces=num(r.pieces); if(isFinite(+r.lat)&&r.lat!=null) b.lat=+r.lat; if(isFinite(+r.lon)&&r.lon!=null) b.lon=+r.lon;
  if(b.geo&&b.geo.foot&&!Array.isArray(b.geo.foot)) delete b.geo.foot;
@@ -2297,7 +2297,7 @@ function sbDB(code){const HD={apikey:SB.key,"x-groupe":code,"Content-Type":"appl
   doc:id=>({delete:async()=>{await chk(await fetch(base+"?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:HD})); tick();},
    update:async p=>{const cur=last.find(x=>x.id===id), b0=cur?cur.data:{}, mine=Object.assign({},b0,p); let theirs=b0;
     try{const r=await chk(await fetch(base0+"?select=data&id=eq."+encodeURIComponent(id),{headers:HD})); const j=await r.json(); if(j[0]&&j[0].data) theirs=j[0].data;}catch(_){}
-    const data=merge3(b0,mine,theirs);
+    const data=merge3(b0,mine,theirs); data.maj={par:myName()||"",le:new Date().toISOString()};   /* qui a modifié en dernier (« ce qui a bougé ») */
     await chk(await fetch(base+"?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:Object.assign({},HD,{Prefer:"return=minimal"}),body:JSON.stringify({data,updated_at:new Date().toISOString()})})); tick();}})};
  return {collection:()=>col,shared:true};}
 (function initShare(){const box=document.getElementById("shareBox"); if(!box) return;
@@ -2316,10 +2316,14 @@ function sbDB(code){const HD={apikey:SB.key,"x-groupe":code,"Content-Type":"appl
 const HSTART=(()=>{let m=null; Object.values(HIST).forEach(c=>["v","l"].forEach(k=>Object.values(c[k]||{}).forEach(e=>{if(!m||e.f<m) m=e.f;}))); return m;})();
 const DAY=864e5, isoD=s=>new Date(s+"T12:00:00"), todayIso=()=>ADS.iso||new Date().toISOString().slice(0,10);
 const dm=s=>{const d=isoD(s); return `${d.getDate()}/${String(d.getMonth()+1).padStart(2,"0")}`;};
-function vu(kind,ck,suf){const e=HIST[ck]&&HIST[ck][kind]&&HIST[ck][kind][suf]; if(!e) return null;
+/* premier relevé de chaque ville : une annonce déjà là ce jour-là n'est pas « nouvelle » (sinon l'arrivée d'une ville marque tout) */
+const HSC={};
+function hStart(ck,kind){const E=HIST[ck]&&HIST[ck][kind]; if(!E) return null; const n=Object.keys(E).length, k=ck+"|"+kind, c=HSC[k]; if(c&&c.n===n) return c.m;
+ let m=null; Object.values(E).forEach(e=>{if(e&&e.f&&(!m||e.f<m)) m=e.f;}); HSC[k]={n,m}; return m;}
+function vu(kind,ck,suf){const e=HIST[ck]&&HIST[ck][kind]&&HIST[ck][kind][suf]; if(!e) return null; const s0=hStart(ck,kind);
  const days=Math.round((isoD(e.g||todayIso())-isoD(e.f))/DAY), P=e.p, drops=P.filter((x,i)=>i&&x[1]<P[i-1][1]).length;
  let last=null; for(let i=P.length-1;i>0;i--) if(P[i][1]<P[i-1][1]){last={d:P[i][0],amt:P[i-1][1]-P[i][1]}; break;}
- return {days,drops,last,first:P[0][1],p:P,gone:e.g||null,isNew:HSTART&&e.f>HSTART&&days<=2,m:e.m};}
+ return {days,drops,last,first:P[0][1],p:P,gone:e.g||null,isNew:!!(s0&&e.f>s0&&days<=2),m:e.m};}
 function vuBadges(kind,ck,suf){const v=vu(kind,ck,suf); if(!v) return ""; const b=[];
  if(v.last) b.push(`<span class="hb drop" title="Prix initial ${keur(v.first)}">↓ ${keur(v.last.amt)} le ${dm(v.last.d)}</span>`);
  if(v.isNew) b.push(`<span class="hb new">nouveau</span>`);
@@ -3133,7 +3137,7 @@ let MSEEN=null;           // date de la visite précédente (pour « nouveau »)
  else if(s.last!==today){MSEEN=s.last; localStorage.setItem("mvisit",JSON.stringify({last:today,prev:s.last}));}
  else MSEEN=s.prev;}catch(_){}})();
 function hEntry(ck,suf){return HIST[ck]&&HIST[ck].v&&HIST[ck].v[suf];}
-function isNewAd(ck,suf){const e=hEntry(ck,suf); if(!e) return false; if(MSEEN) return e.f>MSEEN; const v=vu("v",ck,suf); return !!(v&&v.isNew);}
+function isNewAd(ck,suf){const e=hEntry(ck,suf); if(!e) return false; if(MSEEN) return e.f>MSEEN&&e.f>(hStart(ck,"v")||""); const v=vu("v",ck,suf); return !!(v&&v.isNew);}
 function adInfo(ck,a){const r=venteCalc(ck,a), v=vu("v",ck,a[3]), t=venteIrisA(ck,a), d=t?demandOf(t):null; return {ck,a,r,x:r.x,v,t,d,nw:isNewAd(ck,a[3]),url:VTURL+a[3]};}
 function bienOf(url){return BIENS.find(b=>b.url===url)||null;}
 function mPhoto(ck,a,w,h){return a[4]?photoUrl(a[3],a[4],w,h):"";}

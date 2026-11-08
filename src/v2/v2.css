@@ -134,7 +134,9 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .v2tabbar button[aria-current="page"]{color:var(--accent)}
   .v2tabbar svg{width:22px;height:22px}
   .v2mlist{left:0;right:0;top:auto;bottom:0;width:auto;max-height:46%;border-radius:18px 18px 0 0}
-  .v2mlist[data-min="1"]{max-height:none}
+  /* « Réduire » : la liste reste en bas, repliée en une barre (au lieu de remonter sous le zoom) */
+  .v2mlist[data-min="1"]{top:auto;bottom:0;max-height:none}
+  .v2mlist[data-min="1"] .v2mhead>:not(.v2crumb){display:none}
   .v2mleg{display:none}
   .v2fiche{position:fixed;inset:0;width:auto;z-index:1500;border:0;padding-top:env(safe-area-inset-top,0px)}
   .v2tabs2{top:57px}
@@ -146,3 +148,19 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2f .v2chg label{color:var(--accent)}
 .v2def{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
 .v2regnote{margin-top:-6px}
+/* ce qui a bougé depuis votre dernière visite (en tête de la liste de l'Ouest) */
+.v2news{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--accent-soft);display:flex;flex-direction:column;gap:2px}
+.v2news h2{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin:0 0 4px;font-weight:800}
+.v2nrow{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start;padding:6px 4px;border-radius:8px;cursor:pointer;min-height:40px;box-sizing:border-box}
+.v2nrow:hover{background:var(--surface)}
+.v2nrow b{font-size:13.5px;display:block}
+.v2nrow small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2ni{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;border-radius:999px;font-size:11.5px;font-weight:800;background:var(--surface);color:var(--accent);padding:0 5px;box-sizing:border-box;font-family:var(--f-num)}
+.v2ni.n{background:var(--accent);color:var(--surface)} .v2ni.d{color:var(--ok)} .v2ni.x{color:var(--bad)} .v2ni.w{color:var(--warn)}
+.v2mh2{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0;padding:12px 14px 6px;font-weight:700}
+.v2row.v2dim{opacity:.6}
+.v2row .v2match{grid-column:1/-1;color:var(--fg);font-size:12.5px}
+.v2cdot{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #fff;box-sizing:border-box;box-shadow:0 1px 3px rgb(0 0 0 / .35);color:#fff;font:800 11px/1 var(--f-num);letter-spacing:-.02em}
+.leaflet-tooltip.v2tip.v2tipdim{opacity:.72!important;font-weight:600}
+.v2tabbar button{position:relative}
+.v2bdg{position:absolute;top:3px;left:calc(50% + 5px);background:var(--accent);color:var(--surface);border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;line-height:16px;padding:0 4px;box-sizing:border-box;margin:0}

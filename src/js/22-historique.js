@@ -2,10 +2,14 @@
 const HSTART=(()=>{let m=null; Object.values(HIST).forEach(c=>["v","l"].forEach(k=>Object.values(c[k]||{}).forEach(e=>{if(!m||e.f<m) m=e.f;}))); return m;})();
 const DAY=864e5, isoD=s=>new Date(s+"T12:00:00"), todayIso=()=>ADS.iso||new Date().toISOString().slice(0,10);
 const dm=s=>{const d=isoD(s); return `${d.getDate()}/${String(d.getMonth()+1).padStart(2,"0")}`;};
-function vu(kind,ck,suf){const e=HIST[ck]&&HIST[ck][kind]&&HIST[ck][kind][suf]; if(!e) return null;
+/* premier relevé de chaque ville : une annonce déjà là ce jour-là n'est pas « nouvelle » (sinon l'arrivée d'une ville marque tout) */
+const HSC={};
+function hStart(ck,kind){const E=HIST[ck]&&HIST[ck][kind]; if(!E) return null; const n=Object.keys(E).length, k=ck+"|"+kind, c=HSC[k]; if(c&&c.n===n) return c.m;
+ let m=null; Object.values(E).forEach(e=>{if(e&&e.f&&(!m||e.f<m)) m=e.f;}); HSC[k]={n,m}; return m;}
+function vu(kind,ck,suf){const e=HIST[ck]&&HIST[ck][kind]&&HIST[ck][kind][suf]; if(!e) return null; const s0=hStart(ck,kind);
  const days=Math.round((isoD(e.g||todayIso())-isoD(e.f))/DAY), P=e.p, drops=P.filter((x,i)=>i&&x[1]<P[i-1][1]).length;
  let last=null; for(let i=P.length-1;i>0;i--) if(P[i][1]<P[i-1][1]){last={d:P[i][0],amt:P[i-1][1]-P[i][1]}; break;}
- return {days,drops,last,first:P[0][1],p:P,gone:e.g||null,isNew:HSTART&&e.f>HSTART&&days<=2,m:e.m};}
+ return {days,drops,last,first:P[0][1],p:P,gone:e.g||null,isNew:!!(s0&&e.f>s0&&days<=2),m:e.m};}
 function vuBadges(kind,ck,suf){const v=vu(kind,ck,suf); if(!v) return ""; const b=[];
  if(v.last) b.push(`<span class="hb drop" title="Prix initial ${keur(v.first)}">↓ ${keur(v.last.amt)} le ${dm(v.last.d)}</span>`);
  if(v.isNew) b.push(`<span class="hb new">nouveau</span>`);
