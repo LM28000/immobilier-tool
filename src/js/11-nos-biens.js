@@ -27,7 +27,9 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
   /* loyer du bail en cours lu dans l'annonce (pas un loyer saisi) : il vaut jusqu'au départ du locataire, voir calc */
   if(ia&&ia.loyer>0&&Math.round(loy)===ia.loyer){o.bailAns=bailAns(fx.ia.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
  else o.rent=c.rent*rr;
- if(+b.copro>0) o.copro=+b.copro; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
+ /* charges : la part du propriétaire. Un bien ajouté avant le 8 novembre 2026 a gardé les charges totales de l'annonce : on en prend la même part */
+ let cop=+b.copro||0; if(fx&&cop>0&&typeof copAn==="function"){const ca=copAn(fx); if(ca&&Math.round(ca/12)===Math.round(cop)) cop*=PART_PROPRIO;}
+ if(cop>0) o.copro=cop; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}

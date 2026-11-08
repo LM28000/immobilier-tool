@@ -38,21 +38,21 @@ function calc(c){
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
  const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(T.surf/c.rentM2,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk);
- const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc,0);
- const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
+ const rentHC=Math.max(rentCC*(1+la/100)-D.chLoc,0);
+ const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+(H.grosTrav||0)*SU/12+tf; /* gros travaux de copropriété : provision visible, non récupérable */
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  /* bien vendu loué : loyer du bail pendant c.bailAns années (départ du locataire), puis le loyer actuel relevé de la prime meublé mesurée,
     sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) */
  let rentEff2=rentEff;
  if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
-  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-H.chLoc,0)*(12-vac)/12;}
+  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
  const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
   for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
-   let fees=(rent+H.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
+   let fees=(rent+D.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
     if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d;

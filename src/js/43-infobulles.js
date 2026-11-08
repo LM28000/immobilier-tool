@@ -28,14 +28,15 @@ const TIPS={
  assur:()=>`Taux annuel de l'assurance emprunteur, appliqué au capital emprunté. La quotité, c'est la part du prêt couverte pour cette personne (100 % chacun = couverture totale en cas de problème).`,
  notaire:()=>`Frais d'acquisition dans l'ancien : environ 7 à 8 % du prix, surtout des taxes.`,
  apport:()=>`Ce que vous mettez de votre poche au départ (à deux). Le reste du budget tout compris est emprunté.`,
- chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, entretien des parties communes, ordures ménagères).`,
- copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire).`,
+ chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, chauffage collectif, entretien des parties communes, ordures ménagères). Valeur de départ mesurée sur les locations : 45 € (studio), 50 € (T2), 75 € (T3) par mois.`,
+ grosTrav:()=>`Provision pour les gros travaux votés en copropriété (ravalement, toiture, ascenseur), jamais récupérables sur le locataire et absents des charges annuelles : ${eur(H.grosTrav*H.surface/12)}/mois pour ${H.surface} m². Hypothèse à ajuster avec les procès-verbaux d'assemblée générale.`,
+ copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire) : en moyenne 35 % des charges annoncées, le locataire remboursant le reste avec ses charges. Les charges annoncées d'une annonce remplacent cette valeur.`,
  dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
  statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de la shortlist (×) : l'annonce revient dans la liste des annonces.`};
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];
-const TIPID={"f-pess":"pess","f-vacq":"vacq","f-dvf":"dvf","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro"};
+const TIPID={"f-pess":"pess","f-vacq":"vacq","f-dvf":"dvf","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro","f-grosTrav":"grosTrav"};
 const tipBtn=k=>`<button type="button" class="tipb" data-tip="${k}" aria-label="Explication">?</button>`;
 let TIPBUSY=false;
 function addTips(root){if(TIPBUSY) return; TIPBUSY=true;

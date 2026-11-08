@@ -4,7 +4,7 @@
      la, lo, r (position et rayon de flou en m, 0 = exacte), dpe, cop (charges de copropriété par an), coloc.
    FICHES : les fiches complètes, inlinées dans l'artefact et la page de test ; sur GitHub, chargées ville par ville à la demande.
    Règles : position connue à 300 m près → quartier IRIS du point (sinon : secteur Bien'ici, comme avant) ;
-   charges de copropriété annoncées → comptées en entier côté propriétaire (prudent : une partie est récupérable sur le locataire) ;
+   charges de copropriété annoncées → 35 % côté propriétaire (PART_PROPRIO, mesuré), le reste payé par le locataire ;
    DPE annoncé → même règle que le DPE saisi (F et G signalés) ; colocations (chambres) écartées des loyers de comparaison (src/ads-vue.js). */
 const adId=suf=>String(suf||"").split("?")[0].split("/").pop();
 const ficx=suf=>FICX[adId(suf)]||null;
@@ -36,7 +36,7 @@ function ficheHtml(ck,suf,f){const loc=f.k==="l", ext=[f.balc&&`${f.balc} balcon
   (f.et!=null||f.asc!=null)&&["Étage",etTxt(f)||"—"],
   (f.an||f.chauf)&&["Immeuble",[f.an&&`construit en ${f.an}`,f.chauf&&esc(f.chauf)].filter(Boolean).join(" · ")],
   f.dpe&&["DPE",`<b>${f.dpe}</b>${f.kwh?` · ${f.kwh} kWh/m²/an`:""}${f.ges?` · GES ${f.ges}`:""}`,f.dpeDate?`diagnostic du ${frD(f.dpeDate)}`:""],
-  !loc&&(cop||f.lots||f.proc)&&["Copropriété",`${f.lots?`${f.lots} lots`:""}${cop?`${f.lots?" · ":""}<b class="mono">${eur(cop)}</b> de charges par an (${eur(cop/12)}/mois)`:""}`,`${cop?"comptées en entier dans le calcul":"charges non indiquées"}${f.proc?" · <b style=\"color:var(--bad)\">copropriété en procédure</b>":""}`],
+  !loc&&(cop||f.lots||f.proc)&&["Copropriété",`${f.lots?`${f.lots} lots`:""}${cop?`${f.lots?" · ":""}<b class="mono">${eur(cop)}</b> de charges par an (${eur(cop/12)}/mois)`:""}`,`${cop?`${Math.round(PART_PROPRIO*100)} % à votre charge dans le calcul (${eur(cop/12*PART_PROPRIO)}/mois), le reste est payé par le locataire`:"charges non indiquées"}${f.proc?" · <b style=\"color:var(--bad)\">copropriété en procédure</b>":""}`],
   ext.length&&["Extérieurs et annexes",ext.join(" · ")],
   loc&&["Location",`${f.meu===true?"meublée":f.meu===false?"non meublée":"meublé ?"}${f.coloc?" · <b>chambre en colocation</b>":""}`,f.coloc?"écartée des loyers de comparaison":""],
   loc&&(f.chg||f.dep||f.hono)&&["Conditions",[f.chg&&`${eur(f.chg)} de charges/mois`,f.dep&&`dépôt ${eur(f.dep)}`,f.hono&&`honoraires ${eur(f.hono)}`].filter(Boolean).join(" · ")],

@@ -1075,13 +1075,13 @@ const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]]
  [[48.86,2.35],[47.90,1.91],[47.59,1.335],[47.39,0.69],[47.26,-0.08],[47.47,-0.55]],[[48.86,2.35],[47.79,1.07],[47.39,0.69],[46.58,0.34]],
  [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
  [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
-const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:40,vacance:1,copro:50,autres:48,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,pess:false,vacQ:true,dvf:true};
+const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:45,vacance:1,copro:21,autres:48,grosTrav:6,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,pess:false,vacQ:true,dvf:true};
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
- ["copro","Copro (part proprio)","€/mois",5],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
+ ["copro","Copro (part proprio)","€/mois",1],["grosTrav","Gros travaux copro (provision)","€/m²/an",1],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
  ["salaires","Revenus nets du foyer","€/mois",50],["pretEtud","Autres crédits en cours","€/mois",10],["fraisVente","Frais à la revente","%",0.5]];
 /* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) */
-const HYPK=["apport","duree","notaire","chLoc","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
+const HYPK=["apport","duree","notaire","grosTrav","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
 let HYPOK=false; try{const s=JSON.parse(localStorage.getItem("hyp")||"null"); if(s&&typeof s==="object"){if(!s.v2&&s.fraisVente===5) delete s.fraisVente; /* ancienne valeur par défaut (5 %, novembre 2026), trop prudente */ HYPK.forEach(k=>{if(typeof s[k]==="number"&&isFinite(s[k])) H[k]=s[k];}); HYPOK=s.salaires!=null;}}catch(_){}
 function saveHyp(){try{const s={v2:1}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true;}
 let SEL="lemans";
@@ -1115,9 +1115,13 @@ const TYPES={
  t2:{lab:"T2",pl:"T2",un:"un T2",p:2,smin:25,smax:75,surf:42},
  t3:{lab:"T3",pl:"T3",un:"un T3",p:3,smin:40,smax:110,surf:62}};
 const tyOf=k=>TYPES[k]||TYPES.studio, TY=()=>tyOf(H.type), tyKey=k=>TYPES[k]?k:"studio";
+/* charges, mesurées le 8 novembre 2026 sur les fiches des annonces des 20 villes : charges de copropriété annoncées dans les ventes,
+   médiane 62 / 89 / 125 €/mois (studio / T2 / T3, soit environ 25 € + 1,6 €/m²) ; charges payées par le locataire dans les locations,
+   médiane 47 / 50 / 75 €/mois. Le locataire rembourse donc environ 65 % des charges : il reste au propriétaire 35 % des charges annoncées. */
+const PART_PROPRIO=0.35, CH_LOC={studio:45,t2:50,t3:75};
 /* règles de départ selon le type (modifiables ensuite dans les hypothèses) :
-   meubles 1 500 € + 1 500 € par pièce · petits travaux 105 €/m² · copropriété, part propriétaire, 2,3 €/m²/mois */
-function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+1500*T.p,travaux:Math.round(105*T.surf/50)*50,copro:Math.round(2.3*T.surf/5)*5};}
+   meubles 1 500 € + 1 500 € par pièce · petits travaux 105 €/m² · copropriété, part propriétaire = 35 % des charges médianes · charges du locataire mesurées */
+function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+1500*T.p,travaux:Math.round(105*T.surf/50)*50,copro:Math.round(PART_PROPRIO*(25+1.6*T.surf)),chLoc:CH_LOC[tyKey(k)]};}
 /* type d'un bien : ses pièces ; à défaut, sa surface */
 function typeFor(surface,pieces){pieces=+pieces||0; if(pieces) return pieces>=3?"t3":pieces===2?"t2":"studio"; const s=+surface||22; return s<=30?"studio":s<=50?"t2":"t3";}
 /* libellés : « studio », « T2 »… et le pluriel avec majuscule */
@@ -1166,21 +1170,21 @@ function calc(c){
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
  const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(T.surf/c.rentM2,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk);
- const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc,0);
- const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
+ const rentHC=Math.max(rentCC*(1+la/100)-D.chLoc,0);
+ const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+(H.grosTrav||0)*SU/12+tf; /* gros travaux de copropriété : provision visible, non récupérable */
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  /* bien vendu loué : loyer du bail pendant c.bailAns années (départ du locataire), puis le loyer actuel relevé de la prime meublé mesurée,
     sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) */
  let rentEff2=rentEff;
  if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
-  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-H.chLoc,0)*(12-vac)/12;}
+  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
  const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
   for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
-   let fees=(rent+H.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
+   let fees=(rent+D.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
     if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d;
@@ -1930,7 +1934,9 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
   /* loyer du bail en cours lu dans l'annonce (pas un loyer saisi) : il vaut jusqu'au départ du locataire, voir calc */
   if(ia&&ia.loyer>0&&Math.round(loy)===ia.loyer){o.bailAns=bailAns(fx.ia.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
  else o.rent=c.rent*rr;
- if(+b.copro>0) o.copro=+b.copro; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
+ /* charges : la part du propriétaire. Un bien ajouté avant le 8 novembre 2026 a gardé les charges totales de l'annonce : on en prend la même part */
+ let cop=+b.copro||0; if(fx&&cop>0&&typeof copAn==="function"){const ca=copAn(fx); if(ca&&Math.round(ca/12)===Math.round(cop)) cop*=PART_PROPRIO;}
+ if(cop>0) o.copro=cop; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
@@ -1999,7 +2005,7 @@ const VTURL="https://www.bienici.com/annonce/vente/";
 const VC=new Map();
 function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[sector]) return null;
  const ts=z.list.filter(t=>A.map[sector].includes(t.code)&&t.price); return ts.sort((a,b)=>b.dpe.reduce((x,y)=>x+y,0)-a.dpe.reduce((x,y)=>x+y,0))[0]||null;}
-function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
+function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12*PART_PROPRIO):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.filter(a=>!estDoublon(a[3])).map(a=>({ck,a,r:venteCalc(ck,a)})));
 /* une annonce retirée de la shortlist redevient une annonce comme les autres (son bien est gardé caché, avec ses notes et sa visite, et revient si on la rajoute) */
@@ -2215,7 +2221,7 @@ function poiBlock(t){const p=poiOf(t); if(!p) return "";
      la, lo, r (position et rayon de flou en m, 0 = exacte), dpe, cop (charges de copropriété par an), coloc.
    FICHES : les fiches complètes, inlinées dans l'artefact et la page de test ; sur GitHub, chargées ville par ville à la demande.
    Règles : position connue à 300 m près → quartier IRIS du point (sinon : secteur Bien'ici, comme avant) ;
-   charges de copropriété annoncées → comptées en entier côté propriétaire (prudent : une partie est récupérable sur le locataire) ;
+   charges de copropriété annoncées → 35 % côté propriétaire (PART_PROPRIO, mesuré), le reste payé par le locataire ;
    DPE annoncé → même règle que le DPE saisi (F et G signalés) ; colocations (chambres) écartées des loyers de comparaison (src/ads-vue.js). */
 const adId=suf=>String(suf||"").split("?")[0].split("/").pop();
 const ficx=suf=>FICX[adId(suf)]||null;
@@ -2247,7 +2253,7 @@ function ficheHtml(ck,suf,f){const loc=f.k==="l", ext=[f.balc&&`${f.balc} balcon
   (f.et!=null||f.asc!=null)&&["Étage",etTxt(f)||"—"],
   (f.an||f.chauf)&&["Immeuble",[f.an&&`construit en ${f.an}`,f.chauf&&esc(f.chauf)].filter(Boolean).join(" · ")],
   f.dpe&&["DPE",`<b>${f.dpe}</b>${f.kwh?` · ${f.kwh} kWh/m²/an`:""}${f.ges?` · GES ${f.ges}`:""}`,f.dpeDate?`diagnostic du ${frD(f.dpeDate)}`:""],
-  !loc&&(cop||f.lots||f.proc)&&["Copropriété",`${f.lots?`${f.lots} lots`:""}${cop?`${f.lots?" · ":""}<b class="mono">${eur(cop)}</b> de charges par an (${eur(cop/12)}/mois)`:""}`,`${cop?"comptées en entier dans le calcul":"charges non indiquées"}${f.proc?" · <b style=\"color:var(--bad)\">copropriété en procédure</b>":""}`],
+  !loc&&(cop||f.lots||f.proc)&&["Copropriété",`${f.lots?`${f.lots} lots`:""}${cop?`${f.lots?" · ":""}<b class="mono">${eur(cop)}</b> de charges par an (${eur(cop/12)}/mois)`:""}`,`${cop?`${Math.round(PART_PROPRIO*100)} % à votre charge dans le calcul (${eur(cop/12*PART_PROPRIO)}/mois), le reste est payé par le locataire`:"charges non indiquées"}${f.proc?" · <b style=\"color:var(--bad)\">copropriété en procédure</b>":""}`],
   ext.length&&["Extérieurs et annexes",ext.join(" · ")],
   loc&&["Location",`${f.meu===true?"meublée":f.meu===false?"non meublée":"meublé ?"}${f.coloc?" · <b>chambre en colocation</b>":""}`,f.coloc?"écartée des loyers de comparaison":""],
   loc&&(f.chg||f.dep||f.hono)&&["Conditions",[f.chg&&`${eur(f.chg)} de charges/mois`,f.dep&&`dépôt ${eur(f.dep)}`,f.hono&&`honoraires ${eur(f.hono)}`].filter(Boolean).join(" · ")],
@@ -2837,14 +2843,15 @@ const TIPS={
  assur:()=>`Taux annuel de l'assurance emprunteur, appliqué au capital emprunté. La quotité, c'est la part du prêt couverte pour cette personne (100 % chacun = couverture totale en cas de problème).`,
  notaire:()=>`Frais d'acquisition dans l'ancien : environ 7 à 8 % du prix, surtout des taxes.`,
  apport:()=>`Ce que vous mettez de votre poche au départ (à deux). Le reste du budget tout compris est emprunté.`,
- chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, entretien des parties communes, ordures ménagères).`,
- copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire).`,
+ chLoc:()=>`Charges récupérables payées par le locataire en plus du loyer (eau, chauffage collectif, entretien des parties communes, ordures ménagères). Valeur de départ mesurée sur les locations : 45 € (studio), 50 € (T2), 75 € (T3) par mois.`,
+ grosTrav:()=>`Provision pour les gros travaux votés en copropriété (ravalement, toiture, ascenseur), jamais récupérables sur le locataire et absents des charges annuelles : ${eur(H.grosTrav*H.surface/12)}/mois pour ${H.surface} m². Hypothèse à ajuster avec les procès-verbaux d'assemblée générale.`,
+ copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire) : en moyenne 35 % des charges annoncées, le locataire remboursant le reste avec ses charges. Les charges annoncées d'une annonce remplacent cette valeur.`,
  dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
  statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de la shortlist (×) : l'annonce revient dans la liste des annonces.`};
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];
-const TIPID={"f-pess":"pess","f-vacq":"vacq","f-dvf":"dvf","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro"};
+const TIPID={"f-pess":"pess","f-vacq":"vacq","f-dvf":"dvf","s-surcote":"surcote","s-loyer":"loyerAdj","s-taux":"taux","fin-regime":"regime","fin-tmiA":"tmi","fin-tmiB":"tmi","fin-cfe":"cfe","fin-compta":"compta","fin-garantie":"garantie","fin-assurA":"assur","fin-assurB":"assur","fin-quotA":"assur","fin-quotB":"assur","f-notaire":"notaire","f-apport":"apport","f-chLoc":"chLoc","f-copro":"copro","f-grosTrav":"grosTrav"};
 const tipBtn=k=>`<button type="button" class="tipb" data-tip="${k}" aria-label="Explication">?</button>`;
 let TIPBUSY=false;
 function addTips(root){if(TIPBUSY) return; TIPBUSY=true;

@@ -6,9 +6,13 @@ const TYPES={
  t2:{lab:"T2",pl:"T2",un:"un T2",p:2,smin:25,smax:75,surf:42},
  t3:{lab:"T3",pl:"T3",un:"un T3",p:3,smin:40,smax:110,surf:62}};
 const tyOf=k=>TYPES[k]||TYPES.studio, TY=()=>tyOf(H.type), tyKey=k=>TYPES[k]?k:"studio";
+/* charges, mesurées le 8 novembre 2026 sur les fiches des annonces des 20 villes : charges de copropriété annoncées dans les ventes,
+   médiane 62 / 89 / 125 €/mois (studio / T2 / T3, soit environ 25 € + 1,6 €/m²) ; charges payées par le locataire dans les locations,
+   médiane 47 / 50 / 75 €/mois. Le locataire rembourse donc environ 65 % des charges : il reste au propriétaire 35 % des charges annoncées. */
+const PART_PROPRIO=0.35, CH_LOC={studio:45,t2:50,t3:75};
 /* règles de départ selon le type (modifiables ensuite dans les hypothèses) :
-   meubles 1 500 € + 1 500 € par pièce · petits travaux 105 €/m² · copropriété, part propriétaire, 2,3 €/m²/mois */
-function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+1500*T.p,travaux:Math.round(105*T.surf/50)*50,copro:Math.round(2.3*T.surf/5)*5};}
+   meubles 1 500 € + 1 500 € par pièce · petits travaux 105 €/m² · copropriété, part propriétaire = 35 % des charges médianes · charges du locataire mesurées */
+function typeDefaults(k){const T=tyOf(k); return {surface:T.surf,meubles:1500+1500*T.p,travaux:Math.round(105*T.surf/50)*50,copro:Math.round(PART_PROPRIO*(25+1.6*T.surf)),chLoc:CH_LOC[tyKey(k)]};}
 /* type d'un bien : ses pièces ; à défaut, sa surface */
 function typeFor(surface,pieces){pieces=+pieces||0; if(pieces) return pieces>=3?"t3":pieces===2?"t2":"studio"; const s=+surface||22; return s<=30?"studio":s<=50?"t2":"t3";}
 /* libellés : « studio », « T2 »… et le pluriel avec majuscule */
