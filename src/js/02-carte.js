@@ -30,6 +30,18 @@ function rentBlend(ck,t){/* annonces du type choisi, ramenées à la surface du 
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
 const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
 function calcIris(t){const c=C.find(v=>v.k===t.ck), dm=H.vacQ?demandOf(t):null; return calc(Object.assign({},c,{spm2:studioPm2(t.ck,t),rent:c.rent*rentRatio(t.ck,t),vac:dm?dm.vac:undefined}));}
+/* chiffre d'une ville : celui de son quartier du milieu. Les quartiers sont classés par rendement, chacun compté selon ses ventes du type (DVF) ;
+   la moitié des ventes se font dans des quartiers au rendement plus haut, l'autre moitié plus bas. La couleur d'une ville est ainsi celle
+   de ses quartiers. Sans quartier chiffré : la moyenne de la ville. Le résultat garde le calcul complet de ce quartier (cash-flow, budget…). */
+const VILC=new Map();
+function calcVille(c){if(!c) return null; const k=c.k+"|"+JSON.stringify(H); let r=VILC.get(k); if(r) return r;
+ const z=typeof IR!=="undefined"&&IR[c.k], L=z?z.list.filter(t=>t.type==="H"&&t.price):[];
+ if(!L.length) r=calc(c);
+ else{const D=dvfC(c.k), R=L.map(t=>({t,x:calcIris(t),w:(D&&D.q&&D.q[t.code]&&D.q[t.code].n)||0})); if(!R.some(o=>o.w>0)) R.forEach(o=>{o.w=1;});
+  const B=R.filter(o=>o.w>0).sort((a,b)=>(a.x.irr==null?-1e9:a.x.irr)-(b.x.irr==null?-1e9:b.x.irr)), T=B.reduce((s,o)=>s+o.w,0); let s=0, m=B[B.length-1];
+  for(const o of B){s+=o.w; if(s>=T/2){m=o; break;}}
+  r=Object.assign({},m.x); Object.defineProperty(r,"_c",{value:m.x._c}); Object.defineProperty(r,"_v",{value:c}); Object.defineProperty(r,"qt",{value:m.t});}
+ if(VILC.size>400) VILC.clear(); VILC.set(k,r); return r;}
 const QCLS=[{t:"sous 2,5 %",c:"var(--bad)",o:.55},{t:"2,5 à 5 %",c:"var(--warn)",o:.5},{t:"5 à 7 %",c:"var(--ok)",o:.2},{t:"7 à 9 %",c:"var(--ok)",o:.42},{t:"9 % et plus",c:"var(--ok)",o:.68}];
 const qCls=irr=>irr==null||irr<2.5?0:irr<5?1:irr<7?2:irr<9?3:4;
 const fgPct=d=>{const n=d.reduce((a,b)=>a+b,0);return n?(d[5]+d[6])/n*100:null;};

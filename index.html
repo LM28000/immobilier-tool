@@ -774,7 +774,7 @@ function irrMonthly(f){let lo=-0.05,hi=0.1;const npv=r=>f.reduce((s,v,i)=>s+v/Ma
  if(npv(lo)*npv(hi)>0) return null; for(let i=0;i<90;i++){const m=(lo+hi)/2; if(npv(m)>0) lo=m; else hi=m;} return (Math.pow(1+(lo+hi)/2,12)-1)*100;}
 // calc(c) : voir 00b-financement-impots.js
 function all(){
- const rows=C.map(c=>({c,x:calc(c)}));
+ const rows=C.map(c=>({c,x:typeof calcVille==="function"?calcVille(c):calc(c)}));   /* chiffre de la ville : son quartier du milieu (02-carte.js) */
  return rows;
 }
 const bankOk=x=>Math.round(x*100)<=35;   // même arrondi que l'affichage (35 % = limite, pas refusé)
@@ -947,8 +947,8 @@ function studioPm2(ck,t,tk){const c=C.find(v=>v.k===ck); if(!c) return 0; tk=tk|
 const CALCC=new Map();
 const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); Object.defineProperty(r,"_c",{value:c}); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};
 /* les trois scénarios d'un même calcul : prudent (H.pess), central, favorable (H.fav) */
-function irr3(x){const c=x&&x._c; if(!c) return null; const p0=H.pess, f0=H.fav, o={};
- try{H.fav=false; H.pess=true; o.prudent=calc(c).irr; H.pess=false; o.central=calc(c).irr; H.fav=true; o.favorable=calc(c).irr;}finally{H.pess=p0; H.fav=f0;} return o;}
+function irr3(x){const c=x&&x._c; if(!c) return null; const p0=H.pess, f0=H.fav, o={}, v=x._v, f=()=>(v&&typeof calcVille==="function"?calcVille(v):calc(c)).irr;   /* ville : son quartier du milieu dans chaque scénario */
+ try{H.fav=false; H.pess=true; o.prudent=f(); H.pess=false; o.central=f(); H.fav=true; o.favorable=f();}finally{H.pess=p0; H.fav=f0;} return o;}
 
 /* ---------- carte ---------- */
 const MP={lon0:-4.85,lat1:49.8,k:Math.cos(47.7*Math.PI/180)};   /* emprise de data/mapdata.js (tools/archive/mkmap.py) */
@@ -1048,6 +1048,18 @@ function rentBlend(ck,t){/* annonces du type choisi, ramenées à la surface du 
 const rentRatio=(ck,t)=>{const m=rentRatioM(ck,t), b=rentBlend(ck,t); return b?clampR((1-b.w)*m+b.w*b.ratio):m;};
 const rentRatioM=(ck,t)=>{if(t.ra) return clampR(t.ra/IR[ck].raCity); const [a,b]=IRIS[ck].ra.fit; return clampR(Math.exp(a+b*Math.log(t.price/IR[ck].med)));};
 function calcIris(t){const c=C.find(v=>v.k===t.ck), dm=H.vacQ?demandOf(t):null; return calc(Object.assign({},c,{spm2:studioPm2(t.ck,t),rent:c.rent*rentRatio(t.ck,t),vac:dm?dm.vac:undefined}));}
+/* chiffre d'une ville : celui de son quartier du milieu. Les quartiers sont classés par rendement, chacun compté selon ses ventes du type (DVF) ;
+   la moitié des ventes se font dans des quartiers au rendement plus haut, l'autre moitié plus bas. La couleur d'une ville est ainsi celle
+   de ses quartiers. Sans quartier chiffré : la moyenne de la ville. Le résultat garde le calcul complet de ce quartier (cash-flow, budget…). */
+const VILC=new Map();
+function calcVille(c){if(!c) return null; const k=c.k+"|"+JSON.stringify(H); let r=VILC.get(k); if(r) return r;
+ const z=typeof IR!=="undefined"&&IR[c.k], L=z?z.list.filter(t=>t.type==="H"&&t.price):[];
+ if(!L.length) r=calc(c);
+ else{const D=dvfC(c.k), R=L.map(t=>({t,x:calcIris(t),w:(D&&D.q&&D.q[t.code]&&D.q[t.code].n)||0})); if(!R.some(o=>o.w>0)) R.forEach(o=>{o.w=1;});
+  const B=R.filter(o=>o.w>0).sort((a,b)=>(a.x.irr==null?-1e9:a.x.irr)-(b.x.irr==null?-1e9:b.x.irr)), T=B.reduce((s,o)=>s+o.w,0); let s=0, m=B[B.length-1];
+  for(const o of B){s+=o.w; if(s>=T/2){m=o; break;}}
+  r=Object.assign({},m.x); Object.defineProperty(r,"_c",{value:m.x._c}); Object.defineProperty(r,"_v",{value:c}); Object.defineProperty(r,"qt",{value:m.t});}
+ if(VILC.size>400) VILC.clear(); VILC.set(k,r); return r;}
 const QCLS=[{t:"sous 2,5 %",c:"var(--bad)",o:.55},{t:"2,5 à 5 %",c:"var(--warn)",o:.5},{t:"5 à 7 %",c:"var(--ok)",o:.2},{t:"7 à 9 %",c:"var(--ok)",o:.42},{t:"9 % et plus",c:"var(--ok)",o:.68}];
 const qCls=irr=>irr==null||irr<2.5?0:irr<5?1:irr<7?2:irr<9?3:4;
 const fgPct=d=>{const n=d.reduce((a,b)=>a+b,0);return n?(d[5]+d[6])/n*100:null;};
@@ -1087,7 +1099,7 @@ const DPE0=[0,0,0,0,0,0,0], dpeCity=k=>DPECITY[k]||DPE0, fgOf=d=>{d=d||DPE0; con
 
 
 /* recalcul après un changement de réglage, de type ou de données : les quartiers, puis l'interface (src/v2 enveloppe render) */
-function render(){QBOXK=null; if(typeof VC!=="undefined") VC.clear(); computeIris();}
+function render(){QBOXK=null; if(typeof VC!=="undefined") VC.clear(); if(typeof VILC!=="undefined") VILC.clear(); computeIris();}
 /* dernière action de l'utilisateur (pointeur ou clavier) */
 let LASTUSER=0; ["pointerdown","keydown"].forEach(ev=>addEventListener(ev,()=>{LASTUSER=Date.now();},true));
 
@@ -1148,12 +1160,23 @@ const MARKTXT=mkMap({gare:"Gare",univ:"Université",centre:"Centre"});
 const MKDE=mkMap({gare:"de la gare",univ:"de la fac",centre:"du centre"});
 
 const unproj=(x,y)=>[MP.lat1-y/MAP.S, x/(MP.k*MAP.S)+MP.lon0];
-function demandOf(t){const m=MARK[t.ck]; if(!m) return null;
+/* mois vides d'un quartier : le réglage « Vacance » (Budget) est la moyenne de la ville. Un quartier proche de la gare, de la fac ou du centre
+   est en dessous, un quartier loin au-dessus : facteur 1 à 10 min ou moins, jusqu'à 2,5 à 50 min, divisé par le facteur moyen de la ville
+   (quartiers comptés selon leurs ventes du type, DVF). Ville, quartiers, annonces et biens partent ainsi du même réglage. */
+const vacF=sc=>1+1.5*(1-sc);
+function demandRaw(t){const m=MARK[t.ck]; if(!m) return null;
  const T=typeof TTQ!=="undefined"&&TTQ[t.ck], f=T&&T.foot[t.code];
- if(f){const tr=typeof trajOf==="function"?trajOf(t):null, e=tr?tr.map(o=>o.best):f, i=e.indexOf(Math.min(...e)), mn=e[i], sc=Math.min(1,Math.max(0,1-(mn-10)/40)); return {d:T.dist[t.code][i],min:mn,foot:f[i],bike:T.bike[t.code][i],mk:T.marks[i],mode:tr?tr[i].mode:"foot",real:true,sc,vac:1+1.5*(1-sc)};}
+ if(f){const tr=typeof trajOf==="function"?trajOf(t):null, e=tr?tr.map(o=>o.best):f, i=e.indexOf(Math.min(...e)), mn=e[i], sc=Math.min(1,Math.max(0,1-(mn-10)/40)); return {d:T.dist[t.code][i],min:mn,foot:f[i],bike:T.bike[t.code][i],mk:T.marks[i],mode:tr?tr[i].mode:"foot",real:true,sc,f:vacF(sc)};}
  const [la,lo]=unproj(t.cx,t.cy);
  const d=Math.min(...Object.values(m).map(p=>hav(la,lo,p[0],p[1]))); const sc=Math.min(1,Math.max(0,1-(d-0.6)/2.4));
- return {d,sc,vac:1+1.5*(1-sc)};}
+ return {d,sc,f:vacF(sc)};}
+const FBAR={};
+function vacBar(ck){const k=ck+"|"+H.type; if(FBAR[k]!=null) return FBAR[k]; const z=typeof IR!=="undefined"&&IR[ck]; let s=0, w=0;
+ if(z){const D=dvfC(ck), L=z.list.filter(t=>t.type==="H"&&t.price), W=L.map(t=>(D&&D.q&&D.q[t.code]&&D.q[t.code].n)||0), any=W.some(v=>v>0);
+  L.forEach((t,i)=>{const d=demandRaw(t), wi=any?W[i]:1; if(d&&wi){s+=d.f*wi; w+=wi;}});}
+ return FBAR[k]=w>0?s/w:1;}
+const vacAt=(ck,sc)=>H.vacance*vacF(sc)/vacBar(ck);
+function demandOf(t){const d=demandRaw(t); if(d) d.vac=vacAt(t.ck,d.sc); return d;}
 
 /* ---------- comparaison ---------- */
 let CMP=[];
@@ -1183,7 +1206,7 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
 function bailAns(fb){const m=/^(\d{4})(?:-(\d{2}))?$/.exec(fb||""); if(!m) return 3; const end=new Date(+m[1],(m[2]?+m[2]:7)-1,1); return Math.max(0,(end-Date.now())/(365.25*864e5));}
 function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
- if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
+ if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=vacAt(b.ville,sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
  /* valeurs propres au bien (12-ce-qui-pese.js) : saisies, sinon lues dans l'annonce, sinon estimées */
  const V=typeof valeursBien==="function"?valeursBien(b,o.type):null;
@@ -1951,7 +1974,7 @@ const TIPS={
  cf:()=>`Ce qui reste (ou manque) chaque mois à vous deux : loyer encaissé, mois vides déduits − mensualité et assurance du prêt − charges (copro, taxe foncière, assurance PNO, entretien).${H.net?" En net : aussi les impôts sur les loyers, la CFE et le comptable.":" En brut : avant impôts et frais fiscaux."}`,
  irr:()=>`Rendement annuel de votre apport sur 15 ans, revente comprise : il compte tout ce que vous mettez et récupérez, comme un taux d'épargne. ${H.net?"Net : après impôts sur les loyers, CFE, comptable et impôt sur la plus-value.":"Brut : avant impôts et frais fiscaux."} Repères : livret A 1,7 %, LEP 2,5 %.`,
  banque:()=>`Taux d'endettement estimé de l'ensemble des associés : (mensualité + autres crédits de ${eur(H.pretEtud)}) ÷ (revenus de ${eur(H.salaires)} + 70 % du loyer). Les banques vont en général jusqu'à 35 %. Passe ≤ 33 %, Limite entre 33 et 35 %, Trop haut au-delà.`,
- vac:()=>`Mois sans locataire par an retenus dans le calcul. Avec « Vacance selon l'emplacement » : 0,5 mois à 10 min à pied ou moins de la gare, de l'université ou du centre, jusqu'à 2,5 mois à 50 min et plus.`,
+ vac:()=>`Mois sans locataire par an, en moyenne dans la ville. Avec « Vacance selon l'emplacement », chaque quartier varie autour : moins près de la gare, de l'université ou du centre, plus loin (2,5 fois plus à 50 min qu'à 10 min), la moyenne de la ville restant ce réglage.`,
  autof:()=>`Prix d'achat maximum pour que le loyer paie tout chaque mois (cash-flow ${H.net?"net":"brut"} ≥ 0 €), avec vos réglages actuels.`,
  r7:()=>`Prix d'achat maximum pour que votre apport rapporte 7 % par an sur 15 ans, revente comprise (${H.net?"après impôts":"avant impôts"}).`,
  prixmax:()=>`Les deux prix à ne pas dépasser selon votre objectif : « autofinancé » (rien à sortir chaque mois) ou « 7 % par an ». La différence avec le prix affiché, c'est la marge à négocier.`,
@@ -1961,7 +1984,7 @@ const TIPS={
  etsi:()=>`Testez une hypothèse sans toucher à vos réglages : la colonne « Et si… » se remplit dès qu'une case est cochée. La durée de revente s'applique aux deux colonnes.`,
  scn3:()=>`Le même calcul dans deux autres scénarios. Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : loyer +5 %, un demi-mois vide de moins, prix +${fr(H.px+0.5,1)} %/an. Ces trois hypothèses font l'essentiel de l'écart ; le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.`,
  pess:()=>`Loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +${fr(H.px,1)} %. Le taux ne change pas : il est fixé à la signature.`,
- vacq:()=>`Ajuste les mois vides selon le temps de marche réel (par les rues, OpenStreetMap) jusqu'à la gare, l'université ou le centre : 1 mois à 10 min ou moins, jusqu'à 2,5 mois à 50 min et plus. Décoché : ${fr(H.vacance,1)} mois partout.`,
+ vacq:()=>`Ajuste les mois vides de chaque quartier selon le temps de marche réel (par les rues, OpenStreetMap) jusqu'à la gare, l'université ou le centre : 2,5 fois plus à 50 min et plus qu'à 10 min ou moins, autour de votre réglage « Vacance » (${fr(H.vacance,1)} mois), qui reste la moyenne de la ville. Décoché : ${fr(H.vacance,1)} mois partout.`,
  dvf:()=>`Le prix d'achat vient des logements du type choisi (même nombre de pièces) réellement vendus en 2023-2025 (DVF), dans le quartier quand il en a, sinon dans la ville. Décoché : prix moyen des appartements + surcote.`,
  surcote:()=>`Écart entre le prix que vous paierez et le prix moyen des studios vendus dans la ville (DVF). Un studio bien placé et en bon état se vend souvent 10 à 20 % plus cher.`,
  loyerAdj:()=>`Ajuste le loyer médian : positif pour un studio très bien placé ou bien meublé, négatif pour un bien moins attractif.`,
@@ -2207,13 +2230,13 @@ function cityCharts(c,x){const W=460, imp=(x.imp1+x.fees1)/12, out=x.mens+x.char
  else if(be<0) cv+=`<text x="${L0+8}" y="20" font-size="11" fill="var(--bad)">jamais gagnant sur 25 ans</text>`;
  cv+=`<circle cx="${X(25)}" cy="${Y(G[25])}" r="4" fill="var(--accent)"/><text x="${X(25)-6}" y="${Y(G[25])-8}" text-anchor="end" font-size="11.5" font-weight="700" class="mono" fill="var(--fg)">${(G[25]>=0?"+":"")+keur(G[25])}</text></svg>`;
  return {bar,cv};}
-function villeFiche(c){const x=calc(c), [bc,bt]=bank(x.ratio), {bar,cv}=cityCharts(c,x), [pop,vac,cho]=RISK[c.k]||[0,0,null], fg=fgOf(dpeCity(c.k)), A=ADS[c.k], nv=A&&A.ventes?A.ventes.length:0, nl=A&&A.ads?A.ads.length:0;
+function villeFiche(c){const x=calcVille(c), [bc,bt]=bank(x.ratio), {bar,cv}=cityCharts(c,x), [pop,vac,cho]=RISK[c.k]||[0,0,null], fg=fgOf(dpeCity(c.k)), A=ADS[c.k], nv=A&&A.ventes?A.ventes.length:0, nl=A&&A.ads?A.ads.length:0;
  const L=typeof LOYQ!=="undefined"&&LOYQ.c&&LOYQ.c[c.k], le=loyEtat(c,x), poi=cityPoi(c.k), rq=cityRisq(c.k);
- const attn=fAttn([bc==="p-bad"&&["bad","La banque refuserait : endettement de "+pct(x.ratio*100,0)+"."],bc==="p-warn"&&["warn","Banque limite ("+pct(x.ratio*100,0)+")."],x.irr!=null&&x.irr<2.5&&["bad","Rendement sous le LEP (2,5 %) en moyenne."],
+ const attn=fAttn([bc==="p-bad"&&["bad","La banque refuserait : endettement de "+pct(x.ratio*100,0)+"."],bc==="p-warn"&&["warn","Banque limite ("+pct(x.ratio*100,0)+")."],x.irr!=null&&x.irr<2.5&&["bad",x.qt?"Rendement sous le LEP (2,5 %) dans le quartier du milieu.":"Rendement sous le LEP (2,5 %) en moyenne."],
   fg>=12&&["warn",`${fr(fg,0)} % des petits appartements en DPE F ou G : attention à la classe énergie.`],pop<0&&["warn","La population baisse."],vac>10&&["warn",`${fr(vac,1)} % de logements vides.`],/optimiste/.test(le)&&["warn","Notre loyer est plutôt optimiste par rapport à la référence de l'État."],rq&&rq.t/rq.n>0.2&&["warn",`${rq.t} quartiers sur ${rq.n} en zone inondable.`]]);
  const prix=fRows([hasDVF(c.k)?[`${tyPl()} vendus`,`<b class="mono">${eur(studioPm2(c.k))}/m²</b>`,`médiane de ${dvfC(c.k).n.toLocaleString("fr-FR")} ventes, DVF 2023-2025`]:[`${tyPl()} estimé`,`<b class="mono">${eur(studioPm2(c.k))}/m²</b>`,"tous appartements + surcote petite surface"],["Tous appartements",`${eur(c.pm2)}/m²`,c.evol!=null?`${c.evol>0?"+":""}${fr(c.evol,1)} % sur un an`:""]])+ventesCity(c.k);
- const loyer=fRows([["Loyer HC retenu",`<b class="mono">${eur(x.rentHC)}</b>`,`${H.surface} m² meublé`],...demRows(demCity(c.k))])+le+adsCity(c.k);
- const calcH=`${taxLine(x)}${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["Et si…",scnBox("city",scnCity(c))]])}`;
+ const loyer=fRows([["Loyer HC retenu",`<b class="mono">${eur(x.rentHC)}</b>`,`${H.surface} m² meublé${x.qt?` · quartier du milieu (${esc(x.qt.name)})`:""}`],x.qt&&H.vacQ&&["Mois vides retenus",`${fr(x._c&&x._c.vac!=null?x._c.vac:H.vacance,1)} par an`,`votre réglage (${fr(H.vacance,1)}) est la moyenne de la ville ; les quartiers varient autour`],...demRows(demCity(c.k))])+le+adsCity(c.k);
+ const calcH=`${taxLine(x)}${ptabs("city",[["Le mois type",`<p class="sub" style="margin:0 0 6px">Ce qui entre et sort chaque mois, à deux.</p>${bar}`],["Sur 25 ans",`<p class="sub" style="margin:0 0 6px">Gain ou perte à deux si on revend.</p>${cv}`],["Et si…",scnBox("city",scnCity(x._c||c))]])}`;
  const traj=fRows(["laval","nantes","paris"].map(o=>[ORIG[o].name,hm(trip(c,o))]))+(IR[c.k]?fNote("À pied, à vélo et en bus : dans chaque quartier."):"");
  const vie=poi!=null?fRows([["Note moyenne des quartiers",`<b>${fr(poi,1)}/10</b>`,"détail (supermarché, boulangerie, pharmacie…) dans chaque quartier"]]):"";
  const bati=`<div>${dpeBar(dpeCity(c.k),360)}</div>${fRows([["Petits appartements en F ou G",`<b>${fr(fg,0)} %</b>`,`${dpeCity(c.k).reduce((a,b)=>a+b,0).toLocaleString("fr-FR")} DPE de 30 m² ou moins depuis 2021 (ADEME)`],["Taxe foncière",`${fr(c.tf,1)} %`]])}${fNote("F : location interdite en 2028 · G : déjà interdite.")}`;
@@ -2227,13 +2250,13 @@ function villeFiche(c){const x=calc(c), [bc,bt]=bank(x.ratio), {bar,cv}=cityChar
  const ann=nv||nl?`<p class="sub" style="margin:0">${tyN(nv)} à vendre et ${nl} à louer suivis chaque jour.</p><p style="margin:6px 0 0"><button type="button" class="btn ghost sm" data-annall>Toutes les annonces, classées</button> ${IR[c.k]?`<button type="button" class="btn ghost sm" data-zq="${c.k}">Voir les quartiers</button>`:""}</p>`:"";
  const src=`<div class="srcs" style="margin:0">Sources : <a href="${c.src[0]}" target="_blank" rel="noopener">Prix</a> · <a href="${c.src[1]}" target="_blank" rel="noopener">Loyer</a> · <a href="${c.src[2]}" target="_blank" rel="noopener">Taxe foncière</a> · <a href="#sources" data-opensrc>toutes les sources</a></div>${c.note?`<div class="note">${c.note}</div>`:""}`;
  return `<div class="dh"><h3>${c.name}</h3><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${cmpBtn({kind:"c",k:c.k})}${IR[c.k]?`<button type="button" class="cmpb" data-zq="${c.k}">Voir les quartiers</button>`:""}</span></div>
-  <p class="avg">Moyenne de la ville · ${tyLow()} de ${H.surface} m²${IR[c.k]?" · les quartiers varient":""}</p>${fHead(x)}${attn}
+  <p class="avg">${x.qt?`Quartier du milieu (${esc(x.qt.name)}) · ${tyLow()} de ${H.surface} m² · les quartiers varient`:`Moyenne de la ville · ${tyLow()} de ${H.surface} m²`}</p>${fHead(x)}${attn}
   ${fSec("ville","prix",`${eur(studioPm2(c.k))}/m²`,prix)}${fSec("ville","loyer",`${eur(x.rentHC)} HC${demCity(c.k)?` · marché ${demCity(c.k).txt}`:""}`,loyer)}${fSec("ville","calc",`${sgn(x.cf)}/mois · ${x.irr==null?"n.d.":pct(x.irr)}`,calcH)}
   ${fSec("ville","traj",`Paris ${hm(trip(c,"paris"))}`,traj)}${fSec("ville","vie",poi!=null?fr(poi,1)+"/10 en moyenne":"",vie)}${fSec("ville","bati",`${fr(fg,0)} % de F-G`,bati)}${fSec("ville","risq",rq?(rq.t?`${rq.t} quartiers inondables`:"rien de majeur"):cat?`${cat.n2000} catastrophes naturelles depuis 2000`:"",risq)}
   ${fSec("ville","hab",`population ${pop>0?"+":""}${fr(pop)} %/an`,hab)}${fSec("ville","ecoles",`${c.students.toLocaleString("fr-FR")} étudiants`,ecoles)}${fSec("ville","urba",QV?`${QV.names.length} quartiers prioritaires`:"",urba)}${fSec("ville","ann",nv?`${nv} à vendre`:"",ann)}${fSec("ville","src","",src)}`;}
 
 /* ---------- QUARTIER ---------- */
-function quartierFiche(t,compact){const c=C.find(v=>v.k===t.ck), xc=calc(c), x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe), sec=sectorOf(t), A=ADS[t.ck];
+function quartierFiche(t,compact){const c=C.find(v=>v.k===t.ck), xc=calcVille(c), x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe), sec=sectorOf(t), A=ADS[t.ck];
  const nv=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec).length:0, nl=A&&sec?(A.ads||[]).filter(a=>a[1]===sec).length:0, q=dvfOf(t), tr=trajOf(t), dm=demandOf(t), r=risqOf(t), p=poiOf(t), pc=cityPoi(t.ck), ter=terOf(t);
  if(!x) return `<div class="dh"><h3 style="font-size:1.15rem">${t.name}</h3><span class="pill p-n">${t.type==="H"?"pas de prix publié":"zone d'activité"}</span></div>${fRows([["Prix",`pas d'estimation pour ce secteur IRIS`],n&&["DPE",`${n} petits appartements`]])}${adsLine(t)}`;
  const rr=rentRatio(t.ck,t);
@@ -2374,8 +2397,8 @@ render();
  const med=a=>{const b=a.filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y), m=b.length>>1; return b.length?(b.length%2?b[m]:(b[m-1]+b[m])/2):null;};
  function stats(ck,code){const k=ck+"|"+(code||""); if(STATS[k]) return STATS[k]; const A=feed().filter(o=>o.ck===ck&&(!code||o.t&&o.t.code===code)), ok=A.length>=3;
   return STATS[k]={n:A.length,irr:ok?med(A.map(o=>o.x.irr)):null,cf:ok?med(A.map(o=>o.x.cf)):null,cost:ok?med(A.map(o=>o.x.cost)):null,rentHC:ok?med(A.map(o=>o.x.rentHC)):null,tous:true};}
- /* chiffres d'une ville : le type courant (moyenne d'un bien type), ou la médiane des annonces en mode « Tous » */
- const cx=c=>V.tous?stats(c.k):calc(c);
+ /* chiffres d'une ville : le type courant (son quartier du milieu, voir calcVille), ou la médiane des annonces en mode « Tous » */
+ const cx=c=>V.tous?stats(c.k):calcVille(c);
  const cz=x=>V.tous?{}:(irr3(x)||{});
  const colX=x=>x&&x.irr!=null?cv(colIrr(x.irr)):"#9aa3ad";
  const tyLabel=()=>V.tous?"Tous types":tyl(), typlL=()=>V.tous?"annonces":typl();
@@ -2668,15 +2691,15 @@ render();
  function ident(me,first){return `<div class="v2card"><h2>${first?(H.assoc.length>2?"Vous "+H.assoc.length:"Vous deux"):"Liste commune"}</h2><p class="v2sub">${sbCode()?`Partagée avec le code commun, sous le prénom « ${esc(me||"?")} » : biens, avis et réglages sont communs.`:"Votre prénom distingue vos avis de ceux de l'autre. Avec le même code commun, vous partagez la liste, les avis et les réglages ; sans code, tout reste dans ce navigateur."}</p><div class="v2grid v2f"><div><label for="v2nom2">Prénom</label><input type="text" id="v2nom2" maxlength="30" value="${esc(me)}" placeholder="Prénom"></div><div><label for="v2code">Code commun (le même pour ${nous()})</label><input type="text" id="v2code" maxlength="60" value="${esc(sbCode())}" autocomplete="off" spellcheck="false"></div></div><div><button type="button" class="v2btn${first?" pri":""}" data-v2share>Enregistrer</button></div></div>`;}
 
  /* ---------- onglet Budget : critères, scénario, hypothèses ---------- */
- function sensi(){const c=C.find(v=>v.k===(V.city||"lemans"))||C[0], base=calc(c).irr, T=[["Hausse des prix",{px:0},{px:2},"0 % / 2 % par an"],["Loyer",{loyerAdj:H.loyerAdj-7},{loyerAdj:H.loyerAdj+7},"−7 % / +7 %"],["Vacance",{vacance:H.vacance+1},{vacance:Math.max(0,H.vacance-0.5)},"+1 mois / −½ mois"],["Hausse des loyers",{ly:H.ly-1},{ly:H.ly+0.5},`${fr(H.ly-1)} % / ${fr(H.ly+0.5)} % par an`],["Taux du crédit",{taux:H.taux+0.45},{taux:H.taux-0.45},`${fr(H.taux+0.45,2)} % / ${fr(H.taux-0.45,2)} %`],["Frais à la revente",{fraisVente:H.fraisVente+2},{fraisVente:Math.max(0,H.fraisVente-1)},`${fr(H.fraisVente+2)} % / ${fr(Math.max(0,H.fraisVente-1))} %`]];
-  const run=m=>{const s={}; Object.keys(m).forEach(k=>{s[k]=H[k]; H[k]=m[k];}); const v=calc(c).irr; Object.assign(H,s); return v;};
+ function sensi(){const c=C.find(v=>v.k===(V.city||"lemans"))||C[0], base=calcVille(c).irr, T=[["Hausse des prix",{px:0},{px:2},"0 % / 2 % par an"],["Loyer",{loyerAdj:H.loyerAdj-7},{loyerAdj:H.loyerAdj+7},"−7 % / +7 %"],["Vacance",{vacance:H.vacance+1},{vacance:Math.max(0,H.vacance-0.5)},"+1 mois / −½ mois"],["Hausse des loyers",{ly:H.ly-1},{ly:H.ly+0.5},`${fr(H.ly-1)} % / ${fr(H.ly+0.5)} % par an`],["Taux du crédit",{taux:H.taux+0.45},{taux:H.taux-0.45},`${fr(H.taux+0.45,2)} % / ${fr(H.taux-0.45,2)} %`],["Frais à la revente",{fraisVente:H.fraisVente+2},{fraisVente:Math.max(0,H.fraisVente-1)},`${fr(H.fraisVente+2)} % / ${fr(Math.max(0,H.fraisVente-1))} %`]];
+  const run=m=>{const s={}; Object.keys(m).forEach(k=>{s[k]=H[k]; H[k]=m[k];}); const v=calcVille(c).irr; Object.assign(H,s); return v;};
   return `<p class="v2sub">${tyl()} à ${esc(c.name)}, ${pctS(base)} en ${scn()} :</p><div class="v2tw"><table class="v2t"><thead><tr><th>Hypothèse</th><th>Variation</th><th class="r">Rendement</th></tr></thead><tbody>${T.map(([l,a,b,t])=>`<tr><td>${l}</td><td>${t}</td><td class="r mono">${pctS(run(a))} / ${pctS(run(b))}</td></tr>`).join("")}</tbody></table></div>`;}
  /* ---------- associés (1 à 6) : réglage dans Budget, détail dans « Le calcul » ---------- */
  const nous=()=>H.assoc.length>2?`vous ${H.assoc.length}`:"vous deux";
  const anom=(a,i)=>esc(a.nom||`Associé ${i+1}`);
  /* cash-flow d'un associé : sa part du cash-flow avant impôt, moins son impôt (à sa tranche) et sa part des frais */
  const cfOf=(x,i)=>{const w=H.assoc[i].part/100; return x.net?x.cfBrut*w-(((x.imps||[])[i]||0)+x.fees1*w)/12:x.cfBrut*w;};
- function assocCard(){const A=H.assoc, n=A.length, c=C.find(v=>v.k===(V.city||"lemans"))||C[0], x=calc(c);
+ function assocCard(){const A=H.assoc, n=A.length, c=C.find(v=>v.k===(V.city||"lemans"))||C[0], x=calcVille(c);
   const fld=(i,k,l,u,st,v)=>`<div><label for="v2a-${i}-${k}">${l}${u?` <span class="v2sub">(${u})</span>`:""}</label><input type="${k==="nom"?"text":"number"}" id="v2a-${i}-${k}" data-v2as="${i}|${k}"${k==="nom"?' maxlength="30" placeholder="Prénom"':` step="${st}" min="0"`} value="${esc(String(v))}"></div>`;
   return `<div class="v2card"><div class="v2bar"><h2>Associés</h2><span class="v2sp"></span><span class="v2sub">Nombre</span><span class="v2seg" role="group" aria-label="Nombre d'associés">${[1,2,3,4,5,6].map(k=>`<button type="button" data-v2nas="${k}" aria-pressed="${n===k}">${k}</button>`).join("")}</span></div>
    <p class="v2sub">Chacun reçoit sa part des loyers, paie sa part de la mensualité et des charges, et l'impôt sur sa part à sa propre tranche. Les parts sont ramenées à 100 %.</p>
@@ -2695,7 +2718,7 @@ render();
    <div class="v2card"><h2>Thème (le vôtre)</h2>${themeSeg()}<p class="v2sub">Clair par défaut. Ce choix ne change que votre écran, carte comprise.</p></div>
    <div class="v2card"><h2>Le crédit</h2><div class="v2grid v2f">${f("apport","Apport (ensemble)","€",500)}${f("taux","Taux du crédit","%",0.05)}${f("duree","Durée","ans",1)}${f("notaire","Frais de notaire","%",0.5)}</div></div>
    ${assocCard()}
-   <div class="v2card"><h2>Le bien et sa location</h2><p class="v2sub">Valeurs par défaut pour tous les ${typl()} (chaque type garde les siennes).${(()=>{const n=BIENS.filter(b=>!isOut(b)&&(+b.travaux>0||+b.meubles>0)).length; return n?` Meubles ou travaux remplacés par une valeur saisie dans ${n} bien${n>1?"s":""} suivi${n>1?"s":""}.`:"";})()}</p><div class="v2grid v2f">${f("surface","Surface type","m²",1)}${f("surcote","Prix payé vs prix moyen","%",5)}${f("loyerAdj","Loyer obtenu vs loyer médian","%",5)}${f("vacance","Vacance","mois/an",0.5)}${f("chLoc","Charges payées par le locataire","€/mois",5)}${f("copro","Charges de copro (votre part)","€/mois",1)}${f("grosTrav","Gros travaux copro (provision)","€/m²/an",1)}${f("autres","Assurance PNO, entretien","€/mois",5)}${f("meubles","Meubles","€",250)}${f("travaux","Petits travaux","€",250)}</div></div>
+   <div class="v2card"><h2>Le bien et sa location</h2><p class="v2sub">Valeurs par défaut pour tous les ${typl()} (chaque type garde les siennes).${(()=>{const n=BIENS.filter(b=>!isOut(b)&&(+b.travaux>0||+b.meubles>0)).length; return n?` Meubles ou travaux remplacés par une valeur saisie dans ${n} bien${n>1?"s":""} suivi${n>1?"s":""}.`:"";})()}</p><div class="v2grid v2f">${f("surface","Surface type","m²",1)}${f("surcote","Prix payé vs prix moyen","%",5)}${f("loyerAdj","Loyer obtenu vs loyer médian","%",5)}${f("vacance","Vacance, moyenne de la ville","mois/an",0.5)}${f("chLoc","Charges payées par le locataire","€/mois",5)}${f("copro","Charges de copro (votre part)","€/mois",1)}${f("grosTrav","Gros travaux copro (provision)","€/m²/an",1)}${f("autres","Assurance PNO, entretien","€/mois",5)}${f("meubles","Meubles","€",250)}${f("travaux","Petits travaux","€",250)}</div></div>
    <div class="v2card"><h2>Le long terme</h2><div class="v2grid v2f">${f("px","Hausse des prix","%/an",0.5)}${f("ly","Hausse des loyers","%/an",0.5)}${f("fraisVente","Frais à la revente","%",0.5)}</div></div>
    <div class="v2card"><h2>Impôts</h2><div class="v2grid v2f"><div><label for="v2-reg">Régime</label><select id="v2-reg" data-v2fin="regime">${[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]].map(([k,l])=>`<option value="${k}"${H.regime===k?" selected":""}>${l}</option>`).join("")}</select></div></div><p class="v2sub">La tranche d'impôt de chacun se règle dans Associés.</p></div>
    <div class="v2card"><h2>Ce qui pèse le plus</h2>${sensi()}</div>
@@ -2753,9 +2776,9 @@ render();
    const kp=x&&x.irr!=null?`<div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b><small>${tyl().toLowerCase()} type de ${H.surface} m²</small></div><div class="v2k"><span>Cash-flow</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois</small></div><div class="v2k"><span>Budget</span><b>${keur(x.cost)}</b><small>tout compris</small></div></div>`:"";
    const bref=`<div class="v2sec"><h3>En bref</h3>${dl([["Annonces pour nos critères",A.length?`<b>${m}</b> sur ${A.length} dans le quartier`:"aucune annonce relevée dans le quartier"],x&&x.irr!=null&&["Loyer hors charges",`${eur(x.rentHC)} par mois`]])}</div>`;
    return {title:`${t.name} · ${cityName(ck)}`,head:`<h2 class="v2ft">${esc(t.name)}</h2><p class="v2sub">Quartier de ${esc(cityName(ck))}</p>${kp}`,S,extra:{bien:bref+attn},city:ck};}
-  if(k==="c"){const c=C.find(v=>v.k===ck); if(!c) return null; const {S,attn}=secs(villeFiche(c)); const x=V.tous?Object.assign({},calc(c),stats(ck)):calc(c), z=cz(x), [m,n]=cityCnt(ck);
-   const bref=`<div class="v2sec"><h3>En bref</h3>${dl([["Annonces pour nos critères",n?`<b>${m}</b> sur ${n}`:"pas d'annonces relevées"],[`Prix d'${tyLow()==="studio"?"un studio":"un "+tyl()} type`,`${keur(x.bien)} pour ${H.surface} m² (${nf(x.bien/H.surface)} €/m²)`],["Loyer hors charges",`${eur(x.rentHC)} par mois`],["Étudiants",nf(c.students)],["Paris en train",hm(c.paris)],c.note&&["À savoir",esc(c.note)]])}</div>`;
-   return {title:c.name,head:`<h2 class="v2ft">${esc(c.name)}</h2><div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b><small>${V.tous?`médiane de ${x.n} annonces`:`prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}`}</small></div><div class="v2k"><span>Cash-flow</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois</small></div><div class="v2k"><span>Budget</span><b>${keur(x.cost)}</b><small>tout compris</small></div></div><p class="v2sub" style="margin:0">${V.tous?`Médiane des ${x.n} annonces de la ville, tous types ; les rubriques ci-dessous sont pour ${tyLow()==="studio"?"un studio":"un "+tyl()} type.`:`Moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type dans la ville.`}</p>`,S,extra:{bien:bref+attn}};}
+  if(k==="c"){const c=C.find(v=>v.k===ck); if(!c) return null; const {S,attn}=secs(villeFiche(c)); const x=V.tous?Object.assign({},calcVille(c),stats(ck)):calcVille(c), z=cz(x), [m,n]=cityCnt(ck);
+   const bref=`<div class="v2sec"><h3>En bref</h3>${dl([["Annonces pour nos critères",n?`<b>${m}</b> sur ${n}`:"pas d'annonces relevées"],[`Prix d'${tyLow()==="studio"?"un studio":"un "+tyl()} type${x.qt&&!V.tous?" (quartier du milieu)":""}`,`${keur(x.bien)} pour ${H.surface} m² (${nf(x.bien/H.surface)} €/m²)`],["Loyer hors charges",`${eur(x.rentHC)} par mois`],["Étudiants",nf(c.students)],["Paris en train",hm(c.paris)],c.note&&["À savoir",esc(c.note)]])}</div>`;
+   return {title:c.name,head:`<h2 class="v2ft">${esc(c.name)}</h2><div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b><small>${V.tous?`médiane de ${x.n} annonces`:`prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}`}</small></div><div class="v2k"><span>Cash-flow</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois</small></div><div class="v2k"><span>Budget</span><b>${keur(x.cost)}</b><small>tout compris</small></div></div><p class="v2sub" style="margin:0">${V.tous?`Médiane des ${x.n} annonces de la ville, tous types ; les rubriques ci-dessous sont pour ${tyLow()==="studio"?"un studio":"un "+tyl()} type.`:x.qt?`Quartier du milieu : ${esc(x.qt.name)}. La moitié des ${typl()} vendus le sont dans des quartiers au rendement plus haut, l'autre moitié plus bas ; la couleur de la ville est celle de ce quartier.`:`Moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type dans la ville.`}</p>`,S,extra:{bien:bref+attn}};}
   return null;}
  function fiche(){const el=$("v2fiche"); if(!V.sel){el.hidden=true; el.innerHTML=""; return;}
   const F=V.sel[0]==="v"||V.sel[0]==="b"?ficheBien(V.sel):ficheQV(V.sel); if(!F){V.sel=null; el.hidden=true; return;}

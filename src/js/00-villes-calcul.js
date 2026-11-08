@@ -55,7 +55,7 @@ function irrMonthly(f){let lo=-0.05,hi=0.1;const npv=r=>f.reduce((s,v,i)=>s+v/Ma
  if(npv(lo)*npv(hi)>0) return null; for(let i=0;i<90;i++){const m=(lo+hi)/2; if(npv(m)>0) lo=m; else hi=m;} return (Math.pow(1+(lo+hi)/2,12)-1)*100;}
 // calc(c) : voir 00b-financement-impots.js
 function all(){
- const rows=C.map(c=>({c,x:calc(c)}));
+ const rows=C.map(c=>({c,x:typeof calcVille==="function"?calcVille(c):calc(c)}));   /* chiffre de la ville : son quartier du milieu (02-carte.js) */
  return rows;
 }
 const bankOk=x=>Math.round(x*100)<=35;   // même arrondi que l'affichage (35 % = limite, pas refusé)

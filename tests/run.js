@@ -116,6 +116,24 @@ async function mlRoutes(p) {
       await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '20000'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(400);
       ok(`v2 ${dev} · hypothèse modifiée et appliquée`, await p.evaluate(() => H.apport === 20000));
       await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '15000'; i.dispatchEvent(new Event('change', {bubbles: true})); });
+      // mêmes chiffres pour villes et quartiers : le réglage Vacance est la moyenne des quartiers (comptés selon leurs ventes),
+      // et le chiffre d'une ville est celui de son quartier du milieu
+      if (dev === 'ordi') {
+        const vq = () => p.evaluate(() => C.map(c => { const D = dvfC(c.k), L = IR[c.k].list.filter(t => t.type === 'H' && t.price), W = L.map(t => (D && D.q[t.code] && D.q[t.code].n) || 0), any = W.some(v => v > 0);
+          let s = 0, w = 0; L.forEach((t, i) => { const d = demandOf(t), wi = any ? W[i] : 1; if (d && wi) { s += d.vac * wi; w += wi; } }); return w ? s / w : H.vacance; }).every(m => Math.abs(m - H.vacance) < 1e-9));
+        ok('v2 · mois vides : la moyenne des quartiers de chaque ville est le réglage Vacance', await vq());
+        await p.evaluate(() => { const i = document.getElementById('v2h-vacance'); i.value = '2'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(500);
+        ok('v2 · mois vides : changer le réglage déplace aussi les quartiers', await p.evaluate(() => H.vacance === 2) && await vq());
+        await p.evaluate(() => { const i = document.getElementById('v2h-vacance'); i.value = '1'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(500);
+        ok('v2 · chiffre d\'une ville = son quartier du milieu (ventes du type)', await p.evaluate(() => C.every(c => { const D = dvfC(c.k), L = IR[c.k].list.filter(t => t.type === 'H' && t.price);
+          if (!L.length) return true; let R = L.map(t => ({v: QX[t.ck + t.i].irr, w: (D && D.q[t.code] && D.q[t.code].n) || 0})); if (!R.some(o => o.w > 0)) R.forEach(o => { o.w = 1; });
+          R = R.filter(o => o.w > 0).sort((a, b) => (a.v ?? -1e9) - (b.v ?? -1e9)); const T = R.reduce((s, o) => s + o.w, 0); let s = 0, m = R[R.length - 1];
+          for (const o of R) { s += o.w; if (s >= T / 2) { m = o; break; } } return calcVille(c).irr === m.v; })));
+        await p.evaluate(() => document.querySelector('[data-v2tab="villes"]').click()); await p.waitForTimeout(300);
+        await p.evaluate(() => document.querySelector('#v2p-villes [data-v2city="lemans"]').click()); await p.waitForTimeout(800);
+        ok('v2 · fiche d\'une ville : nomme son quartier du milieu', await p.evaluate(() => /Quartier du milieu : /.test((document.getElementById('v2fiche') || {}).innerText || '')), await p.evaluate(() => ((document.getElementById('v2fiche') || {}).innerText || '').slice(0, 300)));
+        await p.evaluate(() => { const b = document.querySelector('[data-v2close]'); if (b) b.click(); }); await p.waitForTimeout(300);
+      }
       // mode « Tous » : studios, T2 et T3 ensemble, chaque annonce avec son type ; une annonce T2 s'ouvre avec les réglages T2
       if (dev === 'ordi') {
         await p.evaluate(() => document.querySelector('[data-v2tous]').click()); await p.waitForTimeout(2500);

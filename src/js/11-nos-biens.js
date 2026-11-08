@@ -17,7 +17,7 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
 function bailAns(fb){const m=/^(\d{4})(?:-(\d{2}))?$/.exec(fb||""); if(!m) return 3; const end=new Date(+m[1],(m[2]?+m[2]:7)-1,1); return Math.max(0,(end-Date.now())/(365.25*864e5));}
 function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
- if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
+ if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=vacAt(b.ville,sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
  /* valeurs propres au bien (12-ce-qui-pese.js) : saisies, sinon lues dans l'annonce, sinon estimées */
  const V=typeof valeursBien==="function"?valeursBien(b,o.type):null;

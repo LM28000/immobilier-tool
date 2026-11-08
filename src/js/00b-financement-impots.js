@@ -132,5 +132,5 @@ function studioPm2(ck,t,tk){const c=C.find(v=>v.k===ck); if(!c) return 0; tk=tk|
 const CALCC=new Map();
 const _calcRaw=calc; calc=function(c){const k=JSON.stringify(H)+"|"+JSON.stringify(c,(key,v)=>key==="src"?undefined:v); let r=CALCC.get(k); if(!r){r=_calcRaw(c); Object.defineProperty(r,"_c",{value:c}); if(CALCC.size>30000) CALCC.clear(); CALCC.set(k,r);} return r;};
 /* les trois scénarios d'un même calcul : prudent (H.pess), central, favorable (H.fav) */
-function irr3(x){const c=x&&x._c; if(!c) return null; const p0=H.pess, f0=H.fav, o={};
- try{H.fav=false; H.pess=true; o.prudent=calc(c).irr; H.pess=false; o.central=calc(c).irr; H.fav=true; o.favorable=calc(c).irr;}finally{H.pess=p0; H.fav=f0;} return o;}
+function irr3(x){const c=x&&x._c; if(!c) return null; const p0=H.pess, f0=H.fav, o={}, v=x._v, f=()=>(v&&typeof calcVille==="function"?calcVille(v):calc(c)).irr;   /* ville : son quartier du milieu dans chaque scénario */
+ try{H.fav=false; H.pess=true; o.prudent=f(); H.pess=false; o.central=f(); H.fav=true; o.favorable=f();}finally{H.pess=p0; H.fav=f0;} return o;}
