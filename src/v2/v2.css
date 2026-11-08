@@ -183,3 +183,16 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 #v2app .v2t.v2tight th{white-space:normal;line-height:1.25}
 #v2app .v2t.v2tight th,#v2app .v2t.v2tight td{padding:7px 6px}
 @media (max-width:860px){.v2tabs2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.v2tabs2::-webkit-scrollbar{display:none}.v2tabs2 button{flex-shrink:0}}
+/* tri possible : signe discret sur les en-têtes triables */
+.v2srt{opacity:.45}
+/* téléphone : cibles de 44 px, filtres sur une ligne qui défile */
+@media (max-width:860px){
+  .v2scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .v2scroll::-webkit-scrollbar{display:none}
+  .v2scroll>*{flex-shrink:0}
+  .v2chip,.v2btn.sm,.v2tabs2 button,.v2vote button,.v2in .v2seg button,.v2dlg .v2seg button{min-height:44px}
+  .v2crumb button{min-height:44px;padding:8px 6px}
+  .v2star{min-width:44px;min-height:44px}
+  .v2top .v2seg button{min-height:40px}
+}
+@media (max-width:860px){.v2in .v2btn,.v2fiche .v2btn,.v2dlg .v2btn{min-height:44px}}
