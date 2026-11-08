@@ -13,15 +13,20 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
  if(b.geo&&b.geo.foot&&!Array.isArray(b.geo.foot)) delete b.geo.foot;
  if(!okV||sid!==String(id)||!(b.prix>0)||!(b.surface>0)){b.bad=true; b.titre="⚠ Bien illisible"+(b.titre?" : "+b.titre:""); if(!(b.surface>0)) b.surface=22; if(!(b.prix>0)) b.prix=1;}
  return b;}
+/* années de bail restantes : fin écrite dans l'annonce (« AAAA » = milieu d'année), sinon 3 ans (durée d'un bail vide) */
+function bailAns(fb){const m=/^(\d{4})(?:-(\d{2}))?$/.exec(fb||""); if(!m) return 3; const end=new Date(+m[1],(m[2]?+m[2]:7)-1,1); return Math.max(0,(end-Date.now())/(365.25*864e5));}
 function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
  /* bien suivi venu d'une annonce : ce qui a été lu dans sa description (loyer du bail en cours, taxe foncière, travaux) complète les champs restés vides,
     même si la lecture est arrivée après l'ajout à la shortlist ; une valeur saisie garde la priorité */
- const ia=(!(+b.loyer>0)||!(+b.tf>0)||!(+b.travaux>0))&&b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?lueIA(ficx(bienSuf(b)||"")):null;
+ const fx=b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?ficx(bienSuf(b)||""):null, ia=fx?lueIA(fx):null;
  const loy=+b.loyer>0?+b.loyer:(ia&&ia.loyer)||0, tf=+b.tf>0?+b.tf:(ia&&ia.tf)||0, trav=+b.travaux>0?+b.travaux:(ia&&ia.travaux)||0;
- if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;} else o.rent=c.rent*rr;
+ if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;
+  /* loyer du bail en cours lu dans l'annonce (pas un loyer saisi) : il vaut jusqu'au départ du locataire, voir calc */
+  if(ia&&ia.loyer>0&&Math.round(loy)===ia.loyer){o.bailAns=bailAns(fx.ia.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
+ else o.rent=c.rent*rr;
  if(+b.copro>0) o.copro=+b.copro; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");

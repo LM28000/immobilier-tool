@@ -85,6 +85,9 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('bien suivi : loyer lu dans la description repris même après l\'ajout'), await p.evaluate(() => { const suf = Object.keys(FICX).find(k => { const f = FICX[k]; return f.ia && f.ia.loue && f.ia.loyer_mensuel; }); if (!suf) return false;
       const b = {ville: 'lemans', prix: 60000, surface: 20, url: VTURL + suf, loyer: 0}, l = lueIA(FICX[suf]).loyer, hc = v => Math.max(v - H.chLoc, 0);
       return l > 0 && Math.abs(calcBien(b).x.rentHC - hc(l)) < 1 && Math.abs(calcBien(Object.assign({}, b, {loyer: 999})).x.rentHC - hc(999)) < 1; }));
+    ok(T('bien vendu loué : loyer du bail jusqu\'au départ du locataire, puis relevé'), await p.evaluate(() => { const c1 = Object.assign({}, C[0], {rent: 300, rentM2: 22, rentFixed: true, surf: 22, prixTot: 60000});
+      const x1 = calc(c1), x2 = calc(Object.assign({}, c1, {bailAns: 0, rentEst: C[0].rent, rentM2Est: C[0].rentM2})), x3 = calc(Object.assign({}, c1, {bailAns: 50, rentEst: C[0].rent, rentM2Est: C[0].rentM2}));
+      return bailAns('') === 3 && bailAns('2000') === 0 && bailAns('2099-01') > 70 && x2.irr > x1.irr && Math.abs(x3.irr - x1.irr) < 1e-9 && Math.abs(x2.cf - x1.cf) < 1e-9; }));
     ok(T('trois scénarios : prudent < central < favorable'), await p.evaluate(() => { const o = irr3(calc(C[0])); return o && o.prudent < o.central && o.central < o.favorable && Math.abs(o.central - calc(C[0]).irr) < 1e-9; }));
     ok(T('loyers recalés sur les meublés : écart meublé / vide mesuré'), await p.evaluate(() => ['studio', 't2', 't3'].every(t => LRC[t].prime > 1 && LRC[t].prime < 1.3)));
     ok(T('frais de revente : 3 % par défaut'), await p.evaluate(() => H.fraisVente === 3));

@@ -41,11 +41,17 @@ function calc(c){
  const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc,0);
  const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
+ /* bien vendu loué : loyer du bail pendant c.bailAns années (départ du locataire), puis le loyer actuel relevé de la prime meublé mesurée,
+    sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) */
+ let rentEff2=rentEff;
+ if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
+  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-H.chLoc,0)*(12-vac)/12;}
+ const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
-  for(let y=0;y<25;y++){const rent=rentEff*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
+  for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
    let fees=(rent+H.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
@@ -56,7 +62,7 @@ function calc(c){
   const pvT=(b,sa,k,t,a)=>gross?0:pvTax(b,sa,k,t,a);
   const f=[-H.apport], gains=[bien-P-H.apport]; let crd=P, cum=0, r=taux/1200;
   for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
-   const v=rentEff*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
+   const v=rentAt(y)*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
    if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=HZ*12) f.push(v);
    const sale=k=>bien*Math.pow(1+px/100,k)*(1-(H.fraisVente||0)/100); /* prix de revente net des frais (agence, diagnostics) */
    if(m===HZ*12) f[f.length-1]+=sale(HZ)-Math.max(crd,0)-pvT(bien,sale(HZ),HZ,trav,AB[HZ-1]);

@@ -1169,11 +1169,17 @@ function calc(c){
  const rentHC=Math.max(rentCC*(1+la/100)-H.chLoc,0);
  const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+tf;
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
+ /* bien vendu loué : loyer du bail pendant c.bailAns années (départ du locataire), puis le loyer actuel relevé de la prime meublé mesurée,
+    sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) */
+ let rentEff2=rentEff;
+ if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
+  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-H.chLoc,0)*(12-vac)/12;}
+ const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
-  for(let y=0;y<25;y++){const rent=rentEff*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
+  for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
    let fees=(rent+H.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
@@ -1184,7 +1190,7 @@ function calc(c){
   const pvT=(b,sa,k,t,a)=>gross?0:pvTax(b,sa,k,t,a);
   const f=[-H.apport], gains=[bien-P-H.apport]; let crd=P, cum=0, r=taux/1200;
   for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
-   const v=rentEff*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
+   const v=rentAt(y)*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
    if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=HZ*12) f.push(v);
    const sale=k=>bien*Math.pow(1+px/100,k)*(1-(H.fraisVente||0)/100); /* prix de revente net des frais (agence, diagnostics) */
    if(m===HZ*12) f[f.length-1]+=sale(HZ)-Math.max(crd,0)-pvT(bien,sale(HZ),HZ,trav,AB[HZ-1]);
@@ -1910,15 +1916,20 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
  if(b.geo&&b.geo.foot&&!Array.isArray(b.geo.foot)) delete b.geo.foot;
  if(!okV||sid!==String(id)||!(b.prix>0)||!(b.surface>0)){b.bad=true; b.titre="⚠ Bien illisible"+(b.titre?" : "+b.titre:""); if(!(b.surface>0)) b.surface=22; if(!(b.prix>0)) b.prix=1;}
  return b;}
+/* années de bail restantes : fin écrite dans l'annonce (« AAAA » = milieu d'année), sinon 3 ans (durée d'un bail vide) */
+function bailAns(fb){const m=/^(\d{4})(?:-(\d{2}))?$/.exec(fb||""); if(!m) return 3; const end=new Date(+m[1],(m[2]?+m[2]:7)-1,1); return Math.max(0,(end-Date.now())/(365.25*864e5));}
 function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let rr=1, vac=H.vacance, t=null;
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
  /* bien suivi venu d'une annonce : ce qui a été lu dans sa description (loyer du bail en cours, taxe foncière, travaux) complète les champs restés vides,
     même si la lecture est arrivée après l'ajout à la shortlist ; une valeur saisie garde la priorité */
- const ia=(!(+b.loyer>0)||!(+b.tf>0)||!(+b.travaux>0))&&b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?lueIA(ficx(bienSuf(b)||"")):null;
+ const fx=b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?ficx(bienSuf(b)||""):null, ia=fx?lueIA(fx):null;
  const loy=+b.loyer>0?+b.loyer:(ia&&ia.loyer)||0, tf=+b.tf>0?+b.tf:(ia&&ia.tf)||0, trav=+b.travaux>0?+b.travaux:(ia&&ia.travaux)||0;
- if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;} else o.rent=c.rent*rr;
+ if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;
+  /* loyer du bail en cours lu dans l'annonce (pas un loyer saisi) : il vaut jusqu'au départ du locataire, voir calc */
+  if(ia&&ia.loyer>0&&Math.round(loy)===ia.loyer){o.bailAns=bailAns(fx.ia.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
+ else o.rent=c.rent*rr;
  if(+b.copro>0) o.copro=+b.copro; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
@@ -2281,7 +2292,7 @@ function lueIA(f){const ia=f&&f.ia||{}, o={loyer:0,travaux:0,tf:0};
  const tr=(ia.travaux_a_prevoir||0)+(ia.travaux_votes||0); if(tr>0) o.travaux=Math.round(tr);
  if(ia.taxe_fonciere) o.tf=Math.round(ia.taxe_fonciere); return o;}
 function iaHtml(f){const ia=f&&f.ia; if(!ia) return ""; const rows=[
-  ia.loue===true&&["Vendu loué",ia.loyer_mensuel?`<b class="mono">${eur(ia.loyer_mensuel)}</b> ${ia.loyer_charges_comprises===false?"hors charges":ia.loyer_charges_comprises?"charges comprises":""}`:"loyer non indiqué",`${ia.fin_bail?"fin du bail : "+esc(ia.fin_bail)+" · ":""}utilisé dans le calcul`],
+  ia.loue===true&&["Vendu loué",ia.loyer_mensuel?`<b class="mono">${eur(ia.loyer_mensuel)}</b> ${ia.loyer_charges_comprises===false?"hors charges":ia.loyer_charges_comprises?"charges comprises":""}`:"loyer non indiqué",`utilisé jusqu'au départ du locataire (${ia.fin_bail?"fin du bail : "+esc(ia.fin_bail):"supposé dans 3 ans"}), puis relevé de la prime meublé sans dépasser le loyer estimé`],
   ia.loue===false&&["Location","libre (pas de bail en cours)"],
   (ia.travaux_a_prevoir||ia.travaux_votes)&&["Travaux",[ia.travaux_a_prevoir&&`${eur(ia.travaux_a_prevoir)} à prévoir`,ia.travaux_votes&&`${eur(ia.travaux_votes)} votés en copropriété`].filter(Boolean).join(" · "),"ajoutés au budget"],
   ia.taxe_fonciere&&["Taxe foncière",`<b class="mono">${eur(ia.taxe_fonciere)}</b> par an`,"à la place de l'estimation"],
