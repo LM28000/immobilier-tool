@@ -1047,6 +1047,12 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2cmpt thead th button{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;text-align:left}
 .v2cmpck{width:20px;height:20px;accent-color:var(--accent)}
 #v2srcslot details{border-top:1px solid var(--line);padding-top:8px}
+/* carte 3D (MapLibre) : repères, bulles au survol, commandes */
+#v2map .v2rep{display:flex;align-items:center;gap:4px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:3px 8px 3px 5px;font:700 11.5px/1 var(--f-ui);box-shadow:0 2px 6px rgb(0 0 0 / .2);white-space:nowrap}
+#v2map .v2rep svg{width:16px;height:16px;display:block;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.v2pop .maplibregl-popup-content{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font:700 12px var(--f-ui);box-shadow:0 2px 6px rgb(0 0 0 / .15)}
+.v2pop .maplibregl-popup-tip{display:none}
+@media (max-width:860px){#v2map .maplibregl-ctrl-attrib{font-size:10px}}
 </style>
 
 <div class="wrap">
@@ -4226,35 +4232,81 @@ if(!readHash()) render();
   $("v2scn").innerHTML=scnSeg();}
  const scnSeg=()=>`<span class="v2seg" role="group" aria-label="Scénario">${[["prudent","Prudent"],["central","Central"],["favorable","Favorable"]].map(([k,l])=>`<button type="button" data-v2scn="${k}" aria-pressed="${scn()===k}">${l}</button>`).join("")}</span>`;
 
- /* ---------- carte (vraie carte : rues OpenStreetMap, quartiers colorés, annonces) ---------- */
- let LF=null, M=null, LG=null, RND=null, LCITY=null, LTRY=false;
- function leaflet(cb){if(window.L) return cb(); if(LTRY) return; LTRY=true; const old=document.querySelector('script[src*="leaflet"]'); if(old){old.addEventListener("load",cb); return;} const s=document.createElement("script"); s.src=LEAFJS; s.onload=cb;
-  s.onerror=()=>{$("v2map").innerHTML=`<p class="v2empty">La carte n'a pas pu se charger (hors ligne ?). Les annonces restent dans les onglets Annonces et Villes.</p>`;}; document.head.appendChild(s);}
- function mapInit(){if(M||!window.L) return; LF=window.L;   /* la copie de Leaflet de cette carte, même si une autre se charge ensuite */
-  /* zoom au quart de niveau : l'Ouest remplit mieux l'écran ; sur téléphone, pas de boutons de zoom (on pince), et l'attribution en haut, hors de la liste */
-  M=LF.map("v2map",{zoomControl:false,attributionControl:false,minZoom:5,maxZoom:18,zoomSnap:.25}).setView([47.75,-0.6],7);
-  if(!PH()) LF.control.zoom({position:"topright"}).addTo(M); LF.control.attribution({position:PH()?"topright":"bottomright",prefix:false}).addTo(M);
-  LF.tileLayer(TILEURL(),{maxZoom:19,attribution:"© les contributeurs OpenStreetMap"}).addTo(M);
-  M.on("zoomend",()=>{if(!V.city&&PH()) drawMap();});   /* téléphone : les noms des villes apparaissent en zoomant */ LG=LF.layerGroup().addTo(M); setTimeout(()=>{M.invalidateSize(); drawMap(true);},0);}
- function cityBounds(ck){const ll=irisLL(ck), pts=[], walk=a=>{if(!Array.isArray(a)) return; if(typeof a[0]==="number"){if(isFinite(a[0])&&isFinite(a[1])) pts.push(a);} else a.forEach(walk);}; IR[ck].list.forEach(t=>walk(ll[t.i])); const b=pts.length?LF.latLngBounds(pts):null; return b&&b.isValid()?b:null;}
- const put=l=>{try{l.addTo(LG);}catch(_){}};
+ /* ---------- carte en 3D (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
+    Villes, quartiers et annonces sont des couches GeoJSON dessinées par la carte : les noms se rangent sans se chevaucher,
+    le zoom est continu (pas de tuiles d'images agrandies), la carte s'incline et tourne, les immeubles montent en 3D de près.
+    Les repères (gares, campus, centre) sont de petits marqueurs HTML. Sans WebGL, un message renvoie aux listes. */
+ const MLV="4.7.1", MLJS=`https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MLV}/maplibre-gl.js`, MLCSS=`https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MLV}/maplibre-gl.css`;
+ const MLSTYLE=()=>"https://tiles.openfreemap.org/styles/"+(document.documentElement.getAttribute("data-theme")==="dark"||(!document.documentElement.getAttribute("data-theme")&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"liberty");
+ let ML=null, M=null, MREADY=false, LCITY=null, LTRY=false, RMK=[], POP=null, HQ=null;
+ window.V2MAPN={villes:0,quartiers:0,annonces:0};   /* ce que la carte montre (tests) */
+ const mapMsg=t=>{$("v2map").innerHTML=`<p class="v2empty">${t} Les annonces restent dans les onglets Annonces et Villes.</p>`;};
+ function mapLib(cb){if(window.maplibregl) return cb(); if(LTRY) return; LTRY=true;
+  const l=document.createElement("link"); l.rel="stylesheet"; l.href=MLCSS; document.head.appendChild(l);
+  const s=document.createElement("script"); s.src=MLJS; s.onload=cb; s.onerror=()=>mapMsg("La carte n'a pas pu se charger (hors ligne ?)."); document.head.appendChild(s);}
+ const webgl=()=>{try{const c=document.createElement("canvas"); return !!(c.getContext("webgl2")||c.getContext("webgl"));}catch(_){return false;}};
  const sheetH=()=>{const l=$("v2mlist"); return l?l.offsetHeight:260;};   /* téléphone : la liste couvre le bas de la carte */
- /* pastilles en marqueurs HTML : elles suivent la carte sans passer par son moteur de dessin */
- const dot=(c,sz,ring,sel,op)=>LF.divIcon({className:"",iconSize:[sz,sz],html:`<span class="v2dot" style="width:${sz}px;height:${sz}px;background:${c};opacity:${op};${ring?"box-shadow:0 0 0 3px var(--accent);":""}${sel?"outline:3px solid var(--fg);outline-offset:1px;":""}"></span>`});   /* une couche qui refuse de s'ajouter ne bloque pas les autres */
- function drawMap(fit){if(!M) return; LG.clearLayers();
-  if(!V.city){const pts=[], ph=PH(), lab=!ph||M.getZoom()>=7.75; C.forEach(c=>{const x=calc(c), [m]=cityCnt(c.k), col=cv(colIrr(x.irr)), sz=ph?Math.round(m?14+Math.sqrt(m)*2:11):Math.round(m?18+Math.sqrt(m)*3:14); pts.push([c.lat,c.lon]);
-    const m0=LF.marker([c.lat,c.lon],{icon:dot(col,sz,false,false,m?1:.45),keyboard:false,title:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères`}).on("click",()=>goCity(c.k));
-    if(lab) m0.bindTooltip(`${c.name} ${pctS(x.irr)}${m?` · ${m} ann.`:""}`,{permanent:true,direction:"top",className:"v2tip"+(m?"":" v2tipdim"),offset:[0,-Math.round(sz/2)]});
-    put(m0);});
-   if(fit||LCITY!==null) M.fitBounds(LF.latLngBounds(pts),{paddingTopLeft:[PH()?16:390,PH()?16:40],paddingBottomRight:[PH()?16:40,PH()?sheetH()+12:40]}); LCITY=null; return;}
-  const ck=V.city, ll=irisLL(ck);
-  IR[ck].list.forEach(t=>{const g=ll[t.i]; if(!g) return; const x=t.type==="H"?(QX[t.ck+t.i]||calcIris(t)):null;
-   put(LF.polygon(g,{color:cv("var(--line)"),weight:1,fillColor:x&&x.irr!=null?cv(colIrr(x.irr)):"#9aa3ad",fillOpacity:x?.32:.1}).bindTooltip(`${t.name}${x&&x.irr!=null?" · "+pctS(x.irr):""}`,{sticky:true,className:"v2tip"}).on("click",()=>openSel(`q|${ck}|${t.code}`)));});
-  market(ck).forEach(o=>{if(!o.f.la) return; const sel=V.sel===key(o), c=cv(colIrr(o.x.irr));
-   const m=inShort(o)?LF.marker([o.f.la,o.f.lo],{icon:LF.divIcon({className:"",html:`<span class="v2pin" style="width:24px;height:24px">★</span>`,iconSize:[24,24]})})
-    :LF.marker([o.f.la,o.f.lo],{icon:dot(c,sel?20:14,o.nw,sel,1),zIndexOffset:sel?1000:0,keyboard:false});
-   put(m.bindTooltip(`${keur(o.a[2])} · ${pctS(o.x.irr)}`,{direction:"top",className:"v2tip"}).on("click",()=>openSel(key(o))));});
-  if(LCITY!==ck){const b=cityBounds(ck); if(b) M.fitBounds(b,{paddingTopLeft:[PH()?10:390,20],paddingBottomRight:[PH()?10:20,PH()?sheetH()+10:20]}); LCITY=ck;}}
+ const pad=()=>PH()?{top:16,left:16,right:16,bottom:sheetH()+12}:{top:40,left:390,right:40,bottom:40};
+ const EMPTY={type:"FeatureCollection",features:[]};
+ function mapInit(){if(M||!window.maplibregl) return; if(!webgl()){mapMsg("Cette carte demande WebGL, indisponible dans ce navigateur."); return;}
+  ML=window.maplibregl;
+  try{M=new ML.Map({container:"v2map",style:MLSTYLE(),center:[-0.6,47.75],zoom:6,minZoom:4,maxZoom:18.5,maxPitch:70,attributionControl:false});}catch(e){M=null; mapMsg("La carte n'a pas pu démarrer."); return;}
+  M.addControl(new ML.AttributionControl({compact:true}),PH()?"top-right":"bottom-right");
+  if(!PH()) M.addControl(new ML.NavigationControl({visualizePitch:true}),"top-right");   /* boutons : zoom, boussole (inclinaison et rotation) */
+  M.on("load",()=>{try{mapLayers();}catch(_){} MREADY=true; drawMap(true); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
+  M.on("click",mapClick); if(!PH()) M.on("mousemove",mapHover);
+  window.V2MAP=()=>M;}
+ function mapLayers(){const dk=MLSTYLE().endsWith("dark"), L=M.getStyle().layers, below=M.getLayer("building")?"building":(L.find(l=>l.type==="symbol")||{}).id;
+  ["villes","quartiers","annonces"].forEach(s=>{if(!M.getSource(s)) M.addSource(s,{type:"geojson",data:EMPTY});});
+  /* quartiers teintés sous les immeubles et les routes : la ville se lit à travers */
+  M.addLayer({id:"q-fill",type:"fill",source:"quartiers",paint:{"fill-color":["get","c"],"fill-opacity":["case",["boolean",["feature-state","hover"],false],["+",["get","op"],.2],["get","op"]]}},below);
+  M.addLayer({id:"q-line",type:"line",source:"quartiers",paint:{"line-color":dk?"#0b1020":"#ffffff","line-opacity":.85,"line-width":["interpolate",["linear"],["zoom"],10,.6,15,1.8]}},below);
+  /* immeubles en 3D un peu plus tôt qu'avec le style d'origine */
+  if(M.getLayer("building-3d")){M.setLayerZoomRange("building-3d",13.5,24); try{M.setPaintProperty("building-3d","fill-extrusion-opacity",.8);}catch(_){}}
+  M.addLayer({id:"a-dot",type:"circle",source:"annonces",paint:{"circle-radius":["case",["get","sel"],10,["interpolate",["linear"],["zoom"],9,4.5,14,8]],"circle-color":["get","c"],
+   "circle-stroke-color":["case",["get","st"],"#e08a00",["get","nw"],"#2f47b3",dk?"#0b1020":"#ffffff"],"circle-stroke-width":["case",["any",["get","st"],["get","nw"],["get","sel"]],3,1.5]}});
+  M.addLayer({id:"v-dot",type:"circle",source:"villes",paint:{"circle-radius":["get","r"],"circle-color":["get","c"],"circle-opacity":["get","op"],"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":["get","op"]}});
+  M.addLayer({id:"v-lab",type:"symbol",source:"villes",layout:{"text-field":["get","lab"],"text-font":["Noto Sans Bold"],"text-size":12.5,"text-variable-anchor":["bottom","top","right","left"],"text-radial-offset":1.15,"symbol-sort-key":["get","rk"],"text-padding":2},
+   paint:{"text-color":dk?"#e5e9f0":"#18202c","text-halo-color":dk?"#0b1020":"#ffffff","text-halo-width":1.7,"text-opacity":["get","op"]}});}
+ /* contour d'un quartier (latitude, longitude comme Leaflet) en GeoJSON (longitude, latitude), anneaux fermés */
+ function geoPoly(g){const dep=a=>Array.isArray(a)?1+dep(a[0]):0, ring=r=>{const o=r.filter(p=>isFinite(p[0])&&isFinite(p[1])).map(p=>[p[1],p[0]]); if(o.length&&(o[0][0]!==o[o.length-1][0]||o[0][1]!==o[o.length-1][1])) o.push(o[0]); return o;};
+  const d=dep(g); return d===2?{type:"Polygon",coordinates:[ring(g)]}:d===3?{type:"Polygon",coordinates:g.map(ring)}:d===4?{type:"MultiPolygon",coordinates:g.map(p=>p.map(ring))}:null;}
+ function bbox(P){let a=180,b=90,c=-180,d=-90; P.forEach(([x,y])=>{if(x<a)a=x; if(y<b)b=y; if(x>c)c=x; if(y>d)d=y;}); return a<=c?[[a,b],[c,d]]:null;}
+ const geoPts=F=>{const P=[], w=a=>{if(typeof a[0]==="number") P.push(a); else a.forEach(w);}; F.forEach(f=>w(f.geometry.coordinates)); return P;};
+ /* repères de la ville : gares, campus, centre */
+ const REPL={gare:["Gare","M7 3h10a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2zM5 10h14M9 21l2-4M15 21l-2-4"],univ:["Campus","M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5"],centre:["Centre","M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"]};
+ function reperes(ck){RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
+  Object.entries(REPQ[ck]).forEach(([k,p])=>{const d=REPL[k.replace(/\d+$/,"")]; if(!d||!Array.isArray(p)||!isFinite(p[0])) return; const el=document.createElement("div"); el.className="v2rep"; el.title=d[0];
+   el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d[1]}"/></svg><span>${d[0]}</span>`; RMK.push(new ML.Marker({element:el,anchor:"bottom"}).setLngLat([p[1],p[0]]).addTo(M));});}
+ function drawMap(fit){if(!M||!MREADY) return; const set=(s,f)=>{const src=M.getSource(s); if(src) src.setData({type:"FeatureCollection",features:f}); V2MAPN[s]=f.length;};
+  if(!V.city){const P=[]; set("villes",C.map((c,i)=>{const x=calc(c), [m]=cityCnt(c.k); P.push([c.lon,c.lat]);
+    return {type:"Feature",id:i,properties:{k:c.k,c:cv(colIrr(x.irr)),op:m?1:.45,r:m?Math.round((PH()?6:8)+Math.sqrt(m)*1.7):5,lab:`${c.name} ${pctS(x.irr)}${m?` · ${m}`:""}`,rk:-m,t:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères`},geometry:{type:"Point",coordinates:[c.lon,c.lat]}};}));
+   set("quartiers",[]); set("annonces",[]); reperes(null);
+   if(fit||LCITY!==null){const b=bbox(P); if(b) fitLater(b,{pitch:0,bearing:0,duration:fit?0:800});} LCITY=null; return;}
+  const ck=V.city, ll=irisLL(ck), Q=[];
+  IR[ck].list.forEach((t,i)=>{const g=ll[t.i], geo=g&&geoPoly(g); if(!geo) return; let x=null; try{x=t.type==="H"?(QX[t.ck+t.i]||calcIris(t)):null;}catch(_){}
+   Q.push({type:"Feature",id:i,properties:{code:t.code,c:x&&x.irr!=null?cv(colIrr(x.irr)):"#9aa3ad",op:x?.38:.12,t:`${t.name}${x&&x.irr!=null?" · "+pctS(x.irr):""}`},geometry:geo});});
+  set("villes",[]); set("quartiers",Q);
+  set("annonces",market(ck).filter(o=>o.f.la).map((o,i)=>({type:"Feature",id:i,properties:{k:key(o),c:cv(colIrr(o.x.irr)),sel:V.sel===key(o),nw:!!o.nw,st:inShort(o),t:`${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m² · ${pctS(o.x.irr)}`},geometry:{type:"Point",coordinates:[o.f.lo,o.f.la]}})));
+  reperes(ck);
+  if(LCITY!==ck){const b=bbox(geoPts(Q)); if(b) fitLater(b,{pitch:PH()?35:50,bearing:-12,duration:fit?0:1000}); LCITY=ck;}}
+ /* cadrer après que la fiche s'est ouverte ou fermée (la carte change de largeur) */
+ function fitLater(b,o){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!M) return; M.resize(); M.fitBounds(b,Object.assign({padding:pad()},o));}));}
+ /* un clic : annonce, sinon ville, sinon quartier (une petite marge autour du doigt) */
+ function mapClick(e){const r=PH()?12:6, box=[[e.point.x-r,e.point.y-r],[e.point.x+r,e.point.y+r]], at=(l,b)=>M.getLayer(l)?M.queryRenderedFeatures(b||e.point,{layers:[l]}):[];
+  const a=at("a-dot",box); if(a.length){openSel(a[0].properties.k); return;}
+  const v=at("v-dot",box).concat(at("v-lab")); if(v.length){goCity(v[0].properties.k); return;}
+  const q=at("q-fill"); if(q.length&&V.city) openSel(`q|${V.city}|${q[0].properties.code}`);}
+ function mapHover(e){const L=["a-dot","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f[0];
+  M.getCanvas().style.cursor=h?"pointer":"";
+  if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){} HQ=null;}
+  if(h&&h.layer.id==="q-fill"&&h.id!=null){HQ=h.id; try{M.setFeatureState({source:"quartiers",id:HQ},{hover:true});}catch(_){}}
+  if(!h){if(POP) POP.remove(); return;}
+  if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
+  POP.setLngLat(e.lngLat).setText(h.properties.t).addTo(M);}
+ /* une annonce ouverte depuis la carte : la vue s'approche et s'incline, les immeubles autour apparaissent */
+ function flyAd(s){if(!M||!MREADY||V.tab!=="carte"||s[0]!=="v") return; const o=feed().find(x=>key(x)===s); if(!o||!o.f.la) return;
+  M.flyTo({center:[o.f.lo,o.f.la],zoom:Math.max(M.getZoom(),16),pitch:PH()?45:58,padding:pad(),duration:1200,essential:true});}
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0";
   const head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span>`:""}<span>${t}</span><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
   if(!V.city){const rows=C.map(c=>({c,x:calc(c),k:cityCnt(c.k)})).sort((a,b)=>b.x.irr-a.x.irr), tot=rows.reduce((s,r)=>s+r.k[0],0);
@@ -4262,7 +4314,7 @@ if(!readHash()) render();
   const L0=market(V.city), lim=L0.slice(0,80);
   el.innerHTML=head(esc(cityName(V.city)),`<div class="v2chips v2scroll">${vueChips(V.city)}</div><p class="v2sub">${L0.length} ${typl()} · triés par rendement ${scn()}</p>`)
    +`<div class="v2mrows">${lim.length?lim.map(o=>`<div class="v2row${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span style="color:var(--warn)">★</span>':""}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(o.t?o.t.name:o.a[1]||"")}${o.f.dpe?" · DPE "+o.f.dpe:""} · ${sgn(o.x.cf)}/mois</span><span style="text-align:right">${rng(o,64)}</span></div>`).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`}${L0.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L0.length}.</p>`:""}</div>`;}
- function mapLegend(){$("v2mleg").innerHTML=`<b>Rendement ${scn()}</b><span><i style="background:${cv("var(--bad)")}"></i>&lt; 2,5 %</span><span><i style="background:${cv("var(--warn)")}"></i>2,5–5</span><span><i style="background:${cv("var(--ok)")}"></i>≥ 5 %</span><span>${V.city?"anneau : nouvelle · ★ shortlist":"taille : annonces pour nos critères"}</span>`;}
+ function mapLegend(){$("v2mleg").innerHTML=`<b>Rendement ${scn()}</b><span><i style="background:${cv("var(--bad)")}"></i>&lt; 2,5 %</span><span><i style="background:${cv("var(--warn)")}"></i>2,5–5</span><span><i style="background:${cv("var(--ok)")}"></i>≥ 5 %</span><span>${V.city?"contour bleu : nouvelle · orange : shortlist":"taille : annonces pour nos critères"}</span>`;}
  function goCity(ck){V.city=ck||null; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}
 
  /* ---------- nuage (même échelle partout) ---------- */
@@ -4416,8 +4468,8 @@ if(!readHash()) render();
   el.hidden=false; el.innerHTML=`<div class="v2fh"><button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?"Retour":"×"}</button><b>${esc(F.title)}</b></div>
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>`<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l}</button>`).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
-  if(M) requestAnimationFrame(()=>M.invalidateSize());}
- function openSel(s,keepTab){V.sel=s; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
+  if(M) requestAnimationFrame(()=>M.resize());}
+ function openSel(s,keepTab){V.sel=s; flyAd(s); if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
 
  /* ---------- ajouter un bien à la main ----------
     Le formulaire de l'app (recherche d'adresse, quartier, contrôles, envoi dans la liste commune) est déplacé dans une fenêtre,
@@ -4449,7 +4501,7 @@ if(!readHash()) render();
  /* ---------- affichage ---------- */
  function paint(k){if(k==="annonces") pAnnonces(); else if(k==="villes") pVilles(); else if(k==="biens") pBiens(); else if(k==="budget") pBudget(); else {mapList(); mapLegend(); drawMap();}}
  function show(){TABS.forEach(([k])=>{$("v2p-"+k).hidden=k!==V.tab;}); top(); paint(V.tab); fiche(); vuSnap();
-  if(V.tab==="carte") leaflet(()=>{mapInit(); requestAnimationFrame(()=>M&&M.invalidateSize());});}
+  if(V.tab==="carte") mapLib(()=>{mapInit(); requestAnimationFrame(()=>M&&M.resize());});}
  /* une relecture de la liste commune (toutes les 20 s) ne repeint pas la page pendant qu'on tape dans un champ : elle attend qu'on en sorte */
  let RQ=0, RWAIT=false; const typing=()=>{const a=document.activeElement; return !!(a&&app.contains(a)&&a.matches("input:not([type=range]):not([type=checkbox]),select,textarea"));};
  function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{FEED=null; if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap();});}
@@ -4503,7 +4555,7 @@ if(!readHash()) render();
  const _render=render; render=function(){_render.apply(this,arguments); refresh(); if(V.tab==="carte") drawMap();};
  /* renderBiens est déjà enveloppé par l'interface mobile (window[fn].orig) : on garde ce lien */
  ["renderBiens","renderShort"].forEach(n=>{const f=window[n]; if(typeof f!=="function") return; const w=function(){const r=f.apply(this,arguments); refresh(); return r;}; if(f.orig) w.orig=f.orig; window[n]=w;});
- addEventListener("resize",()=>{if(M) M.invalidateSize();});
+ addEventListener("resize",()=>{if(M) M.resize();});
 
  /* ---------- départ ---------- */
  show();

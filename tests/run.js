@@ -13,6 +13,13 @@ async function page(b, o) {
   return {c, p, errs};
 }
 const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mouse.click(x, y);
+// carte 3D de la v2 hors réseau : MapLibre servi depuis tests/vendor, style minimal à la place d'OpenFreeMap (les routes ajoutées ensuite passent avant)
+const ML = (n) => require('path').join(__dirname, 'vendor', 'maplibre-gl-4.7.1.' + n);
+async function mlRoutes(p) {
+  const fs = require('fs');
+  await p.route('**/tiles.openfreemap.org/**', r => r.request().url().includes('/styles/') ? r.fulfill({contentType: 'application/json', body: JSON.stringify({version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf', sources: {}, layers: [{id: 'fond', type: 'background', paint: {'background-color': '#dfe7ef'}}]})}) : r.fulfill({status: 404, body: ''}));
+  await p.route('**/cdnjs.cloudflare.com/ajax/libs/maplibre-gl/**', r => r.fulfill({body: fs.readFileSync(ML(r.request().url().endsWith('.css') ? 'css' : 'js')), contentType: r.request().url().endsWith('.css') ? 'text/css' : 'application/javascript'}));
+}
 
 (async () => {
   const b = await chromium.launch();
@@ -212,10 +219,10 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.route('**/www.georisques.gouv.fr/**', r => { const u = r.request().url(); r.fulfill({contentType: 'application/json', body: u.includes('rga') ? '{"codeExposition":"1"}' : u.includes('ssp') ? '{"casias":{"results":2},"conclusions_sis":{"results":0},"instructions":{"results":0}}' : '{"results":0}'}); });
     await p.goto(URL); await p.waitForTimeout(900);
     await p.evaluate(() => showTab('tab-biens')); await p.waitForTimeout(200);
-    await p.fill('#biensForm .adrin', '10 rue Gougeard Le Mans'); await p.waitForTimeout(700);
-    await p.click('#biensForm [data-adrpick]'); await p.waitForTimeout(800);
+    await p.fill('#biensForm .adrin', '10 rue Gougeard Le Mans'); await p.waitForSelector('#biensForm [data-adrpick]', {timeout: 8000}).catch(() => {});
+    await p.click('#biensForm [data-adrpick]'); await p.waitForFunction(() => document.getElementById('b-ville').value === 'lemans' && !!document.getElementById('b-quartier').value, null, {timeout: 8000}).catch(() => {});
     ok('ordi · adresse : ville et quartier trouvés', await p.evaluate(() => document.getElementById('b-ville').value === 'lemans' && !!document.getElementById('b-quartier').value));
-    await p.fill('#biensForm [name=prix]', '60000'); await p.fill('#biensForm [name=surface]', '22'); await p.click('#biensForm [type=submit]'); await p.waitForTimeout(600);
+    await p.fill('#biensForm [name=prix]', '60000'); await p.fill('#biensForm [name=surface]', '22'); await p.click('#biensForm [type=submit]'); await p.waitForFunction(() => BIENS.length === 1 && BIENS[0].geo && BIENS[0].geo.risq, null, {timeout: 8000}).catch(() => {});
     ok('ordi · adresse enregistrée avec trajets et risques', await p.evaluate(() => BIENS.length === 1 && BIENS[0].lat > 47 && BIENS[0].geo && BIENS[0].geo.foot.length === 3 && !!BIENS[0].geo.risq));
     ok('ordi · adresse sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
@@ -263,12 +270,13 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());   // les routes ajoutées ensuite passent avant
       await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
       await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => fs.existsSync(LJ2) ? r.fulfill({body: fs.readFileSync(LJ2), contentType: 'application/javascript'}) : r.abort());
+      await mlRoutes(p);
       await p.goto(URL2); await p.waitForTimeout(2000);
       ok(`v2 ${dev} · critères au premier lancement`, await p.evaluate(() => !!document.querySelector('.v2dlg') && +document.getElementById('v2cN').textContent > 0));
       await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
-      ok(`v2 ${dev} · carte de l'Ouest et ses 20 villes`, await p.evaluate(() => !!document.querySelector('#v2map.leaflet-container') && document.querySelectorAll('#v2mlist [data-v2city]').length === C.length && C.length === 20));
+      ok(`v2 ${dev} · carte de l'Ouest et ses 20 villes`, await p.evaluate(() => !!(window.V2MAP && V2MAP()) && V2MAPN.villes === C.length && document.querySelectorAll('#v2mlist [data-v2city]').length === C.length && C.length === 20));
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1500);
-      ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => document.querySelectorAll('#v2map path').length > 20 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
+      ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => V2MAPN.quartiers > 20 && V2MAPN.annonces > 0 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
       ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
       ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture`, await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'); return t.getBoundingClientRect().bottom < f.getBoundingClientRect().bottom - 40; }));
@@ -322,6 +330,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
       await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
       await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => fs.existsSync(LJ2) ? r.fulfill({body: fs.readFileSync(LJ2), contentType: 'application/javascript'}) : r.abort());
+      await mlRoutes(p);
       await p.route('**/rest/v1/**', sb);
       await p.goto(URL2); await p.waitForTimeout(2500); return {c, p, errs}; };
     const tick = p => p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
