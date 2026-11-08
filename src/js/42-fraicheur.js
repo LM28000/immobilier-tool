@@ -31,11 +31,4 @@ function renderFresh(){const box=document.getElementById("freshBox"); if(!box) r
  box.innerHTML=`<div class="tablewrap"><table class="fresh"><thead><tr><th>Donnée et source</th><th>Période</th><th>Relevée le</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`;
  ["freshPill","freshPill2"].forEach(id=>{const p=document.getElementById(id); if(!p) return; p.hidden=!stale; p.textContent=`${stale} donnée${stale>1?"s":""} à rafraîchir`;});}
 renderFresh();
-document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("[data-opensrc],[data-top],#freshPill"); if(!a) return; e.preventDefault();
- if(a.dataset.top!==undefined){scrollTo({top:0,behavior:"smooth"}); return;} const d=document.getElementById("sources"); d.open=true; d.scrollIntoView({behavior:"smooth",block:"start"});});
 
-/* ---------- appli sur téléphone (version GitHub) ---------- */
-(function(){let ev=null; const b=document.getElementById("installBtn"); if(!b) return;
- addEventListener("beforeinstallprompt",e=>{e.preventDefault(); ev=e; b.hidden=false;});
- b.addEventListener("click",async()=>{if(!ev) return; ev.prompt(); try{await ev.userChoice;}catch(_){} ev=null; b.hidden=true;});
- addEventListener("appinstalled",()=>{b.hidden=true; toast("Appli installée sur l'écran d'accueil.");});})();

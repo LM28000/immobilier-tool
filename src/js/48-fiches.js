@@ -10,17 +10,13 @@ function fSec(lv,k,sum,html){if(!html) return ""; const t=(FRUB.find(r=>r[0]===k
  return `<details class="fsec" data-lv="${lv}" data-sec="${k}"${fIsOpen(lv,k)?" open":""}><summary><span class="fst">${t}</span><span class="fss">${sum||""}</span></summary><div class="fsb">${html}</div></details>`;}
 function fAttn(list){const L=list.filter(Boolean), W=L.filter(z=>z[0]==="bad"||z[0]==="warn"), G=L.filter(z=>z[0]==="ok"), I=L.filter(z=>z[0]==="info"), li=a=>a.map(([l,t])=>`<li class="${l}">${t}</li>`).join("");
  return `<div class="fattn">${W.length?`<div class="fa-w"><b>À vérifier</b><ul>${li(W)}</ul></div>`:`<div class="fa-g"><b>Rien de bloquant repéré</b> dans les données disponibles.</div>`}${G.length?`<div class="fa-g"><b>Bons signes</b><ul>${li(G)}</ul></div>`:""}${I.length?`<div class="fa-i"><b>À demander</b><ul>${li(I)}</ul></div>`:""}</div>`;}
-const fDelta=(v,ref,unit,dec)=>v==null||ref==null?"":`<em class="fd ${v-ref>=0?"up":"down"}">${v-ref>=0?"+":"−"}${fr(Math.abs(v-ref),dec==null?1:dec)}${unit} vs ${arguments[4]||"ville"}</em>`;
+
 function fHead(x,ref,refName){const [bc,bt]=bank(x.ratio);
  const d=(a,b,u,dc,inv)=>{if(a==null||b==null) return ""; const z=a-b; if(Math.abs(z)<(dc?0.05:0.5)) return `<em class="fd">= ${refName}</em>`; return `<em class="fd ${(z>=0)!==!!inv?"up":"down"}">${z>=0?"+":"−"}${fr(Math.abs(z),dc)}${u} vs ${refName}</em>`;};
  return `<div class="fhead"><div><span>15 ans ${mlab()}</span><b style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b>${ref?d(x.irr,ref.irr," pt",1):altIrr(x)}</div>
   <div><span>Cash-flow ${mlab()}</span><b class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}<small>/mois</small></b>${ref?d(x.cf,ref.cf," €",0):altCf(x)}</div>
   <div><span>Banque</span><b><span class="pill ${bc}">${bt} · ${pct(x.ratio*100,0)}</span></b></div>
   <div><span>Budget tout compris</span><b>${keur(x.cost)}</b>${ref?d(x.cost/1000,ref.cost/1000," k€",0,1):""}</div></div>`;}
-function fCrumb(parts){return `<nav class="fcrumb" aria-label="Niveaux">${parts.map((p,i)=>i<parts.length-1?`<button type="button" class="lnk" ${p[1]}>${esc(p[0])}</button><span aria-hidden="true">›</span>`:`<b>${esc(p[0])}</b>`).join("")}</nav>`;}
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-fgo]"); if(!b) return; e.preventDefault(); const [lv,ck,code]=b.dataset.fgo.split("|");
- if(typeof MOBON!=="undefined"&&MOBON){if(lv==="c"){mPopAll(); SEL=ck; QSEL=null; AD=null; render(); mShow("carte"); if(IR[ck]) flyTo(IR[ck].bb); setSnap(1);} else {const t=IR[ck].list.find(v=>v.code===code); mPopAll(); SEL=ck; QSEL=t; AD=null; render(); mShow("carte"); flyTo(t.bb,3.2); setSnap(2);} return;}
- if(lv==="c"){AD=null; QSEL=null; SEL=ck; render(); if(IR[ck]) flyTo(IR[ck].bb);} else {const t=IR[ck].list.find(v=>v.code===code); AD=null; SEL=ck; QSEL=t; render(); flyTo(t.bb,3.2);}});
 
 /* ---------- moyennes de ville utiles aux comparaisons ---------- */
 function cityPoi(ck){const P=typeof POIQ!=="undefined"&&POIQ[ck]; if(!P) return null; const v=Object.values(P).map(p=>p[0]); return v.reduce((s,x)=>s+x,0)/v.length;}
@@ -69,8 +65,6 @@ function villeFiche(c){const x=calc(c), [bc,bt]=bank(x.ratio), {bar,cv}=cityChar
   ${fSec("ville","prix",`${eur(studioPm2(c.k))}/m²`,prix)}${fSec("ville","loyer",`${eur(x.rentHC)} HC${demCity(c.k)?` · marché ${demCity(c.k).txt}`:""}`,loyer)}${fSec("ville","calc",`${sgn(x.cf)}/mois · ${x.irr==null?"n.d.":pct(x.irr)}`,calcH)}
   ${fSec("ville","traj",`Paris ${hm(trip(c,"paris"))}`,traj)}${fSec("ville","vie",poi!=null?fr(poi,1)+"/10 en moyenne":"",vie)}${fSec("ville","bati",`${fr(fg,0)} % de F-G`,bati)}${fSec("ville","risq",rq?(rq.t?`${rq.t} quartiers inondables`:"rien de majeur"):cat?`${cat.n2000} catastrophes naturelles depuis 2000`:"",risq)}
   ${fSec("ville","hab",`population ${pop>0?"+":""}${fr(pop)} %/an`,hab)}${fSec("ville","ecoles",`${c.students.toLocaleString("fr-FR")} étudiants`,ecoles)}${fSec("ville","urba",QV?`${QV.names.length} quartiers prioritaires`:"",urba)}${fSec("ville","ann",nv?`${nv} à vendre`:"",ann)}${fSec("ville","src","",src)}`;}
-const _rdNew=function(rows){const d=document.getElementById("detail"); const c=C.find(v=>v.k===SEL); if(!d||!c) return; d.innerHTML=villeFiche(c);};
-if(renderDetail.orig) renderDetail.orig=_rdNew; else renderDetail=_rdNew;
 
 /* ---------- QUARTIER ---------- */
 function quartierFiche(t,compact){const c=C.find(v=>v.k===t.ck), xc=calc(c), x=QX[t.ck+t.i], n=t.dpe.reduce((a,b)=>a+b,0), fg=fgPct(t.dpe), sec=sectorOf(t), A=ADS[t.ck];
@@ -94,7 +88,6 @@ function quartierFiche(t,compact){const c=C.find(v=>v.k===t.ck), xc=calc(c), x=Q
   ${fSec("quartier","prix",q&&q.n?`${q.n} ventes · ${eur(q.med)}/m²`:`${eur(studioPm2(t.ck,t))}/m²`,prix)}${fSec("quartier","loyer",`${eur(x.rentHC)} HC${nl?` · ${nl} locations`:""}`,loyer)}${fSec("quartier","calc",`${sgn(x.cf)}/mois`,calcH)}
   ${fSec("quartier","traj",dm&&dm.real?`${minTxt(dm.min)} ${dm.mode==="tc"?"en bus":"à pied"} ${MKDE[dm.mk]}`:"",traj)}${fSec("quartier","vie",p?`${fr(p[0],1)}/10`:"",vie)}${fSec("quartier","bati",n>=15?`F-G ${fr(fg,0)} %`:"",bati)}
   ${fSec("quartier","risq",r?(r.t||r.s?"à regarder":"rien de majeur"):"",risq)}${fSec("quartier","hab",habSum(t),habBlock(t))}${fSec("quartier","ecoles",ecolesSum(t),ecoles)}${fSec("quartier","urba",urbaSum(t),urba)}`;}
-qCard=function(t){return `<div class="qcard">${quartierFiche(t)}</div>`;};
 
 /* ---------- BIEN (annonce suivie ou bien de notre liste) ---------- */
 function bienFicheBody(b,opt){opt=opt||{}; {const s0=b.kind==="v"?b.suf:bienSuf(b), fx=s0?ficx(s0):null; if(fx&&fx.dpe&&!b.dpe) b=Object.assign({},b,{dpe:fx.dpe});}
@@ -121,27 +114,6 @@ function bienFicheBody(b,opt){opt=opt||{}; {const s0=b.kind==="v"?b.suf:bienSuf(
   ${fSec("bien","prix",`${keur(+b.prix)} · ${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs ${t?"quartier":"ville"}`,prix)}${fSec("bien","poids",r.V?`travaux ${keur(r.V.travaux.v)} · meubles ${keur(r.V.meubles.v)}`:"",typeof poidsHtml==="function"?poidsHtml(b):"")}${fSec("bien","loyer",`${eur(x.rentHC)} HC`,loyer)}${fSec("bien","calc",`${sgn(x.cf)}/mois · ${x.irr==null?"n.d.":pct(x.irr)}`,calcH)}
   ${isB?fSec("bien","visite",visitScore(b)!=null?`note ${fr(visitScore(b),1)}/5`:"pas encore visité",visite):""}${fSec("bien","traj",b.adresse?"à l'adresse":qname?"au centre du quartier":"",traj)}${fSec("bien","vie",p?`${fr(p[0],1)}/10 (quartier)`:"",vie)}
   ${fSec("bien","bati",b.dpe?`DPE ${esc(b.dpe)}`:"DPE inconnu",bati)}${fSec("bien","risq",risqR?(risqR.t||risqR.s?"à regarder":"rien de majeur"):"",risq)}${fSec("bien","hab",t?habSum(t):"",t?habBlock(t):"")}${fSec("bien","ecoles",t?ecolesSum(t):"",ecoles)}${fSec("bien","urba",g.urba?`zone ${esc(g.urba[0])} à l'adresse`:t?urbaSum(t):"",urba)}${fSec("bien","ann",comps.length?`${comps.length} comparables`:"",ann)}`;}
-function adQuart(ad){try{if(ad.kind==="v"){const a=findAd("v",ad.ck,ad.suf); return a?calcBien(venteBien(ad.ck,a)).t:null;} if(ad.kind==="b"){const b=BIENS.find(x=>x.id===ad.suf); return b?calcBien(b).t:null;}}catch(_){} return null;}
-const _adFicheOld=adFiche;
-adFiche=function(ad){if(ad.kind==="b") return bienFiche(ad.suf); if(ad.kind!=="v") return _adFicheOld(ad);
- const a=findAd("v",ad.ck,ad.suf); if(!a) return `<p class="sub">Cette annonce n'est plus dans le relevé.</p>`; const vb=Object.assign(venteBien(ad.ck,a),{kind:"v",suf:ad.suf}), url=VTURL+a[3];
- return `${a[4]?`<img class="adph" src="${esc(photoUrl(a[3],a[4],720,420))}" alt="Photo principale de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
-  <div class="dh"><h3 style="font-size:1.15rem;margin:0">${esc(vb.titre)}</h3><span class="pill p-n">à vendre</span></div>
-  <p class="sub" style="margin:2px 0 8px">${keur(a[2])} affiché · ${eur(a[2]/a[0])}/m² ${vuBadges("v",ad.ck,ad.suf)}</p>
-  ${bienFicheBody(vb,{title:"Cette annonce"})}
-  <div class="adact">${adNav(ad)}${addBtn(ad.ck,a,1)}${cmpBtn({kind:"v",id:ad.ck+"|"+ad.suf})}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" title="Photos et description complète">Bien'ici ↗</a></div>`;};
-bienFiche=function(id){const b=BIENS.find(x=>x.id===id); if(!b) return `<p class="sub">Ce bien n'est plus dans la liste.</p>`;
- const s=bienSuf(b), sc=visitScore(b), ph=bienPhoto(b,720,420), out=isOut(b)?"écarté":null;
- return `${ph?`<img class="adph" src="${esc(ph)}" alt="Photo de l'annonce" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
- <div class="dh"><h3 style="font-size:1.15rem;margin:0;display:flex;gap:6px;align-items:center"><button type="button" class="star${b.fav?" on":""}" data-fav="${b.id}" aria-label="${b.fav?"Retirer des favoris":"Mettre en favori"}">${b.fav?"★":"☆"}</button>${esc(b.titre||"Bien sans nom")}</h3>${stPill(b)}</div>
- <p class="sub" style="margin:2px 0 8px">${b.surface} m² · ${keur(+b.prix)} affiché${b.par?` · ajouté par ${esc(b.par)}`:""} ${s?vuBadges("v",b.ville,s):""}</p>
- ${out?`<p class="outline">Retiré de la shortlist. <button type="button" class="lnk" data-reshort="${b.id}">L'y remettre</button></p>`:""}
- ${bienFicheBody(b,{title:b.titre||"Ce bien"})}
- <div class="adact many">${adNav({kind:"b",ck:b.ville,suf:b.id})}<button type="button" class="btn addv" data-visit="${b.id}">Visite${sc!=null?" · "+fr(sc,1)+"/5":""}</button><button type="button" class="btn ghost sm" data-fiche="${b.id}">Fiche à emporter</button>${cmpBtn({kind:"b",id:b.id})}${b.url?`<a class="btn ghost sm" href="${esc(b.url)}" target="_blank" rel="noopener">Annonce ↗</a>`:""}${out?"":`<button type="button" class="btn ghost sm" data-unshort="${b.id}">Écarter</button>`}</div>`;};
-
-/* ---------- téléphone : mêmes rubriques sous la photo et les deux gros chiffres ---------- */
-if(typeof mAdHeavy==="function"){
- const mQRow=t=>t?`<div class="mgroup"><button type="button" class="mrow" data-mgoq="${t.ck}|${t.code}">Le quartier ${esc(t.name)} : fiche et carte<span class="mchev">›</span></button></div>`:"";
- mAdHeavy=function(o){const vb=Object.assign(venteBien(o.ck,o.a),{kind:"v",suf:o.a[3]}); return `<div class="mfs">${bienFicheBody(vb,{noHead:true,title:"Cette annonce"})}</div>${mQRow(calcBien(vb).t)}<div class="mgroup">${cmpBtn({kind:"v",id:o.ck+"|"+o.a[3]}).replace('class="cmpb','class="mrow cmprow cmpb')}<a class="mrow" href="${esc(o.url)}" target="_blank" rel="noopener">Voir l'annonce sur Bien'ici<span class="mchev">↗</span></a></div>`;};
- mBienHeavy=function(b){return `<div class="mfs">${bienFicheBody(b,{noHead:true,title:b.titre||"Ce bien"})}</div>${mQRow(calcBien(b).t)}`;};}
+/* rubriques d'une fiche, les unes sous les autres */
+function ptabs(id,list){return list.map(([l,c])=>`<h2 class="psec">${l}</h2>${c}`).join("");}
 

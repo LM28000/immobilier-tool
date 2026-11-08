@@ -1,4 +1,3 @@
-const HASH0=location.hash; /* lien #ville-quartier, lu avant que le premier rendu ne le remplace */
 const P="https://immobilier.pappers.fr/prix-immobilier/", T="https://www.locservice.fr/tensiometre/tensiometre-studio-", HB="https://habity.fr/ville/";
 const C=[
  {k:"lemans",name:"Le Mans",lat:48.00,lon:0.20,pm2:1959,evol:1.9,rent:450,rentM2:21,tf:47.80,students:15690,paris:.92,lab:"r",src:[P+"pays-de-la-loire/sarthe/le-mans",T+"72181.html",HB+"le-mans-72/finance"]},
@@ -31,10 +30,7 @@ const C=[
  {k:"cherbourg",name:"Cherbourg-en-Cotentin",lat:49.63,lon:-1.636,pm2:2246,evol:8.9,rent:492,rentM2:22,tf:52.57,students:2015,paris:3.12,lab:"r",src:["https://explore.data.gouv.fr/fr/immobilier?onglet=carte&filtre=tous&level=commune&code=50129","https://www.data.gouv.fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2025","https://data.economie.gouv.fr/explore/dataset/fiscalite-locale-des-particuliers/"]}
 ];
 const ORIG={laval:{name:"Laval",lat:48.07,lon:-0.77,mode:"en voiture"},nantes:{name:"Nantes",lat:47.22,lon:-1.55,mode:"en voiture"},paris:{name:"Paris",lat:48.86,lon:2.35,mode:"en train"}};
-const RAIL=[[[48.86,2.35],[48.45,1.49],[48.00,0.20],[48.07,-0.77],[48.11,-1.68]],[[48.00,0.20],[47.47,-0.55],[47.22,-1.55],[47.27,-2.21]],
- [[48.86,2.35],[47.90,1.91],[47.59,1.335],[47.39,0.69],[47.26,-0.08],[47.47,-0.55]],[[48.86,2.35],[47.79,1.07],[47.39,0.69],[46.58,0.34]],
- [[48.86,2.35],[49.02,1.15],[49.15,0.23],[49.18,-0.37]],[[49.18,-0.37],[48.43,0.09],[48.00,0.20]],[[47.22,-1.55],[46.67,-1.43]],
- [[47.47,-0.55],[47.06,-0.88],[47.22,-1.55]],[[48.11,-1.68],[47.65,-2.08],[47.22,-1.55]]];
+
 const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:45,vacance:1,copro:21,autres:48,grosTrav:6,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,pess:false,vacQ:true,dvf:true};
 const HDEF=Object.assign({},H);   /* valeurs de départ (bouton « valeurs par défaut ») */
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
@@ -65,5 +61,4 @@ function all(){
 const bankOk=x=>Math.round(x*100)<=35;   // même arrondi que l'affichage (35 % = limite, pas refusé)
 const bank=x=>Math.round(x*100)<=33?["p-ok","Passe"]:bankOk(x)?["p-warn","Limite"]:["p-bad","Trop haut"];
 const colIrr=irr=>irr==null||irr<2.5?"var(--bad)":irr<5?"var(--warn)":"var(--ok)";
-const colOf=r=>colCity(r.x);
 

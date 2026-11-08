@@ -14,13 +14,13 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `mcp/` | serveur MCP : brancher l'outil sur une IA (voir `mcp/README.md`) |
 | `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE, étage, position) |
 | `data/fiches/` | fiches complètes des annonces, une par ville, lues une seule fois par annonce |
-| `tests/run.js`, `tests/visit.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright ; `tests/vendor/` : Leaflet pour tester la vraie carte sans réseau |
+| `tests/run.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright, dont les réglages communs à deux personnes sur une liste commune simulée ; `tests/vendor/` : MapLibre pour tester la carte 3D sans réseau |
 | `tests/unit.js`, `tests/test_donnees.py` | tests rapides : calcul financier et fiscal, nettoyage des biens partagés, scripts de données, cohérence des villes |
 | `publication.json` | annonces dans la page publique ou seulement dans Supabase |
-| `build.py` | assemble `index.html` (la page servie, interface de `src/v2/`), `ancienne.html` et `dist/` |
+| `build.py` | assemble `index.html` (la page servie) et `dist/` (`test.html` : la même page avec les annonces, pour les tests et le serveur MCP) |
 | `src/v2/` | l'interface de l'outil, servie à `index.html` depuis le 8 novembre 2026 : marché filtré par nos critères en carte, tableau ou nuage ; ce qui a bougé depuis la dernière visite ; fiche unique en onglets ; avis, offre, visite et comparaison à deux ; branchée sur le moteur, les fiches et la liste partagée de l'app (`src/js/`) |
 | `src/js/13-reglages-communs.js` | réglages communs à deux (hypothèses, financement, valeurs par type, critères) dans une ligne spéciale de la liste partagée |
-| `ancienne.html`, `v2.html` | l'ancienne interface, gardée quelques semaines (aussi `dist/test.html` pour les tests et le serveur MCP) ; `v2.html` renvoie à l'adresse d'origine |
+| `v2.html` | ancien lien d'essai : renvoie à l'adresse d'origine |
 | `manifest.webmanifest`, `sw.js`, `icons/` | appli installable sur téléphone, utilisable hors ligne (version GitHub) |
 | `supabase.sql` | tables partagées « Nos biens » et « annonces » (accès par code de groupe) ; `tools/supabase_annonces.py` envoie les annonces |
 | `sync.sh`, `install-sync.sh` | poussent automatiquement les changements sur GitHub (launchd), après vérification des données et de la page ; en cas de refus, notification macOS et ligne « NON PUBLIÉ » dans `sync.log` |

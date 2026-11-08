@@ -13,10 +13,7 @@ function ventesTable(ck,list,sector){const rows=list.map(a=>({a,r:venteCalc(ck,a
  return `<div class="scrollbox"><table class="adt vt"><thead><tr><th></th>${sector?"<th>Secteur</th>":""}<th class="r">m²</th><th class="r">Prix</th><th class="r hm">€/m²</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th></th></tr></thead><tbody>${rows.map(({a,r})=>{const [bc]=bank(r.x.ratio);
   const hv=vu("v",ck,a[3]); return `<tr class="clk" tabindex="0" data-ad="v|${ck}|${esc(a[3])}"${hv&&hv.last?' data-drop="1"':""}><td class="tcell">${thumbHtml(a[3],a[4])}</td>${sector?`<td class="c-sec">${esc(a[1]||"non précisé")}</td>`:""}<td class="r mono c-m2">${String(a[0]).replace(".",",")}</td><td class="r mono c-px">${keur(a[2])}${vuBadges("v",ck,a[3])?`<div class="hbs">${vuBadges("v",ck,a[3])}</div>`:""}</td><td class="r mono hm c-pm">${eur(a[2]/a[0])}</td><td class="r mono c-cf ${r.x.cf>=0?"pos":"neg"}">${sgn(r.x.cf)}</td><td class="r mono c-irr" style="color:${colIrr(r.x.irr)};font-weight:700">${r.x.irr==null?"n.d.":pct(r.x.irr)}${bc==="p-bad"?' <span title="banque trop juste">⚠</span>':""}</td><td class="c-act" style="white-space:nowrap"><a class="hm" href="${VTURL}${esc(a[3])}" target="_blank" rel="noopener">voir</a> ${addBtn(ck,a)}</td></tr>`;}).join("")}</tbody></table></div>
  <p class="sub" style="margin:4px 0 0">Prix affichés (frais d'agence en général inclus), relevé du ${ADS.date||"5 novembre 2026"}. Calcul avec notaire, meubles, petits travaux et le loyer du quartier. ⚠ = banque trop juste.</p>`;}
-function ventesLine(t){const A=ADS[t.ck]; if(!A||!A.ventes) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
- const l=A.ventes.filter(a=>a[1]===d); if(!l.length) return `<p class="sub" style="margin:0 0 6px">Aucun ${tyLow()} à vendre en ce moment dans le secteur « ${esc(d)} » sur Bien'ici.</p>`;
- const best=l.map(a=>venteCalc(t.ck,a)).reduce((m,r)=>r.x.irr!=null&&(m==null||r.x.irr>m)?r.x.irr:m,null);
- return `<details class="ads"${OPENADS===d?" open":""}><summary>${tyN(l.length)} à vendre dans le secteur « ${esc(d)} »${best!=null?` · jusqu'à ${pct(best)} sur 15 ans`:""}</summary>${ventesTable(t.ck,l,false)}</details>`;}
+
 function ventesCity(ck){const A=ADS[ck]; if(!A||!A.ventes||!A.ventes.length) return ""; const c=C.find(v=>v.k===ck), pm=median(A.ventes.map(a=>a[2]/a[0]));
  return fRows([["À vendre en ligne",`${tyN(A.ventes.length)} · médiane <b class="mono">${eur(pm)}/m²</b>`,`${fPct(pm,studioPm2(ck,null,"studio"),"calcul")} · frais d'agence et marge de négociation compris`]]);}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-addv]"); if(!b) return; e.preventDefault();
@@ -32,15 +29,6 @@ function toast(t,act){let el=document.getElementById("toast"); if(!el){el=docume
  el.innerHTML=""; const sp=document.createElement("span"); sp.textContent=t; el.appendChild(sp); el.classList.toggle("act",!!act);
  if(act){const b=document.createElement("button"); b.type="button"; b.textContent=act.label; b.addEventListener("click",()=>{el.classList.remove("on"); clearTimeout(toast.t); act.fn();},{once:true}); el.appendChild(b);}
  el.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("on"),act?6500:3200);}
-
-/* ---------- simuler un bien dans un quartier ---------- */
-function simHere(ck,code){const t=IR[ck].list.find(v=>v.code===code); if(!t) return; showTab("tab-biens");
- const f=document.getElementById("biensForm"); f.reset(); document.getElementById("b-ville").value=ck; fillQuartiers(); document.getElementById("b-quartier").value=t.name;
- const c=C.find(v=>v.k===ck), p=Math.round(studioPm2(ck,t)*H.surface/500)*500;
- f.elements.titre.value=`${TY().lab} type · ${t.name}`; f.elements.surface.value=H.surface; f.elements.prix.value=p;
- document.getElementById("p-biens").scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(()=>f.elements.prix.focus({preventScroll:true}),400);
- toast("Formulaire prérempli : corrigez le prix et la surface puis ajoutez.");}
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-sim]"); if(!b) return; e.preventDefault(); const [ck,code]=b.dataset.sim.split("|"); simHere(ck,code);});
 
 /* ---------- statuts, favoris, auteur ---------- */
 const STATUTS=["à voir","visité","offre faite","compromis","acheté"]; /* « écarté » n'est plus proposé : on retire de la shortlist (bouton ×) */
@@ -59,5 +47,4 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  const [id,nx]=t.dataset.stset.split("|"), b=BIENS.find(x=>x.id===id); closeStMenus(); if(!b) return; const prev=b.statut||"à voir"; if(prev===nx) return;
  updBien(id,{statut:nx}); toast(`Statut : ${nx}`,{label:"Annuler",fn:()=>updBien(id,{statut:prev})});});
 addEventListener("keydown",e=>{if(e.key==="Escape") closeStMenus();});
-document.addEventListener("click",e=>{const f=e.target.closest&&e.target.closest("[data-fav]"); if(!f) return; e.preventDefault(); const b=BIENS.find(x=>x.id===f.dataset.fav); if(b) updBien(b.id,{fav:!b.fav});});
 

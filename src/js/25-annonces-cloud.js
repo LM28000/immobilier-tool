@@ -22,6 +22,6 @@ async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""
  [typeof VC!=="undefined"&&VC,typeof VIP!=="undefined"&&VIP,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear());
  if(typeof TGC!=="undefined") Object.keys(TGC).forEach(k=>delete TGC[k]);
  if(typeof QBOXK!=="undefined") QBOXK=null;
- try{render(); if(typeof MOBON!=="undefined"&&MOBON&&typeof mFeedRender==="function") mFeedRender();}catch(_){}
+ try{render();}catch(_){}
  Object.keys(FD).forEach(ck=>ficheRefresh(ck));}
 setTimeout(annoncesCloud,0);

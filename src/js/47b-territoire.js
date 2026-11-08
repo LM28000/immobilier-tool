@@ -59,10 +59,6 @@ function qTags(t){const out=[], tr=typeof trajOf==="function"?trajOf(t):null;
  const r=terOf(t); if(r&&r.q&&r.q.d===0) out.push(["Quartier prioritaire","var(--bad)"]);
  return out.slice(0,2);}
 
-/* listes de villes dérivées des données (jamais écrites en dur) */
-function cityNames(keys){const n=keys.map(k=>(C.find(c=>c.k===k)||{}).name||k); return n.length>1?n.slice(0,-1).join(", ")+" et "+n[n.length-1]:n[0]||"aucune";}
-document.querySelectorAll("[data-cities]").forEach(el=>{const w=el.dataset.cities; el.textContent=cityNames(C.map(c=>c.k).filter(k=>w==="iris"?!!(typeof IR!=="undefined"&&IR[k]):!!(ADS[k]&&ADS[k].ads)));});
-
 /* demande locative mesurée, même règle partout (Insee) : part de logements vides
    moins de 7 % : marché tendu · 7 à 10 % : normal · 10 % ou plus : détendu ; en contexte, étudiants par petit logement (< 30 m²) et locataires du privé */
 function demCalc(pop,stud,log,vac,rp,loc,hlm,s30){if(!log) return null; const v=vac/log*100;

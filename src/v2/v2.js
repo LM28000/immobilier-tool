@@ -6,11 +6,7 @@
    - une fiche unique en onglets (le bien, le prix, le calcul, le quartier, l'achat) ;
    - les avis à deux (champ « votes » des biens partagés), l'offre et la visite recalculées en direct. */
 (function v2(){
- if(typeof MOBON!=="undefined"&&MOBON&&typeof mApply==="function") mApply(false);   /* l'interface mobile actuelle laisse la place */
- if(typeof mApply==="function") mApply=function(){};
- /* l'ancienne carte (cachée) ne se dessine plus : la v2 a la sienne */
- ["leafInit","leafTry","leafRefresh","leafFly","leafZoomLayers","leafCenterCity","leafSetFull"].forEach(n=>{if(typeof window[n]==="function") window[n]=function(){};});
- document.documentElement.classList.add("v2"); document.body.classList.remove("simple","mob","noscroll","mcarte");
+ document.documentElement.classList.add("v2");
  const $=id=>document.getElementById(id), cv=c=>typeof colv==="function"?colv(c):c, PH=()=>matchMedia("(max-width:860px)").matches;
  const DEF={tab:"carte",city:null,vue:"crit",aview:"tableau",cview:"tableau",sort:["irr",-1],ftab:"bien",n:60,min:false};
  let V; try{V=Object.assign({},DEF,JSON.parse(localStorage.getItem("v2s")||"{}"));}catch(_){V=Object.assign({},DEF);} V.sel=null;
@@ -263,8 +259,8 @@
   const run=m=>{const s={}; Object.keys(m).forEach(k=>{s[k]=H[k]; H[k]=m[k];}); const v=calc(c).irr; Object.assign(H,s); return v;};
   return `<p class="v2sub">${tyl()} à ${esc(c.name)}, ${pctS(base)} en ${scn()} :</p><div class="v2tw"><table class="v2t"><thead><tr><th>Hypothèse</th><th>Variation</th><th class="r">Rendement</th></tr></thead><tbody>${T.map(([l,a,b,t])=>`<tr><td>${l}</td><td>${t}</td><td class="r mono">${pctS(run(a))} / ${pctS(run(b))}</td></tr>`).join("")}</tbody></table></div>`;}
  function defOf(k){return TYK.includes(k)?typeDefaults(H.type)[k]:HDEF[k];}
- const HOLD=document.createElement("div"); HOLD.hidden=true; app.appendChild(HOLD);   /* range les blocs de l'app montrés dans une page avant qu'elle ne soit redessinée */
- function pBudget(){const s0=$("sources"); if(s0&&$("v2p-budget").contains(s0)) HOLD.appendChild(s0); const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK,...TYK,"tmiA","tmiB","regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
+ const HOLD=document.createElement("div"); HOLD.hidden=true; HOLD.id="v2hold"; app.appendChild(HOLD);   /* range les blocs de l'app montrés dans une page avant qu'elle ne soit redessinée */
+ function pBudget(){document.querySelectorAll("#v2p-budget .v2src").forEach(n=>HOLD.appendChild(n)); const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK,...TYK,"tmiA","tmiB","regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
   f=(k,l,u,st)=>{const d=defOf(k), ch=d!=null&&H[k]!==d; return `<div class="${ch?"v2chg":""}"><label for="v2h-${k}">${l} <span class="v2sub">(${u})</span></label><input type="number" id="v2h-${k}" data-v2h="${k}" step="${st}" value="${H[k]}">${ch?`<small class="v2def">défaut : ${d>=1000?nf(d):String(d).replace(".",",")}</small>`:""}</div>`;};
   el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Budget et hypothèses</h1><span class="v2sp"></span>${nch?`<button type="button" class="v2btn sm" data-v2reset>Revenir aux valeurs par défaut (${nch} changée${nch>1?"s":""})</button>`:""}</div>
    <p class="v2sub v2regnote">${ri?`Communs à vous deux : un changement ici change les chiffres de l'autre.${ri.par?` Dernière modification par ${esc(ri.par)}${ri.le?" le "+esc(dateTxt(ri.le.slice(0,10))):""}.`:""}`:"Pas encore partagés : sans code commun (onglet Nos biens), ces réglages restent dans ce navigateur."} Les valeurs différentes du défaut sont signalées.</p>
@@ -275,8 +271,9 @@
    <div class="v2card"><h2>Le long terme</h2><div class="v2grid v2f">${f("px","Hausse des prix","%/an",0.5)}${f("ly","Hausse des loyers","%/an",0.5)}${f("fraisVente","Frais à la revente","%",0.5)}</div></div>
    <div class="v2card"><h2>Impôts</h2><div class="v2grid v2f"><div><label for="v2-reg">Régime</label><select id="v2-reg" data-v2fin="regime">${[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]].map(([k,l])=>`<option value="${k}"${H.regime===k?" selected":""}>${l}</option>`).join("")}</select></div>${["tmiA","tmiB"].map((k,i)=>`<div><label for="v2-${k}">Tranche d'imposition ${i?"de votre binôme":"de l'un"}</label><select id="v2-${k}" data-v2fin="${k}">${[0,11,30,41,45].map(t=>`<option value="${t}"${H[k]===t?" selected":""}>${t} %</option>`).join("")}</select></div>`).join("")}</div></div>
    <div class="v2card"><h2>Ce qui pèse le plus</h2>${sensi()}</div>
-   <div class="v2card"><h2>Sources</h2><p class="v2sub">Ventes réelles DVF (2023-2025), carte des loyers de l'État et annonces de location meublée, Insee, Géorisques, OpenStreetMap, ADEME (DPE), annonces Bien'ici relevées chaque soir.</p><div id="v2srcslot"></div><p class="v2sub">L'ancienne version de l'outil reste ouverte quelques semaines : <a href="./ancienne.html">ancienne version</a>.</p></div></div>`;
-  const s=$("sources"); if(s){$("v2srcslot").appendChild(s);}}
+   <div class="v2card"><h2>Méthode et sources</h2><p class="v2sub">Ce sont des estimations, pas un conseil financier, fiscal ni bancaire : vérifiez chaque chiffre (notaire, banque, comptable) avant de signer. Ventes réelles DVF, carte des loyers de l'État et annonces de location meublée, Insee, Géorisques, OpenStreetMap, ADEME (DPE), annonces Bien'ici relevées chaque soir.</p><div id="v2srcslot"></div><p class="v2sub">Code : <a href="https://github.com/LM28000/immobilier-tool" target="_blank" rel="noopener">github.com/LM28000/immobilier-tool</a></p></div></div>`;
+  /* méthode, sources et fraîcheur des données (blocs de body.html), rangés dans la carte Sources */
+  const slot=$("v2srcslot"); document.querySelectorAll("#appHold .v2src, #v2hold .v2src").forEach(n=>slot.appendChild(n)); HOLD.querySelectorAll(".v2src").forEach(n=>slot.appendChild(n));}
 
  /* ---------- fiche unique en onglets ---------- */
  const FT=[["bien","Le bien",["suivi","annonce"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
@@ -424,8 +421,11 @@
   else if(d.v2offb){const b=BIENS.find(x=>x.id===d.v2offb); if(!b) return; const pr=Math.round(+b.prix*(+t.value)/100/500)*500; delete OFFT[d.v2off]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}});
  /* l'app recalcule (type, scénario, hypothèses, liste partagée, annonces reçues) : la v2 suit */
  const _render=render; render=function(){_render.apply(this,arguments); refresh(); if(V.tab==="carte") drawMap();};
- /* renderBiens est déjà enveloppé par l'interface mobile (window[fn].orig) : on garde ce lien */
- ["renderBiens","renderShort"].forEach(n=>{const f=window[n]; if(typeof f!=="function") return; const w=function(){const r=f.apply(this,arguments); refresh(); return r;}; if(f.orig) w.orig=f.orig; window[n]=w;});
+ document.addEventListener("biens",refresh);   /* la liste commune a changé (11-nos-biens.js) */
+ /* liens des fiches : une annonce s'ouvre dans la fiche, une location sur Bien'ici, « toutes les sources » dans Budget */
+ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("#v2fiche [data-ad], #v2fiche [data-opensrc]"); if(!a) return; const inner=e.target.closest("button,a,input,select"); if(inner&&inner!==a) return; e.preventDefault();
+  if(a.dataset.opensrc!=null){V.tab="budget"; save(); show(); const s=$("sources"); if(s){s.open=true; s.scrollIntoView({block:"start"});} return;}
+  const [k,ck,...r]=a.dataset.ad.split("|"), id=r.join("|"); if(k==="v") openSel(`v|${ck}|${id}`); else if(k==="l") window.open(ADURL+id,"_blank","noopener");});
  addEventListener("resize",()=>{if(M) M.resize();});
 
  /* ---------- départ ---------- */

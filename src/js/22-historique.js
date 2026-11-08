@@ -1,5 +1,3 @@
-/* ---------- historique des annonces : baisses de prix, ancienneté, vendues ---------- */
-const HSTART=(()=>{let m=null; Object.values(HIST).forEach(c=>["v","l"].forEach(k=>Object.values(c[k]||{}).forEach(e=>{if(!m||e.f<m) m=e.f;}))); return m;})();
 const DAY=864e5, isoD=s=>new Date(s+"T12:00:00"), todayIso=()=>ADS.iso||new Date().toISOString().slice(0,10);
 const dm=s=>{const d=isoD(s); return `${d.getDate()}/${String(d.getMonth()+1).padStart(2,"0")}`;};
 /* premier relevé de chaque ville : une annonce déjà là ce jour-là n'est pas « nouvelle » (sinon l'arrivée d'une ville marque tout) */

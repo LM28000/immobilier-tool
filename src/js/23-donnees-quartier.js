@@ -37,12 +37,7 @@ function risqPillsR(r){if(!r) return "";
  if(!r.t&&!r.s&&!r.v) P.unshift(["p-ok","Pas de risque majeur repéré",""]);
  return `<div class="risqb">${P.map(([c,l,tip])=>`<span class="pill ${c}"${tip?` title="${esc(tip)}"`:""}>${l}</span>`).join("")}</div>`;}
 
-/* bloc complet pour la fiche quartier */
-function quartierReal(t){const a=dvfBlock(t), b=trajBlock(t), c=risqPills(t), d=poiBlock(t); if(!a&&!b&&!c&&!d) return "";
- return `<div class="qreal">${a?`<h4>Ventes réelles (DVF)</h4>${a}`:""}${b?`<h4>Trajets réels</h4>${b}`:""}${d?`<h4>À pied autour du centre du quartier</h4>${d}`:""}${c?`<h4>Risques</h4>${c}`:""}</div>`;}
-
-document.getElementById("f-dvf").addEventListener("change",e=>{H.dvf=e.target.checked; try{localStorage.setItem("dvf",H.dvf?"1":"0");}catch(_){} render();});
-(function(){try{const v=localStorage.getItem("dvf"); if(v!=null){H.dvf=v==="1"; document.getElementById("f-dvf").checked=H.dvf;}}catch(_){}})();
+(function(){try{const v=localStorage.getItem("dvf"); if(v!=null) H.dvf=v==="1";}catch(_){}})();
 
 /* vie de quartier : commerces et services à pied (OpenStreetMap) */
 function poiOf(t){return typeof POIQ!=="undefined"&&POIQ[t.ck]?POIQ[t.ck][t.code]||null:null;}

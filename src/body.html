@@ -1,115 +1,7 @@
-
-<div class="wrap">
-  <script>(function(){var t="light";try{t=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}document.documentElement.setAttribute("data-theme",t)})();</script>
-  <header>
-    <div class="hrow"><h1>Où acheter notre studio ?</h1><a href="#sources" class="freshpill" id="freshPill" hidden data-opensrc></a><button type="button" class="btn sm" id="installBtn" hidden>Installer l'appli</button><span class="hctl"><span class="seg2 modeseg" id="netSeg" role="group" aria-label="Chiffres affichés"><button type="button" data-net="1">Chiffres nets</button><button type="button" data-net="0">Bruts</button></span><button type="button" class="themeb" id="themeBtn" aria-label="Changer de thème"></button><span class="seg2 modeseg" id="modeSeg" role="group" aria-label="Niveau de détail"><button type="button" data-mode="simple" aria-pressed="true">Vue simple</button><button type="button" data-mode="full" aria-pressed="false">Vue complète</button></span></span></div>
-    <p id="heroTxt">Le même studio meublé de 22 m², 14 000 € d'apport et le même crédit, simulé dans vingt villes de l'Ouest avec leurs prix de vente réels, leurs loyers médians et leur taxe foncière. Clique une ville sur la carte, le graphique ou le classement : tout se met à jour.</p>
-  </header>
-
-
-  <section class="panel" id="shortPanel">
-    <h2>Notre shortlist</h2>
-    <div class="rowwrap"><div class="cards row" id="shortList"></div></div>
-    <div id="shortOut"></div>
-    <button type="button" class="btn sm" id="cmpGo" hidden style="margin-top:10px"></button>
-    <h2 style="margin-top:18px" id="dealsH">Meilleures annonces du moment <span class="h2n">les meilleurs rendements parmi les annonces relevées dans nos villes que la banque accepterait, hors résidences gérées</span></h2>
-    <div class="rowwrap" id="dealsWrap"><div class="cards row" id="dealsList"></div></div>
-    <p class="sub" style="margin:6px 0 0" id="dealsMore"><button type="button" class="lnk" data-annall>Voir toutes les annonces, classées →</button></p>
-  </section>
-
-  <section class="panel" id="setPanel">
-    <div class="toprow">
-      <h2>Les réglages qui comptent le plus</h2>
-      <span style="display:flex;gap:8px;flex-wrap:wrap"><label class="switch" id="pessWrap" for="f-pess"><input type="checkbox" id="f-pess"> Scénario pessimiste</label>
-      <label class="switch sw-ok on" id="vacWrap" for="f-vacq"><input type="checkbox" id="f-vacq" checked> Vacance selon l'emplacement</label>
-      <label class="switch sw-ok on" id="dvfWrap" for="f-dvf"><input type="checkbox" id="f-dvf" checked> Prix des studios réellement vendus</label></span>
-    </div>
-    <div class="sliders">
-      <div class="sl"><label for="s-surcote">Prix payé vs prix moyen des studios <b id="v-surcote"></b></label>
-        <input type="range" id="s-surcote" min="-10" max="40" step="5"><small id="n-surcote">Surcote pour un studio bien placé et en bon état</small></div>
-      <div class="sl"><label for="s-loyer">Loyer obtenu vs loyer médian <b id="v-loyer"></b></label>
-        <input type="range" id="s-loyer" min="-20" max="20" step="5"><small>Négatif = studio moins bien placé ou loué plus bas</small></div>
-      <div class="sl"><label for="s-taux">Taux du crédit <b id="v-taux"></b></label>
-        <input type="range" id="s-taux" min="3" max="5.5" step="0.05"><small>Le taux de votre offre de prêt ; gardé dans ce navigateur</small></div>
-    </div>
-    <p class="sub" id="pessTxt" hidden>Scénario pessimiste actif : loyer −5 %, un demi-mois vide de plus par an, prix des biens +0,5 %/an au lieu de +1 %. Le taux ne change pas : il est fixé à la signature. Pour tester un cas plus dur, utilisez « Et si… » dans les fiches.</p>
-    <details>
-      <summary>Plus d'hypothèses</summary>
-      <div class="fields" id="hypFields"></div>
-    </details>
-    <details id="finBox">
-      <summary>Financement et impôts en détail</summary>
-      <div class="fields" id="finFields"></div>
-      <div id="finDetail"></div>
-    </details>
-  </section>
-
-  <div class="main">
-    <section class="panel" id="mapSec">
-      <div class="maphead">
-        <h2 style="margin:0">Carte</h2>
-        <div class="ctl">
-          <span class="seg2" id="cmode" role="group" aria-label="Couleur de la carte"><button type="button" data-m="irr" aria-pressed="true">Rendement</button><button type="button" data-m="cf" aria-pressed="false">Cash-flow</button></span>
-          <label class="chk" title="Grise les villes et quartiers où le crédit dépasserait 35 % d'endettement"><input type="checkbox" id="f-bank"> Seulement si la banque suit</label>
-        </div>
-      </div>
-      <div class="mapbox">
-        <svg id="map" role="img" aria-label="Carte des villes comparées, zoomable jusqu'aux quartiers"></svg>
-        <div id="tip" hidden></div>
-        <div class="mwhere" id="mWhere"><button type="button" class="mw-back" id="zAll" title="Revenir à toute la carte"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tout l'Ouest</span></button><span class="mw-here" id="mwHere" hidden></span><button type="button" class="mw-go" id="zCity"></button></div>
-        <div class="mtools" role="toolbar" aria-label="Outils de la carte">
-          <button type="button" id="zIn" class="mt-zoom" aria-label="Zoomer" title="Zoomer (+)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button type="button" id="zOut" class="mt-zoom" aria-label="Dézoomer" title="Dézoomer (−)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button type="button" id="zHome" aria-label="Toute la carte" title="Toute la carte (0)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 8 8 3.2 13.5 8M4.2 6.8V13h7.6V6.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button type="button" id="zFull" aria-pressed="false" aria-label="Plein écran" title="Plein écran (F)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        </div>
-        <button type="button" class="mapchip" id="mapChip" aria-label="Aller à la fiche de la ville"></button>
-        <div class="wheelhint" id="wheelHint" aria-hidden="true">Cliquez sur la carte ou maintenez Ctrl (⌘ sur Mac) pour zoomer avec la molette</div>
-        <div class="maphint" id="mapHint">2 doigts pour déplacer · double-tap pour zoomer</div>
-      </div>
-      <div class="legend" id="mapLegend"></div>
-      <div id="qBox" hidden>
-        <div id="qCard"></div>
-        <div class="qall" id="qAll">
-          <h3 class="qbh" id="qTitle"></h3>
-          <div class="adf" style="margin-top:10px"><input type="search" id="qSearch" placeholder="Chercher un quartier" aria-label="Chercher un quartier"><span class="sub" id="qCount" style="margin:0"></span></div>
-          <div class="scrollbox tall"><table class="qt">
-            <thead><tr><th>Quartier</th><th class="r hm">Prix appart.</th><th class="r hm">Loyer HC</th><th class="r">Cash-flow</th><th class="r">15 ans</th><th class="r hm">F-G (DPE)</th></tr></thead>
-            <tbody id="zBody"></tbody></table></div>
-          <p class="fnote"><sup>*</sup> pas de loyer publié pour ce quartier : estimé à partir de son prix, ou loyer médian de la ville.</p>
-        </div>
-        <details class="qmeth"><summary>Comment les quartiers sont estimés</summary><p class="sub">Contours : quartiers IRIS de l'INSEE (IGN, 2025). Prix : estimation RealAdvisor du quartier (octobre 2026) rapportée au prix moyen des studios vendus dans la ville, avec la même surcote que pour la ville. Loyer : loyer médian des studios de la ville, ajusté de l'écart du quartier selon RealAdvisor (plafonné à ±15 %). Les quartiers les moins chers sortent en tête sur le papier : vérifiez sur place la demande locative avant d'y croire. DPE : diagnostics ADEME depuis juillet 2021 des appartements de 30 m² ou moins, placés dans leur quartier par leur adresse.</p></details>
-      </div>
-    </section>
-    <div class="side" id="side">
-      <section class="panel" id="detail" aria-live="polite"></section>
-      <section class="panel qdetail" id="qDetail" hidden aria-live="polite"><div class="crumbs" id="crumbs"></div><div id="qDetailBody"></div></section>
-    </div>
-  </div>
-
-  <section class="panel" id="tabsSec">
-    <div class="tabs" role="tablist" aria-label="Vues de comparaison">
-      <button type="button" role="tab" id="tab-rank" aria-controls="p-rank" aria-selected="true">Classement</button>
-      <button type="button" role="tab" id="tab-sc" aria-controls="p-sc" aria-selected="false" tabindex="-1">Prix contre loyer</button>
-      <button type="button" role="tab" id="tab-cmp" aria-controls="p-cmp" aria-selected="false" tabindex="-1">Comparer (0)</button>
-      <button type="button" role="tab" id="tab-ann" aria-controls="p-ann" aria-selected="false" tabindex="-1">Toutes les annonces</button>
-      <button type="button" role="tab" id="tab-biens" aria-controls="p-biens" aria-selected="false" tabindex="-1">Nos biens</button>
-    </div>
-    <div role="tabpanel" id="p-rank" aria-labelledby="tab-rank">
-      <p class="avg">Moyennes par ville (prix et loyers médians, tous quartiers confondus). Le détail par quartier est sur la carte pour <span data-cities="iris"></span>.</p>
-      <div class="tablewrap"><table>
-        <thead><tr><th>#</th><th>Ville</th><th class="r" title="Moyenne de la ville">Budget moyen</th><th class="r" title="Loyer médian de la ville">Loyer HC moyen</th><th class="r">Brut</th><th class="r">Cash-flow à deux</th><th class="r">15 ans</th><th>Banque</th><th>Demande</th><th class="r">Étudiants</th><th class="r">Laval · Nantes · Paris</th><th class="r">DPE F-G</th><th class="r">Population</th><th class="r">Logements vides</th><th class="r">Chômage</th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table></div>
-    </div>
-    <div role="tabpanel" id="p-sc" aria-labelledby="tab-sc" hidden>
-      <svg id="scatter" viewBox="0 0 900 400" role="img" aria-label="Budget tout compris et loyer de chaque ville"></svg>
-      <p class="sub">Au-dessus d'une diagonale, la ville rapporte chaque année plus que ce pourcentage de son prix en loyers (rendement brut).</p>
-    </div>
-    <div role="tabpanel" id="p-cmp" aria-labelledby="tab-cmp" hidden><div id="cmpBox"></div></div>
-    <div role="tabpanel" id="p-ann" aria-labelledby="tab-ann" hidden><div id="annBox"></div></div>
-    <div role="tabpanel" id="p-biens" aria-labelledby="tab-biens" hidden>
-      <p class="sub" style="margin-top:0">Une annonce de vente repérée ? Ajoutez-la : le calcul reprend vos réglages, le loyer et la vacance du quartier. Sans code commun, la liste reste dans ce navigateur ; avec le code commun (plus bas), elle est partagée à deux.</p>
+<!-- L'interface est construite par src/v2/v2.js. Ici seulement ce qu'elle réutilise : le formulaire d'ajout d'un bien,
+     la méthode et les sources (montrées dans l'onglet Budget), la grille de visite et la fiche à emporter. -->
+<div id="appHold" hidden>
+  <div id="p-biens">
       <form id="biensForm" class="bform" autocomplete="off">
         <label class="f">Nom<span class="inp"><input name="titre" maxlength="120" placeholder="Studio rue Gambetta"></span></label>
         <label class="f">Lien de l'annonce<span class="inp"><input name="url" type="url" placeholder="https://…"></span></label>
@@ -124,45 +16,8 @@
         <label class="f wide">Notes<span class="inp"><input name="notes" maxlength="200" placeholder="3e sans ascenseur, à rafraîchir…"></span></label>
         <div class="wide" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button type="submit" class="btn">Ajouter le bien</button><span class="sub" id="biensState" role="status" style="margin:0"></span></div>
       </form>
-      <div class="sharebox" id="shareBox">
-        <b>Liste commune</b>
-        <div class="shf"><label class="f">Ton prénom<span class="inp"><input id="sh-nom" maxlength="30" placeholder="Prénom"></span></label>
-        <label class="f">Code commun (le même pour vous deux)<span class="inp"><input id="sh-code" maxlength="60" autocomplete="off" spellcheck="false"></span></label></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="btn" id="sh-save">Enregistrer</button><button type="button" class="btn ghost" id="sh-gen">Générer un code</button><span class="sub" id="sh-state" style="margin:0"></span></div>
-      </div>
-      <details class="xfer"><summary>Échanger la liste avec quelqu'un qui n'a pas accès à cette page</summary>
-        <p class="sub">Copiez la liste, envoyez le texte (message, mail), et l'autre personne le colle ici dans sa version de l'outil. Les biens déjà présents ne sont pas ajoutés deux fois.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button type="button" class="btn" id="bCopy">Copier la liste</button><button type="button" class="btn ghost" id="bImport">Importer le texte collé</button><span class="sub" id="xferState" role="status" style="margin:0"></span></div>
-        <textarea id="bPaste" rows="3" placeholder="Collez ici une liste copiée depuis l'outil"></textarea>
-      </details>
-      <div id="biensList"></div>
-    </div>
-  </section>
-
-  <footer class="foot">
-    <div class="fcols">
-      <section>
-        <h3>Où acheter notre studio ?</h3>
-        <p>Un outil à nous deux pour choisir où acheter un studio meublé à louer : 20 villes de l'Ouest, leurs quartiers, les annonces Bien'ici du jour et nos biens suivis.</p>
-        <p class="fwarn">Ce sont des estimations, pas un conseil financier, fiscal ni bancaire. Vérifiez chaque chiffre (notaire, banque, comptable) avant de signer.</p>
-      </section>
-      <section>
-        <h3>Mises à jour</h3>
-        <ul class="flist">
-          <li>Annonces relevées chaque soir · dernier relevé : <b class="adsdate"></b></li>
-          <li>Annonces relevées : <span data-cities="ads"></span> · quartiers détaillés : <span data-cities="iris"></span></li>
-          <li><a href="#sources" data-opensrc>Sources et fraîcheur des données</a> <a href="#sources" class="freshpill" id="freshPill2" hidden data-opensrc></a></li>
-          <li>Code : <a href="https://github.com/LM28000/immobilier-tool" target="_blank" rel="noopener">github.com/LM28000/immobilier-tool</a></li>
-        </ul>
-      </section>
-      <section>
-        <h3>Sur téléphone</h3>
-        <p id="installTip">Ouvrez <a href="https://lm28000.github.io/immobilier-tool/" target="_blank" rel="noopener">lm28000.github.io/immobilier-tool</a>, puis sur iPhone : Partager → « Sur l'écran d'accueil » ; sur Android : « Installer l'appli » en haut de la page. Elle s'ouvre ensuite hors ligne avec les dernières données.</p>
-        <h3>Raccourcis (ordinateur)</h3>
-        <p class="kbd"><kbd>←</kbd><kbd>→</kbd> annonces · <kbd>A</kbd> ajouter · <kbd>C</kbd> comparer · <kbd>F</kbd> plein écran · <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> tout voir · <kbd>Échap</kbd> fermer</p>
-      </section>
-    </div>
-    <details class="fdet">
+  </div>
+    <details class="fdet v2src">
       <summary>Comment c'est calculé</summary>
       <dl class="fmeth">
         <dt>Le principe</dt><dd>Les mêmes règles pour toutes les villes. Quand une donnée manque quelque part, on le dit et on retombe sur la règle du niveau au-dessus (le quartier prend la ville) : jamais de réglage propre à une ville.</dd>
@@ -180,14 +35,11 @@
         <dt>Annonces</dt><dd>Pages de résultats Bien'ici lues chaque soir comme un visiteur. Une annonce absente deux jours de suite est considérée comme vendue ou retirée. La fiche complète de chaque nouvelle annonce (description, photos, charges, DPE, étage, position) est lue une fois : sa position donne son quartier exact, ses charges de copropriété remplacent l'estimation (comptées en entier, par prudence) et les chambres en colocation sont écartées des loyers.</dd>
       </dl>
     </details>
-    <details class="fdet" id="sources">
+    <details class="fdet v2src" id="sources">
       <summary>Sources et fraîcheur des données</summary>
       <div id="freshBox"></div>
     </details>
-    <p class="fbot">Où acheter notre studio ? · estimations, pas un conseil · <a href="#" data-top>Haut de page ↑</a></p>
-  </footer>
+    <details class="qmeth v2src"><summary>Comment les quartiers sont estimés</summary><p class="sub">Contours : quartiers IRIS de l'INSEE (IGN, 2025). Prix : estimation RealAdvisor du quartier (octobre 2026) rapportée au prix moyen des studios vendus dans la ville, avec la même surcote que pour la ville. Loyer : loyer médian des studios de la ville, ajusté de l'écart du quartier selon RealAdvisor (plafonné à ±15 %). Les quartiers les moins chers sortent en tête sur le papier : vérifiez sur place la demande locative avant d'y croire. DPE : diagnostics ADEME depuis juillet 2021 des appartements de 30 m² ou moins, placés dans leur quartier par leur adresse.</p></details>
 </div>
 <div class="vpanel" id="visitPanel" hidden role="dialog" aria-modal="true" aria-label="Visite du bien"><div class="vsheet"><button type="button" class="sheetx vclose" aria-label="Fermer">×</button><div id="visitBody"></div></div></div>
 <div class="fpanel" id="fichePanel" hidden role="dialog" aria-modal="true" aria-label="Fiche à emporter"><div class="fbar"><button type="button" class="btn ghost sm fclose">← Retour</button><button type="button" class="btn sm fprint">Imprimer ou PDF</button></div><article class="fiche" id="ficheBody"></article></div>
-
-
