@@ -1,6 +1,7 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="referrer" content="strict-origin-when-cross-origin"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2f47b3"><link rel="apple-touch-icon" href="icons/icone-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Notre studio">
 <script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")&&!/claude\.ai|claudeusercontent/.test(location.host))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
-</head><body><title>Où acheter notre studio ?</title>
+</head><body><script>/* thème : clair par défaut, sombre si on l'a choisi (onglet Budget ou bouton en haut), appliqué avant le premier affichage */(function(){var t="light";try{if(localStorage.getItem("theme-v2")==="dark")t="dark";}catch(e){}document.documentElement.setAttribute("data-theme",t);})();</script>
+<title>Où acheter notre studio ?</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -652,6 +653,9 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2ty{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.03em;background:var(--sunk);color:var(--fg);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
 /* téléphone étroit : le nom de l'app laisse la place au type de bien (quatre boutons) et aux critères */
 @media (max-width:480px){.v2brand{display:none}.v2top .v2seg button{padding:6px 9px}.v2top{gap:6px}}
+/* bouton du thème (clair / sombre) dans l'en-tête ; sur un téléphone étroit, le choix reste dans Budget */
+.v2btn.v2thm{padding:0;width:38px;display:inline-grid;place-items:center;flex-shrink:0}.v2thm svg{width:18px;height:18px;display:block}
+@media (max-width:480px){.v2top .v2thm{display:none}}
 </style>
 <!-- L'interface est construite par src/v2/v2.js. Ici seulement ce qu'elle réutilise : le formulaire d'ajout d'un bien,
      la méthode et les sources (montrées dans l'onglet Budget), la grille de visite et la fiche à emporter. -->
@@ -2427,7 +2431,7 @@ render();
  const TABS=[["carte","Carte"],["annonces","Annonces"],["villes","Villes"],["biens","Nos biens"],["budget","Budget"]];
  const ICO={carte:'<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>',annonces:'<path d="M4 6h16M4 12h16M4 18h10"/>',villes:'<path d="M4 20V9l5-3v14M9 20V4l6 3v13M15 20v-9l5 2v7M3 20h18"/>',biens:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>',budget:'<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/>'};
  const app=document.createElement("div"); app.id="v2app";
- app.innerHTML=`<header class="v2top"><span class="v2brand">Notre studio</span><nav class="v2tabs" aria-label="Rubriques" id="v2tabs"></nav><span class="v2sp"></span><span id="v2type"></span><span class="v2scnw" id="v2scn"></span><button type="button" class="v2btn sm" data-v2crit>Critères</button></header>
+ app.innerHTML=`<header class="v2top"><span class="v2brand">Notre studio</span><nav class="v2tabs" aria-label="Rubriques" id="v2tabs"></nav><span class="v2sp"></span><span id="v2type"></span><span class="v2scnw" id="v2scn"></span><button type="button" class="v2btn sm" data-v2crit>Critères</button><button type="button" class="v2btn sm v2thm" id="v2thm" data-v2theme=""></button></header>
   <div class="v2main"><section class="v2page" id="v2p-carte" style="display:flex;overflow:hidden"><div class="v2mapwrap"><div id="v2map" role="region" aria-label="Carte"></div><div class="v2mlist" id="v2mlist"></div><div class="v2mleg" id="v2mleg"></div></div></section>
   <section class="v2page" id="v2p-annonces" hidden></section><section class="v2page" id="v2p-villes" hidden></section><section class="v2page" id="v2p-biens" hidden></section><section class="v2page" id="v2p-budget" hidden></section>
   <aside class="v2fiche" id="v2fiche" hidden aria-label="Fiche"></aside></div>
@@ -2438,17 +2442,27 @@ render();
   $("v2tabs").innerHTML=TABS.map(([k,l])=>`<button type="button" data-v2tab="${k}" aria-current="${V.tab===k?"page":"false"}">${t(k,l)}</button>`).join("");
   $("v2tabbar").innerHTML=TABS.map(([k,l])=>`<button type="button" data-v2tab="${k}" aria-current="${V.tab===k?"page":"false"}"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</g></svg>${l}${k==="biens"&&nb?`<small class="v2bdg">${nb}</small>`:""}</button>`).join("");
   $("v2type").innerHTML=`<span class="v2seg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${!V.tous&&H.type===k}">${T.lab}</button>`).join("")}<button type="button" data-v2tous aria-pressed="${!!V.tous}" title="Studios, T2 et T3 ensemble">Tous</button></span>`;
-  $("v2scn").innerHTML=scnSeg();}
+  $("v2scn").innerHTML=scnSeg();
+  const th=$("v2thm"), dk=DARK(); th.setAttribute("aria-label",dk?"Passer au thème clair":"Passer au thème sombre"); th.title=th.getAttribute("aria-label");
+  th.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${dk?'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>':'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'}</g></svg>`;}
  const scnSeg=()=>`<span class="v2seg" role="group" aria-label="Scénario">${[["prudent","Prudent"],["central","Central"],["favorable","Favorable"]].map(([k,l])=>`<button type="button" data-v2scn="${k}" aria-pressed="${scn()===k}">${l}</button>`).join("")}</span>`;
 
- /* ---------- carte en 3D (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
-    Villes, quartiers et annonces sont des couches GeoJSON dessinées par la carte : les noms se rangent sans se chevaucher,
-    le zoom est continu (pas de tuiles d'images agrandies), la carte s'incline et tourne, les immeubles montent en 3D de près.
-    Les repères (gares, campus, centre) sont de petits marqueurs HTML. Sans WebGL, un message renvoie aux listes. */
+ /* ---------- carte (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
+    Tout est sur la carte en même temps et le zoom décide de ce qu'on voit, sans bouton :
+    - de loin, l'Ouest à plat : les 20 villes, colorées par leur rendement ;
+    - en approchant d'une ville (zoom 9 à 10) : ses quartiers colorés, puis ses annonces ; la carte s'incline et la liste suit
+      la ville la plus proche du centre ;
+    - de près (zoom 13 et plus, là où les tuiles ont les immeubles) : les immeubles montent en 3D, la carte s'incline davantage.
+    L'inclinaison suit le zoom tant qu'on ne l'a pas réglée soi-même (jusqu'au retour sur l'Ouest).
+    Fond clair (positron) ou sombre (dark) selon le thème, mêmes couches par-dessus. Repères (gares, campus, centre) : petits
+    marqueurs HTML de la ville suivie. Sans WebGL, un message renvoie aux listes. */
  const MLV="4.7.1", MLJS=`https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MLV}/maplibre-gl.js`, MLCSS=`https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/${MLV}/maplibre-gl.css`;
- const MLSTYLE=()=>"https://tiles.openfreemap.org/styles/"+(document.documentElement.getAttribute("data-theme")==="dark"||(!document.documentElement.getAttribute("data-theme")&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"liberty");
- let ML=null, M=null, MREADY=false, LCITY=null, LTRY=false, RMK=[], POP=null, HQ=null;
- window.V2MAPN={villes:0,quartiers:0,annonces:0};   /* ce que la carte montre (tests) */
+ const DARK=()=>document.documentElement.getAttribute("data-theme")==="dark";
+ const MLSTYLE=()=>"https://tiles.openfreemap.org/styles/"+(DARK()?"dark":"positron");
+ const ZQ=9, ZA=9.5, ZV=10, Z3=13.2;   /* paliers : quartiers, annonces, ville (inclinée, liste de la ville), immeubles */
+ const P1=()=>PH()?35:45, P2=()=>PH()?45:58;   /* inclinaison en ville, puis de près */
+ let ML=null, M=null, MREADY=false, LCITY=null, LTRY=false, RMK=[], RCK=null, POP=null, HQ=null, PB=0, MANP=false, QSIG=null;
+ window.V2MAPN={villes:0,quartiers:0,annonces:0,err:[]};   /* ce que la carte montre, et les couches refusées (tests) */
  const mapMsg=t=>{$("v2map").innerHTML=`<p class="v2empty">${t} Les annonces restent dans les onglets Annonces et Villes.</p>`;};
  function mapLib(cb){if(window.maplibregl) return cb(); if(LTRY) return; LTRY=true;
   const l=document.createElement("link"); l.rel="stylesheet"; l.href=MLCSS; document.head.appendChild(l);
@@ -2457,26 +2471,46 @@ render();
  const sheetH=()=>{const l=$("v2mlist"); return l?l.offsetHeight:260;};   /* téléphone : la liste couvre le bas de la carte */
  const pad=()=>PH()?{top:16,left:16,right:16,bottom:sheetH()+12}:{top:40,left:390,right:40,bottom:40};
  const EMPTY={type:"FeatureCollection",features:[]};
+ const km=(la1,lo1,la2,lo2)=>Math.hypot((lo2-lo1)*Math.cos(la1*Math.PI/180)*111.32,(la2-la1)*110.57);
  function mapInit(){if(M||!window.maplibregl) return; if(!webgl()){mapMsg("Cette carte demande WebGL, indisponible dans ce navigateur."); return;}
   ML=window.maplibregl;
   try{M=new ML.Map({container:"v2map",style:MLSTYLE(),center:[-0.6,47.75],zoom:6,minZoom:4,maxZoom:18.5,maxPitch:70,attributionControl:false});}catch(e){M=null; mapMsg("La carte n'a pas pu démarrer."); return;}
   M.addControl(new ML.AttributionControl({compact:true}),PH()?"top-right":"bottom-right");
   if(!PH()) M.addControl(new ML.NavigationControl({visualizePitch:true}),"top-right");   /* boutons : zoom, boussole (inclinaison et rotation) */
-  M.on("load",()=>{try{mapLayers();}catch(_){} MREADY=true; drawMap(true); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
+  /* une couche refusée par MapLibre ne lève pas d'erreur : elle est notée (les tuiles et polices manquantes, elles, sont ignorées) */
+  M.on("error",e=>{const er=e&&e.error, m=String(er&&er.message||er||""); if(!(er&&er.status)&&!/fetch|network|load|glyph|tile|abort/i.test(m)&&V2MAPN.err.length<10) V2MAPN.err.push(m);});
+  M.on("load",()=>{mapLayers(); MREADY=true; drawMap(true); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
   M.on("click",mapClick); if(!PH()) M.on("mousemove",mapHover);
+  M.on("moveend",mapMoved);
+  M.on("pitchstart",e=>{if(e&&e.originalEvent) MANP=true;});   /* inclinaison réglée à la main : on n'y touche plus */
   window.V2MAP=()=>M;}
- function mapLayers(){const dk=MLSTYLE().endsWith("dark"), L=M.getStyle().layers, below=M.getLayer("building")?"building":(L.find(l=>l.type==="symbol")||{}).id;
-  ["villes","quartiers","annonces"].forEach(s=>{if(!M.getSource(s)) M.addSource(s,{type:"geojson",data:EMPTY});});
-  /* quartiers teintés sous les immeubles et les routes : la ville se lit à travers */
-  M.addLayer({id:"q-fill",type:"fill",source:"quartiers",paint:{"fill-color":["get","c"],"fill-opacity":["case",["boolean",["feature-state","hover"],false],["+",["get","op"],.2],["get","op"]]}},below);
-  M.addLayer({id:"q-line",type:"line",source:"quartiers",paint:{"line-color":dk?"#0b1020":"#ffffff","line-opacity":.85,"line-width":["interpolate",["linear"],["zoom"],10,.6,15,1.8]}},below);
-  /* immeubles en 3D un peu plus tôt qu'avec le style d'origine */
-  if(M.getLayer("building-3d")){M.setLayerZoomRange("building-3d",13.5,24); try{M.setPaintProperty("building-3d","fill-extrusion-opacity",.8);}catch(_){}}
-  M.addLayer({id:"a-dot",type:"circle",source:"annonces",paint:{"circle-radius":["case",["get","sel"],10,["interpolate",["linear"],["zoom"],9,4.5,14,8]],"circle-color":["get","c"],
-   "circle-stroke-color":["case",["get","st"],"#e08a00",["get","nw"],"#2f47b3",dk?"#0b1020":"#ffffff"],"circle-stroke-width":["case",["any",["get","st"],["get","nw"],["get","sel"]],3,1.5]}});
-  M.addLayer({id:"v-dot",type:"circle",source:"villes",paint:{"circle-radius":["get","r"],"circle-color":["get","c"],"circle-opacity":["get","op"],"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":["get","op"]}});
-  M.addLayer({id:"v-lab",type:"symbol",source:"villes",layout:{"text-field":["get","lab"],"text-font":["Noto Sans Bold"],"text-size":12.5,"text-variable-anchor":["bottom","top","right","left"],"text-radial-offset":1.15,"symbol-sort-key":["get","rk"],"text-padding":2},
-   paint:{"text-color":dk?"#e5e9f0":"#18202c","text-halo-color":dk?"#0b1020":"#ffffff","text-halo-width":1.7,"text-opacity":["get","op"]}});}
+ function mapLayers(){const dk=DARK(), L=M.getStyle().layers, lab=(L.find(l=>l.type==="symbol")||{}).id, below=M.getLayer("building")?"building":lab;
+  /* les noms des villes ont leur propre source : sans police (hors ligne), seuls les noms manquent, pas les cercles */
+  ["villes","vnoms","quartiers","annonces"].forEach(s=>{if(!M.getSource(s)) M.addSource(s,{type:"geojson",data:EMPTY});});
+  const zf=(a,b,v0,v1)=>["interpolate",["linear"],["zoom"],a,v0,b,v1], hov=["boolean",["feature-state","hover"],false];
+  /* quartiers : apparaissent en approchant d'une ville, sous les immeubles et les rues (la ville se lit à travers) ;
+     de près, la teinte s'éclaircit pour laisser voir les immeubles */
+  const qo=k=>["case",hov,["+",["*",["get","op"],k],.2],["*",["get","op"],k]];
+  M.addLayer({id:"q-fill",type:"fill",source:"quartiers",minzoom:ZQ-.6,paint:{"fill-color":["get","c"],"fill-opacity":["interpolate",["linear"],["zoom"],ZQ-.6,0,ZQ+.3,qo(1),12.5,qo(1),15,qo(dk?.5:.6)]}},below);
+  M.addLayer({id:"q-line",type:"line",source:"quartiers",minzoom:ZQ-.6,paint:{"line-color":dk?"#0b1020":"#ffffff","line-opacity":zf(ZQ-.6,ZQ+.3,0,.85),"line-width":zf(10,15,.6,1.8)}},below);
+  /* immeubles en 3D, sur les deux fonds : ils montent entre les zooms 13 et 14 */
+  if(M.getSource("openmaptiles")){
+   if(M.getLayer("building-3d")) M.setLayoutProperty("building-3d","visibility","none");
+   if(M.getLayer("building")) M.setLayerZoomRange("building",M.getLayer("building").minzoom||0,13);   /* les immeubles à plat laissent la place aux immeubles en relief */
+   M.addLayer({id:"b3d",type:"fill-extrusion",source:"openmaptiles","source-layer":"building",minzoom:13,filter:["!",["has","hide_3d"]],
+    paint:{"fill-extrusion-color":dk?"#46536b":"#d9d6cf","fill-extrusion-opacity":.9,
+     "fill-extrusion-height":zf(13,14,0,["coalesce",["get","render_height"],8]),"fill-extrusion-base":zf(13,14,0,["coalesce",["get","render_min_height"],0])}},lab);}
+  /* annonces : de plus en plus grosses en approchant ; anneau orange : shortlist, bleu : nouvelle */
+  const sel=["boolean",["get","sel"],false], st=["boolean",["get","st"],false], nw=["boolean",["get","nw"],false];
+  M.addLayer({id:"a-dot",type:"circle",source:"annonces",minzoom:ZA-.5,paint:{
+   "circle-radius":["interpolate",["linear"],["zoom"],ZA-.5,["case",sel,7,3.5],12,["case",sel,11,7],16,["case",sel,14,10]],
+   "circle-color":["get","c"],"circle-opacity":zf(ZA-.5,ZA,0,1),"circle-stroke-opacity":zf(ZA-.5,ZA,0,1),
+   "circle-stroke-color":["case",st,"#e08a00",nw,"#2f47b3",dk?"#0b1020":"#ffffff"],"circle-stroke-width":["case",["any",st,nw,sel],2.5,1.2]}});
+  /* villes : de loin seulement, elles s'effacent quand les quartiers arrivent */
+  const vo=zf(ZQ-.4,ZQ+.5,["get","op"],0);
+  M.addLayer({id:"v-dot",type:"circle",source:"villes",maxzoom:ZV,paint:{"circle-radius":["get","r"],"circle-color":["get","c"],"circle-opacity":vo,"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":vo}});
+  M.addLayer({id:"v-lab",type:"symbol",source:"vnoms",maxzoom:ZV,layout:{"text-field":["get","lab"],"text-font":["Noto Sans Bold"],"text-size":12.5,"text-variable-anchor":["bottom","top","right","left"],"text-radial-offset":1.15,"symbol-sort-key":["get","rk"],"text-padding":2},
+   paint:{"text-color":dk?"#e5e9f0":"#18202c","text-halo-color":dk?"#0b1020":"#ffffff","text-halo-width":1.7,"text-opacity":vo}});}
  /* contour d'un quartier (latitude, longitude comme Leaflet) en GeoJSON (longitude, latitude), anneaux fermés */
  function geoPoly(g){const dep=a=>Array.isArray(a)?1+dep(a[0]):0, ring=r=>{const o=r.filter(p=>isFinite(p[0])&&isFinite(p[1])).map(p=>[p[1],p[0]]); if(o.length&&(o[0][0]!==o[o.length-1][0]||o[0][1]!==o[o.length-1][1])) o.push(o[0]); return o;};
   const d=dep(g); return d===2?{type:"Polygon",coordinates:[ring(g)]}:d===3?{type:"Polygon",coordinates:g.map(ring)}:d===4?{type:"MultiPolygon",coordinates:g.map(p=>p.map(ring))}:null;}
@@ -2484,39 +2518,62 @@ render();
  const geoPts=F=>{const P=[], w=a=>{if(typeof a[0]==="number") P.push(a); else a.forEach(w);}; F.forEach(f=>w(f.geometry.coordinates)); return P;};
  /* repères de la ville : gares, campus, centre */
  const REPL={gare:["Gare","M7 3h10a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2zM5 10h14M9 21l2-4M15 21l-2-4"],univ:["Campus","M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5"],centre:["Centre","M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"]};
- function reperes(ck){RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
+ function reperes(ck){RCK=ck||null; RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
   Object.entries(REPQ[ck]).forEach(([k,p])=>{const d=REPL[k.replace(/\d+$/,"")]; if(!d||!Array.isArray(p)||!isFinite(p[0])) return; const el=document.createElement("div"); el.className="v2rep"; el.title=d[0];
    el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d[1]}"/></svg><span>${d[0]}</span>`; RMK.push(new ML.Marker({element:el,anchor:"bottom"}).setLngLat([p[1],p[0]]).addTo(M));});}
+ /* les quartiers des 20 villes (≈ 800 contours, quelques millisecondes) : refaits seulement quand le calcul a changé */
+ function quartiersGeo(){const Q=[]; let id=0;
+  C.forEach(c=>{const ck=c.k; if(!IR[ck]||typeof IRIS==="undefined"||!IRIS[ck]) return; const ll=irisLL(ck);
+   IR[ck].list.forEach(t=>{const g=ll[t.i], geo=g&&geoPoly(g); if(!geo) return; let x=null;
+    if(V.tous){const q=stats(ck,t.code); if(q.irr!=null) x=q;} else try{x=t.type==="H"?(QX[t.ck+t.i]||calcIris(t)):null;}catch(_){}
+    Q.push({type:"Feature",id:id++,properties:{ck,code:t.code,c:colX(x),op:x?.38:.12,t:`${t.name} (${cityName(ck)})${x&&x.irr!=null?" · "+(V.tous?`médiane ${pctS(x.irr)} (${x.n} annonces)`:pctS(x.irr)):""}`},geometry:geo});});});
+  return Q;}
  function drawMap(fit){if(!M||!MREADY) return; const set=(s,f)=>{const src=M.getSource(s); if(src) src.setData({type:"FeatureCollection",features:f}); V2MAPN[s]=f.length;};
-  if(!V.city){const P=[]; set("villes",C.map((c,i)=>{const x=cx(c), [m]=cityCnt(c.k); P.push([c.lon,c.lat]);
-    return {type:"Feature",id:i,properties:{k:c.k,c:colX(x),op:m?1:.45,r:m?Math.round((PH()?6:8)+Math.sqrt(m)*1.7):5,lab:`${c.name} ${pctS(x.irr)}${m?` · ${m}`:""}`,rk:-m,t:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères`},geometry:{type:"Point",coordinates:[c.lon,c.lat]}};}));
-   set("quartiers",[]); set("annonces",[]); reperes(null);
-   if(fit||LCITY!==null){const b=bbox(P); if(b) fitLater(b,{pitch:0,bearing:0,duration:fit?0:800});} LCITY=null; return;}
-  const ck=V.city, ll=irisLL(ck), Q=[];
-  IR[ck].list.forEach((t,i)=>{const g=ll[t.i], geo=g&&geoPoly(g); if(!geo) return; let x=null;
-   if(V.tous){const q=stats(ck,t.code); if(q.irr!=null) x=q;} else try{x=t.type==="H"?(QX[t.ck+t.i]||calcIris(t)):null;}catch(_){}
-   Q.push({type:"Feature",id:i,properties:{code:t.code,c:colX(x),op:x?.38:.12,t:`${t.name}${x&&x.irr!=null?" · "+(V.tous?`médiane ${pctS(x.irr)} (${x.n} annonces)`:pctS(x.irr)):""}`},geometry:geo});});
-  set("villes",[]); set("quartiers",Q);
-  set("annonces",market(ck).filter(o=>o.f.la).map((o,i)=>({type:"Feature",id:i,properties:{k:key(o),c:cv(colIrr(o.x.irr)),sel:V.sel===key(o),nw:!!o.nw,st:inShort(o),t:`${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m² · ${pctS(o.x.irr)}`},geometry:{type:"Point",coordinates:[o.f.lo,o.f.la]}})));
-  reperes(ck);
-  if(LCITY!==ck){const b=bbox(geoPts(Q)); if(b) fitLater(b,{pitch:PH()?35:50,bearing:-12,duration:fit?0:1000}); LCITY=ck;}}
+  const VF=C.map((c,i)=>{const x=cx(c), [m]=cityCnt(c.k);
+   return {type:"Feature",id:i,properties:{k:c.k,c:colX(x),op:m?1:.45,r:m?Math.round((PH()?6:8)+Math.sqrt(m)*1.7):5,lab:`${c.name} ${pctS(x.irr)}${m?` · ${m}`:""}`,rk:-m,t:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères`},geometry:{type:"Point",coordinates:[c.lon,c.lat]}};});
+  set("villes",VF); set("vnoms",VF);
+  const f0=feed(); if(QSIG!==f0){QSIG=f0; set("quartiers",quartiersGeo());}
+  /* les annonces de toutes les villes, dans la vue choisie (nos critères, nouvelles, baisses…) */
+  set("annonces",market(null).filter(o=>o.f.la).map((o,i)=>({type:"Feature",id:i,properties:{k:key(o),c:cv(colIrr(o.x.irr)),sel:V.sel===key(o),nw:!!o.nw,st:inShort(o),t:`${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m² · ${pctS(o.x.irr)}${V.tous?" · "+tyOfO(o):""}`},geometry:{type:"Point",coordinates:[o.f.lo,o.f.la]}})));
+  if(RCK!==(V.city||null)) reperes(V.city);
+  if(fit||LCITY!==V.city){LCITY=V.city; MANP=false;
+   if(V.city) fitCity(V.city,fit); else {const b=bbox(C.map(c=>[c.lon,c.lat])); if(b) fitLater(b,{pitch:0,bearing:0,duration:fit?0:800});}}}
+ /* une ville : tous ses quartiers dans le cadre, assez près pour être « en ville » (inclinée) */
+ function fitCity(ck,now){const P=[]; if(typeof IRIS!=="undefined"&&IRIS[ck]) Object.values(irisLL(ck)).forEach(g=>{const w=a=>{if(typeof a[0]==="number") P.push([a[1],a[0]]); else a.forEach(w);}; w(g);});
+  const c=C.find(v=>v.k===ck); if(!P.length&&c) P.push([c.lon-.05,c.lat-.03],[c.lon+.05,c.lat+.03]); const b=bbox(P); if(b) fitLater(b,{pitch:P1(),bearing:-12,duration:now?0:1000},ZV+.3);}
  /* cadrer après que la fiche s'est ouverte ou fermée (la carte change de largeur) */
- function fitLater(b,o){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!M) return; M.resize(); M.fitBounds(b,Object.assign({padding:pad()},o));}));}
- /* un clic : annonce, sinon ville, sinon quartier (une petite marge autour du doigt) */
+ function fitLater(b,o,zmin){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!M) return; M.resize(); const cam=M.cameraForBounds(b,{padding:pad(),bearing:o.bearing||0}); if(!cam) return;
+  if(zmin&&cam.zoom<zmin) cam.zoom=zmin; const opt=Object.assign({},cam,o); if(o.duration) M.easeTo(opt); else M.jumpTo(opt);}));}
+ /* après chaque mouvement : l'inclinaison suit le zoom, la liste suit la ville au centre */
+ function mapMoved(){if(!M||!MREADY) return; const z=M.getZoom();
+  const b=z<ZV-.5?0:z<ZV?(PB===0?0:1):z<Z3?1:z<Z3+.4?(PB===2?2:1):2; PB=b;
+  if(!b){MANP=false; if(M.getPitch()>.5||Math.abs(M.getBearing())>.5) M.easeTo({pitch:0,bearing:0,duration:600});}
+  else if(!MANP){const p=b===2?P2():P1(); if(Math.abs(M.getPitch()-p)>3) M.easeTo({pitch:p,duration:700});}
+  let ck=V.city;
+  if(z>=ZV){const c=M.getCenter(); let best=null, bd=1e9; C.forEach(v=>{const d=km(c.lat,c.lng,v.lat,v.lon); if(d<bd){bd=d; best=v.k;}}); ck=bd<=25?best:null;}
+  else if(z<ZQ) ck=null;
+  if(ck!==V.city){V.city=ck; LCITY=ck; save(); if(V.tab==="carte") mapList(); reperes(ck);}
+  mapLegend();}
+ /* un clic : annonce, sinon ville (de loin), sinon quartier (une petite marge autour du doigt) */
  function mapClick(e){const r=PH()?12:6, box=[[e.point.x-r,e.point.y-r],[e.point.x+r,e.point.y+r]], at=(l,b)=>M.getLayer(l)?M.queryRenderedFeatures(b||e.point,{layers:[l]}):[];
   const a=at("a-dot",box); if(a.length){openSel(a[0].properties.k); return;}
-  const v=at("v-dot",box).concat(at("v-lab")); if(v.length){goCity(v[0].properties.k); return;}
-  const q=at("q-fill"); if(q.length&&V.city) openSel(`q|${V.city}|${q[0].properties.code}`);}
- function mapHover(e){const L=["a-dot","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f[0];
+  const v=M.getZoom()<ZQ+.3?at("v-dot",box).concat(at("v-lab")):[]; if(v.length){goCity(v[0].properties.k); return;}
+  const q=at("q-fill"); if(q.length) openSel(`q|${q[0].properties.ck}|${q[0].properties.code}`);}
+ function mapHover(e){if(!MREADY) return; const L=["a-dot","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
   M.getCanvas().style.cursor=h?"pointer":"";
   if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){} HQ=null;}
   if(h&&h.layer.id==="q-fill"&&h.id!=null){HQ=h.id; try{M.setFeatureState({source:"quartiers",id:HQ},{hover:true});}catch(_){}}
   if(!h){if(POP) POP.remove(); return;}
   if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
   POP.setLngLat(e.lngLat).setText(h.properties.t).addTo(M);}
- /* une annonce ouverte depuis la carte : la vue s'approche et s'incline, les immeubles autour apparaissent */
- function flyAd(s){if(!M||!MREADY||V.tab!=="carte"||s[0]!=="v") return; const o=feed().find(x=>key(x)===s); if(!o||!o.f.la) return;
-  M.flyTo({center:[o.f.lo,o.f.la],zoom:Math.max(M.getZoom(),16),pitch:PH()?45:58,padding:pad(),duration:1200,essential:true});}
+ /* une annonce ouverte : la vue s'approche et s'incline, les immeubles autour apparaissent */
+ function flyAd(s){if(!M||!MREADY||V.tab!=="carte"||s[0]!=="v") return; const o=feed().find(x=>key(x)===s); if(!o||!o.f.la) return; MANP=false;
+  M.flyTo({center:[o.f.lo,o.f.la],zoom:Math.max(M.getZoom(),16),pitch:P2(),padding:pad(),duration:1200,essential:true});}
+ /* thème clair (par défaut) ou sombre : propre à chacun ; la carte change de fond et garde ses couches */
+ function setTheme(t){document.documentElement.setAttribute("data-theme",t); try{localStorage.setItem("theme-v2",t);}catch(_){}
+  if(M&&MREADY){MREADY=false; QSIG=null; if(POP) POP.remove(); M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap();}); M.setStyle(MLSTYLE(),{diff:false});}
+  render();}
+ const themeSeg=()=>`<span class="v2seg" role="group" aria-label="Thème">${[["light","Clair"],["dark","Sombre"]].map(([k,l])=>`<button type="button" data-v2theme="${k}" aria-pressed="${(DARK()?"dark":"light")===k}">${l}</button>`).join("")}</span>`;
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0";
   const head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span>`:""}<span>${t}</span><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
   if(!V.city){const rows=C.map(c=>({c,x:cx(c),k:cityCnt(c.k)})).sort((a,b)=>(b.x.irr??-99)-(a.x.irr??-99)), tot=rows.reduce((s,r)=>s+r.k[0],0);
@@ -2524,8 +2581,9 @@ render();
   const L0=market(V.city), lim=L0.slice(0,80);
   el.innerHTML=head(esc(cityName(V.city)),`<div class="v2chips v2scroll">${vueChips(V.city)}</div><p class="v2sub">${L0.length} ${typlL()} · triés par rendement ${scn()}</p>`)
    +`<div class="v2mrows">${lim.length?lim.map(o=>`<div class="v2row${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${V.tous?` <span class="v2ty">${tyOfO(o)}</span>`:""}${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span style="color:var(--warn)">★</span>':""}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(o.t?o.t.name:o.a[1]||"")}${o.f.dpe?" · DPE "+o.f.dpe:""} · ${sgn(o.x.cf)}/mois</span><span style="text-align:right">${rng(o,64)}</span></div>`).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`}${L0.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L0.length}.</p>`:""}</div>`;}
- function mapLegend(){$("v2mleg").innerHTML=`<b>Rendement ${scn()}</b><span><i style="background:${cv("var(--bad)")}"></i>&lt; 2,5 %</span><span><i style="background:${cv("var(--warn)")}"></i>2,5–5</span><span><i style="background:${cv("var(--ok)")}"></i>≥ 5 %</span><span>${V.city?"contour bleu : nouvelle · orange : shortlist":"taille : annonces pour nos critères"}</span>`;}
- function goCity(ck){V.city=ck||null; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}
+ function mapLegend(){const z=M&&MREADY?M.getZoom():0;
+  $("v2mleg").innerHTML=`<b>Rendement ${scn()}</b><span><i style="background:${cv("var(--bad)")}"></i>&lt; 2,5 %</span><span><i style="background:${cv("var(--warn)")}"></i>2,5–5</span><span><i style="background:${cv("var(--ok)")}"></i>≥ 5 %</span><span>${z>=ZQ||PB?`contour bleu : nouvelle · orange : shortlist${PB===1?" · approchez : immeubles en 3D":""}`:"taille : annonces pour nos critères · approchez : quartiers et annonces"}</span>`;}
+ function goCity(ck){V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}
 
  /* ---------- nuage (même échelle partout) ---------- */
  function nuage(o){const W=o.w||900,Hh=o.h||460,l=56,r=16,t=30,b=40, X=v=>l+(v-o.x[0])/(o.x[1]-o.x[0]||1)*(W-l-r), Y=v=>t+(o.y[1]-Math.max(o.y[0],Math.min(o.y[1],v)))/(o.y[1]-o.y[0])*(Hh-t-b);
@@ -2623,6 +2681,7 @@ render();
    <p class="v2sub v2regnote">${ri?`Communs à ${nous()} : un changement ici change les chiffres des autres.${ri.par?` Dernière modification par ${esc(ri.par)}${ri.le?" le "+esc(dateTxt(ri.le.slice(0,10))):""}.`:""}`:"Pas encore partagés : sans code commun (onglet Nos biens), ces réglages restent dans ce navigateur."} Les valeurs différentes du défaut sont signalées.</p>
    <div class="v2card"><h2>Nos critères</h2><p class="v2sub" style="font-size:15px;color:var(--fg)">${tyl()} · budget tout compris jusqu'à <b>${keur(cr.budget)}</b> · rendement au moins <b>${fr(cr.rmin)} %</b> · ${cr.bank?"la banque doit suivre":"avec ou sans la banque"}</p><div><button type="button" class="v2btn" data-v2crit>Modifier les critères</button></div></div>
    <div class="v2card"><h2>Scénario affiché partout (le vôtre)</h2>${scnSeg()}<p class="v2sub">Ce choix ne change que votre écran. Prudent : loyer −5 %, un demi-mois vide de plus par an, prix +0,5 %/an. Favorable : l'inverse. Le central sert à comparer, le prudent à vérifier qu'on tient si ça tourne mal.</p></div>
+   <div class="v2card"><h2>Thème (le vôtre)</h2>${themeSeg()}<p class="v2sub">Clair par défaut. Ce choix ne change que votre écran, carte comprise.</p></div>
    <div class="v2card"><h2>Le crédit</h2><div class="v2grid v2f">${f("apport","Apport (ensemble)","€",500)}${f("taux","Taux du crédit","%",0.05)}${f("duree","Durée","ans",1)}${f("notaire","Frais de notaire","%",0.5)}</div></div>
    ${assocCard()}
    <div class="v2card"><h2>Le bien et sa location</h2><p class="v2sub">Valeurs par défaut pour tous les ${typl()} (chaque type garde les siennes).${(()=>{const n=BIENS.filter(b=>!isOut(b)&&(+b.travaux>0||+b.meubles>0)).length; return n?` Meubles ou travaux remplacés par une valeur saisie dans ${n} bien${n>1?"s":""} suivi${n>1?"s":""}.`:"";})()}</p><div class="v2grid v2f">${f("surface","Surface type","m²",1)}${f("surcote","Prix payé vs prix moyen","%",5)}${f("loyerAdj","Loyer obtenu vs loyer médian","%",5)}${f("vacance","Vacance","mois/an",0.5)}${f("chLoc","Charges payées par le locataire","€/mois",5)}${f("copro","Charges de copro (votre part)","€/mois",1)}${f("grosTrav","Gros travaux copro (provision)","€/m²/an",1)}${f("autres","Assurance PNO, entretien","€/mois",5)}${f("meubles","Meubles","€",250)}${f("travaux","Petits travaux","€",250)}</div></div>
@@ -2734,7 +2793,7 @@ render();
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.type){if(V.tous){V.tous=false; save(); FEED=null;} return;}   /* Studio, T2, T3 : le type est changé par 49-type-ui.js */
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
@@ -2754,6 +2813,7 @@ render();
    const f=document.querySelector(`.v2tabs2 [data-v2ft="${d.v2ft}"]`); if(f) f.focus({preventScroll:true}); return;}
   if(d.v2close!=null){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); return;}
   if(d.v2crit!=null){critDlg(false); return;}
+  if(d.v2theme!=null){setTheme(d.v2theme||(DARK()?"light":"dark")); return;}
   if(d.v2add!=null){addDlg(); return;}
   if(d.v2addx!=null){addClose(); return;}
   if(d.v2cmpx!=null){CMPS.clear(); refresh(); return;}

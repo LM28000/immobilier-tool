@@ -214,3 +214,6 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2ty{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.03em;background:var(--sunk);color:var(--fg);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
 /* téléphone étroit : le nom de l'app laisse la place au type de bien (quatre boutons) et aux critères */
 @media (max-width:480px){.v2brand{display:none}.v2top .v2seg button{padding:6px 9px}.v2top{gap:6px}}
+/* bouton du thème (clair / sombre) dans l'en-tête ; sur un téléphone étroit, le choix reste dans Budget */
+.v2btn.v2thm{padding:0;width:38px;display:inline-grid;place-items:center;flex-shrink:0}.v2thm svg{width:18px;height:18px;display:block}
+@media (max-width:480px){.v2top .v2thm{display:none}}

@@ -7,7 +7,7 @@ const res = []; const ok = (n, c, info = '') => { res.push([n, !!c, info]); };
 const ML = (n) => require('path').join(__dirname, 'vendor', 'maplibre-gl-4.7.1.' + n);
 async function mlRoutes(p) {
   const fs = require('fs');
-  await p.route('**/tiles.openfreemap.org/**', r => r.request().url().includes('/styles/') ? r.fulfill({contentType: 'application/json', body: JSON.stringify({version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf', sources: {}, layers: [{id: 'fond', type: 'background', paint: {'background-color': '#dfe7ef'}}]})}) : r.fulfill({status: 404, body: ''}));
+  await p.route('**/tiles.openfreemap.org/**', r => r.request().url().includes('/styles/') ? r.fulfill({contentType: 'application/json', body: JSON.stringify({version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf', sources: {openmaptiles: {type: 'vector', tiles: ['https://tiles.openfreemap.org/planet/x/{z}/{x}/{y}.pbf'], maxzoom: 14}}, layers: [{id: 'fond', type: 'background', paint: {'background-color': '#dfe7ef'}}]})}) : r.fulfill({status: 404, body: ''}));
   await p.route('**/cdnjs.cloudflare.com/ajax/libs/maplibre-gl/**', r => r.fulfill({body: fs.readFileSync(ML(r.request().url().endsWith('.css') ? 'css' : 'js')), contentType: r.request().url().endsWith('.css') ? 'text/css' : 'application/javascript'}));
 }
 
@@ -30,6 +30,22 @@ async function mlRoutes(p) {
     ok('ajout d\'un bien · adresse enregistrée avec trajets et risques', await p.evaluate(() => BIENS.length === 1 && BIENS[0].lat > 47 && BIENS[0].geo && BIENS[0].geo.foot.length === 3 && !!BIENS[0].geo.risq));
     ok('ajout d\'un bien · adresse sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
+  // thème : clair par défaut même si l'appareil est en sombre ; bouton en haut et choix dans Budget ; la carte change de fond et garde ses couches
+  { const c = await b.newContext({viewport: {width: 1300, height: 850}, colorScheme: 'dark'}); const p = await c.newPage(); const errs = [], styles = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await mlRoutes(p);
+    p.on('request', r => { const u = r.url(); if (u.includes('openfreemap.org/styles/')) styles.push(u.split('/').pop()); });
+    await p.goto(URL); await p.waitForTimeout(2000); await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
+    const fond = () => p.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    ok('thème · clair par défaut, même avec un appareil en sombre', await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'light') && await fond() === 'rgb(243, 245, 247)' && styles[0] === 'positron', (await fond()) + ' ' + styles.join(','));
+    await p.click('#v2thm'); await p.waitForTimeout(1500);
+    ok('thème · le bouton passe en sombre, la carte aussi (couches gardées)', await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'dark' && localStorage.getItem('theme-v2') === 'dark' && !!V2MAP().getLayer('a-dot') && !!V2MAP().getLayer('q-fill') && V2MAPN.err.length === 0) && await fond() === 'rgb(17, 21, 28)' && styles.includes('dark'), styles.join(','));
+    await p.reload(); await p.waitForTimeout(2000);
+    ok('thème · le choix est gardé', await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'dark'));
+    await p.evaluate(() => document.querySelector('[data-v2tab="budget"]').click()); await p.waitForTimeout(300);
+    await p.evaluate(() => document.querySelector('#v2p-budget [data-v2theme="light"]').click()); await p.waitForTimeout(600);
+    ok('thème · retour au clair depuis Budget', await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'light' && document.querySelector('#v2p-budget [data-v2theme="light"]').getAttribute('aria-pressed') === 'true') && await fond() === 'rgb(243, 245, 247)');
+    ok('thème · sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
   // l'interface : carte, fiche, annonces, villes, budget (ordinateur et téléphone)
   { const fs = require('fs'), URL2 = URL;
     for (const [dev, opt] of [['ordi', {viewport: {width: 1440, height: 900}}], ['tel', {...devices['iPhone 13']}]]) {
@@ -40,8 +56,22 @@ async function mlRoutes(p) {
       ok(`v2 ${dev} · critères au premier lancement`, await p.evaluate(() => !!document.querySelector('.v2dlg') && +document.getElementById('v2cN').textContent > 0));
       await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
       ok(`v2 ${dev} · carte de l'Ouest et ses 20 villes`, await p.evaluate(() => !!(window.V2MAP && V2MAP()) && V2MAPN.villes === C.length && document.querySelectorAll('#v2mlist [data-v2city]').length === C.length && C.length === 20));
-      await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1500);
+      ok(`v2 ${dev} · carte : toutes les couches acceptées (quartiers, annonces, villes, immeubles 3D)`, await p.evaluate(() => { const M = V2MAP(); return ['q-fill', 'q-line', 'a-dot', 'v-dot', 'v-lab', 'b3d'].every(l => M.getLayer(l)) && V2MAPN.err.length === 0; }), await p.evaluate(() => V2MAPN.err.join(' | ')));
+      ok(`v2 ${dev} · carte de l'Ouest à plat, sans quartiers ni annonces de loin`, await p.evaluate(() => { const M = V2MAP(); return M.getPitch() === 0 && M.queryRenderedFeatures({layers: ['v-dot']}).length > 10 && !M.queryRenderedFeatures({layers: ['a-dot']}).length; }));
+      // zoomer suffit : quartiers et annonces apparaissent, la carte s'incline, la liste passe à la ville au centre
+      const rendu = () => p.evaluate(() => { const M = V2MAP(); return {q: M.queryRenderedFeatures({layers: ['q-fill']}).length, a: M.queryRenderedFeatures({layers: ['a-dot']}).length, v: M.queryRenderedFeatures({layers: ['v-dot']}).length, pitch: Math.round(M.getPitch()), liste: document.querySelector('#v2mlist .v2mhead').innerText}; });
+      await p.evaluate(() => V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.2})); await p.waitForTimeout(1800);
+      const zin = await rendu();
+      ok(`v2 ${dev} · zoom sur Le Mans : quartiers et annonces dessinés sans clic`, zin.q > 10 && zin.a > 0 && zin.v === 0, JSON.stringify(zin));
+      ok(`v2 ${dev} · zoom sur Le Mans : la carte s'incline et la liste suit la ville`, zin.pitch >= 30 && /Le Mans/.test(zin.liste), JSON.stringify(zin));
+      await p.evaluate(() => V2MAP().jumpTo({zoom: 14.2})); await p.waitForTimeout(1500);
+      ok(`v2 ${dev} · de près : plus inclinée (immeubles en 3D)`, await p.evaluate(() => V2MAP().getPitch() > 40 && V2MAP().getLayer('b3d').minzoom === 13));
+      await p.evaluate(() => V2MAP().jumpTo({zoom: 7})); await p.waitForTimeout(1500);
+      const zout = await rendu();
+      ok(`v2 ${dev} · dézoom : l'Ouest revient à plat, avec ses villes`, zout.pitch === 0 && zout.a === 0 && zout.v > (dev === 'tel' ? 4 : 10) && /L'Ouest/.test(zout.liste) && !/Le Mans/.test(zout.liste), JSON.stringify(zout));
+      await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800);
       ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => V2MAPN.quartiers > 20 && V2MAPN.annonces > 0 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
+      ok(`v2 ${dev} · Le Mans : les points des annonces sont dessinés`, await p.evaluate(() => V2MAP().queryRenderedFeatures({layers: ['a-dot']}).length > 0 && V2MAP().getZoom() >= 10));
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
       ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
       ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture`, await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'); return t.getBoundingClientRect().bottom < f.getBoundingClientRect().bottom - 40; }));
