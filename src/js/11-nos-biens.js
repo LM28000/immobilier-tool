@@ -17,8 +17,12 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
- if(+b.loyer>0){o.rent=+b.loyer; o.rentM2=S; o.rentFixed=true;} else o.rent=c.rent*rr;
- if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(+b.travaux>0) o.trav=+b.travaux; if(scn) o._s=scn;
+ /* bien suivi venu d'une annonce : ce qui a été lu dans sa description (loyer du bail en cours, taxe foncière, travaux) complète les champs restés vides,
+    même si la lecture est arrivée après l'ajout à la shortlist ; une valeur saisie garde la priorité */
+ const ia=(!(+b.loyer>0)||!(+b.tf>0)||!(+b.travaux>0))&&b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?lueIA(ficx(bienSuf(b)||"")):null;
+ const loy=+b.loyer>0?+b.loyer:(ia&&ia.loyer)||0, tf=+b.tf>0?+b.tf:(ia&&ia.tf)||0, trav=+b.travaux>0?+b.travaux:(ia&&ia.travaux)||0;
+ if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;} else o.rent=c.rent*rr;
+ if(+b.copro>0) o.copro=+b.copro; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
  return {x:calc(o),vac,t,pm2:+b.prix/S};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}

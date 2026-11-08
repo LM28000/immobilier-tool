@@ -82,6 +82,9 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     await p.click('#toast button'); await p.waitForTimeout(300);
     ok(T('annuler le retrait'), await p.evaluate(() => BIENS[0].statut === 'à voir' && !!document.querySelector('#shortList .bcard')));
     ok(T('prix à viser dans la shortlist'), await p.evaluate(() => !!document.querySelector('#shortList .btg')));
+    ok(T('bien suivi : loyer lu dans la description repris même après l\'ajout'), await p.evaluate(() => { const suf = Object.keys(FICX).find(k => { const f = FICX[k]; return f.ia && f.ia.loue && f.ia.loyer_mensuel; }); if (!suf) return false;
+      const b = {ville: 'lemans', prix: 60000, surface: 20, url: VTURL + suf, loyer: 0}, l = lueIA(FICX[suf]).loyer, hc = v => Math.max(v - H.chLoc, 0);
+      return l > 0 && Math.abs(calcBien(b).x.rentHC - hc(l)) < 1 && Math.abs(calcBien(Object.assign({}, b, {loyer: 999})).x.rentHC - hc(999)) < 1; }));
     ok(T('trois scénarios : prudent < central < favorable'), await p.evaluate(() => { const o = irr3(calc(C[0])); return o && o.prudent < o.central && o.central < o.favorable && Math.abs(o.central - calc(C[0]).irr) < 1e-9; }));
     ok(T('loyers recalés sur les meublés : écart meublé / vide mesuré'), await p.evaluate(() => ['studio', 't2', 't3'].every(t => LRC[t].prime > 1 && LRC[t].prime < 1.3)));
     ok(T('frais de revente : 3 % par défaut'), await p.evaluate(() => H.fraisVente === 3));

@@ -7,7 +7,8 @@ Usage :
       ventes d'abord (studios, T2, T3), puis locations, par lots de 10 à passer à tools/fiches-bienici.js.
       Affiche {"manquantes": n, "lots": [[[id, ville, "v"|"l"], …], …]}.
   python3 tools/fiches.py a-lire [--max 40]
-      Ventes dont la description n'a pas encore été lue par Claude : {"lots": [[{id, ville, titre, prix, surface, description}, …], …]} (lots de 10).
+      Ventes dont la description n'a pas encore été lue par Claude : {"lots": [[{id, ville, titre, prix, surface, description}, …], …]} (lots de 10),
+      celles qui parlent de loyer, bail, taxe foncière, travaux chiffrés ou résidence gérée d'abord.
   python3 tools/fiches.py lu data/lecture-du-jour.json
       Range ce que Claude a lu dans chaque description (champ « ia » de la fiche), après contrôle des bornes. Entrée : liste d'objets
       {id, loue, loyer_mensuel, loyer_charges_comprises, fin_bail, travaux_a_prevoir, travaux_votes, taxe_fonciere, surface_carrez,
@@ -146,6 +147,9 @@ def doublons(st, ids):
                 if d <= 100: out[j] = i
     return out
 
+# description qui peut changer le calcul (loyer d'un bien loué, taxe foncière, travaux chiffrés, résidence gérée) : lue en premier
+UTILE = re.compile(r"loyer|lou[ée]e?s?\b|locataire|bail\b|baux|taxe fonci|r[ée]sidence (?:de )?services|[ée]tudiante|gestionnaire|exploitant|travaux[^.]{0,80}\d", re.I)
+
 def a_lire(args):
     mx = int(args[args.index("--max") + 1]) if "--max" in args else 40
     st = load_store(); L = []
@@ -153,7 +157,7 @@ def a_lire(args):
         for i, f in c.items():
             if f.get("k") == "v" and "ia" not in f and f.get("d"):
                 L.append({"id": i, "ville": ck, "titre": f.get("titre"), "prix": f.get("prix"), "surface": f.get("surf"), "description": f["d"][:3000]})
-    L.sort(key=lambda x: x["id"]); pick = L[:mx]
+    L.sort(key=lambda x: (not UTILE.search(x["description"]), x["id"])); pick = L[:mx]   # d'abord celles qui peuvent changer le calcul
     print(json.dumps({"restantes": len(L), "lots": [pick[i:i + 10] for i in range(0, len(pick), 10)]}, ensure_ascii=False))
 
 def lu(args):
