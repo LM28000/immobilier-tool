@@ -833,14 +833,14 @@ small.alt.irr3{display:block;margin-top:2px;font-family:inherit;font-size:.68rem
 small.alt.irr3 .tipb{vertical-align:middle}
 /* ce qui pèse sur un bien */
 .pwrows{display:grid;gap:8px}
-.pwr{display:grid;grid-template-columns:minmax(120px,170px) minmax(110px,150px) 1fr auto;gap:4px 10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pwr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,140px);gap:3px 10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pws,.pwp{grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
 .pwr:first-child{border-top:0}
 .pwl{font-size:.88rem;font-weight:600}
 .pws{font-size:.78rem;color:var(--muted);line-height:1.35}
 .pws .pill{font-size:.7rem;padding:1px 6px;margin-right:3px}
-.pwp{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.pwp{font-size:.78rem;color:var(--muted)}
 .pwres{margin:8px 0 0;font-size:.92rem}
-@media (max-width:640px){.pwr{grid-template-columns:1fr 130px}.pws,.pwp{grid-column:1/-1}.pwp{white-space:normal}}
 </style>
 
 <div class="wrap">
@@ -2059,14 +2059,14 @@ function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) ret
  const d=patch=>{const y=calcBien(Object.assign({},b,patch)).x; return y.irr==null?null:y.irr-x.irr;};
  const loyCC=V.loyer.v||Math.round(x.rentHC+D.chLoc), tfAn=V.tf.v||Math.round(x.tf*12);
  const pt=v=>v==null?"":`${v>0?"+":"−"}${fr(Math.abs(v),1)} pt`;
- const src=(o,est)=>o.src==="saisi"?`saisi · ${est}`:est;
+ const src=(o,est)=>o.src==="saisi"?`à la place de : ${est}`:est;
  const det=L=>L.map(z=>`${esc(z[0])} : ${eur(z[1])}`).join(" + ");
  const rows=[
-  ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,`estimé : ${det(V.travaux.L)}`),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
-  ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,`estimé : ${det(V.meubles.L)}`),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
-  ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`estimé : loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
-  ["copro","Charges copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`annonce : ${eur(V.copro.tot)}/mois de charges, ${Math.round(PART_PROPRIO*100)} % pour vous`:`estimé (réglage du type)`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
-  ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`estimée : taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
+  ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,det(V.travaux.L)),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
+  ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,det(V.meubles.L)),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
+  ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
+  ["copro","Charges copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`${eur(V.copro.tot)}/mois de charges annoncées, ${Math.round(PART_PROPRIO*100)} % pour vous`:`réglage du type`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
+  ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
  const key=pwKey(b);
  return `<div class="pwbox" data-pwbox="${esc(key)}">
   <p class="sub" style="margin:0 0 6px">Les valeurs qui changent le plus le résultat. Modifiez-en une : le rendement se recalcule, et c'est enregistré dans nos biens (pour vous deux). Videz le champ pour revenir à l'estimation.</p>

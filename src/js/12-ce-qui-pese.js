@@ -49,14 +49,14 @@ function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) ret
  const d=patch=>{const y=calcBien(Object.assign({},b,patch)).x; return y.irr==null?null:y.irr-x.irr;};
  const loyCC=V.loyer.v||Math.round(x.rentHC+D.chLoc), tfAn=V.tf.v||Math.round(x.tf*12);
  const pt=v=>v==null?"":`${v>0?"+":"−"}${fr(Math.abs(v),1)} pt`;
- const src=(o,est)=>o.src==="saisi"?`saisi · ${est}`:est;
+ const src=(o,est)=>o.src==="saisi"?`à la place de : ${est}`:est;
  const det=L=>L.map(z=>`${esc(z[0])} : ${eur(z[1])}`).join(" + ");
  const rows=[
-  ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,`estimé : ${det(V.travaux.L)}`),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
-  ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,`estimé : ${det(V.meubles.L)}`),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
-  ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`estimé : loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
-  ["copro","Charges copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`annonce : ${eur(V.copro.tot)}/mois de charges, ${Math.round(PART_PROPRIO*100)} % pour vous`:`estimé (réglage du type)`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
-  ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`estimée : taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
+  ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,det(V.travaux.L)),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
+  ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,det(V.meubles.L)),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
+  ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
+  ["copro","Charges copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`${eur(V.copro.tot)}/mois de charges annoncées, ${Math.round(PART_PROPRIO*100)} % pour vous`:`réglage du type`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
+  ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
  const key=pwKey(b);
  return `<div class="pwbox" data-pwbox="${esc(key)}">
   <p class="sub" style="margin:0 0 6px">Les valeurs qui changent le plus le résultat. Modifiez-en une : le rendement se recalcule, et c'est enregistré dans nos biens (pour vous deux). Videz le champ pour revenir à l'estimation.</p>

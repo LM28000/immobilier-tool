@@ -60,7 +60,7 @@ fi
 M=.git/supabase-envoi
 if [ -f data/annoncesdata.js ] && { [ ! -f "$M" ] || [ -n "$(find data/annoncesdata.js data/historique.js data/fiches -newer "$M" 2>/dev/null | head -1)" ]; }; then
   if python3 tools/supabase_annonces.py push >.sync-err 2>&1; then touch "$M"; echo "$(now) annonces envoyées dans Supabase"
-  else echo "$(now) envoi Supabase impossible : $(tail -2 .sync-err | tr '\n' ' ')"; osascript -e 'display notification "Envoi des annonces vers Supabase impossible" with title "Notre studio"' >/dev/null 2>&1; fi
+  else echo "$(now) envoi Supabase impossible : $(python3 -c 'import json,sys;print("; ".join(json.load(open(sys.argv[1])).get("erreurs",[]))[:400])' .sync-err 2>/dev/null || tail -2 .sync-err | tr '\n' ' ')"; osascript -e 'display notification "Envoi des annonces vers Supabase impossible" with title "Notre studio"' >/dev/null 2>&1; fi
   rm -f .sync-err
 fi
 

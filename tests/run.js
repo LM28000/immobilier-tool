@@ -88,6 +88,15 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok(T('bien vendu loué : loyer du bail jusqu\'au départ du locataire, puis relevé'), await p.evaluate(() => { const c1 = Object.assign({}, C[0], {rent: 300, rentM2: 22, rentFixed: true, surf: 22, prixTot: 60000});
       const x1 = calc(c1), x2 = calc(Object.assign({}, c1, {bailAns: 0, rentEst: C[0].rent, rentM2Est: C[0].rentM2})), x3 = calc(Object.assign({}, c1, {bailAns: 50, rentEst: C[0].rent, rentM2Est: C[0].rentM2}));
       return bailAns('') === 3 && bailAns('2000') === 0 && bailAns('2099-01') > 70 && x2.irr > x1.irr && Math.abs(x3.irr - x1.irr) < 1e-9 && Math.abs(x2.cf - x1.cf) < 1e-9; }));
+    ok(T('ce qui pèse : travaux estimés selon l\'état et le DPE, valeur saisie prioritaire'), await p.evaluate(() => { const b = {ville: 'lemans', prix: 60000, surface: 20, dpe: 'F'}, v = valeursBien(b, 'studio');
+      const t = valeursBien(Object.assign({}, b, {travaux: 9000}), 'studio'), m = valeursBien(Object.assign({}, b, {meubles: 1200}), 'studio');
+      const x0 = calcBien(b).x, x1 = calcBien(Object.assign({}, b, {travaux: v.travaux.v + 5000})).x;
+      return v.travaux.v === H.travaux + 4000 && v.travaux.src === 'estimé' && t.travaux.v === 9000 && t.travaux.src === 'saisi' && m.meubles.v === 1200 && x1.cost > x0.cost && x1.irr < x0.irr; }));
+    ok(T('ce qui pèse : bloc dans la fiche d\'une annonce, recalcul en direct'), await p.evaluate(() => { for (const ck of Object.keys(ADSRAW)) { const A = ADS[ck]; if (!A || !A.ventes || !A.ventes.length) continue; const a = A.ventes[0];
+      const vb = Object.assign(venteBien(ck, a), {kind: 'v', suf: a[3]}), body = bienFicheBody(vb, {noHead: true}); if (!/data-sec="poids"/.test(body)) return false;
+      const d = document.createElement('div'); d.innerHTML = poidsHtml(vb); document.body.appendChild(d); const i = d.querySelector('[data-pw="travaux"]'), r0 = d.querySelector('[data-pwres]').textContent;
+      i.value = '40000'; i.dispatchEvent(new Event('input', {bubbles: true})); const r1 = d.querySelector('[data-pwres]').textContent; d.remove();
+      return d.querySelectorAll('[data-pw]').length === 5 && r1 !== r0 && /non enregistré/.test(r1); } return false; }));
     ok(T('trois scénarios : prudent < central < favorable'), await p.evaluate(() => { const o = irr3(calc(C[0])); return o && o.prudent < o.central && o.central < o.favorable && Math.abs(o.central - calc(C[0]).irr) < 1e-9; }));
     ok(T('loyers recalés sur les meublés : écart meublé / vide mesuré'), await p.evaluate(() => ['studio', 't2', 't3'].every(t => LRC[t].prime > 1 && LRC[t].prime < 1.3)));
     ok(T('frais de revente : 3 % par défaut'), await p.evaluate(() => H.fraisVente === 3));

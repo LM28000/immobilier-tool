@@ -76,14 +76,21 @@ def main():
             if k.startswith("fiches-"): put(f"data/fiches/{k[7:]}.json", json.dumps(v, ensure_ascii=False, separators=(",", ":")))
         print(json.dumps({"ecrits": out}, ensure_ascii=False, indent=1)); return
     res = {"envoyees": [], "erreurs": []}
+    import time
     for cle, data in rows():
-        try:
-            call("POST", base + "?on_conflict=groupe,cle", key, code, {"groupe": code, "cle": cle, "data": data, "maj": datetime.datetime.now(datetime.timezone.utc).isoformat()}, prefer="resolution=merge-duplicates,return=minimal")
-            res["envoyees"].append(f"{cle} ({len(json.dumps(data, ensure_ascii=False)) // 1024} Ko)")
-        except urllib.error.HTTPError as e:
-            res["erreurs"].append(f"{cle} : HTTP {e.code} {e.read().decode()[:200]}")
-        except Exception as e:
-            res["erreurs"].append(f"{cle} : {e}")
+        ok, err = False, ""
+        for essai in (1, 2, 3):   # une coupure ou un délai dépassé arrive parfois : on réessaie avant de signaler l'erreur
+            try:
+                call("POST", base + "?on_conflict=groupe,cle", key, code, {"groupe": code, "cle": cle, "data": data, "maj": datetime.datetime.now(datetime.timezone.utc).isoformat()}, prefer="resolution=merge-duplicates,return=minimal")
+                res["envoyees"].append(f"{cle} ({len(json.dumps(data, ensure_ascii=False)) // 1024} Ko)" + (f", {essai}e essai" if essai > 1 else ""))
+                ok = True; break
+            except urllib.error.HTTPError as e:
+                err = f"{cle} : HTTP {e.code} {e.read().decode()[:200]}"
+                if e.code < 500 and e.code != 429: break   # refus définitif : inutile de réessayer
+            except Exception as e:
+                err = f"{cle} : {e}"
+            if essai < 3: time.sleep(5 * essai)
+        if not ok: res["erreurs"].append(err)
     print(json.dumps(res, ensure_ascii=False, indent=1))
     if res["erreurs"]: sys.exit(1)
 
