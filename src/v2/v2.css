@@ -1,0 +1,55 @@
+/* ================= version 2 (v2.html) : même app, autre organisation =================
+   Onglets en haut (Carte, Annonces, Villes, Nos biens, Comparer, Budget), carte en plein écran à l'ouverture,
+   fiche dans un panneau à droite, découpée en onglets (le bien, le calcul, le quartier, l'achat).
+   Sur téléphone (body.mob), l'interface mobile existante reste, ouverte sur la carte. */
+#v2bar{display:none}
+html.v2 body:not(.mob){padding:0!important;--v2h:58px;--v2d:460px}
+html.v2 body:not(.mob) .wrap{max-width:none;padding:0;gap:0}
+html.v2 body:not(.mob) #v2bar{display:flex;position:fixed;top:0;left:0;right:0;height:var(--v2h);z-index:45;align-items:center;gap:14px;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-bottom:1px solid var(--line)}
+#v2bar .v2b{font-weight:800;font-size:16px;white-space:nowrap}
+#v2bar .v2tabs{display:flex;gap:2px;height:100%}
+#v2bar .v2tabs button{border:0;background:transparent;font:inherit;font-weight:700;font-size:14px;color:var(--muted);padding:0 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+#v2bar .v2tabs button[aria-current="page"]{color:var(--fg);border-bottom-color:var(--accent)}
+#v2bar .v2tabs button small{font-weight:700;color:var(--accent);margin-left:4px}
+#v2bar .v2r{margin-left:auto;display:flex;gap:10px;align-items:center}
+#v2bar .seg2 button{white-space:nowrap}
+/* ce que la v2 cache ou montre selon l'onglet */
+html.v2 body:not(.mob) header,html.v2 body:not(.mob) #sideNav,html.v2 body:not(.mob) #zFull,
+html.v2 body:not(.mob) #shortPanel,html.v2 body:not(.mob) #setPanel,html.v2 body:not(.mob) .main,html.v2 body:not(.mob) #tabsSec,html.v2 body:not(.mob) .foot{display:none}
+html.v2 body:not(.mob)[data-v2="carte"] .main{display:block}
+html.v2 body:not(.mob)[data-v2="annonces"] #tabsSec,html.v2 body:not(.mob)[data-v2="villes"] #tabsSec,html.v2 body:not(.mob)[data-v2="biens"] #tabsSec,html.v2 body:not(.mob)[data-v2="comparer"] #tabsSec{display:block}
+html.v2 body:not(.mob)[data-v2="biens"] #shortPanel{display:block}
+html.v2 body:not(.mob)[data-v2="budget"] #setPanel,html.v2 body:not(.mob)[data-v2="budget"] .foot{display:block}
+html.v2 body:not(.mob) #tabsSec>[role="tablist"]{display:none}
+html.v2 body:not(.mob)[data-v2="villes"] #tabsSec>[role="tablist"]{display:flex}
+html.v2 body:not(.mob)[data-v2="villes"] #tab-cmp,html.v2 body:not(.mob)[data-v2="villes"] #tab-ann,html.v2 body:not(.mob)[data-v2="villes"] #tab-biens{display:none}
+/* pages autres que la carte : une colonne centrée sous la barre, décalée quand la fiche est ouverte */
+html.v2 body:not(.mob):not([data-v2="carte"]) .wrap{padding:calc(var(--v2h) + 20px) max(20px,env(safe-area-inset-right,0px)) 32px max(20px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px;max-width:1320px;margin:0 auto}
+html.v2 body:not(.mob).v2open:not([data-v2="carte"]) .wrap{margin:0;max-width:none;padding-right:calc(var(--v2d) + 20px)}
+/* carte plein écran sous la barre ; la fiche à droite */
+html.v2 body:not(.mob)[data-v2="carte"]{overflow:hidden}
+html.v2 body:not(.mob)[data-v2="carte"] #mapSec{position:fixed!important;top:var(--v2h)!important;left:0!important;bottom:0!important;right:var(--v2d)!important;inset:auto;z-index:5!important;margin:0;border-radius:0!important;border:0!important;display:flex;flex-direction:column;overflow:hidden;padding:10px 12px}
+html.v2 body:not(.mob)[data-v2="carte"] #mapSec .mapbox{flex:1;min-height:0}
+html.v2 body:not(.mob)[data-v2="carte"] #mapSec #map{height:100%}
+html.v2 body:not(.mob)[data-v2="carte"] #mapSec .qmeth,html.v2 body:not(.mob)[data-v2="carte"] #qBox{display:none}
+html.v2 body:not(.mob) #side{display:none}
+html.v2 body:not(.mob).v2open:not([data-v2="carte"]) .main{display:block}
+html.v2 body:not(.mob).v2open:not([data-v2="carte"]) #mapSec{display:none}
+html.v2 body:not(.mob)[data-v2="carte"] #side,html.v2 body:not(.mob).v2open #side{display:block;position:fixed;top:var(--v2h);right:0;bottom:0;width:var(--v2d);overflow:auto;z-index:30;background:var(--surface);border-left:1px solid var(--line);margin:0;padding:0}
+html.v2 body:not(.mob) #side .panel{border:0;border-radius:0;box-shadow:none;margin:0}
+html.v2 body:not(.mob) #side .qdetail{position:static!important;width:auto!important;max-height:none!important;box-shadow:none!important;border-radius:0!important;inset:auto!important}
+html.v2 body:not(.mob) #side .qdetail .crumbs{position:sticky;top:0;z-index:6;background:var(--surface)}
+html.v2 body:not(.mob) #side .sheetx{display:inline-flex!important}
+/* onglets de la fiche */
+.v2ft{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 10px;position:sticky;top:44px;z-index:5;background:var(--surface);padding:6px 0;border-bottom:1px solid var(--line)}
+.v2ft button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;min-height:34px}
+.v2ft button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+/* annonces : tableau ou nuage */
+.v2annv{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+#v2nuage{margin-top:10px}
+#v2nuage svg{width:100%;height:auto;display:block}
+#v2nuage text{fill:var(--muted);font-size:11px;font-family:var(--f-ui)}
+#v2nuage [data-v2ad]{cursor:pointer}
+body.v2nu #annBox table,body.v2nu #annBox .annmore,body.v2nu #annBox [data-dfmore]{display:none!important}
+.v2leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+@media (max-width:1180px){html.v2 body:not(.mob){--v2d:400px} #v2bar .v2tabs button{padding:0 8px}}

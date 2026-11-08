@@ -18,6 +18,7 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `tests/unit.js`, `tests/test_donnees.py` | tests rapides : calcul financier et fiscal, nettoyage des biens partagés, scripts de données, cohérence des villes |
 | `publication.json` | annonces dans la page publique ou seulement dans Supabase |
 | `build.py` | assemble `index.html` (la page servie) et `dist/` |
+| `src/v2/`, `v2.html` | version 2 à l'essai : la même app (données, calcul, fiches) réorganisée en onglets, carte d'abord, fiche en panneau découpé en onglets, annonces en tableau ou en nuage ; `index.html` reste l'app actuelle |
 | `manifest.webmanifest`, `sw.js`, `icons/` | appli installable sur téléphone, utilisable hors ligne (version GitHub) |
 | `supabase.sql` | tables partagées « Nos biens » et « annonces » (accès par code de groupe) ; `tools/supabase_annonces.py` envoie les annonces |
 | `sync.sh`, `install-sync.sh` | poussent automatiquement les changements sur GitHub (launchd), après vérification des données et de la page ; en cas de refus, notification macOS et ligne « NON PUBLIÉ » dans `sync.log` |

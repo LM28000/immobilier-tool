@@ -122,8 +122,11 @@ def code(public):
         *[open(p, encoding="utf-8").read() for p in after],
     ])
 
-def page(public):
-    return need("src/head.html") + "<style>\n" + need("src/styles.css") + "</style>\n" + need("src/body.html") + "<script>\n" + code(public) + "</script>\n"
+def page(public, v2=False):
+    """v2=True : la même page, réorganisée par src/v2 (onglets, carte d'abord, fiche en panneau) ; publiée à part dans v2.html"""
+    css = need("src/styles.css") + ("\n" + need("src/v2/v2.css") if v2 else "")
+    js = code(public) + ("\n" + need("src/v2/v2.js") if v2 else "")
+    return need("src/head.html") + "<style>\n" + css + "</style>\n" + need("src/body.html") + "<script>\n" + js + "</script>\n"
 
 pub, full = page(True), page(False)
 
@@ -136,6 +139,9 @@ if shutil.which("node"):
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as t: t.write(code(False))
     r = subprocess.run(["node", "--check", t.name], capture_output=True, text=True); os.unlink(t.name)
     if r.returncode: ERR.append("erreur de syntaxe dans le script assemblé :\n" + "\n".join(r.stderr.splitlines()[:6]))
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as t: t.write(code(False) + "\n" + need("src/v2/v2.js"))
+    r = subprocess.run(["node", "--check", t.name], capture_output=True, text=True); os.unlink(t.name)
+    if r.returncode: ERR.append("erreur de syntaxe dans le script de la v2 :\n" + "\n".join(r.stderr.splitlines()[:6]))
 else: print("attention : node introuvable, syntaxe non vérifiée", file=sys.stderr)
 if len(pub) > 3_000_000: ERR.append(f"page publique trop lourde ({len(pub)} octets)")
 if ERR:
@@ -156,6 +162,10 @@ head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
 html = head + pub + "</body></html>"
 w("dist/index.html", html)
 if not os.path.exists(P("index.html")) or rd("index.html") != html: w("index.html", html)   # pas de réécriture inutile (sync.sh surveille ce fichier)
+# version 2 : même données et même calcul, organisation différente (src/v2) ; l'app actuelle reste à index.html
+html2 = head + page(True, True) + "</body></html>"
+if not os.path.exists(P("v2.html")) or rd("v2.html") != html2: w("v2.html", html2)
+w("dist/v2-test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + page(False, True))
 ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
 sw = rd("sw.js"); sw2 = re.sub(r'const VERSION = "[^"]*";', f'const VERSION = "{ver}";', sw, count=1)
 if sw2 != sw: w("sw.js", sw2)
