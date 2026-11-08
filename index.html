@@ -961,7 +961,7 @@ small.alt.irr3 .tipb{vertical-align:middle}
         <label class="f">Quartier<span class="inp"><select name="quartier" id="b-quartier"></select></span></label>
         <label class="f">Prix affiché<span class="inp"><input name="prix" type="number" inputmode="numeric" min="5000" step="500" required><span>€</span></span></label>
         <label class="f">Surface<span class="inp"><input name="surface" type="number" inputmode="decimal" min="8" step="0.5" required><span>m²</span></span></label>
-        <label class="f">Charges copro (part proprio)<span class="inp"><input name="copro" type="number" inputmode="numeric" min="0" step="5" placeholder="50"><span>€/mois</span></span></label>
+        <label class="f">Charges de copro (votre part)<span class="inp"><input name="copro" type="number" inputmode="numeric" min="0" step="5" placeholder="50"><span>€/mois</span></span></label>
         <label class="f">Taxe foncière<span class="inp"><input name="tf" type="number" inputmode="numeric" min="0" step="10" placeholder="estimée"><span>€/an</span></span></label>
         <label class="f">Loyer visé, charges comprises<span class="inp"><input name="loyer" type="number" inputmode="numeric" min="0" step="5" placeholder="estimé"><span>€</span></span></label>
         <label class="f">DPE<span class="inp"><select name="dpe"><option value="">?</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option></select></span></label>
@@ -1089,7 +1089,7 @@ const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,d
 const HDEF=Object.assign({},H);   /* valeurs de départ (bouton « valeurs par défaut ») */
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
- ["copro","Copro (part proprio)","€/mois",1],["grosTrav","Gros travaux copro (provision)","€/m²/an",1],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
+ ["copro","Charges de copro (votre part)","€/mois",1],["grosTrav","Gros travaux copro (provision)","€/m²/an",1],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
  ["salaires","Revenus nets du foyer","€/mois",50],["pretEtud","Autres crédits en cours","€/mois",10],["fraisVente","Frais à la revente","%",0.5]];
 /* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) ; communs à deux avec la liste commune (13-reglages-communs.js) */
 const HYPK=["apport","duree","notaire","grosTrav","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
@@ -1778,7 +1778,7 @@ function scnInner(key){const R=SCNR[key]; if(!R) return ""; const b=R(null), s=R
  const [bb]=bank(b.ratio), [sb]=bank(s.ratio), row=(l,f)=>`<tr><td>${l}</td><td class="r mono">${f(b)}</td><td class="r mono">${scnActive()?f(s):"—"}</td></tr>`;
  return `<div class="scnchips">${SCNL.map(([k,l])=>`<button type="button" class="chip${SCN[k]?" on":""}" data-scnk="${k}" aria-pressed="${SCN[k]}">${l}</button>`).join("")}
   <span class="seg2 hz" role="group" aria-label="Revente">${[7,10,15,25].map(v=>`<button type="button" data-scnhz="${v}" aria-pressed="${SCN.hz===v}">${v} ans</button>`).join("")}</span></div>
-  ${scnActive()?"":`<p class="sub" style="margin:0 0 6px">Cochez une ou plusieurs hypothèses pour les comparer à la base. La durée de revente s'applique aux deux colonnes.</p>`}<table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
+  ${scnActive()?"":`<p class="sub" style="margin:0 0 6px">Cochez une ou plusieurs hypothèses pour les comparer à la base : c'est une comparaison, rien n'est enregistré. La durée de revente s'applique aux deux colonnes.</p>`}<table class="scnt"><thead><tr><th></th><th class="r">Base</th><th class="r">Et si…</th></tr></thead><tbody>
   ${row("Cash-flow / mois",x=>`<span class="${x.cf>=0?"pos":"neg"}">${sgn(x.cf)}</span>`)}
   ${row("Rendement, revente à "+SCN.hz+" ans",x=>x.irr==null?"n.d.":`<b style="color:${colIrr(x.irr)}">${pct(x.irr)}</b>`)}
   ${row("Banque",x=>{const [c,t]=bank(x.ratio); return `<span class="pill ${c}">${t}</span>`;})}
@@ -2075,7 +2075,7 @@ function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) ret
   ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,det(V.travaux.L)),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
   ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,det(V.meubles.L)),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
   ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
-  ["copro","Charges copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`${eur(V.copro.tot)}/mois de charges annoncées, ${Math.round(PART_PROPRIO*100)} % pour vous`:`réglage du type`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
+  ["copro","Charges de copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`${eur(V.copro.tot)}/mois de charges annoncées, ${Math.round(PART_PROPRIO*100)} % pour vous`:`réglage du type`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
   ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
  const key=pwKey(b);
  return `<div class="pwbox" data-pwbox="${esc(key)}">
