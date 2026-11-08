@@ -240,6 +240,41 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       ok('ordi · vraie carte sans erreur', errs.length === 0, errs.join(' | '));
       await c.close(); }
   }
+  // version 2 (v2.html) : l'interface des maquettes sur le moteur de l'app
+  { const fs = require('fs'), LJ2 = process.env.LEAFLET_JS || path.join(__dirname, 'vendor/leaflet-1.9.4.js'), URL2 = 'file://' + path.resolve(__dirname, '../dist/v2-test.html');
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+    for (const [dev, opt] of [['ordi', {viewport: {width: 1440, height: 900}}], ['tel', {...devices['iPhone 13']}]]) {
+      const c = await b.newContext(opt); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());   // les routes ajoutées ensuite passent avant
+      await p.route('**/tile.openstreetmap.org/**', r => r.fulfill({body: png, contentType: 'image/png'}));
+      await p.route('**/cdnjs.cloudflare.com/ajax/libs/leaflet/**', r => fs.existsSync(LJ2) ? r.fulfill({body: fs.readFileSync(LJ2), contentType: 'application/javascript'}) : r.abort());
+      await p.goto(URL2); await p.waitForTimeout(2000);
+      ok(`v2 ${dev} · critères au premier lancement`, await p.evaluate(() => !!document.querySelector('.v2dlg') && +document.getElementById('v2cN').textContent > 0));
+      await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
+      ok(`v2 ${dev} · carte de l'Ouest et ses 13 villes`, await p.evaluate(() => !!document.querySelector('#v2map.leaflet-container') && document.querySelectorAll('#v2mlist [data-v2city]').length === 13));
+      await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1500);
+      ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => document.querySelectorAll('#v2map path').length > 20 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
+      await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
+      ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
+      await p.evaluate(() => document.querySelector('#v2fiche [data-v2ft="achat"]').click()); await p.waitForTimeout(300);
+      const r0 = await p.evaluate(() => document.querySelector('#v2fiche .v2sec .v2k b').textContent);
+      await p.evaluate(() => { const s = document.getElementById('v2off'); s.value = '88'; s.dispatchEvent(new Event('input', {bubbles: true})); }); await p.waitForTimeout(300);
+      ok(`v2 ${dev} · offre plus basse : rendement recalculé`, await p.evaluate(r0 => { const b = document.querySelector('#v2fiche .v2sec .v2k b').textContent; return b !== r0 && parseFloat(b.replace(',', '.').replace('−', '-')) > parseFloat(r0.replace(',', '.').replace('−', '-')); }, r0));
+      await p.evaluate(() => document.querySelector('[data-v2close]').click());
+      await p.evaluate(() => document.querySelector('[data-v2tab="annonces"]').click()); await p.waitForTimeout(500);
+      const n0 = await p.evaluate(() => document.querySelectorAll('#v2p-annonces [data-v2open]').length);
+      await p.evaluate(() => document.querySelectorAll('#v2p-annonces [data-v2open]')[2].click()); await p.waitForTimeout(500);
+      ok(`v2 ${dev} · ouvrir une annonce ne filtre pas le tableau`, n0 > 2 && await p.evaluate(n0 => document.querySelectorAll('#v2p-annonces [data-v2open]').length === n0 && !document.getElementById('v2fiche').hidden, n0));
+      await p.evaluate(() => { document.querySelector('[data-v2close]').click(); document.querySelector('[data-v2av="nuage"]').click(); }); await p.waitForTimeout(400);
+      ok(`v2 ${dev} · nuage des annonces`, await p.evaluate(() => document.querySelectorAll('#v2p-annonces svg [data-v2open]').length > 2));
+      await p.evaluate(() => document.querySelector('[data-v2tab="villes"]').click()); await p.waitForTimeout(400);
+      ok(`v2 ${dev} · villes`, await p.evaluate(() => document.querySelectorAll('#v2p-villes [data-v2city]').length === 13));
+      await p.evaluate(() => document.querySelector('[data-v2tab="budget"]').click()); await p.waitForTimeout(300);
+      await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '20000'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(400);
+      ok(`v2 ${dev} · hypothèse modifiée et appliquée`, await p.evaluate(() => H.apport === 20000));
+      await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '15000'; i.dispatchEvent(new Event('change', {bubbles: true})); });
+      ok(`v2 ${dev} · sans erreur`, errs.length === 0, errs.slice(0, 3).join(' | '));
+      await c.close(); } }
   await b.close();
   let bad = 0; for (const [name, pass, info] of res) { if (!pass) bad++; console.log((pass ? '✓ ' : '✗ ') + name + (pass || !info ? '' : '  → ' + info)); }
   console.log(`\n${res.length - bad}/${res.length} tests réussis`); process.exit(bad ? 1 : 0);

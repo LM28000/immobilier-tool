@@ -1,12 +1,13 @@
 /* ---------- nos biens (liste partagée) ---------- */
 let BIENS=[], DB=null, USER=null;
 /* chaque bien lu passe par ici : types vérifiés, listes blanches, longueurs bornées. Une ligne abîmée reste visible (« bien illisible ») pour pouvoir la supprimer. */
-function normBien(id,raw){const r=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{}, num=v=>{v=+v; return isFinite(v)?v:0;}, str=(v,n)=>typeof v==="string"?v.slice(0,n):"", obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:undefined;
+function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à voir | "n" passer} */ const votesOf=v=>{if(!v||typeof v!=="object"||Array.isArray(v)) return undefined; const o={}; Object.entries(v).slice(0,6).forEach(([k,x])=>{k=String(k).slice(0,30); if(k&&["o","m","n"].includes(x)) o[k]=x;}); return Object.keys(o).length?o:undefined;};
+ const r=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{}, num=v=>{v=+v; return isFinite(v)?v:0;}, str=(v,n)=>typeof v==="string"?v.slice(0,n):"", obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:undefined;
  const sid=String(id==null?"":id).replace(/[^A-Za-z0-9_-]/g,"").slice(0,64), okV=C.some(c=>c.k===r.ville), url=str(r.url,500);
  const b={id:sid,titre:str(r.titre,120),url:/^https?:\/\//i.test(url)?url:"",ville:okV?r.ville:C[0].k,quartier:str(r.quartier,80),secteur:str(r.secteur,80),
   prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
   notes:str(r.notes,200),statut:["à voir","visité","offre faite","compromis","acheté","écarté"].includes(r.statut)?r.statut:"à voir",fav:r.fav===true,par:str(r.par,30),ts:num(r.ts),
-  short:typeof r.short==="boolean"?r.short:undefined,suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
+  short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
  Object.keys(b).forEach(k=>{if(b[k]===undefined) delete b[k];});
  if(TYPES[r.type]) b.type=r.type; if(+r.pieces>0) b.pieces=num(r.pieces); if(isFinite(+r.lat)&&r.lat!=null) b.lat=+r.lat; if(isFinite(+r.lon)&&r.lon!=null) b.lon=+r.lon;
  if(b.geo&&b.geo.foot&&!Array.isArray(b.geo.foot)) delete b.geo.foot;
