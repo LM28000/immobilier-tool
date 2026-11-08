@@ -61,8 +61,8 @@ const DFL={loue:["warn","loué","Vendu loué : un bail est en cours. Demandez le
  vote:["warn","copro : travaux","Travaux de copropriété mentionnés (ravalement, travaux votés) : demandez qui les paie et le montant."],
  meub:["ok","vendu meublé","Vendu meublé : moins de meubles à acheter."]};
 function ficheAttn(suf){const f=ficx(suf); if(!f) return []; const L=(f.fl||[]).filter(k=>DFL[k]).map(k=>[DFL[k][0]==="ok"?"ok":DFL[k][0],DFL[k][2]]); if(f.dup) L.push(["warn","Le même bien semble publié moins cher par une autre agence : comparez les deux annonces avant de contacter."]); return L;}
-function ficheBadges(suf){const f=ficx(suf); if(!f) return ""; const b=[];
- if(f.dpe) b.push(`<span class="hb ${/[FG]/.test(f.dpe)?"fbad":"old"}" title="DPE annoncé">DPE ${f.dpe}</span>`);
+function ficheBadges(suf,sansDpe){const f=ficx(suf); if(!f) return ""; const b=[];
+ if(f.dpe&&!sansDpe) b.push(`<span class="hb ${/[FG]/.test(f.dpe)?"fbad":"old"}" title="DPE annoncé">DPE ${f.dpe}</span>`);
  (f.fl||[]).forEach(k=>{const d=DFL[k]; if(d) b.push(`<span class="hb ${d[0]==="bad"?"fbad":d[0]==="warn"?"fwarn":"drop"}" title="${esc(d[2])}">${d[1]}</span>`);});
  if(f.proc) b.push(`<span class="hb fbad" title="Copropriété en procédure selon l'annonce">copro en procédure</span>`);
  if(f.dup) b.push(`<span class="hb old" title="Le même bien est publié moins cher par une autre agence">doublon</span>`);

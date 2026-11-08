@@ -164,3 +164,22 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .leaflet-tooltip.v2tip.v2tipdim{opacity:.72!important;font-weight:600}
 .v2tabbar button{position:relative}
 .v2bdg{position:absolute;top:3px;left:calc(50% + 5px);background:var(--accent);color:var(--surface);border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;line-height:16px;padding:0 4px;box-sizing:border-box;margin:0}
+/* fiche : en-tête compact (vignette, titre, trois chiffres sur une ligne) ; « En bref » des villes et quartiers */
+.v2fhd{display:flex;gap:12px;align-items:flex-start}
+.v2fth{width:112px;height:84px;object-fit:cover;border-radius:10px;flex-shrink:0;background:var(--sunk)}
+.v2fhdt{min-width:0}
+.v2kp3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.v2kp3 .v2k{padding:9px 10px}
+.v2kp3 .v2k b{font-size:19px}
+.v2kp3 .v2k span{font-size:10px;letter-spacing:.04em}
+.v2kp3 .v2bigbar{height:6px;margin:5px 0 2px}
+.v2kp3 .v2bigbar b{width:12px;height:12px;margin-left:-6px;top:-3px;border-width:2px}
+.v2dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:0;font-size:13.5px}
+.v2dl dt{color:var(--muted)} .v2dl dd{margin:0}
+@media (max-width:860px){.v2fth{width:88px;height:66px}.v2kp3 .v2k b{font-size:17px}.v2kp3 .v2k small{font-size:11px}}
+/* la règle générale table{min-width:960px} de l'app ne vaut que pour les grands tableaux de la v2 */
+#v2app table.v2t{min-width:0}
+#v2app table.v2t.v2wide{min-width:880px}
+#v2app .v2t.v2tight th{white-space:normal;line-height:1.25}
+#v2app .v2t.v2tight th,#v2app .v2t.v2tight td{padding:7px 6px}
+@media (max-width:860px){.v2tabs2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.v2tabs2::-webkit-scrollbar{display:none}.v2tabs2 button{flex-shrink:0}}
