@@ -28,6 +28,10 @@ async function mlRoutes(p) {
     ok('ajout d\'un bien · adresse : ville et quartier trouvés', await p.evaluate(() => document.getElementById('b-ville').value === 'lemans' && !!document.getElementById('b-quartier').value));
     await p.fill('.v2dlg #biensForm [name=prix]', '60000'); await p.fill('.v2dlg #biensForm [name=surface]', '22'); await p.click('.v2dlg #biensForm [type=submit]'); await p.waitForFunction(() => BIENS.length === 1 && BIENS[0].geo && BIENS[0].geo.risq, null, {timeout: 8000}).catch(() => {});
     ok('ajout d\'un bien · adresse enregistrée avec trajets et risques', await p.evaluate(() => BIENS.length === 1 && BIENS[0].lat > 47 && BIENS[0].geo && BIENS[0].geo.foot.length === 3 && !!BIENS[0].geo.risq));
+    await p.evaluate(() => document.querySelector('[data-v2tab="carte"]').click()); await p.waitForTimeout(1500);
+    ok('ajout d\'un bien · placé sur la carte à son adresse', await p.evaluate(() => { const f = V2MAP().getSource('annonces')._data.features.find(f => f.properties.k === 'b|' + BIENS[0].id); return !!f && Math.abs(f.geometry.coordinates[1] - BIENS[0].lat) < 1e-6 && !f.properties.ap; }));
+    await p.evaluate(() => { document.querySelector('[data-v2tab="biens"]').click(); document.querySelector(`[data-v2open="b|${BIENS[0].id}"]`).click(); }); await p.waitForTimeout(600);
+    ok('ajout d\'un bien · la fiche dit qu\'il est à l\'adresse saisie', await p.evaluate(() => /Sur la carte : à l'adresse saisie/.test((document.querySelector('#v2fiche .v2pos') || {}).textContent || '')));
     ok('ajout d\'un bien · adresse sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // thème : clair par défaut même si l'appareil est en sombre ; bouton en haut et choix dans Budget ; la carte change de fond et garde ses couches
@@ -56,7 +60,7 @@ async function mlRoutes(p) {
       ok(`v2 ${dev} · critères au premier lancement`, await p.evaluate(() => !!document.querySelector('.v2dlg') && +document.getElementById('v2cN').textContent > 0));
       await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
       ok(`v2 ${dev} · carte de l'Ouest et ses 20 villes`, await p.evaluate(() => !!(window.V2MAP && V2MAP()) && V2MAPN.villes === C.length && document.querySelectorAll('#v2mlist [data-v2city]').length === C.length && C.length === 20));
-      ok(`v2 ${dev} · carte : toutes les couches acceptées (quartiers, annonces, villes, immeubles 3D)`, await p.evaluate(() => { const M = V2MAP(); return ['q-fill', 'q-line', 'a-dot', 'v-dot', 'v-lab', 'b3d'].every(l => M.getLayer(l)) && V2MAPN.err.length === 0; }), await p.evaluate(() => V2MAPN.err.join(' | ')));
+      ok(`v2 ${dev} · carte : toutes les couches acceptées (quartiers, annonces, villes, immeubles 3D)`, await p.evaluate(() => { const M = V2MAP(); return ['q-fill', 'q-line', 'q-lab', 'a-dot', 'a-hole', 'a-zone', 'v-dot', 'v-lab', 'b3d', 'p-tram', 'p-dot'].every(l => M.getLayer(l)) && V2MAPN.err.length === 0; }), await p.evaluate(() => V2MAPN.err.join(' | ')));
       ok(`v2 ${dev} · carte de l'Ouest à plat, sans quartiers ni annonces de loin`, await p.evaluate(() => { const M = V2MAP(); return M.getPitch() === 0 && M.queryRenderedFeatures({layers: ['v-dot']}).length > 10 && !M.queryRenderedFeatures({layers: ['a-dot']}).length; }));
       // zoomer suffit : quartiers et annonces apparaissent, la carte s'incline, la liste passe à la ville au centre
       const rendu = () => p.evaluate(() => { const M = V2MAP(); return {q: M.queryRenderedFeatures({layers: ['q-fill']}).length, a: M.queryRenderedFeatures({layers: ['a-dot']}).length, v: M.queryRenderedFeatures({layers: ['v-dot']}).length, pitch: Math.round(M.getPitch()), liste: document.querySelector('#v2mlist .v2mhead').innerText}; });
@@ -72,6 +76,8 @@ async function mlRoutes(p) {
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800);
       ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => V2MAPN.quartiers > 20 && V2MAPN.annonces > 0 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
       ok(`v2 ${dev} · Le Mans : les points des annonces sont dessinés`, await p.evaluate(() => V2MAP().queryRenderedFeatures({layers: ['a-dot']}).length > 0 && V2MAP().getZoom() >= 10));
+      ok(`v2 ${dev} · carte : positions exactes en points pleins, approchées en points creux`, await p.evaluate(() => { const M = V2MAP(), F = M.getSource('annonces')._data.features; return F.some(f => f.properties.ap) && F.some(f => !f.properties.ap) && M.queryRenderedFeatures({layers: ['a-hole']}).length > 0 && M.queryRenderedFeatures({layers: ['a-hole']}).length < M.queryRenderedFeatures({layers: ['a-dot']}).length; }));
+      ok(`v2 ${dev} · carte : noms des quartiers prêts`, await p.evaluate(() => V2MAPN.qnoms > 500));
       if (dev === 'ordi') {   // la bulle du survol ne bloque pas la carte : survoler un quartier puis zoomer à la molette sans bouger la souris
         const pt = await p.evaluate(() => { const M = V2MAP(), cv = M.getCanvas().getBoundingClientRect(); for (let y = 200; y < cv.height - 100; y += 25) for (let x = 450; x < cv.width - 80; x += 25) { if (M.queryRenderedFeatures([x, y], {layers: ['q-fill']}).length && !M.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {layers: ['a-dot']}).length) return {x: cv.left + x, y: cv.top + y}; } return null; });
         await p.mouse.move(pt.x - 3, pt.y - 3); await p.mouse.move(pt.x, pt.y); await p.waitForTimeout(300);
@@ -81,9 +87,31 @@ async function mlRoutes(p) {
         for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, -120); await p.waitForTimeout(60); } await p.waitForTimeout(1500);
         const z1 = await p.evaluate(() => V2MAP().getZoom());
         ok(`v2 ${dev} · carte : la bulle du survol ne bloque ni la molette ni les clics`, bulle === 'none' && z1 > z0 + 1, JSON.stringify({bulle, z0, z1}));
+        // glisser la carte pendant l'inclinaison automatique : le point saisi reste sous le curseur (avant : le geste était annulé, la carte semblait bloquée)
+        await p.evaluate(() => V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 9.2, pitch: 0, bearing: 0})); await p.waitForTimeout(1500);
+        await p.mouse.move(900, 450); for (let i = 0; i < 5; i++) { await p.mouse.wheel(0, -120); await p.waitForTimeout(40); }
+        await p.evaluate(() => new Promise(r => { const t = setTimeout(r, 2500); V2MAP().once('moveend', () => { clearTimeout(t); r(); }); })); await p.waitForTimeout(450);
+        const pi0 = await p.evaluate(() => V2MAP().getPitch()), ll = await p.evaluate(() => { const q = V2MAP().unproject([900, 450]); return [q.lng, q.lat]; });
+        await p.mouse.down(); for (let i = 1; i <= 12; i++) { await p.mouse.move(900 - 25 * i, 450 + 8 * i); await p.waitForTimeout(25); } await p.waitForTimeout(40);
+        const sous = await p.evaluate(ll => { const q = V2MAP().project(ll); return [q.x, q.y]; }, ll); await p.mouse.up(); await p.waitForTimeout(1600);
+        const pi1 = await p.evaluate(() => V2MAP().getPitch());
+        ok('v2 ordi · carte : glisser pendant l\'inclinaison automatique suit la souris', pi0 > 2 && pi0 < 40 && Math.hypot(sous[0] - 600, sous[1] - 546) < 30 && pi1 > 40, JSON.stringify({pi0, sous, pi1}));
         await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]') || V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.3}));
+        // couleur des quartiers au choix : prix au m² en bleu, avec son échelle ; retour au rendement
+        await p.evaluate(() => V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.3})); await p.waitForTimeout(1200);
+        await p.selectOption('[data-v2qm]', 'prix'); await p.waitForTimeout(800);
+        ok('v2 ordi · carte : quartiers colorés par le prix au m², échelle dans la légende', await p.evaluate(() => { const F = V2MAP().getSource('quartiers')._data.features, blues = ['#b7d3f6', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b']; return document.querySelector('[data-v2qm]').value === 'prix' && JSON.parse(localStorage.getItem('v2s')).qm === 'prix' && F.filter(f => blues.includes(f.properties.c)).length > 500 && new Set(F.map(f => f.properties.c)).size >= 5 && /€\/m²/.test(document.getElementById('v2mleg').textContent) && F.some(f => /\d €\/m²/.test(f.properties.t)); }), await p.evaluate(() => document.getElementById('v2mleg').textContent));
+        await p.selectOption('[data-v2qm]', 'irr'); await p.waitForTimeout(800);
+        ok('v2 ordi · carte : retour au rendement', await p.evaluate(() => JSON.parse(localStorage.getItem('v2s')).qm === 'irr' && !V2MAP().getSource('quartiers')._data.features.some(f => f.properties.c === '#3987e5')));
       }
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
+      ok(`v2 ${dev} · fiche : où le bien est placé sur la carte`, await p.evaluate(() => /^Sur la carte : /.test(((document.querySelector('#v2fiche .v2pos') || {}).textContent || '').trim())));
+      if (dev === 'ordi') {
+        const ka = await p.evaluate(() => { const A = new Set(V2MAP().getSource('annonces')._data.features.filter(f => f.properties.ap).map(f => f.properties.k)); const r = [...document.querySelectorAll('#v2mlist [data-v2open]')].find(e => A.has(e.dataset.v2open)); if (r) r.click(); return r ? r.dataset.v2open : null; });
+        await p.waitForTimeout(2600);
+        ok('v2 ordi · annonce à position approchée : zone dessinée, fiche qui le dit', !!ka && await p.evaluate(() => V2MAP().queryRenderedFeatures({layers: ['a-zone']}).length === 1 && /position approchée/.test(document.querySelector('#v2fiche .v2pos').textContent)), String(ka));
+        await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
+      }
       ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
       ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture`, await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'); return t.getBoundingClientRect().bottom < f.getBoundingClientRect().bottom - 40; }));
       ok(`v2 ${dev} · fiche : le DPE une seule fois dans l'en-tête`, await p.evaluate(() => { const h = document.querySelector('#v2fiche .v2fb'), t = h.querySelector('.v2tabs2'); let n = 0, e = h.firstElementChild; while (e && e !== t) { n += (e.innerText.match(/DPE [A-G]/g) || []).length; e = e.nextElementSibling; } return n <= 1; }));

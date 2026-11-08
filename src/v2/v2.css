@@ -80,6 +80,15 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2row .v2rv{text-align:right;font-family:var(--f-num);font-weight:700}
 .v2mleg{position:absolute;right:12px;bottom:12px;z-index:500;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:7px 10px;font-size:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;max-width:calc(100% - 400px)}
 .v2mleg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+/* légende : couleur des quartiers au choix, échelle, points pleins (adresse) et creux (position approchée), autour */
+.v2mleg>span{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.v2mlq{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.v2mlq select{font:inherit;font-weight:600;color:var(--fg);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:3px 6px;min-height:28px;cursor:pointer}
+.v2mleg .v2ramp{gap:0}.v2mleg .v2ramp i{width:16px;margin:0;border-radius:0}.v2mleg .v2ramp i:first-of-type{margin-left:5px;border-radius:3px 0 0 3px}.v2mleg .v2ramp i:last-of-type{margin-right:5px;border-radius:0 3px 3px 0}
+.v2mleg i.v2pl{width:11px;height:11px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 1px var(--surface)}
+.v2mleg i.v2ph{background:radial-gradient(circle,var(--surface) 0 32%,var(--muted) 34%)}
+.v2mleg i.v2ln{width:16px;height:3px;border-radius:2px;vertical-align:3px}
+.v2pos{display:flex;align-items:center;gap:6px;margin:4px 0 0}.v2pos svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linejoin:round}.v2pos svg circle{fill:var(--accent);stroke:none}
 /* fiche */
 .v2fiche{width:480px;flex-shrink:0;border-left:1px solid var(--line);background:var(--surface);overflow:auto;position:relative}
 .v2fiche[hidden]{display:none}
@@ -132,7 +141,10 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   /* « Réduire » : la liste reste en bas, repliée en une barre (au lieu de remonter sous le zoom) */
   .v2mlist[data-min="1"]{top:auto;bottom:0;max-height:none}
   .v2mlist[data-min="1"] .v2mhead>:not(.v2crumb){display:none}
-  .v2mleg{display:none}
+  /* téléphone : seulement le choix de la couleur des quartiers et son échelle, en haut à gauche */
+  .v2mleg{top:10px;left:10px;right:auto;bottom:auto;max-width:calc(100% - 64px);padding:5px 8px;font-size:11.5px;gap:6px}
+  .v2mleg .v2mlx,.v2mleg .v2mlr{display:none}
+  .v2mlq select{min-height:36px;font-size:13px}
   .v2fiche{position:fixed;inset:0;width:auto;z-index:1500;border:0;padding-top:env(safe-area-inset-top,0px)}
   .v2tabs2{top:57px}
   .v2in{padding-top:14px}
