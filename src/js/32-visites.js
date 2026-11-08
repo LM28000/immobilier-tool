@@ -43,7 +43,7 @@ function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.fi
  <h2 class="psec" id="vs0">Les chiffres réels</h2>
  <div class="fields vf">
   <label class="f">DPE réel<span class="inp"><select data-vf="dpe"><option value="">?</option>${"ABCDEFG".split("").map(l=>`<option${b.dpe===l?" selected":""}>${l}</option>`).join("")}</select></span></label>
-  <label class="f">Charges copro (part proprio)<span class="inp"><input data-vf="copro" type="number" min="0" step="5" value="${+b.copro||""}" placeholder="estimées"><span>€/mois</span></span></label>
+  <label class="f">Charges de copro (votre part)<span class="inp"><input data-vf="copro" type="number" min="0" step="5" value="${+b.copro||""}" placeholder="estimées"><span>€/mois</span></span></label>
   <label class="f">Taxe foncière<span class="inp"><input data-vf="tf" type="number" min="0" step="10" value="${+b.tf||""}" placeholder="estimée"><span>€/an</span></span></label>
   <label class="f">Travaux à prévoir<span class="inp"><input data-vf="travaux" type="number" min="0" step="500" value="${+b.travaux||""}" placeholder="${H.travaux}"><span>€</span></span></label>
   <label class="f wide">Travaux votés en copropriété<span class="inp"><input data-vf="votes" maxlength="200" value="${esc(v.votes||"")}" placeholder="ravalement 2027, toiture…"></span></label>

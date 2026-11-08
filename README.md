@@ -17,8 +17,10 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `tests/run.js`, `tests/visit.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright ; `tests/vendor/` : Leaflet pour tester la vraie carte sans réseau |
 | `tests/unit.js`, `tests/test_donnees.py` | tests rapides : calcul financier et fiscal, nettoyage des biens partagés, scripts de données, cohérence des villes |
 | `publication.json` | annonces dans la page publique ou seulement dans Supabase |
-| `build.py` | assemble `index.html` (la page servie) et `dist/` |
-| `src/v2/`, `v2.html` | version 2 à l'essai : l'interface des maquettes (marché filtré par nos critères en carte, tableau ou nuage ; fiche unique en onglets ; avis à deux dans le champ `votes` des biens ; offre et visite recalculées) branchée sur le moteur, les fiches et la liste partagée de l'app ; `index.html` reste l'app actuelle |
+| `build.py` | assemble `index.html` (la page servie, interface de `src/v2/`), `ancienne.html` et `dist/` |
+| `src/v2/` | l'interface de l'outil, servie à `index.html` depuis le 8 novembre 2026 : marché filtré par nos critères en carte, tableau ou nuage ; ce qui a bougé depuis la dernière visite ; fiche unique en onglets ; avis, offre, visite et comparaison à deux ; branchée sur le moteur, les fiches et la liste partagée de l'app (`src/js/`) |
+| `src/js/13-reglages-communs.js` | réglages communs à deux (hypothèses, financement, valeurs par type, critères) dans une ligne spéciale de la liste partagée |
+| `ancienne.html`, `v2.html` | l'ancienne interface, gardée quelques semaines (aussi `dist/test.html` pour les tests et le serveur MCP) ; `v2.html` renvoie à l'adresse d'origine |
 | `manifest.webmanifest`, `sw.js`, `icons/` | appli installable sur téléphone, utilisable hors ligne (version GitHub) |
 | `supabase.sql` | tables partagées « Nos biens » et « annonces » (accès par code de groupe) ; `tools/supabase_annonces.py` envoie les annonces |
 | `sync.sh`, `install-sync.sh` | poussent automatiquement les changements sur GitHub (launchd), après vérification des données et de la page ; en cas de refus, notification macOS et ligne « NON PUBLIÉ » dans `sync.log` |

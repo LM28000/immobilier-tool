@@ -123,7 +123,8 @@ def code(public):
     ])
 
 def page(public, v2=False):
-    """v2=True : la même page, réorganisée par src/v2 (onglets, carte d'abord, fiche en panneau) ; publiée à part dans v2.html"""
+    """v2=True : la même page, réorganisée par src/v2 (onglets, carte d'abord, fiche en panneau) : c'est l'outil publié (index.html) ;
+    v2=False : l'ancienne interface, gardée quelques semaines à ancienne.html et pour les tests et le serveur MCP (dist/test.html)"""
     css = need("src/styles.css") + ("\n" + need("src/v2/v2.css") if v2 else "")
     js = code(public) + ("\n" + need("src/v2/v2.js") if v2 else "")
     return need("src/head.html") + "<style>\n" + css + "</style>\n" + need("src/body.html") + "<script>\n" + js + "</script>\n"
@@ -143,7 +144,8 @@ if shutil.which("node"):
     r = subprocess.run(["node", "--check", t.name], capture_output=True, text=True); os.unlink(t.name)
     if r.returncode: ERR.append("erreur de syntaxe dans le script de la v2 :\n" + "\n".join(r.stderr.splitlines()[:6]))
 else: print("attention : node introuvable, syntaxe non vérifiée", file=sys.stderr)
-if len(pub) > 3_000_000: ERR.append(f"page publique trop lourde ({len(pub)} octets)")
+pubv2 = page(True, True)
+if len(pubv2) > 3_000_000: ERR.append(f"page publique trop lourde ({len(pubv2)} octets)")
 if ERR:
     print("BUILD REFUSÉ\n- " + "\n- ".join(ERR), file=sys.stderr); sys.exit(1)
 
@@ -151,7 +153,7 @@ def w(p, s):  # écriture atomique : jamais de fichier à moitié écrit (sync.s
     os.makedirs(os.path.dirname(P(p)) or R, exist_ok=True)
     tmp = P(p) + ".tmp"; open(tmp, "w", encoding="utf-8").write(s); os.replace(tmp, P(p))
 
-w("dist/artifact.html", full)
+w("dist/artifact.html", page(False, True))
 w("dist/test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + full)
 head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
@@ -159,14 +161,23 @@ head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>'
         + (rd("src/pwa-head.html") if os.path.exists(P("src/pwa-head.html")) else "")
         + '</head><body>')
-html = head + pub + "</body></html>"
+# l'outil : la version 2 (src/v2 sur le moteur de l'app), à l'adresse d'origine
+html = head + pubv2 + "</body></html>"
 w("dist/index.html", html)
 if not os.path.exists(P("index.html")) or rd("index.html") != html: w("index.html", html)   # pas de réécriture inutile (sync.sh surveille ce fichier)
-# version 2 : même données et même calcul, organisation différente (src/v2) ; l'app actuelle reste à index.html
-html2 = head + page(True, True) + "</body></html>"
-if not os.path.exists(P("v2.html")) or rd("v2.html") != html2: w("v2.html", html2)
+# l'ancienne interface, gardée quelques semaines, avec un bandeau vers la nouvelle
+bandeau = ('<div style="position:sticky;top:0;z-index:100;background:#2f47b3;color:#fff;padding:8px 16px;font:600 14px system-ui,sans-serif">'
+           'Ancienne version de l\'outil, gardée quelques semaines. <a href="./" style="color:#fff;text-decoration:underline">Ouvrir la nouvelle version</a></div>')
+old = head + bandeau + pub + "</body></html>"
+if not os.path.exists(P("ancienne.html")) or rd("ancienne.html") != old: w("ancienne.html", old)
+# v2.html (lien d'essai) mène désormais à l'adresse d'origine
+redir = ('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+         '<title>Notre studio</title><meta http-equiv="refresh" content="0; url=./"><link rel="canonical" href="./">'
+         '<script>location.replace("./"+location.search+location.hash)</script></head>'
+         '<body><p><a href="./">La version 2 est maintenant l\'outil : ouvrir</a></p></body></html>')
+if not os.path.exists(P("v2.html")) or rd("v2.html") != redir: w("v2.html", redir)
 w("dist/v2-test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + page(False, True))
 ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
 sw = rd("sw.js"); sw2 = re.sub(r'const VERSION = "[^"]*";', f'const VERSION = "{ver}";', sw, count=1)
 if sw2 != sw: w("sw.js", sw2)
-print("exposant loyer/surface par type :", EXPT); print("ok", len(pub), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")
+print("exposant loyer/surface par type :", EXPT); print("ok", len(pubv2), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")

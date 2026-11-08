@@ -193,11 +193,22 @@
  function pBiens(){const el=$("v2p-biens"), [me,oth]=people(), L0=BIENS.filter(b=>!isOut(b)).map(b=>({b,r:calcBien(b),e:etat(b,me,oth)}));
   const ord={des:0,att:1,acc:2}; L0.sort((p,q)=>ord[p.e[0]]-ord[q.e[0]]||((q.r.x.irr??-99)-(p.r.x.irr??-99)));
   const n={acc:0,des:0,att:0}; L0.forEach(o=>n[o.e[0]]++);
-  el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Nos biens</h1><span class="v2sub">${L0.length} bien${L0.length>1?"s":""} suivi${L0.length>1?"s":""}${L0.length>1?" · les désaccords en tête":""}</span><span class="v2sp"></span><a class="v2btn sm" href="./">Ajouter un bien à la main (version actuelle) ↗</a></div>
+  el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Nos biens</h1><span class="v2sub">${L0.length} bien${L0.length>1?"s":""} suivi${L0.length>1?"s":""}${L0.length>1?" · les désaccords en tête":""}</span><span class="v2sp"></span><button type="button" class="v2btn sm pri" data-v2add>Ajouter un bien</button></div>
+   ${cmpCard(L0)}
    ${!me||!sbCode()?ident(me,true):""}
    ${L0.length?`<div class="v2chips">${n.des?`<span class="v2pill warn">${n.des} à trancher</span>`:""}${n.att?`<span class="v2pill">${n.att} en attente d'un avis</span>`:""}${n.acc?`<span class="v2pill ok">${n.acc} d'accord</span>`:""}</div>`:""}
-   ${L0.length?`<div class="v2tw"><table class="v2t v2wide"><thead><tr><th></th><th>Bien</th><th class="r">Rendement 15 ans</th><th>Fourchette</th><th class="r">Cash-flow</th><th>Statut</th><th>${me?esc(me)+" (vous)":"Vous"}</th>${oth.length?oth.map(o=>`<th>${esc(o)}</th>`).join(""):"<th>Binôme</th>"}<th>État</th></tr></thead><tbody>${L0.map(({b,r,e})=>{const x=r.x; return `<tr data-v2open="b|${esc(b.id)}" tabindex="0"><td>${img(bienPhoto(b,160,120),"v2th")}</td><td><b>${esc(b.titre||"Bien")}</b><div class="v2sub" style="font-size:12px">${esc(cityName(b.ville))}${b.quartier?" · "+esc(b.quartier):""} · ${keur(+b.prix)}</div></td><td class="r mono" style="color:${cv(colIrr(x.irr))};font-weight:700">${pctS(x.irr)}</td><td>${rng({x,z:irr3(x)||{}})}</td><td class="r mono" style="color:${cfC(x.cf)}">${sgn(x.cf)}</td><td>${stPill(b)}</td><td>${me?voteBtns(b,me):`<span class="v2sub">prénom d'abord</span>`}</td>${oth.length?oth.map(o=>`<td>${voteTxt(b,o)}</td>`).join(""):`<td><span class="v2sub">pas encore de binôme</span></td>`}<td><span class="v2pill ${e[0]==="acc"?"ok":e[0]==="des"?"warn":""}">${e[1]}</span></td></tr>`;}).join("")}</tbody></table></div>`:`<div class="v2card"><p class="v2empty">Aucun bien pour l'instant. Touchez l'étoile d'une annonce pour la suivre ici.</p></div>`}
+   ${L0.length?`<div class="v2tw"><table class="v2t v2wide"><thead><tr><th title="Cochez 2 à 4 biens pour les comparer">Comparer</th><th></th><th>Bien</th><th class="r">Rendement 15 ans</th><th>Fourchette</th><th class="r">Cash-flow</th><th>Statut</th><th>${me?esc(me)+" (vous)":"Vous"}</th>${oth.length?oth.map(o=>`<th>${esc(o)}</th>`).join(""):"<th>Binôme</th>"}<th>État</th></tr></thead><tbody>${L0.map(({b,r,e})=>{const x=r.x; return `<tr data-v2open="b|${esc(b.id)}" tabindex="0"><td><input type="checkbox" class="v2cmpck" data-v2cmp="${esc(b.id)}" aria-label="Comparer ${esc(b.titre||"ce bien")}"${CMPS.has(b.id)?" checked":""}></td><td>${img(bienPhoto(b,160,120),"v2th")}</td><td><b>${esc(b.titre||"Bien")}</b><div class="v2sub" style="font-size:12px">${esc(cityName(b.ville))}${b.quartier?" · "+esc(b.quartier):""} · ${keur(+b.prix)}</div></td><td class="r mono" style="color:${cv(colIrr(x.irr))};font-weight:700">${pctS(x.irr)}</td><td>${rng({x,z:irr3(x)||{}})}</td><td class="r mono" style="color:${cfC(x.cf)}">${sgn(x.cf)}</td><td>${stPill(b)}</td><td>${me?voteBtns(b,me):`<span class="v2sub">prénom d'abord</span>`}</td>${oth.length?oth.map(o=>`<td>${voteTxt(b,o)}</td>`).join(""):`<td><span class="v2sub">pas encore de binôme</span></td>`}<td><span class="v2pill ${e[0]==="acc"?"ok":e[0]==="des"?"warn":""}">${e[1]}</span></td></tr>`;}).join("")}</tbody></table></div>`:`<div class="v2card"><p class="v2empty">Aucun bien pour l'instant. Touchez l'étoile d'une annonce pour la suivre ici.</p></div>`}
    ${me&&sbCode()?ident(me,false):""}</div>`;}
+ /* comparer 2 à 4 biens suivis, côte à côte ; la meilleure valeur de chaque ligne en gras */
+ const CMPS=new Set();
+ function cmpCard(L0){const R=L0.filter(o=>CMPS.has(o.b.id)).map(o=>Object.assign({},o,{x:o.r.x,V:o.r.V,z:irr3(o.r.x)||{}})); if(R.length<2) return CMPS.size===1?`<p class="v2sub">Cochez un deuxième bien pour les comparer.</p>`:"";
+  const L=[["Prix",r=>+r.b.prix,v=>eur(v),-1],["Surface",r=>+r.b.surface,v=>fr(v,0)+" m²",1],["Prix au m²",r=>+r.b.prix/(+r.b.surface||1),v=>eur(v),-1],["Ville · quartier",null,r=>esc(cityName(r.b.ville))+(r.b.quartier?" · "+esc(r.b.quartier):"")],
+   [`Rendement 15 ans · ${scn()}`,r=>r.x.irr,v=>pctS(v),1],["Prudent · favorable",null,r=>`${pctS(r.z.prudent)} · ${pctS(r.z.favorable)}`],["Cash-flow",r=>r.x.cf,v=>sgn(v)+"/mois",1],["Mensualité",r=>r.x.mens,v=>eur(v),-1],["Budget tout compris",r=>r.x.cost,v=>keur(v),-1],
+   ["Loyer hors charges",r=>r.x.rentHC,v=>eur(v),1],["Charges de copro (votre part)",r=>r.V?r.V.copro.v:null,v=>eur(v)+"/mois",-1],["Taxe foncière",r=>r.V?(r.V.tf.v||Math.round(r.x.tf*12)):null,v=>eur(v)+"/an",-1],["Travaux",r=>r.V?r.V.travaux.v:null,v=>eur(v),-1],
+   ["DPE",null,r=>esc(r.b.dpe||"?")],["Statut",null,r=>stPill(r.b)],["Avis",null,r=>Object.entries(r.b.votes||{}).map(([k,c])=>`${esc(k)} : ${((VOT.find(x=>x[0]===c)||[])[1]||"").toLowerCase()}`).join("<br>")||"—"]];
+  const rows=L.map(([l,g,f,dir])=>{const vals=R.map(r=>g?g(r):null), ok=vals.filter(v=>v!=null&&isFinite(v)), best=g&&dir&&ok.length>1?(dir>0?Math.max(...ok):Math.min(...ok)):null;
+   return `<tr><th scope="row">${l}</th>${R.map((r,i)=>{const v=vals[i]; return `<td class="${g?"r mono":""}">${g?(v==null||!isFinite(v)?"n.d.":(best!=null&&v===best?`<b>${f(v)}</b>`:f(v))):f(r)}</td>`;}).join("")}</tr>`;}).join("");
+  return `<div class="v2card"><div class="v2bar"><h2>Comparaison</h2><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2cmpx>Effacer la sélection</button></div><div class="v2tw"><table class="v2t v2cmpt"><thead><tr><th></th>${R.map(r=>`<th><button type="button" data-v2open="b|${esc(r.b.id)}">${esc(r.b.titre||"Bien")}</button></th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div><p class="v2sub">En gras : la meilleure valeur de la ligne.</p></div>`;}
  /* qui vous êtes et le code commun : une seule carte, en tête tant qu'il manque l'un des deux */
  function ident(me,first){return `<div class="v2card"><h2>${first?"Vous deux":"Liste commune"}</h2><p class="v2sub">${sbCode()?`Partagée avec le code commun, sous le prénom « ${esc(me||"?")} » : biens, avis et réglages sont communs.`:"Votre prénom distingue vos avis de ceux de l'autre. Avec le même code commun, vous partagez la liste, les avis et les réglages ; sans code, tout reste dans ce navigateur."}</p><div class="v2grid v2f"><div><label for="v2nom2">Prénom</label><input type="text" id="v2nom2" maxlength="30" value="${esc(me)}" placeholder="Prénom"></div><div><label for="v2code">Code commun (le même pour vous deux)</label><input type="text" id="v2code" maxlength="60" value="${esc(sbCode())}" autocomplete="off" spellcheck="false"></div></div><div><button type="button" class="v2btn${first?" pri":""}" data-v2share>Enregistrer</button></div></div>`;}
 
@@ -206,7 +217,8 @@
   const run=m=>{const s={}; Object.keys(m).forEach(k=>{s[k]=H[k]; H[k]=m[k];}); const v=calc(c).irr; Object.assign(H,s); return v;};
   return `<p class="v2sub">${tyl()} à ${esc(c.name)}, ${pctS(base)} en ${scn()} :</p><div class="v2tw"><table class="v2t"><thead><tr><th>Hypothèse</th><th>Variation</th><th class="r">Rendement</th></tr></thead><tbody>${T.map(([l,a,b,t])=>`<tr><td>${l}</td><td>${t}</td><td class="r mono">${pctS(run(a))} / ${pctS(run(b))}</td></tr>`).join("")}</tbody></table></div>`;}
  function defOf(k){return TYK.includes(k)?typeDefaults(H.type)[k]:HDEF[k];}
- function pBudget(){const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK,...TYK,"tmiA","tmiB","regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
+ const HOLD=document.createElement("div"); HOLD.hidden=true; app.appendChild(HOLD);   /* range les blocs de l'app montrés dans une page avant qu'elle ne soit redessinée */
+ function pBudget(){const s0=$("sources"); if(s0&&$("v2p-budget").contains(s0)) HOLD.appendChild(s0); const el=$("v2p-budget"), cr=critV(), ri=regInfo(), nch=[...HYPK,...TYK,"tmiA","tmiB","regime"].filter(k=>defOf(k)!=null&&H[k]!==defOf(k)).length,
   f=(k,l,u,st)=>{const d=defOf(k), ch=d!=null&&H[k]!==d; return `<div class="${ch?"v2chg":""}"><label for="v2h-${k}">${l} <span class="v2sub">(${u})</span></label><input type="number" id="v2h-${k}" data-v2h="${k}" step="${st}" value="${H[k]}">${ch?`<small class="v2def">défaut : ${d>=1000?nf(d):String(d).replace(".",",")}</small>`:""}</div>`;};
   el.innerHTML=`<div class="v2in"><div class="v2bar"><h1 class="v2h1">Budget et hypothèses</h1><span class="v2sp"></span>${nch?`<button type="button" class="v2btn sm" data-v2reset>Revenir aux valeurs par défaut (${nch} changée${nch>1?"s":""})</button>`:""}</div>
    <p class="v2sub v2regnote">${ri?`Communs à vous deux : un changement ici change les chiffres de l'autre.${ri.par?` Dernière modification par ${esc(ri.par)}${ri.le?" le "+esc(dateTxt(ri.le.slice(0,10))):""}.`:""}`:"Pas encore partagés : sans code commun (onglet Nos biens), ces réglages restent dans ce navigateur."} Les valeurs différentes du défaut sont signalées.</p>
@@ -217,7 +229,8 @@
    <div class="v2card"><h2>Le long terme</h2><div class="v2grid v2f">${f("px","Hausse des prix","%/an",0.5)}${f("ly","Hausse des loyers","%/an",0.5)}${f("fraisVente","Frais à la revente","%",0.5)}</div></div>
    <div class="v2card"><h2>Impôts</h2><div class="v2grid v2f"><div><label for="v2-reg">Régime</label><select id="v2-reg" data-v2fin="regime">${[["auto","Le plus avantageux"],["micro","Micro-BIC"],["reel","Réel"]].map(([k,l])=>`<option value="${k}"${H.regime===k?" selected":""}>${l}</option>`).join("")}</select></div>${["tmiA","tmiB"].map((k,i)=>`<div><label for="v2-${k}">Tranche d'imposition ${i?"de votre binôme":"de l'un"}</label><select id="v2-${k}" data-v2fin="${k}">${[0,11,30,41,45].map(t=>`<option value="${t}"${H[k]===t?" selected":""}>${t} %</option>`).join("")}</select></div>`).join("")}</div></div>
    <div class="v2card"><h2>Ce qui pèse le plus</h2>${sensi()}</div>
-   <div class="v2card"><h2>Sources</h2><p class="v2sub">Ventes réelles DVF (2023-2025), carte des loyers de l'État et annonces de location meublée, Insee, Géorisques, OpenStreetMap, ADEME (DPE), annonces Bien'ici relevées chaque soir. La méthode complète est décrite dans <a href="./#sources">la version actuelle</a>.</p></div></div>`;}
+   <div class="v2card"><h2>Sources</h2><p class="v2sub">Ventes réelles DVF (2023-2025), carte des loyers de l'État et annonces de location meublée, Insee, Géorisques, OpenStreetMap, ADEME (DPE), annonces Bien'ici relevées chaque soir.</p><div id="v2srcslot"></div><p class="v2sub">L'ancienne version de l'outil reste ouverte quelques semaines : <a href="./ancienne.html">ancienne version</a>.</p></div></div>`;
+  const s=$("sources"); if(s){$("v2srcslot").appendChild(s);}}
 
  /* ---------- fiche unique en onglets ---------- */
  const FT=[["bien","Le bien",["suivi","annonce"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
@@ -283,6 +296,17 @@
   if(M) requestAnimationFrame(()=>M.invalidateSize());}
  function openSel(s,keepTab){V.sel=s; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
 
+ /* ---------- ajouter un bien à la main ----------
+    Le formulaire de l'app (recherche d'adresse, quartier, contrôles, envoi dans la liste commune) est déplacé dans une fenêtre,
+    puis remis à sa place à la fermeture. */
+ let ADDHOME=null;
+ function addDlg(){const f=$("biensForm"); if(!f||document.querySelector(".v2dlg")) return; if(!ADDHOME) ADDHOME=[f.parentNode,f.nextSibling];
+  const d=document.createElement("div"); d.className="v2dlg"; d.innerHTML=`<div class="v2dlgb" role="dialog" aria-modal="true" aria-labelledby="v2aT"><div class="v2bar"><h2 id="v2aT" class="v2h1">Ajouter un bien</h2><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2addx>Fermer</button></div><p class="v2sub">Une annonce repérée ailleurs : le calcul reprend nos réglages, le loyer et la vacance du quartier. Indiquez au moins le prix et la surface ; l'adresse permet de trouver le quartier.</p><div id="v2addslot"></div></div>`;
+  document.body.appendChild(d); $("v2addslot").appendChild(f);
+  const st=$("biensState"); if(st){st.textContent=""; const mo=new MutationObserver(()=>{if(/Bien ajouté/.test(st.textContent)){mo.disconnect(); setTimeout(()=>{addClose(); toast("Bien ajouté à nos biens."); V.tab="biens"; save(); show();},400);}}); mo.observe(st,{childList:true,characterData:true,subtree:true}); d._mo=mo;}
+  const i=f.querySelector("input"); if(i) i.focus();}
+ function addClose(){const d=document.querySelector(".v2dlg"), f=$("biensForm"); if(f&&ADDHOME&&f.closest(".v2dlg")) ADDHOME[0].insertBefore(f,ADDHOME[1]); if(d){if(d._mo) d._mo.disconnect(); d.remove();}}
+
  /* ---------- dialogue des critères (premier lancement) ---------- */
  function critDlg(first){if(document.querySelector(".v2dlg")) return; const d=document.createElement("div"); d.className="v2dlg"; const c=critV();
   const n=()=>feed().filter(o=>o.x.cost<=+$("v2cB").value&&o.x.irr>=+$("v2cR").value&&(!$("v2cK").checked||bankOk(o.x.ratio))).length;
@@ -309,7 +333,7 @@
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
   if(d.v2scn){H.pess=d.v2scn==="prudent"; H.fav=d.v2scn==="favorable"; try{localStorage.setItem("scn",d.v2scn);}catch(_){} const p=$("f-pess"); if(p) p.checked=H.pess; if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render(); return;}
@@ -328,6 +352,9 @@
    const f=document.querySelector(`.v2tabs2 [data-v2ft="${d.v2ft}"]`); if(f) f.focus({preventScroll:true}); return;}
   if(d.v2close!=null){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); return;}
   if(d.v2crit!=null){critDlg(false); return;}
+  if(d.v2add!=null){addDlg(); return;}
+  if(d.v2addx!=null){addClose(); return;}
+  if(d.v2cmpx!=null){CMPS.clear(); refresh(); return;}
   if(d.v2reset!=null){if(confirm(regShared()?"Revenir aux valeurs par défaut pour vous deux ? Vos critères et vos biens ne changent pas.":"Revenir aux valeurs par défaut ? Vos critères et vos biens ne changent pas.")) regReset(); return;}
   if(d.v2offkeep){const [k,ck,...r]=d.v2offkeep.split("|"), suf=r.join("|"), P=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!P) return; const pr=Math.round(P[2]*(OFFT[d.v2offkeep]??100)/100/500)*500;
    Promise.resolve(mStar(ck,suf)).then(()=>setTimeout(()=>{const b=bienOf(VTURL+suf); if(b){delete OFFT[d.v2offkeep]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}},600)); return;}
@@ -337,6 +364,7 @@
   if(d.v2city!=null&&!e.target.closest("[data-v2open]")){goCity(d.v2city); return;}
   if(d.v2open){if(e.target.closest("button,a,input,select,[data-stmenu]")&&!t.matches("button")) return; openSel(d.v2open); return;}});
  document.addEventListener("keydown",e=>{const t=e.target; if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-v2open],[data-v2city],[data-v2gonew],.v2nrow")&&!t.matches("button")){e.preventDefault(); t.click();}
+  if(e.key==="Escape"){const dl=document.querySelector(".v2dlg"); if(dl&&dl.querySelector("[data-v2addx]")){addClose(); return;} if(dl&&dl.querySelector("[data-v2cx]")){dl.remove(); return;}}
   if(e.key==="Escape"&&V.sel&&!document.querySelector(".v2dlg")&&$("visitPanel").hidden&&$("fichePanel").hidden){V.sel=null; fiche(); paint(V.tab);}});
  document.addEventListener("input",e=>{const t=e.target, d=t.dataset; if(!d) return;
   /* curseur d'offre : seuls les chiffres autour changent (le curseur reste sous le doigt) */
@@ -346,6 +374,7 @@
  document.addEventListener("change",e=>{const t=e.target, d=t.dataset; if(!d) return;
   if(d.v2h){const v=+t.value; if(isFinite(v)){H[d.v2h]=v; if(TYK.includes(d.v2h)) saveTyv(d.v2h); else saveHyp(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}}
   else if(d.v2fin){H[d.v2fin]=d.v2fin==="regime"?t.value:+t.value; if(typeof saveFin==="function") saveFin(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}
+  else if(d.v2cmp){if(t.checked){if(CMPS.size>=4){t.checked=false; toast("Quatre biens au plus."); return;} CMPS.add(d.v2cmp);} else CMPS.delete(d.v2cmp); refresh();}
   else if(d.v2offb){const b=BIENS.find(x=>x.id===d.v2offb); if(!b) return; const pr=Math.round(+b.prix*(+t.value)/100/500)*500; delete OFFT[d.v2off]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}});
  /* l'app recalcule (type, scénario, hypothèses, liste partagée, annonces reçues) : la v2 suit */
  const _render=render; render=function(){_render.apply(this,arguments); refresh(); if(V.tab==="carte") drawMap();};

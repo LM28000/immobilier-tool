@@ -363,6 +363,18 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
     ok('v2 commun · Nos biens signale le bien à regarder', await B.p.evaluate(() => ((document.querySelector('#v2tabs [data-v2tab="biens"] small') || {}).textContent || '') === '1'));
     ok('v2 · le premier relevé d\'une ville ne compte pas comme nouveau', await B.p.evaluate(() => { const K = Object.keys(ADS).filter(k => ADS[k] && ADS[k].ventes && hStart(k, 'v') === ADS.iso); return K.length > 0 && K.every(k => ADS[k].ventes.every(a => !isNewAd(k, a[3]))); }));
     ok('v2 · L\'Ouest compte les annonces pour nos critères', await B.p.evaluate(() => /pour nos critères/.test(document.querySelector('#v2mlist [data-v2city]').innerText)));
+    // nos biens : ajouter un bien à la main dans une fenêtre (formulaire de l'app), puis comparer deux biens
+    await A.p.evaluate(() => document.querySelector('[data-v2tab="biens"]').click()); await A.p.waitForTimeout(400);
+    await A.p.evaluate(() => document.querySelector('[data-v2add]').click()); await A.p.waitForTimeout(300);
+    ok('v2 · ajouter un bien : le formulaire dans une fenêtre', await A.p.evaluate(() => !!document.querySelector('.v2dlg #biensForm')));
+    await A.p.fill('.v2dlg #biensForm [name=prix]', '52000'); await A.p.fill('.v2dlg #biensForm [name=surface]', '21'); await A.p.click('.v2dlg #biensForm [type=submit]'); await A.p.waitForTimeout(2000);
+    ok('v2 · bien ajouté, fenêtre fermée, formulaire rangé', await A.p.evaluate(() => BIENS.length === 2 && !document.querySelector('.v2dlg') && !!document.querySelector('#p-biens #biensForm')), await A.p.evaluate(() => BIENS.length + ' ' + !!document.querySelector('.v2dlg')));
+    await A.p.evaluate(() => document.querySelectorAll('#v2p-biens [data-v2cmp]').forEach(c => { c.checked = true; c.dispatchEvent(new Event('change', {bubbles: true})); })); await A.p.waitForTimeout(500);
+    ok('v2 · comparer deux biens côte à côte', await A.p.evaluate(() => document.querySelectorAll('#v2p-biens .v2cmpt thead th').length === 3));
+    await A.p.evaluate(() => document.querySelector('[data-v2tab="budget"]').click()); await A.p.waitForTimeout(400);
+    ok('v2 · sources et fraîcheur des données dans Budget', await A.p.evaluate(() => !!document.querySelector('#v2p-budget #sources')));
+    { const rd = n => fs.readFileSync(path.resolve(__dirname, '..', n), 'utf8');
+      ok('bascule : index.html est la v2, ancienne.html l\'ancienne, v2.html y renvoie', rd('index.html').includes('app.id="v2app"') && rd('ancienne.html').includes('Ancienne version de l') && !rd('ancienne.html').includes('app.id="v2app"') && rd('v2.html').includes('location.replace')); }
     ok('v2 commun · sans erreur', !A.errs.length && !B.errs.length, A.errs.concat(B.errs).slice(0, 3).join(' | '));
     await A.c.close(); await B.c.close(); }
   await b.close();
