@@ -5,7 +5,7 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
  const r=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{}, num=v=>{v=+v; return isFinite(v)?v:0;}, str=(v,n)=>typeof v==="string"?v.slice(0,n):"", obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:undefined;
  const sid=String(id==null?"":id).replace(/[^A-Za-z0-9_-]/g,"").slice(0,64), okV=C.some(c=>c.k===r.ville), url=str(r.url,500);
  const b={id:sid,titre:str(r.titre,120),url:/^https?:\/\//i.test(url)?url:"",ville:okV?r.ville:C[0].k,quartier:str(r.quartier,80),secteur:str(r.secteur,80),
-  prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
+  prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),meubles:num(r.meubles),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
   notes:str(r.notes,200),statut:["à voir","visité","offre faite","compromis","acheté","écarté"].includes(r.statut)?r.statut:"à voir",fav:r.fav===true,par:str(r.par,30),ts:num(r.ts),
   short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
  Object.keys(b).forEach(k=>{if(b[k]===undefined) delete b[k];});
@@ -19,18 +19,16 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
- /* bien suivi venu d'une annonce : ce qui a été lu dans sa description (loyer du bail en cours, taxe foncière, travaux) complète les champs restés vides,
-    même si la lecture est arrivée après l'ajout à la shortlist ; une valeur saisie garde la priorité */
- const fx=b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?ficx(bienSuf(b)||""):null, ia=fx?lueIA(fx):null;
- const loy=+b.loyer>0?+b.loyer:(ia&&ia.loyer)||0, tf=+b.tf>0?+b.tf:(ia&&ia.tf)||0, trav=+b.travaux>0?+b.travaux:(ia&&ia.travaux)||0;
- if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;
-  /* loyer du bail en cours lu dans l'annonce (pas un loyer saisi) : il vaut jusqu'au départ du locataire, voir calc */
-  if(ia&&ia.loyer>0&&Math.round(loy)===ia.loyer){o.bailAns=bailAns(fx.ia.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
- else o.rent=c.rent*rr;
- /* charges : la part du propriétaire. Un bien ajouté avant le 8 novembre 2026 a gardé les charges totales de l'annonce : on en prend la même part */
- let cop=+b.copro||0; if(fx&&cop>0&&typeof copAn==="function"){const ca=copAn(fx); if(ca&&Math.round(ca/12)===Math.round(cop)) cop*=PART_PROPRIO;}
- if(cop>0) o.copro=cop; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
- return {x:calc(o),vac,t,pm2:+b.prix/S};}
+ /* valeurs propres au bien (12-ce-qui-pese.js) : saisies, sinon lues dans l'annonce, sinon estimées */
+ const V=typeof valeursBien==="function"?valeursBien(b,o.type):null;
+ if(V){if(V.loyer.v>0){o.rent=V.loyer.v; o.rentM2=S; o.rentFixed=true;
+   /* loyer du bail en cours lu dans l'annonce : il vaut jusqu'au départ du locataire, voir calc */
+   if(V.loyer.bail){o.bailAns=bailAns(V.raw.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
+  else o.rent=c.rent*rr;
+  o.copro=V.copro.v; if(V.tf.v>0) o.tfM=V.tf.v/12; o.trav=V.travaux.v; o.meubles=V.meubles.v;}
+ else {o.rent=+b.loyer>0?+b.loyer:c.rent*rr; if(+b.loyer>0){o.rentM2=S; o.rentFixed=true;} if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(+b.travaux>0) o.trav=+b.travaux; if(+b.meubles>0) o.meubles=+b.meubles;}
+ if(scn) o._s=scn;
+ return {x:calc(o),vac,t,pm2:+b.prix/S,V};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
  if(!BIENS.length){box.innerHTML=`<p class="sub">Aucun bien pour l'instant. Ajoutez une annonce de vente repérée : le calcul reprend vos réglages et le loyer du quartier.</p>`; return;}
@@ -81,7 +79,7 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
   hook(db);
  }).catch(()=>{clearTimeout(timer); if(!DB){DB=localDB(); hook(DB);}});
  function hook(db){
-  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
+  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; if(typeof VC!=="undefined") VC.clear(); renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
    e=>{clearTimeout(timer); st.textContent="Lecture de la liste impossible ("+(e&&e.code||"erreur")+").";});
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();

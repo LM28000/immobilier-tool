@@ -824,3 +824,13 @@ div.hrow{cursor:default}
 /* fourchette des trois scénarios, sous le rendement */
 small.alt.irr3{display:block;margin-top:2px;font-family:inherit;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
 small.alt.irr3 .tipb{vertical-align:middle}
+/* ce qui pèse sur un bien */
+.pwrows{display:grid;gap:8px}
+.pwr{display:grid;grid-template-columns:minmax(120px,170px) minmax(110px,150px) 1fr auto;gap:4px 10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pwr:first-child{border-top:0}
+.pwl{font-size:.88rem;font-weight:600}
+.pws{font-size:.78rem;color:var(--muted);line-height:1.35}
+.pws .pill{font-size:.7rem;padding:1px 6px;margin-right:3px}
+.pwp{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.pwres{margin:8px 0 0;font-size:.92rem}
+@media (max-width:640px){.pwr{grid-template-columns:1fr 130px}.pws,.pwp{grid-column:1/-1}.pwp{white-space:normal}}

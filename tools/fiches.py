@@ -121,7 +121,7 @@ def valide_ia(x):
         elif t is list and isinstance(v, list): out[k] = [str(p)[:120] for p in v if isinstance(p, str) and p.strip()][:4]
     return out
 
-IA_CALC = ("loue", "loyer_mensuel", "loyer_charges_comprises", "fin_bail", "taxe_fonciere", "travaux_a_prevoir", "travaux_votes", "surface_carrez")
+IA_CALC = ("loue", "loyer_mensuel", "loyer_charges_comprises", "fin_bail", "etat", "taxe_fonciere", "travaux_a_prevoir", "travaux_votes", "surface_carrez")
 def ficx_de(f):
     """champs d'une fiche utiles au calcul, inclus dans la page (FICX)"""
     x = {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f}

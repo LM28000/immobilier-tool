@@ -197,7 +197,7 @@ function mBienDetail(id){const b=BIENS.find(x=>x.id===id); if(!b) return;
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
  if(b&&!isOut(b)){await retirer(b); return;}
  if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
 
 /* ---------- shortlist ---------- */

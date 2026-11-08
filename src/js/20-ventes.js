@@ -3,7 +3,7 @@ const VTURL="https://www.bienici.com/annonce/vente/";
 const VC=new Map();
 function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[sector]) return null;
  const ts=z.list.filter(t=>A.map[sector].includes(t.code)&&t.price); return ts.sort((a,b)=>b.dpe.reduce((x,y)=>x+y,0)-a.dpe.reduce((x,y)=>x+y,0))[0]||null;}
-function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12*PART_PROPRIO):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
+function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return avecSaisies({type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12*PART_PROPRIO):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]});}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.filter(a=>!estDoublon(a[3])).map(a=>({ck,a,r:venteCalc(ck,a)})));
 /* une annonce retirée de la shortlist redevient une annonce comme les autres (son bien est gardé caché, avec ses notes et sa visite, et revient si on la rajoute) */
@@ -23,7 +23,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.c
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
  const old=BIENS.find(x=>x.url===VTURL+suf);
  if(old){b.disabled=true; await updBien(old.id,{statut:old.statut==="écarté"?"à voir":old.statut,short:true}); toast(`« ${old.titre||"Bien"} » remis dans nos biens, avec ses notes.`); return;}
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  b.disabled=true; b.textContent="ajout…";
  try{await DB.collection("biens").add(bien); b.outerHTML=`<span class="pill p-ok">ajouté</span>`; toast(`« ${vb.titre} » ajouté à nos biens.`);}catch(err){b.disabled=false; b.textContent="+ Ajouter"; toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}});
 

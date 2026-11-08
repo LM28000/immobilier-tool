@@ -831,6 +831,16 @@ div.hrow{cursor:default}
 /* fourchette des trois scénarios, sous le rendement */
 small.alt.irr3{display:block;margin-top:2px;font-family:inherit;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
 small.alt.irr3 .tipb{vertical-align:middle}
+/* ce qui pèse sur un bien */
+.pwrows{display:grid;gap:8px}
+.pwr{display:grid;grid-template-columns:minmax(120px,170px) minmax(110px,150px) 1fr auto;gap:4px 10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pwr:first-child{border-top:0}
+.pwl{font-size:.88rem;font-weight:600}
+.pws{font-size:.78rem;color:var(--muted);line-height:1.35}
+.pws .pill{font-size:.7rem;padding:1px 6px;margin-right:3px}
+.pwp{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.pwres{margin:8px 0 0;font-size:.92rem}
+@media (max-width:640px){.pwr{grid-template-columns:1fr 130px}.pws,.pwp{grid-column:1/-1}.pwp{white-space:normal}}
 
 /* ================= version 2 (v2.html) : l'interface des maquettes, sur le moteur de l'app =================
    Un marché filtré par nos critères, vu en carte, en tableau ou en nuage ; une fiche unique en onglets ;
@@ -1310,7 +1320,7 @@ function calc(c){
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
- const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
+ const meu=c.meubles!=null?c.meubles:D.meubles, base=bien*(1+H.notaire/100)+meu+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
  const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(T.surf/c.rentM2,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk);
@@ -1332,7 +1342,7 @@ function calc(c){
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
     if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d;
-    stock+=amBati+(y<FISC.ansMeubles?H.meubles/FISC.ansMeubles:0)+(y<FISC.ansTravaux?trav/FISC.ansTravaux:0);
+    stock+=amBati+(y<FISC.ansMeubles?meu/FISC.ansMeubles:0)+(y<FISC.ansTravaux?trav/FISC.ansTravaux:0);
     const u=Math.min(res,stock); stock-=u; res-=u; cumAB+=Math.min(u,amBati*(y+1)-cumAB); taxable=res;}
    T.push(gross?0:taxable*taxRate()); F.push(gross?0:fees); AB.push(reg==="reel"?cumAB:0);}
   const pvT=(b,sa,k,t,a)=>gross?0:pvTax(b,sa,k,t,a);
@@ -2056,7 +2066,7 @@ function normBien(id,raw){/* avis à deux (v2) : {prénom: "o" garder | "m" à v
  const r=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{}, num=v=>{v=+v; return isFinite(v)?v:0;}, str=(v,n)=>typeof v==="string"?v.slice(0,n):"", obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:undefined;
  const sid=String(id==null?"":id).replace(/[^A-Za-z0-9_-]/g,"").slice(0,64), okV=C.some(c=>c.k===r.ville), url=str(r.url,500);
  const b={id:sid,titre:str(r.titre,120),url:/^https?:\/\//i.test(url)?url:"",ville:okV?r.ville:C[0].k,quartier:str(r.quartier,80),secteur:str(r.secteur,80),
-  prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
+  prix:num(r.prix),surface:num(r.surface),copro:num(r.copro),tf:num(r.tf),loyer:num(r.loyer),travaux:num(r.travaux),meubles:num(r.meubles),dpe:/^[A-G]$/.test(r.dpe||"")?r.dpe:"",
   notes:str(r.notes,200),statut:["à voir","visité","offre faite","compromis","acheté","écarté"].includes(r.statut)?r.statut:"à voir",fav:r.fav===true,par:str(r.par,30),ts:num(r.ts),
   short:typeof r.short==="boolean"?r.short:undefined,votes:votesOf(r.votes),suivi:obj(r.suivi),adresse:str(r.adresse,200),visite:obj(r.visite),geo:obj(r.geo),by:str(r.by,80)};
  Object.keys(b).forEach(k=>{if(b[k]===undefined) delete b[k];});
@@ -2070,18 +2080,16 @@ function calcBien(b,scn){const c=C.find(v=>v.k===b.ville), S=+b.surface||22; let
  if(b.quartier&&IR[b.ville]){t=IR[b.ville].list.find(v=>v.name===b.quartier); if(t&&t.price) rr=rentRatio(b.ville,t); if(t&&H.vacQ){const d=demandOf(t); if(d) vac=d.vac;}}
  if(H.vacQ&&b.geo&&b.geo.foot&&b.geo.foot.length){const tr=t&&typeof trajOf==="function"?trajOf(t):null; const e=b.geo.foot.map((f,i)=>{const o=tr&&tr.find(z=>z.k===b.geo.marks[i]); return o&&o.tc!=null?Math.min(f,o.tc):f;}); const mn=Math.min(...e), sc=Math.min(1,Math.max(0,1-(mn-10)/40)); vac=1+1.5*(1-sc);}
  const o=Object.assign({},c,{prixTot:+b.prix,surf:S,vac,type:b.type||typeFor(S,b.pieces)});
- /* bien suivi venu d'une annonce : ce qui a été lu dans sa description (loyer du bail en cours, taxe foncière, travaux) complète les champs restés vides,
-    même si la lecture est arrivée après l'ajout à la shortlist ; une valeur saisie garde la priorité */
- const fx=b.url&&typeof bienSuf==="function"&&typeof lueIA==="function"?ficx(bienSuf(b)||""):null, ia=fx?lueIA(fx):null;
- const loy=+b.loyer>0?+b.loyer:(ia&&ia.loyer)||0, tf=+b.tf>0?+b.tf:(ia&&ia.tf)||0, trav=+b.travaux>0?+b.travaux:(ia&&ia.travaux)||0;
- if(loy>0){o.rent=loy; o.rentM2=S; o.rentFixed=true;
-  /* loyer du bail en cours lu dans l'annonce (pas un loyer saisi) : il vaut jusqu'au départ du locataire, voir calc */
-  if(ia&&ia.loyer>0&&Math.round(loy)===ia.loyer){o.bailAns=bailAns(fx.ia.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
- else o.rent=c.rent*rr;
- /* charges : la part du propriétaire. Un bien ajouté avant le 8 novembre 2026 a gardé les charges totales de l'annonce : on en prend la même part */
- let cop=+b.copro||0; if(fx&&cop>0&&typeof copAn==="function"){const ca=copAn(fx); if(ca&&Math.round(ca/12)===Math.round(cop)) cop*=PART_PROPRIO;}
- if(cop>0) o.copro=cop; if(tf>0) o.tfM=tf/12; if(trav>0) o.trav=trav; if(scn) o._s=scn;
- return {x:calc(o),vac,t,pm2:+b.prix/S};}
+ /* valeurs propres au bien (12-ce-qui-pese.js) : saisies, sinon lues dans l'annonce, sinon estimées */
+ const V=typeof valeursBien==="function"?valeursBien(b,o.type):null;
+ if(V){if(V.loyer.v>0){o.rent=V.loyer.v; o.rentM2=S; o.rentFixed=true;
+   /* loyer du bail en cours lu dans l'annonce : il vaut jusqu'au départ du locataire, voir calc */
+   if(V.loyer.bail){o.bailAns=bailAns(V.raw.fin_bail); o.rentEst=c.rent*rr; o.rentM2Est=c.rentM2;}}
+  else o.rent=c.rent*rr;
+  o.copro=V.copro.v; if(V.tf.v>0) o.tfM=V.tf.v/12; o.trav=V.travaux.v; o.meubles=V.meubles.v;}
+ else {o.rent=+b.loyer>0?+b.loyer:c.rent*rr; if(+b.loyer>0){o.rentM2=S; o.rentFixed=true;} if(+b.copro>0) o.copro=+b.copro; if(+b.tf>0) o.tfM=+b.tf/12; if(+b.travaux>0) o.trav=+b.travaux; if(+b.meubles>0) o.meubles=+b.meubles;}
+ if(scn) o._s=scn;
+ return {x:calc(o),vac,t,pm2:+b.prix/S,V};}
 function renderBiens(){const box=document.getElementById("biensList"), st=document.getElementById("biensState");
  if(!DB){return;}
  if(!BIENS.length){box.innerHTML=`<p class="sub">Aucun bien pour l'instant. Ajoutez une annonce de vente repérée : le calcul reprend vos réglages et le loyer du quartier.</p>`; return;}
@@ -2132,7 +2140,7 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
   hook(db);
  }).catch(()=>{clearTimeout(timer); if(!DB){DB=localDB(); hook(DB);}});
  function hook(db){
-  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
+  db.collection("biens").orderBy("ts","desc").limit(200).onSnapshot(snap=>{clearTimeout(timer); BIENS=snap.docs.map(d=>{try{return normBien(d.id,d.data());}catch(_){return null;}}).filter(Boolean); st.textContent=db.local?`${BIENS.length} bien${BIENS.length>1?"s":""}, gardé${BIENS.length>1?"s":""} dans ce navigateur (version hors Claude : échangez la liste avec le bloc ci-dessous)`:db.shared?`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste commune`:`${BIENS.length} bien${BIENS.length>1?"s":""} dans la liste partagée`; if(typeof VC!=="undefined") VC.clear(); renderBiens(); renderCompare(); renderShort(); if(typeof draw==="function"&&draw.rows) draw(); if(VISIT) renderVisit(); if(AD&&AD.kind==="b") renderSide();},
    e=>{clearTimeout(timer); st.textContent="Lecture de la liste impossible ("+(e&&e.code||"erreur")+").";});
  }
  form.addEventListener("submit",async e=>{e.preventDefault(); if(!DB) return; const f=new FormData(form), g=k=>(f.get(k)||"").toString().trim();
@@ -2144,12 +2152,96 @@ const bienKey=b=>[b.ville,b.prix,b.surface,(b.titre||"").toLowerCase().trim(),b.
 })();
 
 
+/* ---------- ce qui pèse sur un bien : les valeurs du calcul propres à ce bien, leur provenance et leur poids ----------
+   Chaque valeur vient, dans cet ordre : de ce que vous avez saisi (ce bloc, la fiche de visite), de l'annonce (description lue,
+   charges annoncées, DPE), sinon d'une estimation. Estimations des travaux et des meubles — ordres de grandeur relevés en novembre 2026 :
+   rafraîchissement 150 à 300 €/m², rénovation complète 650 à 1 000 €/m² (La Maison Saint-Gobain) ; rénovation énergétique performante
+   200 à 350 €/m² en médiane, plus chère pour les plus mauvaises classes (EDF R&D) ; meubles neufs 3 000 à 6 000 €. Règles :
+   - état lu dans la description : « neuf » ou « très bon » → un quart des petits travaux ; « bon » ou inconnu → petits travaux du réglage ;
+     « à rafraîchir » → 200 €/m² ; « à rénover » → 650 €/m² (bas de fourchette : villes moyennes, hors Paris) ;
+   - un montant écrit dans l'annonce remplace l'estimation par l'état ; les travaux votés en copropriété à la charge de l'acheteur s'ajoutent ;
+   - DPE (location interdite : G depuis 2025, F en 2028, E en 2034, dans les 15 ans du calcul) : G 300 €/m², F 200 €/m², E 100 €/m² ;
+   - meubles : réglage du type ; bien vendu meublé → un tiers (compléments).
+   Une valeur du bien égale à celle de l'annonce a été recopiée à l'ajout dans la shortlist (biens ajoutés avant le 8 novembre 2026) :
+   elle compte comme venant de l'annonce, pas comme saisie. */
+const TRV_ETAT={"neuf":["q",0.25],"très bon":["q",0.25],"à rafraîchir":["m2",200],"à rénover":["m2",650]};
+const DPE_M2={G:[300,"déjà interdite"],F:[200,"interdite en 2028"],E:[100,"interdite en 2034"]};
+const PW_CHAMPS=["travaux","meubles","loyer","copro","tf"];
+const r50=v=>Math.round(v/50)*50;
+
+function valeursBien(b,ty){
+ ty=ty||b.type||typeFor(+b.surface||22,b.pieces); const T=tyOf(ty), D=ty===H.type?H:Object.assign({},H,typeDefaults(ty)), S=+b.surface||T.surf;
+ const suf=b.kind==="v"?b.suf:(b.url&&typeof bienSuf==="function"?bienSuf(b):null), fx=suf&&typeof ficx==="function"?ficx(suf):null;
+ const ia=fx&&typeof lueIA==="function"?lueIA(fx):{loyer:0,travaux:0,tf:0}, raw=(fx&&fx.ia)||{}, fl=(fx&&fx.fl)||[], dpe=b.dpe||(fx&&fx.dpe)||"";
+ const typed=(v,...annonce)=>+v>0&&!annonce.some(a=>a>0&&Math.round(+v)===Math.round(a));
+ const out={fx,raw,dpe};
+ {const L=[], petits=D.travaux, ecrit=raw.travaux_a_prevoir||0, votes=raw.travaux_votes||0, etat=raw.etat||(fl.includes("trav")?"à rafraîchir":""), e=TRV_ETAT[etat];
+  if(ecrit>0) L.push(["Montant écrit dans l'annonce",ecrit,"annonce"]);
+  else if(e&&e[0]==="m2") L.push([`${etat[0].toUpperCase()+etat.slice(1)}${raw.etat?"":" (mot repéré dans la description)"} : ${e[1]} €/m² × ${fr(S,0)} m²`,Math.max(petits,r50(e[1]*S)),"description"]);
+  else if(e) L.push([`État « ${etat} » d'après la description : quelques reprises`,r50(petits*e[1]),"description"]);
+  else L.push(["Petits travaux (réglage du type)",petits,"réglage"]);
+  if(votes>0) L.push(["Travaux votés en copropriété",votes,"annonce"]);
+  const dp=DPE_M2[dpe]; if(dp) L.push([`DPE ${dpe} : ${dp[0]} €/m² × ${fr(S,0)} m² (location ${dp[1]})`,r50(dp[0]*S),"DPE"]);
+  const est=L.reduce((a,z)=>a+z[1],0);
+  out.travaux=typed(b.travaux,ia.travaux)?{v:+b.travaux,src:"saisi",est,L}:{v:est,src:"estimé",est,L};}
+ {const meub=fl.includes("meub"), est=meub?r50(D.meubles/3):D.meubles, L=[[meub?"Vendu meublé : compléments (un tiers des meubles du type)":"Meubles neufs (réglage du type)",est,meub?"description":"réglage"]];
+  out.meubles=+b.meubles>0?{v:+b.meubles,src:"saisi",est,L}:{v:est,src:"estimé",est,L};}
+ out.loyer=typed(b.loyer,ia.loyer)?{v:+b.loyer,src:"saisi"}:ia.loyer>0?{v:ia.loyer,src:"annonce",bail:true}:{v:0,src:"estimé"};
+ const ca=fx&&typeof copAn==="function"?copAn(fx):null, cpA=ca?ca/12*PART_PROPRIO:0;
+ out.copro=typed(b.copro,ca?ca/12:0,cpA)?{v:+b.copro,src:"saisi"}:cpA?{v:cpA,src:"annonce",tot:ca/12}:{v:D.copro,src:"estimé"};
+ out.tf=typed(b.tf,ia.tf)?{v:+b.tf,src:"saisi"}:ia.tf>0?{v:ia.tf,src:"annonce"}:{v:0,src:"estimé"};
+ return out;}
+
+/* une annonce déjà dans nos biens : ce qu'on a saisi sur le bien s'applique aussi à l'annonce (classements, fiches) */
+function avecSaisies(vb){const ex=typeof bienOf==="function"?bienOf(vb.url):null; if(!ex||(typeof isOut==="function"&&isOut(ex))) return vb;
+ const o=Object.assign({},vb,{bid:ex.id}); PW_CHAMPS.forEach(k=>{if(+ex[k]>0) o[k]=+ex[k];}); if(ex.dpe) o.dpe=ex.dpe; return o;}
+
+/* le bloc : une ligne par valeur, avec sa provenance et son poids (écart de rendement pour un pas donné) */
+function pwKey(b){const ex=b.id?null:(b.bid||null); return b.id?"b|"+b.id:ex?"b|"+ex:"v|"+b.ville+"|"+(b.kind==="v"?b.suf:bienSuf(b)||"");}
+function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) return "";
+ const ty=b.type||typeFor(+b.surface||22,b.pieces), D=ty===H.type?H:Object.assign({},H,typeDefaults(ty));
+ const d=patch=>{const y=calcBien(Object.assign({},b,patch)).x; return y.irr==null?null:y.irr-x.irr;};
+ const loyCC=V.loyer.v||Math.round(x.rentHC+D.chLoc), tfAn=V.tf.v||Math.round(x.tf*12);
+ const pt=v=>v==null?"":`${v>0?"+":"−"}${fr(Math.abs(v),1)} pt`;
+ const src=(o,est)=>o.src==="saisi"?`saisi · ${est}`:est;
+ const det=L=>L.map(z=>`${esc(z[0])} : ${eur(z[1])}`).join(" + ");
+ const rows=[
+  ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,`estimé : ${det(V.travaux.L)}`),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
+  ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,`estimé : ${det(V.meubles.L)}`),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
+  ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`estimé : loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
+  ["copro","Charges copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`annonce : ${eur(V.copro.tot)}/mois de charges, ${Math.round(PART_PROPRIO*100)} % pour vous`:`estimé (réglage du type)`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
+  ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`estimée : taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
+ const key=pwKey(b);
+ return `<div class="pwbox" data-pwbox="${esc(key)}">
+  <p class="sub" style="margin:0 0 6px">Les valeurs qui changent le plus le résultat. Modifiez-en une : le rendement se recalcule, et c'est enregistré dans nos biens (pour vous deux). Videz le champ pour revenir à l'estimation.</p>
+  <div class="pwrows">${rows.map(([k,lab,u,st,v,s,[,pl,dv]])=>{const o=V[k];
+   return `<div class="pwr"><label class="pwl" for="pw-${k}">${lab}</label><span class="inp pwi"><input id="pw-${k}" data-pw="${k}" type="number" min="0" step="${st}" value="${o.src==="saisi"?Math.round(o.v):""}" placeholder="${Math.round(v)}"><span>${u}</span></span>
+    <span class="pws"><span class="pill ${o.src==="saisi"?"p-ok":o.src==="annonce"?"p-n":"p-warn"}">${o.src}</span> ${s}</span><span class="pwp mono" title="Effet sur le rendement sur 15 ans">${pl} de plus : ${pt(dv)}</span></div>`;}).join("")}</div>
+  <p class="pwres" data-pwres>Rendement ${mlab()} : <b class="mono" style="color:${colIrr(x.irr)}">${pct(x.irr)}</b> · cash-flow ${sgn(x.cf)}/mois</p></div>`;}
+
+function pwBase(key){const [k,...r]=key.split("|");
+ if(k==="b") return BIENS.find(x=>x.id===r[0])||null;
+ const ck=r[0], suf=r.slice(1).join("|"), a=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); return a?Object.assign(avecSaisies(venteBien(ck,a)),{kind:"v",suf}):null;}
+function pwPatch(box){const p={}; box.querySelectorAll("[data-pw]").forEach(i=>{if(i.value!=="") p[i.dataset.pw]=Math.max(0,+i.value||0);}); return p;}
+document.addEventListener("input",e=>{const i=e.target.closest&&e.target.closest("[data-pw]"); if(!i) return; const box=i.closest("[data-pwbox]"), b=box&&pwBase(box.dataset.pwbox); if(!b) return;
+ const clean=Object.assign({},b); PW_CHAMPS.forEach(k=>{if(box.querySelector(`[data-pw="${k}"]`)) clean[k]=0;});
+ const x=calcBien(Object.assign(clean,pwPatch(box))).x, res=box.querySelector("[data-pwres]");
+ if(res) res.innerHTML=`Rendement ${mlab()} : <b class="mono" style="color:${colIrr(x.irr)}">${x.irr==null?"n.d.":pct(x.irr)}</b> · cash-flow ${sgn(x.cf)}/mois <span class="sub">(non enregistré)</span>`;});
+document.addEventListener("change",async e=>{const i=e.target.closest&&e.target.closest("[data-pw]"); if(!i) return; const box=i.closest("[data-pwbox]"); if(!box) return;
+ const f=i.dataset.pw, v=i.value===""?0:Math.max(0,Math.round(+i.value||0)), key=box.dataset.pwbox, [k,...r]=key.split("|");
+ if(!DB){toast("Pour enregistrer, ouvrez « Nos biens » et indiquez le code de votre groupe."); return;}
+ if(k==="b"){await updBien(r[0],{[f]:v}); return;}
+ const ck=r[0], suf=r.slice(1).join("|"), a=(ADS[ck]&&ADS[ck].ventes||[]).find(z=>z[3]===suf); if(!a) return;
+ const old=BIENS.find(x=>x.url===VTURL+suf); if(old){await updBien(old.id,Object.assign({[f]:v},isOut(old)?{statut:"à voir",short:true}:{})); return;}
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ bien[f]=v; try{await DB.collection("biens").add(bien); toast(`« ${vb.titre} » ajouté à nos biens avec cette valeur.`);}catch(err){toast("Enregistrement impossible ("+(err&&err.code||"erreur")+").");}});
+
 /* ---------- ventes du type choisi (studios, T2, T3 à vendre) ---------- */
 const VTURL="https://www.bienici.com/annonce/vente/";
 const VC=new Map();
 function venteIris(ck,sector){const A=ADS[ck], z=IR[ck]; if(!A||!z||!A.map[sector]) return null;
  const ts=z.list.filter(t=>A.map[sector].includes(t.code)&&t.price); return ts.sort((a,b)=>b.dpe.reduce((x,y)=>x+y,0)-a.dpe.reduce((x,y)=>x+y,0))[0]||null;}
-function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return {type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12*PART_PROPRIO):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]};}
+function venteBien(ck,a){const t=venteIrisA(ck,a), f=ficx(a[3]), cop=copAn(f), ia=lueIA(f); return avecSaisies({type:H.type,ville:ck,quartier:t?t.name:"",prix:a[2],surface:a[0],dpe:f&&f.dpe||"",copro:cop?Math.round(cop/12*PART_PROPRIO):0,loyer:ia.loyer,travaux:ia.travaux,tf:ia.tf,url:VTURL+a[3],titre:`${TY().lab} ${String(a[0]).replace(".",",")} m²${a[1]?" · "+a[1]:""}`,secteur:a[1]});}
 function venteCalc(ck,a){const k=ck+a[3]; if(!VC.has(k)) VC.set(k,calcBien(venteBien(ck,a))); return VC.get(k);}
 const allVentes=()=>Object.entries(ADS).filter(([k,v])=>v&&v.ventes).flatMap(([ck,v])=>v.ventes.filter(a=>!estDoublon(a[3])).map(a=>({ck,a,r:venteCalc(ck,a)})));
 /* une annonce retirée de la shortlist redevient une annonce comme les autres (son bien est gardé caché, avec ses notes et sa visite, et revient si on la rajoute) */
@@ -2169,7 +2261,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.c
  const [ck,suf]=b.dataset.addv.split("|"), a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return;
  const old=BIENS.find(x=>x.url===VTURL+suf);
  if(old){b.disabled=true; await updBien(old.id,{statut:old.statut==="écarté"?"à voir":old.statut,short:true}); toast(`« ${old.titre||"Bien"} » remis dans nos biens, avec ses notes.`); return;}
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  b.disabled=true; b.textContent="ajout…";
  try{await DB.collection("biens").add(bien); b.outerHTML=`<span class="pill p-ok">ajouté</span>`; toast(`« ${vb.titre} » ajouté à nos biens.`);}catch(err){b.disabled=false; b.textContent="+ Ajouter"; toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}});
 
@@ -3218,7 +3310,7 @@ function mBienDetail(id){const b=BIENS.find(x=>x.id===id); if(!b) return;
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
  if(b&&!isOut(b)){await retirer(b); return;}
  if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
- const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:vb.copro||0,tf:vb.tf||0,loyer:vb.loyer||0,travaux:vb.travaux||0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
+ const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
  try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
 
 /* ---------- shortlist ---------- */
@@ -3610,8 +3702,8 @@ C.forEach(c=>{const d=demCity(c.k); if(d&&RISK[c.k]) RISK[c.k][1]=+d.vac.toFixed
 /* ================= fiches ville, quartier et bien : même structure partout =================
    Rubriques dans le même ordre ; chaque niveau se compare au niveau du dessus au lieu de le répéter.
    Les rubriques se replient (résumé d'une ligne) et l'outil retient lesquelles vous gardez ouvertes. */
-const FRUB=[["attn","Points d'attention"],["annonce","L'annonce"],["prix","Prix d'achat"],["loyer","Loyer et demande"],["calc","Le calcul"],["suivi","Suivi de l'achat"],["visite","Visite"],["traj","Trajets"],["vie","Vie de quartier"],["bati","Bâti et énergie"],["risq","Risques"],["hab","Habitants"],["ecoles","Écoles et campus"],["urba","Urbanisme et projets"],["ann","Annonces"],["src","Sources"]];
-const FDEF={ville:{calc:1,prix:1},quartier:{prix:1,traj:1,vie:0},bien:{suivi:1,annonce:1,prix:1,calc:1}};
+const FRUB=[["attn","Points d'attention"],["annonce","L'annonce"],["prix","Prix d'achat"],["poids","Ce qui pèse sur ce bien"],["loyer","Loyer et demande"],["calc","Le calcul"],["suivi","Suivi de l'achat"],["visite","Visite"],["traj","Trajets"],["vie","Vie de quartier"],["bati","Bâti et énergie"],["risq","Risques"],["hab","Habitants"],["ecoles","Écoles et campus"],["urba","Urbanisme et projets"],["ann","Annonces"],["src","Sources"]];
+const FDEF={ville:{calc:1,prix:1},quartier:{prix:1,traj:1,vie:0},bien:{suivi:1,annonce:1,prix:1,poids:1,calc:1}};
 let FOPEN={}; try{FOPEN=JSON.parse(localStorage.getItem("fopen")||"{}");}catch(_){}
 const fIsOpen=(lv,k)=>FOPEN[lv+k]!=null?FOPEN[lv+k]:!!(FDEF[lv]&&FDEF[lv][k]);
 document.addEventListener("toggle",e=>{const d=e.target; if(!d.matches||!d.matches("details.fsec")) return; FOPEN[d.dataset.lv+d.dataset.sec]=d.open; try{localStorage.setItem("fopen",JSON.stringify(FOPEN));}catch(_){}},true);
@@ -3720,14 +3812,14 @@ function bienFicheBody(b,opt){opt=opt||{}; {const s0=b.kind==="v"?b.suf:bienSuf(
   return `${sc!=null||coms.length||Object.values(av).some(z=>z.verdict)?`<div class="vsum">${sc!=null?`<span class="pill p-n">note ${fr(sc,1)}/5</span>`:""}${Object.entries(av).filter(([,z])=>z.verdict).map(([n,z])=>`<span class="pill ${VERD[z.verdict][1]}">${esc(n)} : ${VERD[z.verdict][0]}${z.verdict==="prix"&&z.vprix?" "+keur(+z.vprix):""}</span>`).join("")}</div>${coms.map(([n,a])=>`<p class="vcom"><b>${esc(n)} :</b> ${esc(a.com)}</p>`).join("")}`:`<p class="sub" style="margin:0">Pas encore visité. Le bouton « Visite » permet de saisir les chiffres réels et vos notes.</p>`}${b.notes?`<p class="vcom"><b>Notes :</b> ${esc(b.notes)}</p>`:""}`;})():"";
  const traj=`${isB?adrBlock(b):""}${!g.foot&&t?trajBlock(t):""}`;
  const vie=p?poiBlock(t):"";
- const bati=fRows([["DPE",b.dpe?`<b>${esc(b.dpe)}</b>`:"inconnu",t&&t.dpe.reduce((a,z)=>a+z,0)>=15?`quartier : ${fr(fgPct(t.dpe),0)} % de F-G`:""],["Copropriété",+b.copro?`${eur(+b.copro)}/mois`:`${eur(H.copro)}/mois`,+b.copro?"":"estimée"],["Taxe foncière",+b.tf?`${eur(+b.tf)}/an`:"estimée"],+b.travaux&&["Travaux",eur(+b.travaux)]]);
+ const bati=fRows([["DPE",b.dpe?`<b>${esc(b.dpe)}</b>`:"inconnu",t&&t.dpe.reduce((a,z)=>a+z,0)>=15?`quartier : ${fr(fgPct(t.dpe),0)} % de F-G`:""],["Copropriété",`${eur(r.V?r.V.copro.v:H.copro)}/mois pour vous`,r.V?r.V.copro.src:"estimée"],["Taxe foncière",`${eur(x.tf*12)}/an`,r.V?r.V.tf.src:"estimée"],["Travaux",eur(r.V?r.V.travaux.v:+b.travaux||H.travaux),r.V?r.V.travaux.src:""]]);
  const risq=(risqR?`${risqPillsR(risqR)}${fNote(`${g.risq?"Mesuré à l'adresse":"Mesuré au centre du quartier"} (Géorisques). L'état des risques du vendeur fait foi.`)}`:"")+catnatLine(b.ville);
  const ecoles=t?ecolesBlock(t):"", urba=`${adrUrbaBlock(b)}${t?urbaBlock(t):""}`;
  const comps=A&&sec?(A.ventes||[]).filter(a=>a[1]===sec&&a[3]!==s):[], sold=sec?soldList(b.ville,sec).slice(0,5):[];
  const ann=comps.length||sold.length?`${comps.length?ventesTable(b.ville,comps,false):""}${sold.length?`<h4 class="fh4">Parties récemment</h4>${soldTable(b.ville,sold)}`:""}`:"";
  const qname=t?t.name:(b.quartier||"");
  return `${opt.noHead?"":fHead(x,xq,t?"quartier":"ville")}${attn}${(()=>{const s=suiviSec(b); return fSec("bien","suivi",s[0],s[1]);})()}${fSec("bien","annonce",fiche[0],fiche[1])}
-  ${fSec("bien","prix",`${keur(+b.prix)} · ${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs ${t?"quartier":"ville"}`,prix)}${fSec("bien","loyer",`${eur(x.rentHC)} HC`,loyer)}${fSec("bien","calc",`${sgn(x.cf)}/mois · ${x.irr==null?"n.d.":pct(x.irr)}`,calcH)}
+  ${fSec("bien","prix",`${keur(+b.prix)} · ${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % vs ${t?"quartier":"ville"}`,prix)}${fSec("bien","poids",r.V?`travaux ${keur(r.V.travaux.v)} · meubles ${keur(r.V.meubles.v)}`:"",typeof poidsHtml==="function"?poidsHtml(b):"")}${fSec("bien","loyer",`${eur(x.rentHC)} HC`,loyer)}${fSec("bien","calc",`${sgn(x.cf)}/mois · ${x.irr==null?"n.d.":pct(x.irr)}`,calcH)}
   ${isB?fSec("bien","visite",visitScore(b)!=null?`note ${fr(visitScore(b),1)}/5`:"pas encore visité",visite):""}${fSec("bien","traj",b.adresse?"à l'adresse":qname?"au centre du quartier":"",traj)}${fSec("bien","vie",p?`${fr(p[0],1)}/10 (quartier)`:"",vie)}
   ${fSec("bien","bati",b.dpe?`DPE ${esc(b.dpe)}`:"DPE inconnu",bati)}${fSec("bien","risq",risqR?(risqR.t||risqR.s?"à regarder":"rien de majeur"):"",risq)}${fSec("bien","hab",t?habSum(t):"",t?habBlock(t):"")}${fSec("bien","ecoles",t?ecolesSum(t):"",ecoles)}${fSec("bien","urba",g.urba?`zone ${esc(g.urba[0])} à l'adresse`:t?urbaSum(t):"",urba)}${fSec("bien","ann",comps.length?`${comps.length} comparables`:"",ann)}`;}
 function adQuart(ad){try{if(ad.kind==="v"){const a=findAd("v",ad.ck,ad.suf); return a?calcBien(venteBien(ad.ck,a)).t:null;} if(ad.kind==="b"){const b=BIENS.find(x=>x.id===ad.suf); return b?calcBien(b).t:null;}}catch(_){} return null;}
@@ -4039,7 +4131,7 @@ if(!readHash()) render();
    <div class="v2card"><h2>Sources</h2><p class="v2sub">Ventes réelles DVF (2023-2025), carte des loyers de l'État et annonces de location meublée, Insee, Géorisques, OpenStreetMap, ADEME (DPE), annonces Bien'ici relevées chaque soir. La méthode complète est décrite dans <a href="./#sources">la version actuelle</a>.</p></div></div>`;}
 
  /* ---------- fiche unique en onglets ---------- */
- const FT=[["bien","Le bien",["suivi","annonce"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
+ const FT=[["bien","Le bien",["suivi","annonce"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
  function secs(html){const d=document.createElement("div"); d.innerHTML=html; const S={}; d.querySelectorAll("details.fsec").forEach(s=>{s.open=true; S[s.dataset.sec]=s.outerHTML;}); const at=d.querySelector(".fattn"); return {S,attn:at?at.outerHTML:""};}
  function bienOfSel(s){const [k,...r]=s.split("|"); if(k==="b"){const b=BIENS.find(x=>x.id===r[0]); return b?{b,kind:"b"}:null;}
   if(k==="v"){const ck=r[0], suf=r.slice(1).join("|"), a=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a) return null; const ex=bienOf(VTURL+suf); return {b:Object.assign(venteBien(ck,a),{kind:"v",suf}),a,ck,suf,ex:ex&&!isOut(ex)?ex:null,kind:"v"};}
@@ -4057,10 +4149,11 @@ if(!readHash()) render();
    <div class="v2kp"><div class="v2k"><span>Rendement à ce prix</span><b style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b><small>${scn()}</small></div><div class="v2k"><span>Cash-flow · mensualité</span><b style="color:${cfC(y.cf)}">${sgn(y.cf)}</b><small>mensualité ${eur(y.mens)}</small></div></div>
    <div class="v2tw"><table class="v2t"><thead><tr><th class="r">Offre</th><th class="r">Écart</th><th class="r">15 ans</th><th class="r">Cash-flow</th><th class="r">Mensualité</th></tr></thead><tbody>${rows}</tbody></table></div>
    ${b.kind==="v"?`<div class="v2f"><label for="v2cpd">Date du compromis</label><input type="date" id="v2cpd" value="${esc(cpd)}" data-v2cpd="${esc(id)}"></div>${cpd?`<ol style="margin:0;padding-left:20px;line-height:1.8"><li>Compromis le ${add(0)}</li><li>Fin du délai de rétractation : ${add(10)}</li><li>Accord de prêt attendu vers le ${add(45)}</li><li>Acte chez le notaire vers le ${add(90)}</li></ol>`:`<p class="v2sub">Indiquez la date du compromis pour voir les échéances jusqu'à l'acte.</p>`}`:""}</div>`;}
- function visite(b,id){const tv=V.loc[id+"|t"]||0, y=calcBien(Object.assign({},b,{travaux:(+b.travaux||0)+tv})).x, ck=V.loc[id+"|k"]||{};
+ function visite(b,id){const r=calcBien(b), y=r.x, tv=r.V?r.V.travaux:null, ck=V.loc[id+"|k"]||{};
   const CK=["Lumière, bruit, vis-à-vis","Humidité, fenêtres, chauffage","Tableau électrique, eau chaude","Parties communes et extérieur","Procès-verbaux des 3 dernières assemblées générales","Charges annuelles et travaux votés","Taxe foncière (dernier avis)","Diagnostic de performance énergétique réel"];
-  return `<div class="v2sec"><h3>Visite</h3><div class="v2f"><label for="v2trv">Travaux constatés en plus de l'annonce</label><select id="v2trv" data-v2trv="${esc(id)}">${[0,2000,5000,10000,20000,30000].map(v=>`<option value="${v}"${v===tv?" selected":""}>${v?eur(v):"aucuns"}</option>`).join("")}</select></div>
-   <p style="margin:0">Rendement après visite : <b class="mono" style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b> <span class="v2sub">· cash-flow ${sgn(y.cf)}/mois</span></p>
+  return `<div class="v2sec"><h3>Visite</h3><div data-pwbox="${esc(typeof pwKey==="function"?pwKey(b):"")}"><div class="v2f"><label for="v2trv">Travaux après visite (devis, constat)</label><span class="inp"><input id="v2trv" data-pw="travaux" type="number" min="0" step="500" value="${tv&&tv.src==="saisi"?Math.round(tv.v):""}" placeholder="${tv?Math.round(tv.est):""}"><span>€</span></span></div>
+   <p class="v2sub" style="margin:2px 0 0">Estimation avant visite : ${tv?eur(tv.est):"n.d."}. La valeur saisie remplace l'estimation pour vous deux.</p>
+   <p style="margin:0" data-pwres>Rendement après visite : <b class="mono" style="color:${cv(colIrr(y.irr))}">${pctS(y.irr)}</b> <span class="v2sub">· cash-flow ${sgn(y.cf)}/mois</span></p></div>
    <div class="v2ck">${CK.map((t,i)=>`<label><input type="checkbox" data-v2ck="${esc(id)}|${i}"${ck[i]?" checked":""}>${t}</label>`).join("")}</div>${b.kind==="b"?`<div><button type="button" class="v2btn" data-visit="${esc(b.id)}">Ouvrir la grille de visite complète</button></div>`:""}</div>`;}
  function ficheBien(sel){const R=bienOfSel(sel); if(!R) return null; const b=R.b, id=R.kind==="b"?"b"+b.id:sel, r=calcBien(b), x=r.x, z=irr3(x)||{}, t=r.t, fx=ficx(R.kind==="v"?R.suf:(bienSuf(b)||""))||{};
   const {S,attn}=secs(bienFicheBody(b,{noHead:true}));

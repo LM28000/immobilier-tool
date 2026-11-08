@@ -34,7 +34,7 @@ function calc(c){
  const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeDefaults(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
- const base=bien*(1+H.notaire/100)+D.meubles+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
+ const meu=c.meubles!=null?c.meubles:D.meubles, base=bien*(1+H.notaire/100)+meu+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
  const L=loanYears(P,taux,H.duree,P*insRate()/1200), ins=P*insRate()/1200, M0=L.M, mens=M0+ins, n=H.duree*12;
  /* loyer : loyer de référence de la ville (charges comprises) ramené à la surface  */
  const rentCC=c.rentFixed?c.rent:c.rent*Math.pow(T.surf/c.rentM2,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk);
@@ -56,7 +56,7 @@ function calc(c){
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
     if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d;
-    stock+=amBati+(y<FISC.ansMeubles?H.meubles/FISC.ansMeubles:0)+(y<FISC.ansTravaux?trav/FISC.ansTravaux:0);
+    stock+=amBati+(y<FISC.ansMeubles?meu/FISC.ansMeubles:0)+(y<FISC.ansTravaux?trav/FISC.ansTravaux:0);
     const u=Math.min(res,stock); stock-=u; res-=u; cumAB+=Math.min(u,amBati*(y+1)-cumAB); taxable=res;}
    T.push(gross?0:taxable*taxRate()); F.push(gross?0:fees); AB.push(reg==="reel"?cumAB:0);}
   const pvT=(b,sa,k,t,a)=>gross?0:pvTax(b,sa,k,t,a);
