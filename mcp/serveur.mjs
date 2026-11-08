@@ -51,11 +51,11 @@ const AIDES = `
 async function aides() { const p = await getPage(); if (!(await p.evaluate(() => !!window.__resume))) await p.evaluate(AIDES); }
 
 const server = new McpServer({name: "notre-studio", version: "1.0.0"}, {instructions:
-  "Outil « Où acheter notre studio ? » : 13 villes de l'Ouest, quartiers IRIS, annonces Bien'ici relevées chaque soir (5 villes), calcul LMNP (crédit, impôts, revente, TRI sur 15 ans). " +
+  "Outil « Où acheter notre studio ? » : 20 villes de l'Ouest, quartiers IRIS, annonces Bien'ici relevées chaque soir dans chaque ville, calcul LMNP (crédit, impôts, revente, TRI sur 15 ans). " +
   "Les montants sont en euros ; « rendement_15ans_pct » est le rendement annuel de l'apport revente comprise. Les résidences gérées et viagers sont signalés : le calcul ne s'y applique pas. " +
   "Ce sont des estimations, pas un conseil financier ; citez les liens des annonces."});
 
-server.registerTool("classement_villes", {title: "Classement des villes", description: "Les 13 villes classées par rendement sur 15 ans pour le type de bien choisi, avec cash-flow, budget, loyer, endettement et nombre d'annonces.",
+server.registerTool("classement_villes", {title: "Classement des villes", description: "Les 20 villes classées par rendement sur 15 ans pour le type de bien choisi, avec cash-flow, budget, loyer, endettement et nombre d'annonces.",
   inputSchema: {type: z.enum(["studio", "t2", "t3"]).optional().describe("type de bien (par défaut : celui des réglages)")}},
   wrap(async ({type}) => { await aides(); return run(ty => { const t0 = H.type; if (ty) setType(ty, true);
     const out = all().map(({c, x}) => ({ville: c.name, cle: c.k, rendement_15ans_pct: __r(x.irr), cashflow_mois: Math.round(x.cf), budget_tout_compris: Math.round(x.cost), loyer_hc: Math.round(x.rentHC), endettement_pct: Math.round(x.ratio * 100), banque: bank(x.ratio)[1], annonces_a_vendre: ADS[c.k] && ADS[c.k].ventes ? ADS[c.k].ventes.length : 0, note: c.note || null}))

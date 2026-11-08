@@ -97,4 +97,4 @@ document.addEventListener("change",e=>{const f=e.target.closest&&e.target.closes
   if(cur==="tabsSec"||(cur&&cur.startsWith("tab-"))){const sel=document.querySelector('[role="tab"][aria-selected="true"]'); cur=sel&&sel.id==="tab-biens"?"tab-biens":"tab-ann";}
   nav.querySelectorAll("[data-side]").forEach(a=>a.setAttribute("aria-current",a.dataset.side===(cur||"mapSec")?"location":"false"));};
  addEventListener("scroll",()=>requestAnimationFrame(mark),{passive:true}); setTimeout(mark,500);
- setTimeout(()=>{const f=document.getElementById("sideFresh"); if(f) f.textContent=ADS.date?`Annonces relevées le ${ADS.date} · 5 villes sur 13`:"";},600);})();
+ setTimeout(()=>{const f=document.getElementById("sideFresh"); if(f) f.textContent=ADS.date?`Annonces relevées le ${ADS.date} · ${C.filter(c=>ADS[c.k]&&ADS[c.k].ventes).length} villes sur ${C.length}`:"";},600);})();

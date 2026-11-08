@@ -2,7 +2,7 @@ import json,math,sys
 from shapely.geometry import shape,box,mapping
 from shapely.ops import unary_union
 src=sys.argv[1]
-LON0,LON1,LAT0,LAT1=-2.9,2.9,46.0,49.45
+LON0,LON1,LAT0,LAT1=-4.85,2.9,45.6,49.8   # novembre 2026 : élargie pour Brest, Cherbourg et Limoges
 K=math.cos(math.radians(47.7)); W=640
 S=W/((LON1-LON0)*K); H=round((LAT1-LAT0)*S)
 bb=box(LON0-0.3,LAT0-0.3,LON1+0.3,LAT1+0.3)

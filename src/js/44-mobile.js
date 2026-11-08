@@ -101,7 +101,7 @@ function mSheetRender(){if(!MOBON) return; const box=document.getElementById("mS
  else{const x=calc(c), A=ADS[c.k], nv=A&&A.ventes?A.ventes.length:0, ta=topAds(c.k,"",6), [bc,bt]=bank(x.ratio);
   box.innerHTML=`<div class="msh"><div><h2>${mEsc(c.name)}</h2><p>Moyenne de la ville · ${tyLow()} de ${H.surface} m²</p></div></div>
    <div class="mkrow">${kp("15 ans "+mlab(),irrTxt(x),"")}${kp("Cash-flow",sgn(x.cf),mcfc(x.cf),"par mois")}${kp("Banque",pct(x.ratio*100,0),bc==="p-ok"?"pos":bc==="p-bad"?"neg":"",bt)}</div>
-   ${ta.length?`<div class="mhs"><h3>Meilleures annonces</h3><button type="button" class="mlink" data-mfeed="${c.k}|">Voir les ${nv} ›</button></div><div class="mminis">${ta.map(miniAd).join("")}</div>`:`<p class="msub">${IR[c.k]?"":"Pas d'annonces suivies pour cette ville. "}Zoomez sur Le Mans, Saint-Nazaire, Angers, Caen ou Orléans pour voir les quartiers.</p>`}
+   ${ta.length?`<div class="mhs"><h3>Meilleures annonces</h3><button type="button" class="mlink" data-mfeed="${c.k}|">Voir les ${nv} ›</button></div><div class="mminis">${ta.map(miniAd).join("")}</div>`:`<p class="msub">Pas encore d'annonces relevées pour cette ville.</p>`}
    <div class="mgroup">${IR[c.k]?`<button type="button" class="mrow" data-mzoom="${c.k}">Voir les quartiers${chev}</button>`:""}<button type="button" class="mrow" data-mcity>Fiche complète de la ville${chev}</button></div>`;}
  const ic=document.querySelector("#mSheet .mx"); if(ic) ic.blur();}
 

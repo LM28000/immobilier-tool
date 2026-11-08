@@ -1,6 +1,6 @@
 # Où acheter notre studio ?
 
-Comparateur de 13 villes de l'Ouest pour un studio meublé en location : prix, loyers, quartiers (IRIS), DPE, annonces Bien'ici, financement et rendement.
+Comparateur de 20 villes de l'Ouest pour un studio meublé en location : prix, loyers, quartiers (IRIS), DPE, annonces Bien'ici, financement et rendement.
 
 Page en ligne : https://lm28000.github.io/immobilier-tool/
 
@@ -34,7 +34,7 @@ npm test                  # build + tests du calcul + tests des données + tests
 
 `sync.sh` lance aussi les tests rapides avant chaque publication et n'envoie rien s'ils échouent (notification macOS, ligne « NON PUBLIÉ » dans `sync.log`). GitHub relance tous les tests à chaque envoi (`.github/workflows/tests.yml`).
 
-Les annonces sont relevées chaque jour (Le Mans, Saint-Nazaire, Angers, Caen, Orléans) par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 60 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
+Les annonces sont relevées chaque jour dans les 20 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 60 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
 
 ## Annonces privées (Supabase)
 

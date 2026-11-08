@@ -251,7 +251,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.goto(URL2); await p.waitForTimeout(2000);
       ok(`v2 ${dev} · critères au premier lancement`, await p.evaluate(() => !!document.querySelector('.v2dlg') && +document.getElementById('v2cN').textContent > 0));
       await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
-      ok(`v2 ${dev} · carte de l'Ouest et ses 13 villes`, await p.evaluate(() => !!document.querySelector('#v2map.leaflet-container') && document.querySelectorAll('#v2mlist [data-v2city]').length === 13));
+      ok(`v2 ${dev} · carte de l'Ouest et ses 20 villes`, await p.evaluate(() => !!document.querySelector('#v2map.leaflet-container') && document.querySelectorAll('#v2mlist [data-v2city]').length === C.length && C.length === 20));
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1500);
       ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => document.querySelectorAll('#v2map path').length > 20 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
@@ -268,7 +268,7 @@ const tap = async (p, n, x, y) => n === 'tel' ? p.touchscreen.tap(x, y) : p.mous
       await p.evaluate(() => { document.querySelector('[data-v2close]').click(); document.querySelector('[data-v2av="nuage"]').click(); }); await p.waitForTimeout(400);
       ok(`v2 ${dev} · nuage des annonces`, await p.evaluate(() => document.querySelectorAll('#v2p-annonces svg [data-v2open]').length > 2));
       await p.evaluate(() => document.querySelector('[data-v2tab="villes"]').click()); await p.waitForTimeout(400);
-      ok(`v2 ${dev} · villes`, await p.evaluate(() => document.querySelectorAll('#v2p-villes [data-v2city]').length === 13));
+      ok(`v2 ${dev} · villes`, await p.evaluate(() => document.querySelectorAll('#v2p-villes [data-v2city]').length === C.length));
       await p.evaluate(() => document.querySelector('[data-v2tab="budget"]').click()); await p.waitForTimeout(300);
       await p.evaluate(() => { const i = document.getElementById('v2h-apport'); i.value = '20000'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(400);
       ok(`v2 ${dev} · hypothèse modifiée et appliquée`, await p.evaluate(() => H.apport === 20000));
