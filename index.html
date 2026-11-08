@@ -1321,6 +1321,8 @@ const FINK=["garantie","regime","cfe","compta"];   /* et les associés (H.assoc)
 const CRIT0={budget:90000,rmin:3,bank:true};
 let NOSCRIT=null; try{const c=JSON.parse(localStorage.getItem("crit")||"null"); if(c&&typeof c==="object"&&!Array.isArray(c)) NOSCRIT=c;}catch(_){}
 let REGL=null, REGREADY=false, REGNEW=false, REGT=0, REGIN=false;
+/* ce navigateur avait-il ses propres réglages avant de lire ceux du groupe ? Un navigateur neuf lit et applique, mais ne complète pas la ligne commune */
+const REGLOCAL=HYPOK;
 const critV=()=>Object.assign({},CRIT0,NOSCRIT||{});
 const regShared=()=>!!(typeof DB!=="undefined"&&DB&&!DB.local);
 function regLab(k){const L={surcote:"prix payé vs prix moyen",loyerAdj:"loyer obtenu",taux:"taux du crédit",tmiA:"tranche d'impôt 1",tmiB:"tranche d'impôt 2",regime:"régime fiscal",
@@ -1343,7 +1345,7 @@ function regTake(docs){const out=[], R=[];
  const first=!REGREADY; REGREADY=true;
  if(R[0]&&first&&R[0].data.exemple===true&&HYPOK){REGL=R[0]; REGNEW=false; regPush();}
  else if(R[0]){REGL=R[0]; REGNEW=false; regApply(R[0].data,first);
-  if((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)||!(R[0].data.fin&&R[0].data.fin.assoc)) regPush();}
+  if(REGLOCAL&&((!R[0].data.crit&&NOSCRIT)||(!R[0].data.tyv&&Object.keys(TYV).length)||!(R[0].data.fin&&R[0].data.fin.assoc))) regPush();}
  else if(!REGNEW){REGNEW=true; setTimeout(regSend,0);}
  if(first) document.dispatchEvent(new Event("reglages"));
  return out;}
@@ -1355,7 +1357,11 @@ function regApply(d,first){const ch=[];
   if(d.hyp&&typeof d.hyp==="object") HYPK.forEach(k=>{if(typeof d.hyp[k]==="number") setK(k,d.hyp[k]);});
   if(d.fin&&typeof d.fin==="object") FINK.forEach(k=>{const v=d.fin[k]; if(typeof v==="number"||(typeof v==="string"&&v.length<=40)) setK(k,v);});
   if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){if(JSON.stringify(d.fin.assoc)!==JSON.stringify(H.assoc)){H.assoc=JSON.parse(JSON.stringify(d.fin.assoc)); assocNorm(); ch.push("assoc");}}
-  else if(d.hyp) assocFromLegacy({salaires:d.hyp.salaires,pretEtud:d.hyp.pretEtud});   /* réglages communs d'avant les associés : revenus et crédits répartis */
+  else if(d.fin&&d.fin.tmiA!=null){   /* réglages communs d'avant les associés : les deux personnes reconstruites (prénoms, parts, tranches, assurances) */
+   const F=d.fin, h=d.hyp||{}, pa=Math.min(100,Math.max(0,+F.partA||50)), sal=+h.salaires||H.salaires, cr=+h.pretEtud||0;
+   H.assoc=[{nom:F.nomA||"",part:pa,revenus:sal*pa/100,credits:cr/2,tmi:+F.tmiA||0,assur:F.assurA!=null?+F.assurA:0.2,quot:F.quotA!=null?+F.quotA:100},{nom:F.nomB||"",part:100-pa,revenus:sal*(100-pa)/100,credits:cr/2,tmi:+F.tmiB||0,assur:F.assurB!=null?+F.assurB:0.2,quot:F.quotB!=null?+F.quotB:100}];
+   assocNorm(); ch.push("assoc");}
+  else if(d.hyp) assocFromLegacy({salaires:d.hyp.salaires,pretEtud:d.hyp.pretEtud});   /* sinon : revenus et crédits du groupe répartis sur les associés de ce navigateur */
   if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&JSON.stringify(d.tyv)!==JSON.stringify(TYV)){
    TYV=JSON.parse(JSON.stringify(d.tyv)); saveTyvLocal(); const v=typeVals(H.type); TYK.forEach(k=>setK(k,v[k]));}
   if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&JSON.stringify(d.crit)!==JSON.stringify(NOSCRIT)){
