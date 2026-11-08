@@ -201,6 +201,8 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 #v2map .v2rep svg{width:16px;height:16px;display:block;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .v2pop .maplibregl-popup-content{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font:700 12px var(--f-ui);box-shadow:0 2px 6px rgb(0 0 0 / .15)}
 .v2pop .maplibregl-popup-tip{display:none}
+/* la bulle du survol ne capte jamais la souris : sinon, restée sous le curseur quand la carte bouge, elle bloque molette, clic et glisser */
+.v2pop,.v2pop *{pointer-events:none!important}
 @media (max-width:860px){#v2map .maplibregl-ctrl-attrib{font-size:10px}}
 /* dans une fiche de ville, « toutes les annonces » et « voir les quartiers » sont déjà sur la carte à côté */
 #v2fiche [data-annall],#v2fiche [data-zq]{display:none}

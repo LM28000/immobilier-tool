@@ -14,6 +14,10 @@ let REGL=null, REGREADY=false, REGNEW=false, REGT=0, REGIN=false;
 /* ce navigateur avait-il ses propres réglages avant de lire ceux du groupe ? Un navigateur neuf lit et applique, mais ne complète pas la ligne commune */
 const REGLOCAL=HYPOK;
 const critV=()=>Object.assign({},CRIT0,NOSCRIT||{});
+/* comparaison sans tenir compte de l'ordre des clés : la base (jsonb) les range à sa façon, et deux textes JSON différents
+   pouvaient dire la même chose — les réglages étaient alors réappliqués à chaque relecture (message et recalcul toutes les 20 s) */
+const canon=v=>JSON.stringify(v,(k,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,k2)=>(o[k2]=x[k2],o),{}):x);
+const critClean=c=>({budget:+c.budget||CRIT0.budget,rmin:isFinite(+c.rmin)?+c.rmin:CRIT0.rmin,bank:c.bank!==false});
 const regShared=()=>!!(typeof DB!=="undefined"&&DB&&!DB.local);
 function regLab(k){const L={surcote:"prix payé vs prix moyen",loyerAdj:"loyer obtenu",taux:"taux du crédit",tmiA:"tranche d'impôt 1",tmiB:"tranche d'impôt 2",regime:"régime fiscal",
   assurA:"assurance du prêt 1",assurB:"assurance du prêt 2",quotA:"quotité 1",quotB:"quotité 2",garantie:"garantie du prêt",cfe:"CFE",compta:"comptable",nomA:"prénom 1",nomB:"prénom 2",
@@ -46,17 +50,17 @@ function regApply(d,first){const ch=[];
  try{
   if(d.hyp&&typeof d.hyp==="object") HYPK.forEach(k=>{if(typeof d.hyp[k]==="number") setK(k,d.hyp[k]);});
   if(d.fin&&typeof d.fin==="object") FINK.forEach(k=>{const v=d.fin[k]; if(typeof v==="number"||(typeof v==="string"&&v.length<=40)) setK(k,v);});
-  if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){if(JSON.stringify(d.fin.assoc)!==JSON.stringify(H.assoc)){H.assoc=JSON.parse(JSON.stringify(d.fin.assoc)); assocNorm(); ch.push("assoc");}}
+  if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){const A=assocClean(d.fin.assoc); if(canon(A)!==canon(H.assoc)){H.assoc=A; assocNorm(); ch.push("assoc");}}
   else if(d.fin&&d.fin.tmiA!=null){   /* réglages communs d'avant les associés : les deux personnes reconstruites (prénoms, parts, tranches, assurances) */
    const F=d.fin, h=d.hyp||{}, pa=Math.min(100,Math.max(0,+F.partA||50)), sal=+h.salaires||H.salaires, cr=+h.pretEtud||0;
    H.assoc=[{nom:F.nomA||"",part:pa,revenus:sal*pa/100,credits:cr/2,tmi:+F.tmiA||0,assur:F.assurA!=null?+F.assurA:0.2,quot:F.quotA!=null?+F.quotA:100},{nom:F.nomB||"",part:100-pa,revenus:sal*(100-pa)/100,credits:cr/2,tmi:+F.tmiB||0,assur:F.assurB!=null?+F.assurB:0.2,quot:F.quotB!=null?+F.quotB:100}];
    assocNorm(); ch.push("assoc");}
   else if(d.hyp) assocFromLegacy({salaires:d.hyp.salaires,pretEtud:d.hyp.pretEtud});   /* sinon : revenus et crédits du groupe répartis sur les associés de ce navigateur */
-  if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&JSON.stringify(d.tyv)!==JSON.stringify(TYV)){
+  if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&canon(d.tyv)!==canon(TYV)){
    TYV=JSON.parse(JSON.stringify(d.tyv)); saveTyvLocal(); const v=typeVals(H.type); TYK.forEach(k=>setK(k,v[k]));}
-  if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&JSON.stringify(d.crit)!==JSON.stringify(NOSCRIT)){
-   if(NOSCRIT) ["budget","rmin","bank"].forEach(k=>{if(NOSCRIT[k]!==d.crit[k]) ch.push(k);});
-   NOSCRIT={budget:+d.crit.budget||CRIT0.budget,rmin:isFinite(+d.crit.rmin)?+d.crit.rmin:CRIT0.rmin,bank:d.crit.bank!==false};
+  if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&(!NOSCRIT||canon(critClean(d.crit))!==canon(critClean(NOSCRIT)))){
+   const nc=critClean(d.crit); if(NOSCRIT) ["budget","rmin","bank"].forEach(k=>{if(critClean(NOSCRIT)[k]!==nc[k]) ch.push(k);});
+   NOSCRIT=nc;
    try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){} if(!ch.length) ch.push("");}
   if(ch.length){saveHyp(); saveFin();}   /* copie locale (REGIN empêche le renvoi) */
  }finally{REGIN=false;}

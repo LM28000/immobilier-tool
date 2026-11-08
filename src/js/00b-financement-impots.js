@@ -15,9 +15,11 @@ Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
    est donné aussi. Les anciens réglages à deux (salaires, pretEtud, tmiA, tmiB, partA, assurA…) en sont tirés : le serveur MCP les lit encore. */
 const TMIS=[0,11,30,41,45];
 const assoc0=n=>({nom:"",part:100/n,revenus:Math.round(2500/n),credits:0,tmi:0,assur:0.20,quot:100});
-function assocNorm(){let A=Array.isArray(H.assoc)?H.assoc.filter(a=>a&&typeof a==="object").slice(0,6):[]; if(!A.length) A=[assoc0(1)];
+/* associés sous leur forme propre (1 à 6, champs bornés, parts ramenées à 100 %), sans rien changer d'autre : sert aussi à comparer */
+function assocClean(L){let A=Array.isArray(L)?L.filter(a=>a&&typeof a==="object").slice(0,6):[]; if(!A.length) A=[assoc0(1)];
  A=A.map(a=>({nom:String(a.nom||"").slice(0,30),part:Math.max(0,+a.part||0),revenus:Math.max(0,+a.revenus||0),credits:Math.max(0,+a.credits||0),tmi:TMIS.includes(+a.tmi)?+a.tmi:0,assur:Math.max(0,+a.assur||0),quot:Math.min(100,Math.max(0,a.quot==null?100:+a.quot||0))}));
- const t=A.reduce((s,a)=>s+a.part,0); A.forEach(a=>{a.part=t>0?a.part/t*100:100/A.length;}); H.assoc=A;
+ const t=A.reduce((s,a)=>s+a.part,0); A.forEach(a=>{a.part=t>0?a.part/t*100:100/A.length;}); return A;}
+function assocNorm(){const A=assocClean(H.assoc); H.assoc=A;
  const B=A[1]||{tmi:A[0].tmi,assur:0,quot:0,nom:""};
  Object.assign(H,{salaires:A.reduce((s,a)=>s+a.revenus,0),pretEtud:A.reduce((s,a)=>s+a.credits,0),tmiA:A[0].tmi,tmiB:B.tmi,partA:A[0].part,assurA:A[0].assur,quotA:A[0].quot,assurB:B.assur,quotB:B.quot,nomA:A[0].nom,nomB:B.nom});}
 /* réglages venus d'ailleurs sous l'ancienne forme (serveur MCP) : répartis sur les associés */

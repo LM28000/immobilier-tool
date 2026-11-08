@@ -640,6 +640,8 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 #v2map .v2rep svg{width:16px;height:16px;display:block;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .v2pop .maplibregl-popup-content{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font:700 12px var(--f-ui);box-shadow:0 2px 6px rgb(0 0 0 / .15)}
 .v2pop .maplibregl-popup-tip{display:none}
+/* la bulle du survol ne capte jamais la souris : sinon, restée sous le curseur quand la carte bouge, elle bloque molette, clic et glisser */
+.v2pop,.v2pop *{pointer-events:none!important}
 @media (max-width:860px){#v2map .maplibregl-ctrl-attrib{font-size:10px}}
 /* dans une fiche de ville, « toutes les annonces » et « voir les quartiers » sont déjà sur la carte à côté */
 #v2fiche [data-annall],#v2fiche [data-zq]{display:none}
@@ -828,9 +830,11 @@ Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
    est donné aussi. Les anciens réglages à deux (salaires, pretEtud, tmiA, tmiB, partA, assurA…) en sont tirés : le serveur MCP les lit encore. */
 const TMIS=[0,11,30,41,45];
 const assoc0=n=>({nom:"",part:100/n,revenus:Math.round(2500/n),credits:0,tmi:0,assur:0.20,quot:100});
-function assocNorm(){let A=Array.isArray(H.assoc)?H.assoc.filter(a=>a&&typeof a==="object").slice(0,6):[]; if(!A.length) A=[assoc0(1)];
+/* associés sous leur forme propre (1 à 6, champs bornés, parts ramenées à 100 %), sans rien changer d'autre : sert aussi à comparer */
+function assocClean(L){let A=Array.isArray(L)?L.filter(a=>a&&typeof a==="object").slice(0,6):[]; if(!A.length) A=[assoc0(1)];
  A=A.map(a=>({nom:String(a.nom||"").slice(0,30),part:Math.max(0,+a.part||0),revenus:Math.max(0,+a.revenus||0),credits:Math.max(0,+a.credits||0),tmi:TMIS.includes(+a.tmi)?+a.tmi:0,assur:Math.max(0,+a.assur||0),quot:Math.min(100,Math.max(0,a.quot==null?100:+a.quot||0))}));
- const t=A.reduce((s,a)=>s+a.part,0); A.forEach(a=>{a.part=t>0?a.part/t*100:100/A.length;}); H.assoc=A;
+ const t=A.reduce((s,a)=>s+a.part,0); A.forEach(a=>{a.part=t>0?a.part/t*100:100/A.length;}); return A;}
+function assocNorm(){const A=assocClean(H.assoc); H.assoc=A;
  const B=A[1]||{tmi:A[0].tmi,assur:0,quot:0,nom:""};
  Object.assign(H,{salaires:A.reduce((s,a)=>s+a.revenus,0),pretEtud:A.reduce((s,a)=>s+a.credits,0),tmiA:A[0].tmi,tmiB:B.tmi,partA:A[0].part,assurA:A[0].assur,quotA:A[0].quot,assurB:B.assur,quotB:B.quot,nomA:A[0].nom,nomB:B.nom});}
 /* réglages venus d'ailleurs sous l'ancienne forme (serveur MCP) : répartis sur les associés */
@@ -1328,6 +1332,10 @@ let REGL=null, REGREADY=false, REGNEW=false, REGT=0, REGIN=false;
 /* ce navigateur avait-il ses propres réglages avant de lire ceux du groupe ? Un navigateur neuf lit et applique, mais ne complète pas la ligne commune */
 const REGLOCAL=HYPOK;
 const critV=()=>Object.assign({},CRIT0,NOSCRIT||{});
+/* comparaison sans tenir compte de l'ordre des clés : la base (jsonb) les range à sa façon, et deux textes JSON différents
+   pouvaient dire la même chose — les réglages étaient alors réappliqués à chaque relecture (message et recalcul toutes les 20 s) */
+const canon=v=>JSON.stringify(v,(k,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,k2)=>(o[k2]=x[k2],o),{}):x);
+const critClean=c=>({budget:+c.budget||CRIT0.budget,rmin:isFinite(+c.rmin)?+c.rmin:CRIT0.rmin,bank:c.bank!==false});
 const regShared=()=>!!(typeof DB!=="undefined"&&DB&&!DB.local);
 function regLab(k){const L={surcote:"prix payé vs prix moyen",loyerAdj:"loyer obtenu",taux:"taux du crédit",tmiA:"tranche d'impôt 1",tmiB:"tranche d'impôt 2",regime:"régime fiscal",
   assurA:"assurance du prêt 1",assurB:"assurance du prêt 2",quotA:"quotité 1",quotB:"quotité 2",garantie:"garantie du prêt",cfe:"CFE",compta:"comptable",nomA:"prénom 1",nomB:"prénom 2",
@@ -1360,17 +1368,17 @@ function regApply(d,first){const ch=[];
  try{
   if(d.hyp&&typeof d.hyp==="object") HYPK.forEach(k=>{if(typeof d.hyp[k]==="number") setK(k,d.hyp[k]);});
   if(d.fin&&typeof d.fin==="object") FINK.forEach(k=>{const v=d.fin[k]; if(typeof v==="number"||(typeof v==="string"&&v.length<=40)) setK(k,v);});
-  if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){if(JSON.stringify(d.fin.assoc)!==JSON.stringify(H.assoc)){H.assoc=JSON.parse(JSON.stringify(d.fin.assoc)); assocNorm(); ch.push("assoc");}}
+  if(d.fin&&Array.isArray(d.fin.assoc)&&d.fin.assoc.length){const A=assocClean(d.fin.assoc); if(canon(A)!==canon(H.assoc)){H.assoc=A; assocNorm(); ch.push("assoc");}}
   else if(d.fin&&d.fin.tmiA!=null){   /* réglages communs d'avant les associés : les deux personnes reconstruites (prénoms, parts, tranches, assurances) */
    const F=d.fin, h=d.hyp||{}, pa=Math.min(100,Math.max(0,+F.partA||50)), sal=+h.salaires||H.salaires, cr=+h.pretEtud||0;
    H.assoc=[{nom:F.nomA||"",part:pa,revenus:sal*pa/100,credits:cr/2,tmi:+F.tmiA||0,assur:F.assurA!=null?+F.assurA:0.2,quot:F.quotA!=null?+F.quotA:100},{nom:F.nomB||"",part:100-pa,revenus:sal*(100-pa)/100,credits:cr/2,tmi:+F.tmiB||0,assur:F.assurB!=null?+F.assurB:0.2,quot:F.quotB!=null?+F.quotB:100}];
    assocNorm(); ch.push("assoc");}
   else if(d.hyp) assocFromLegacy({salaires:d.hyp.salaires,pretEtud:d.hyp.pretEtud});   /* sinon : revenus et crédits du groupe répartis sur les associés de ce navigateur */
-  if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&JSON.stringify(d.tyv)!==JSON.stringify(TYV)){
+  if(d.tyv&&typeof d.tyv==="object"&&!Array.isArray(d.tyv)&&canon(d.tyv)!==canon(TYV)){
    TYV=JSON.parse(JSON.stringify(d.tyv)); saveTyvLocal(); const v=typeVals(H.type); TYK.forEach(k=>setK(k,v[k]));}
-  if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&JSON.stringify(d.crit)!==JSON.stringify(NOSCRIT)){
-   if(NOSCRIT) ["budget","rmin","bank"].forEach(k=>{if(NOSCRIT[k]!==d.crit[k]) ch.push(k);});
-   NOSCRIT={budget:+d.crit.budget||CRIT0.budget,rmin:isFinite(+d.crit.rmin)?+d.crit.rmin:CRIT0.rmin,bank:d.crit.bank!==false};
+  if(d.crit&&typeof d.crit==="object"&&!Array.isArray(d.crit)&&(!NOSCRIT||canon(critClean(d.crit))!==canon(critClean(NOSCRIT)))){
+   const nc=critClean(d.crit); if(NOSCRIT) ["budget","rmin","bank"].forEach(k=>{if(critClean(NOSCRIT)[k]!==nc[k]) ch.push(k);});
+   NOSCRIT=nc;
    try{localStorage.setItem("crit",JSON.stringify(NOSCRIT));}catch(_){} if(!ch.length) ch.push("");}
   if(ch.length){saveHyp(); saveFin();}   /* copie locale (REGIN empêche le renvoi) */
  }finally{REGIN=false;}
@@ -2480,7 +2488,9 @@ render();
   /* une couche refusée par MapLibre ne lève pas d'erreur : elle est notée (les tuiles et polices manquantes, elles, sont ignorées) */
   M.on("error",e=>{const er=e&&e.error, m=String(er&&er.message||er||""); if(!(er&&er.status)&&!/fetch|network|load|glyph|tile|abort/i.test(m)&&V2MAPN.err.length<10) V2MAPN.err.push(m);});
   M.on("load",()=>{mapLayers(); MREADY=true; drawMap(true); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
-  M.on("click",mapClick); if(!PH()) M.on("mousemove",mapHover);
+  M.on("click",mapClick);
+  /* survol (souris seulement) : une fois par image au plus, rien pendant que la carte bouge ; la bulle disparaît dès que la carte bouge ou que la souris sort */
+  if(!PH()){let HR=0, HE=null; M.on("mousemove",e=>{HE=e; if(!HR) HR=requestAnimationFrame(()=>{HR=0; mapHover(HE);});}); M.on("mouseout",hoverOff); M.on("movestart",hoverOff);}
   M.on("moveend",mapMoved);
   M.on("pitchstart",e=>{if(e&&e.originalEvent) MANP=true;});   /* inclinaison réglée à la main : on n'y touche plus */
   window.V2MAP=()=>M;}
@@ -2559,19 +2569,20 @@ render();
   const a=at("a-dot",box); if(a.length){openSel(a[0].properties.k); return;}
   const v=M.getZoom()<ZQ+.3?at("v-dot",box).concat(at("v-lab")):[]; if(v.length){goCity(v[0].properties.k); return;}
   const q=at("q-fill"); if(q.length) openSel(`q|${q[0].properties.ck}|${q[0].properties.code}`);}
- function mapHover(e){if(!MREADY) return; const L=["a-dot","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
+ function hoverQ(id){if(id===HQ) return; if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){}} HQ=id; if(id!=null){try{M.setFeatureState({source:"quartiers",id},{hover:true});}catch(_){}}}
+ function hoverOff(){if(!M) return; if(POP) POP.remove(); hoverQ(null); M.getCanvas().style.cursor="";}
+ function mapHover(e){if(!MREADY||!e||M.isMoving()) return; const L=["a-dot","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
   M.getCanvas().style.cursor=h?"pointer":"";
-  if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){} HQ=null;}
-  if(h&&h.layer.id==="q-fill"&&h.id!=null){HQ=h.id; try{M.setFeatureState({source:"quartiers",id:HQ},{hover:true});}catch(_){}}
+  hoverQ(h&&h.layer.id==="q-fill"&&h.id!=null?h.id:null);
   if(!h){if(POP) POP.remove(); return;}
   if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
-  POP.setLngLat(e.lngLat).setText(h.properties.t).addTo(M);}
+  POP.setLngLat(e.lngLat).setText(h.properties.t); if(!POP.isOpen()) POP.addTo(M);}
  /* une annonce ouverte : la vue s'approche et s'incline, les immeubles autour apparaissent */
  function flyAd(s){if(!M||!MREADY||V.tab!=="carte"||s[0]!=="v") return; const o=feed().find(x=>key(x)===s); if(!o||!o.f.la) return; MANP=false;
   M.flyTo({center:[o.f.lo,o.f.la],zoom:Math.max(M.getZoom(),16),pitch:P2(),padding:pad(),duration:1200,essential:true});}
  /* thème clair (par défaut) ou sombre : propre à chacun ; la carte change de fond et garde ses couches */
  function setTheme(t){document.documentElement.setAttribute("data-theme",t); try{localStorage.setItem("theme-v2",t);}catch(_){}
-  if(M&&MREADY){MREADY=false; QSIG=null; if(POP) POP.remove(); M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap();}); M.setStyle(MLSTYLE(),{diff:false});}
+  if(M&&MREADY){MREADY=false; QSIG=null; hoverOff(); HQ=null; M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap();}); M.setStyle(MLSTYLE(),{diff:false});}
   render();}
  const themeSeg=()=>`<span class="v2seg" role="group" aria-label="Thème">${[["light","Clair"],["dark","Sombre"]].map(([k,l])=>`<button type="button" data-v2theme="${k}" aria-pressed="${(DARK()?"dark":"light")===k}">${l}</button>`).join("")}</span>`;
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0";

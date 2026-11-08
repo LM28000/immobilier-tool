@@ -72,6 +72,17 @@ async function mlRoutes(p) {
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800);
       ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => V2MAPN.quartiers > 20 && V2MAPN.annonces > 0 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
       ok(`v2 ${dev} · Le Mans : les points des annonces sont dessinés`, await p.evaluate(() => V2MAP().queryRenderedFeatures({layers: ['a-dot']}).length > 0 && V2MAP().getZoom() >= 10));
+      if (dev === 'ordi') {   // la bulle du survol ne bloque pas la carte : survoler un quartier puis zoomer à la molette sans bouger la souris
+        const pt = await p.evaluate(() => { const M = V2MAP(), cv = M.getCanvas().getBoundingClientRect(); for (let y = 200; y < cv.height - 100; y += 25) for (let x = 450; x < cv.width - 80; x += 25) { if (M.queryRenderedFeatures([x, y], {layers: ['q-fill']}).length && !M.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {layers: ['a-dot']}).length) return {x: cv.left + x, y: cv.top + y}; } return null; });
+        await p.mouse.move(pt.x - 3, pt.y - 3); await p.mouse.move(pt.x, pt.y); await p.waitForTimeout(300);
+        const bulle = await p.evaluate(() => { const b = document.querySelector('.v2pop'); return b ? getComputedStyle(b.querySelector('.maplibregl-popup-content')).pointerEvents : null; });
+        const z0 = await p.evaluate(() => V2MAP().getZoom());
+        for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, -120); await p.waitForTimeout(60); } await p.waitForTimeout(1500);
+        for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, -120); await p.waitForTimeout(60); } await p.waitForTimeout(1500);
+        const z1 = await p.evaluate(() => V2MAP().getZoom());
+        ok(`v2 ${dev} · carte : la bulle du survol ne bloque ni la molette ni les clics`, bulle === 'none' && z1 > z0 + 1, JSON.stringify({bulle, z0, z1}));
+        await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]') || V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.3}));
+      }
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
       ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
       ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture`, await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'); return t.getBoundingClientRect().bottom < f.getBoundingClientRect().bottom - 40; }));
@@ -119,13 +130,15 @@ async function mlRoutes(p) {
       await c.close(); } }
   // v2 · réglages communs à deux : deux navigateurs (deux personnes), une liste commune simulée (Supabase en mémoire)
   { const fs = require('fs'), {URL: U} = require('url'), URL2 = URL;
+    // la base range les clés des objets JSON à sa façon (jsonb : par longueur, puis par ordre alphabétique) : la liste simulée fait de même
+    const jb = v => Array.isArray(v) ? v.map(jb) : v && typeof v === 'object' ? Object.keys(v).sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)).reduce((o, k) => (o[k] = jb(v[k]), o), {}) : v;
     const rows = []; let n = 0; const CORS = {'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*'};
     const sb = async r => { const q = r.request(), u = new U(q.url()), m = q.method(), id = (u.searchParams.get('id') || '').replace(/^eq\./, ''), js = (s, b) => r.fulfill({status: s, headers: CORS, contentType: 'application/json', body: b});
       if (m === 'OPTIONS') return r.fulfill({status: 204, headers: CORS, body: ''});
       if (u.pathname.endsWith('/annonces')) return js(200, '[]');
       if (m === 'GET') return js(200, JSON.stringify(id ? rows.filter(x => x.id === id) : rows.slice().sort((a, b) => b.created_at.localeCompare(a.created_at))));
-      if (m === 'POST') { rows.push({id: 'r' + (++n), data: JSON.parse(q.postData()).data, created_at: new Date(Date.now() + n).toISOString()}); return js(201, ''); }
-      if (m === 'PATCH') { const x = rows.find(x => x.id === id); if (x) x.data = JSON.parse(q.postData()).data; return js(204, ''); }
+      if (m === 'POST') { rows.push({id: 'r' + (++n), data: jb(JSON.parse(q.postData()).data), created_at: new Date(Date.now() + n).toISOString()}); return js(201, ''); }
+      if (m === 'PATCH') { const x = rows.find(x => x.id === id); if (x) x.data = jb(JSON.parse(q.postData()).data); return js(204, ''); }
       if (m === 'DELETE') { const i = rows.findIndex(x => x.id === id); if (i >= 0) rows.splice(i, 1); return js(204, ''); }
       return js(405, ''); };
     const open = async nom => { const c = await b.newContext({viewport: {width: 1440, height: 900}});
@@ -158,6 +171,10 @@ async function mlRoutes(p) {
     await B.p.evaluate(() => { const i = document.getElementById('v2a-2-nom'); i.value = 'Sam'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await B.p.waitForTimeout(1800);
     await tick(A.p); await A.p.waitForTimeout(1200);
     ok('v2 commun · associés : trois, partagés, parts à 100 %', await A.p.evaluate(() => H.assoc.length === 3 && H.assoc[2].nom === 'Sam' && Math.abs(H.assoc.reduce((s, a) => s + a.part, 0) - 100) < 1e-6), await A.p.evaluate(() => JSON.stringify(H.assoc.map(a => [a.nom, a.part]))));
+    // relecture sans changement (toutes les 20 s en vrai) : rien n'est réappliqué, ni message ni recalcul
+    await A.p.evaluate(() => { window.__r = 0; const r0 = window.render; window.render = function () { window.__r++; return r0.apply(this, arguments); }; const t = document.getElementById('toast'); if (t) t.textContent = ''; });
+    await tick(A.p); await A.p.waitForTimeout(1200); await tick(A.p); await A.p.waitForTimeout(1200);
+    ok('v2 commun · relecture sans changement : ni message ni recalcul', await A.p.evaluate(() => window.__r === 0 && !/réglages communs/.test((document.getElementById('toast') || {}).textContent || '')), await A.p.evaluate(() => window.__r + ' recalculs / ' + ((document.getElementById('toast') || {}).textContent || '')));
     await A.p.reload(); await A.p.waitForTimeout(2500);
     ok('v2 commun · meubles du type gardés après rechargement', await A.p.evaluate(() => H.meubles === 4000));
     // offre : suivre une annonce puis choisir un prix, l'autre le voit
