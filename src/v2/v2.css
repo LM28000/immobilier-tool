@@ -322,3 +322,15 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   /* pastilles lisibles */
   .hb,.v2new,.v2age,.v2fthn{font-size:12px}
 }
+
+/* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran (l'annonce reste visible au-dessus) ; sa poignée l'agrandit ou la réduit */
+.v2fgrip{display:none}
+@media (max-width:860px){
+  .v2fiche[data-half="1"]{top:44%;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgb(0 0 0 / .18);padding-top:0}
+  .v2fiche[data-half="1"] .v2fh{border-radius:18px 18px 0 0}
+  .v2fhg{padding-top:24px}
+  .v2fgrip{display:flex;position:absolute;left:0;right:0;top:0;height:24px;border:0;background:transparent;padding:0;align-items:center;justify-content:center;cursor:pointer}
+  .v2fgrip i{width:40px;height:5px;border-radius:3px;background:var(--line)}
+  .v2fgrip:focus-visible i{background:var(--accent)}
+  .v2fhg~.v2fb .v2tabs2{top:81px}
+}

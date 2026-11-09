@@ -97,6 +97,15 @@ async function mlRoutes(p) {
           ok('v2 tel · retour : une fiche fermée par son bouton ne laisse pas d\'étape en trop', h1 > 0 && !s5.fiche && s5.h < h1, JSON.stringify({h1, s5}));
           await p.evaluate(() => document.querySelector('#v2mlist [data-v2city=""]').click()); await p.waitForTimeout(1200);   // la carte revient sur Le Mans pour la suite
           await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800); }
+        { // fiche en demi-écran sur la carte : l'annonce reste visible au-dessus ; la poignée l'agrandit puis la réduit
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2open^="v|"]').click()); await p.waitForTimeout(1600);
+          const f1 = await p.evaluate(() => { const F = document.getElementById('v2fiche'), M = V2MAP(), t = F.getBoundingClientRect().top, y = M.project(M.getCenter()).y + M.getContainer().getBoundingClientRect().top; return {half: F.dataset.half, t: Math.round(t / innerHeight * 100), y: Math.round(y), top: Math.round(t)}; });
+          await p.tap('#v2fiche [data-v2fgrip]'); await p.waitForTimeout(500); const f2 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+          await p.tap('#v2fiche [data-v2fgrip]'); await p.waitForTimeout(500); const f3 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+          ok('v2 tel · fiche en demi-écran sur la carte, annonce visible au-dessus, poignée pour l\'agrandir et la réduire', f1.half === '1' && f1.t >= 35 && f1.t <= 55 && f1.y < f1.top && f2 === '0' && f3 === '1', JSON.stringify({f1, f2, f3}));
+          await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2city=""]').click()); await p.waitForTimeout(1200);
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800); }
         await p.tap('#v2mlist [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
         ok('v2 tel · fiche de la ville depuis l\'en-tête de la liste', await p.evaluate(() => !document.getElementById('v2fiche').hidden && /Le Mans/.test(document.querySelector('#v2fiche .v2ft').textContent)));
         await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);
@@ -173,7 +182,10 @@ async function mlRoutes(p) {
         await p.waitForTimeout(300);
         ok(`v2 ${dev} · photos : fermer la visionneuse laisse la fiche ouverte`, await p.evaluate(() => !document.querySelector('.v2lb') && !document.getElementById('v2fiche').hidden));
       }
-      ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture`, await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'); return t.getBoundingClientRect().bottom < f.getBoundingClientRect().bottom - 40; }));
+      // ordinateur (et fiche plein écran) : les onglets visibles dès l'ouverture ; téléphone sur la carte (fiche en demi-écran) : le résumé d'abord, les onglets collés en haut dès qu'on fait défiler
+      ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture, ou collés en haut de la fiche en demi-écran`, await p.evaluate(async () => { const f = document.getElementById('v2fiche'), t = () => f.querySelector('.v2tabs2').getBoundingClientRect(), B = f.getBoundingClientRect();
+        if (f.dataset.half !== '1') return t().bottom < B.bottom - 40;
+        f.scrollTop = 600; await new Promise(r => setTimeout(r, 150)); const T = t(); f.scrollTop = 0; return T.top >= B.top - 1 && T.bottom < B.top + 140; }));
       ok(`v2 ${dev} · fiche : le DPE une seule fois dans l'en-tête`, await p.evaluate(() => { const h = document.querySelector('#v2fiche .v2fb'), t = h.querySelector('.v2tabs2'); let n = 0, e = h.firstElementChild; while (e && e !== t) { n += (e.innerText.match(/DPE [A-G]/g) || []).length; e = e.nextElementSibling; } return n <= 1; }));
       await p.evaluate(() => { document.querySelector('#v2fiche [data-v2ft="quartier"]').click(); }); await p.waitForTimeout(300);
       await p.evaluate(() => { document.getElementById('v2fiche').scrollTop = 1500; });

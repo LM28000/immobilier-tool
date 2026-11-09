@@ -187,7 +187,8 @@
     de la carte ; sans elle, les boutons + et −, l'inclinaison et la rotation tournaient autour d'un point caché sous la liste
     et la ville glissait vers la droite à chaque zoom */
  const padP=()=>{const l=$("v2mlist"), m=$("v2map"); if(!l||!m) return {top:0,left:0,right:0,bottom:0}; const L=l.getBoundingClientRect(), R=m.getBoundingClientRect();
-  return PH()?{top:0,left:0,right:0,bottom:Math.max(0,Math.round(R.bottom-L.top))}:{top:0,left:L.height>R.height*.5?Math.max(0,Math.round(L.right-R.left)):0,right:0,bottom:0};};
+  const F=$("v2fiche"), fh=PH()&&F&&!F.hidden&&F.dataset.half==="1"?Math.round(R.bottom-F.getBoundingClientRect().top):0;
+  return PH()?{top:0,left:0,right:0,bottom:Math.max(0,Math.round(R.bottom-L.top),fh)}:{top:0,left:L.height>R.height*.5?Math.max(0,Math.round(L.right-R.left)):0,right:0,bottom:0};};
  function padSync(){if(!M||DOWN||M.isMoving()) return; const p=padP(), c=M.getPadding(); if(["top","left","right","bottom"].some(k=>Math.abs((c[k]||0)-p[k])>2)) M.setPadding(p);}
  const pad=()=>PH()?{top:60,left:56,right:56,bottom:12}:{top:40,left:24,right:40,bottom:40};   /* marges du cadrage, en plus de la marge permanente */
  const EMPTY={type:"FeatureCollection",features:[]};
@@ -634,11 +635,12 @@
   const F=V.sel[0]==="v"||V.sel[0]==="b"?ficheBien(V.sel):ficheQV(V.sel); if(!F){V.sel=null; el.hidden=true; return;}
   const tabs=FT.filter(([k,,ss])=>ss.some(s=>F.S[s])||(F.extra[k]&&F.extra[k].length)); let cur=tabs.some(t=>t[0]===V.ftab)?V.ftab:(tabs[0]||["bien"])[0];
   const g=FT.find(t=>t[0]===cur)||FT[0], zone=V.sel[0]==="c"||V.sel[0]==="q";
-  el.hidden=false; el.innerHTML=`<div class="v2fh"><button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?"Retour":"×"}</button><b>${esc(F.title)}</b></div>
+  const gp=PH()&&V.tab==="carte", half=gp&&!V.fbig; el.dataset.half=half?"1":"0";   /* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran, l'annonce reste visible au-dessus */
+  el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?"Retour":"×"}</button><b>${esc(F.title)}</b></div>
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>{const t=zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l, c=PH()?t.replace(/^L(e |')/,""):t; return `<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${c[0].toUpperCase()+c.slice(1)}</button>`;}).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
   if(M) requestAnimationFrame(()=>M.resize());}
- function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} V.sel=s; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; flyAd(s); if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
+ function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw) V.fbig=false; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
 
  /* ---------- ajouter un bien à la main ----------
     Le formulaire de l'app (recherche d'adresse, quartier, contrôles, envoi dans la liste commune) est déplacé dans une fenêtre,
@@ -694,11 +696,11 @@
   else if(k==="tab"){V.tab="carte"; save(); show();}}
  addEventListener("popstate",()=>{if(BKSKIP){BKSKIP--; return;} const k=BK.pop(); if(!k) return; if(k==="x"){try{history.back();}catch(_){} return;} bkClose(k);});
  new MutationObserver(bkLater).observe(document.body,{childList:true});
- {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
+ {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); if(PH()) requestAnimationFrame(()=>padSync()); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
  window.V2CITY=()=>V.city||null;   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2fgrip],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.type){if(V.tous){V.tous=false; save(); FEED=null;} return;}   /* Studio, T2, T3 : le type est changé par 49-type-ui.js */
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
@@ -716,6 +718,7 @@
    if(tb&&fe.scrollTop>top0-hh) fe.scrollTop=top0-hh;   /* on arrive au début de l'onglet, pas au milieu */
    const fo=d.v2focus&&$(d.v2focus); if(fo){fo.scrollIntoView({block:"center"}); fo.focus({preventScroll:true}); return;}
    const f=document.querySelector(`.v2tabs2 [data-v2ft="${d.v2ft}"]`); if(f) f.focus({preventScroll:true}); return;}
+  if(d.v2fgrip!=null){V.fbig=!V.fbig; const sc=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=sc; requestAnimationFrame(()=>{padSync(); if(!V.fbig&&V.sel) flyAd(V.sel);}); return;}
   if(d.v2close!=null){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); return;}
   if(d.v2crit!=null){critDlg(false); return;}
   if(d.v2theme!=null){setTheme(d.v2theme||(DARK()?"light":"dark")); return;}

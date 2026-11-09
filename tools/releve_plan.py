@@ -85,7 +85,10 @@ def main():
                     pages.append(base + q)
                 out.append({"liste": f"{ck} {ty} {quoi}", "ville": ck, "type": ty, "quoi": quoi, "pages": pages})
     today = datetime.datetime.now(ZoneInfo("Europe/Paris")).date().isoformat() if ZoneInfo else datetime.date.today().isoformat()
-    print(json.dumps({"date": today, "budget": budget, "source_budget": src, "plafond": cap, "pages_max": C["pages_max"], "listes": out}, ensure_ascii=False, indent=1))
+    consigne = ("Si tools/extraction-bienici.js renvoie un champ « erreur » non nul, attends 10 s et relance-le une fois sur la même page ; "
+                "si l'erreur revient, arrête le relevé : n'ouvre plus de page, n'écris pas de relevé, et dis-le dans le message de l'étape 7 "
+                "en recopiant cette erreur.")
+    print(json.dumps({"date": today, "budget": budget, "source_budget": src, "plafond": cap, "pages_max": C["pages_max"], "consigne": consigne, "listes": out}, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

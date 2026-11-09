@@ -3,6 +3,7 @@
 </head><body><script>/* thème : clair par défaut, sombre si on l'a choisi (onglet Budget ou bouton en haut), appliqué avant le premier affichage */(function(){var t="light";try{if(localStorage.getItem("theme-v2")==="dark")t="dark";}catch(e){}document.documentElement.setAttribute("data-theme",t);})();</script>
 <title>Où acheter notre studio ?</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -760,6 +761,18 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .tipb::after{content:"";position:absolute;inset:-12px}
   /* pastilles lisibles */
   .hb,.v2new,.v2age,.v2fthn{font-size:12px}
+}
+
+/* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran (l'annonce reste visible au-dessus) ; sa poignée l'agrandit ou la réduit */
+.v2fgrip{display:none}
+@media (max-width:860px){
+  .v2fiche[data-half="1"]{top:44%;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgb(0 0 0 / .18);padding-top:0}
+  .v2fiche[data-half="1"] .v2fh{border-radius:18px 18px 0 0}
+  .v2fhg{padding-top:24px}
+  .v2fgrip{display:flex;position:absolute;left:0;right:0;top:0;height:24px;border:0;background:transparent;padding:0;align-items:center;justify-content:center;cursor:pointer}
+  .v2fgrip i{width:40px;height:5px;border-radius:3px;background:var(--line)}
+  .v2fgrip:focus-visible i{background:var(--accent)}
+  .v2fhg~.v2fb .v2tabs2{top:81px}
 }
 </style>
 <!-- L'interface est construite par src/v2/v2.js. Ici seulement ce qu'elle réutilise : le formulaire d'ajout d'un bien,
@@ -2088,7 +2101,7 @@ function ficheOf(ck,suf){const c=FD[ck]; if(c) return c[adId(suf)]||null; if(FIC
 function ficheLoad(ck){if(FICHES||FDL[ck]||!ck) return; FDL[ck]=1;
  /* annonces privées : les fiches complètes d'une ville sont lues dans Supabase quand on en a besoin (25-annonces-cloud.js) ;
     si la lecture échoue, la fiche dit qu'elle n'est pas relevée et on réessaie une minute plus tard */
- if(FPRIV){if(typeof sbAnn!=="function"){FD[ck]={}; return;} sbAnn("select=cle,data&cle=eq."+encodeURIComponent("fiches-"+ck)).then(rows=>{const d=Array.isArray(rows)&&rows[0]&&rows[0].data;
+ if(FPRIV){if(typeof sbAnn!=="function"){FD[ck]={}; return;} sbAnn("select=cle,data,maj&cle=eq."+encodeURIComponent("fiches-"+ck),["fiches-"+ck]).then(rows=>{const d=Array.isArray(rows)&&rows[0]&&rows[0].data;
    FD[ck]=d&&typeof d==="object"?d:{}; if(!d) setTimeout(()=>{delete FD[ck]; delete FDL[ck];},60000); ficheRefresh(ck);}); return;}
  fetch("data/fiches/"+encodeURIComponent(ck)+".json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{FD[ck]=j&&typeof j==="object"?j:{}; ficheRefresh(ck);});}
 function ficheRefresh(ck){document.querySelectorAll("[data-fwait]").forEach(el=>{const [c,...r]=el.dataset.fwait.split("|"); if(c!==ck) return; const s=r.join("|"), f=ficheOf(c,s); const sm=el.closest("details.fsec"); if(sm&&sm.querySelector(".fss")) sm.querySelector(".fss").textContent=ficheSum(f,s); el.outerHTML=f?ficheHtml(c,s,f):ficheNone(s);});}
@@ -2142,10 +2155,12 @@ const DFL={loue:["warn","loué","Vendu loué : un bail est en cours. Demandez le
  trav:["warn","travaux","La description annonce des travaux : chiffrez-les à la visite (champ « Travaux » de la visite)."],
  vote:["warn","copro : travaux","Travaux de copropriété mentionnés (ravalement, travaux votés) : demandez qui les paie et le montant."],
  meub:["ok","vendu meublé","Vendu meublé : moins de meubles à acheter."],
+ offre:["warn","sous offre","La description dit que le bien est sous offre, sous compromis ou déjà vendu : il n'est sans doute plus disponible. Demandez à l'agence avant d'aller plus loin."],
  nonloc:["bad","non louable","La description dit que ce bien ne peut pas être loué en l'état (insalubre, non habitable, interdit à la location ou moins de 9 m² habitables). Le calcul de l'outil ne s'applique pas."]};
 function ficheAttn(suf){const f=ficx(suf); if(!f) return []; const L=(f.fl||[]).filter(k=>DFL[k]).map(k=>[DFL[k][0]==="ok"?"ok":DFL[k][0],DFL[k][2]]); if(f.dup) L.push(["warn","Le même bien semble publié moins cher par une autre agence : comparez les deux annonces avant de contacter."]); return L;}
-function ficheBadges(suf,sansDpe){const f=ficx(suf); if(!f&&!prixAnormal(suf)) return ""; const b=[];
+function ficheBadges(suf,sansDpe){const f=ficx(suf); if(!f&&!prixAnormal(suf)&&!prixBas(suf)) return ""; const b=[];
  if(prixAnormal(suf)) b.push(`<span class="hb fbad" title="Prix au m² sous le quart de celui des ventes réelles de la ville : sans doute pas un logement ordinaire (cave, viager, enchères, part de bien). Hors calcul.">prix anormal</span>`);
+ else if(prixBas(suf)) b.push(`<span class="hb fwarn" title="Prix au m² sous 40 % de celui des ventes réelles de la ville : vérifiez avant de vous emballer (travaux lourds, viager, part de bien, annonce erronée ou déjà vendue).">à vérifier</span>`);
  if(!f) return b.join("");
  if(f.dpe&&!sansDpe) b.push(`<span class="hb ${/[FG]/.test(f.dpe)?"fbad":"old"}" title="${f.dpe0?esc("DPE "+dpeNote(f)):"DPE annoncé"}">DPE ${f.dpe}${f.dpe0?"*":""}</span>`);
  (f.fl||[]).forEach(k=>{const d=DFL[k]; if(d) b.push(`<span class="hb ${d[0]==="bad"?"fbad":d[0]==="warn"?"fwarn":"drop"}" title="${esc(d[2])}">${d[1]}</span>`);});
@@ -2158,10 +2173,12 @@ const _vuBadgesF=vuBadges; vuBadges=function(kind,ck,suf){return _vuBadgesF(kind
 /* annonces où le calcul de l'outil ne s'applique pas (résidence gérée, viager, non louable) : signalées partout, retirées des « Meilleures annonces » */
 /* prix au m² sous le quart de celui des ventes réelles de la ville pour ce type : pas un logement ordinaire (cave, viager,
    enchères, part de bien, résidence gérée non signalée…), le calcul n'a pas de sens ; la liste est refaite quand les annonces changent */
-let ANOM=null;
-function prixAnormal(suf){if(!ANOM){ANOM=new Set(); if(typeof ADS!=="undefined") Object.entries(ADS).forEach(([ck,A])=>{if(!A||typeof A!=="object") return;
-   [["studio",A.ventes],["t2",A.t&&A.t.t2&&A.t.t2.ventes],["t3",A.t&&A.t.t3&&A.t.t3.ventes]].forEach(([ty,L])=>{const D=dvfC(ck,ty); if(!D||!L) return; L.forEach(a=>{if(a&&a[0]>0&&a[2]>0&&a[2]/a[0]<0.25*D.med) ANOM.add(a[3]);});});});}
+let ANOM=null, ABAS=null;
+function prixAnormal(suf){if(!ANOM){ANOM=new Set(); ABAS=new Set(); if(typeof ADS!=="undefined") Object.entries(ADS).forEach(([ck,A])=>{if(!A||typeof A!=="object") return;
+   [["studio",A.ventes],["t2",A.t&&A.t.t2&&A.t.t2.ventes],["t3",A.t&&A.t.t3&&A.t.t3.ventes]].forEach(([ty,L])=>{const D=dvfC(ck,ty); if(!D||!L) return; L.forEach(a=>{if(!(a&&a[0]>0&&a[2]>0)) return; const r=a[2]/a[0]/D.med; if(r<0.25) ANOM.add(a[3]); else if(r<0.4) ABAS.add(a[3]);});});});}
  return ANOM.has(suf);}
+/* prix très bas, sans être anormal (de 25 à 40 % des ventes réelles de la ville pour le type) : gardé dans le calcul, signalé « à vérifier » */
+function prixBas(suf){prixAnormal(suf); return !!(ABAS&&ABAS.has(suf));}
 const horsCalcul=suf=>{const f=ficx(suf); return !!(f&&f.fl&&f.fl.some(k=>k==="serv"||k==="viager"||k==="nonloc"))||prixAnormal(suf);};
 
 /* ce que Claude a lu dans la description (tools/fiches.py lu) : loyer d'un bien vendu loué, travaux, taxe foncière.
@@ -2204,9 +2221,19 @@ let ADSCLOUD=null;
    Novembre 2026 : tout lire d'un coup (34 Mo avec les fiches complètes) dépassait le temps accordé aux requêtes par Supabase
    (« statement timeout ») et plus aucune annonce n'arrivait ; la page lit d'abord annonces, historique et champs de calcul (6 Mo),
    puis les fiches complètes d'une ville quand on ouvre une de ses annonces (24-fiches-annonces.js, ficheLoad). */
-async function sbAnn(q){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url) return null;
- const pub=await sbLit("annonces_publiques",q,null); if(pub) return pub;   /* la vue publique, sans code */
- return code?sbLit("annonces",q,code):null;}
+/* ouverture rapide : une petite lecture des dates de mise à jour (cle, maj) ; si celles des morceaux demandés n'ont pas changé
+   depuis la dernière lecture, la copie gardée dans le navigateur suffit (plus de 6 Mo retéléchargés à chaque ouverture) */
+let ANNMAJ={}; try{ANNMAJ=JSON.parse(localStorage.getItem("ann-maj")||"{}")||{};}catch(_){}
+let ANNM=null;
+async function annMaj(){if(ANNM) return ANNM; try{const r=await fetch(SB.url.replace(/\/$/,"")+"/rest/v1/annonces_publiques?select=cle,maj",{headers:{apikey:SB.key}}); if(r.ok){const L=await r.json(); if(Array.isArray(L)&&L.length){ANNM={}; L.forEach(x=>{ANNM[x.cle]=x.maj;});}}}catch(_){} return ANNM;}
+async function sbCache(q){const base=SB.url.replace(/\/$/,"")+"/rest/v1/", code=typeof sbCode==="function"?sbCode():"";
+ for(const u of [base+"annonces_publiques?"+q+"&pub=1"].concat(code?[base+"annonces?"+q+"&g="+encodeURIComponent(code.slice(0,4))]:[])){try{const c=await caches.open("studio-annonces"), h=await c.match(new Request(u)); if(h) return await h.json();}catch(_){}}
+ return null;}
+async function sbAnn(q,keys){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url) return null;
+ if(keys){const m=await annMaj(); if(m&&keys.every(k=>m[k]&&ANNMAJ[k]===m[k])){const c=await sbCache(q); if(Array.isArray(c)&&c.length) return c;}}
+ const rows=await sbLit("annonces_publiques",q,null)||(code?await sbLit("annonces",q,code):null);   /* la vue publique, sans code ; sinon la table avec le code */
+ if(Array.isArray(rows)&&keys){rows.forEach(r=>{if(r&&r.cle&&r.maj) ANNMAJ[r.cle]=r.maj;}); try{localStorage.setItem("ann-maj",JSON.stringify(ANNMAJ));}catch(_){}}
+ return rows;}
 async function sbLit(table,q,code){
  const url=SB.url.replace(/\/$/,"")+"/rest/v1/"+table+"?"+q, req=new Request(url+(code?"&g="+encodeURIComponent(code.slice(0,4)):"&pub=1")), h={apikey:SB.key};
  if(code) h["x-groupe"]=code;
@@ -2217,7 +2244,7 @@ async function sbLit(table,q,code){
  return null;}
 async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url||window.claude) return;
  if(code) try{const c=await caches.open("studio-annonces"); await c.delete(new Request(SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj&g="+encodeURIComponent(code.slice(0,4))));}catch(_){}   /* l'ancienne copie complète (34 Mo) */
- const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)");
+ const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)",["ads","hist","ficx"]);
  if(!Array.isArray(rows)||!rows.length) return;
  const by={}; rows.forEach(x=>{if(x&&x.cle&&x.data&&typeof x.data==="object") by[x.cle]=x.data;});
  const ads=by.ads; if(!ads||typeof ads!=="object") return;
@@ -3076,7 +3103,8 @@ render();
     de la carte ; sans elle, les boutons + et −, l'inclinaison et la rotation tournaient autour d'un point caché sous la liste
     et la ville glissait vers la droite à chaque zoom */
  const padP=()=>{const l=$("v2mlist"), m=$("v2map"); if(!l||!m) return {top:0,left:0,right:0,bottom:0}; const L=l.getBoundingClientRect(), R=m.getBoundingClientRect();
-  return PH()?{top:0,left:0,right:0,bottom:Math.max(0,Math.round(R.bottom-L.top))}:{top:0,left:L.height>R.height*.5?Math.max(0,Math.round(L.right-R.left)):0,right:0,bottom:0};};
+  const F=$("v2fiche"), fh=PH()&&F&&!F.hidden&&F.dataset.half==="1"?Math.round(R.bottom-F.getBoundingClientRect().top):0;
+  return PH()?{top:0,left:0,right:0,bottom:Math.max(0,Math.round(R.bottom-L.top),fh)}:{top:0,left:L.height>R.height*.5?Math.max(0,Math.round(L.right-R.left)):0,right:0,bottom:0};};
  function padSync(){if(!M||DOWN||M.isMoving()) return; const p=padP(), c=M.getPadding(); if(["top","left","right","bottom"].some(k=>Math.abs((c[k]||0)-p[k])>2)) M.setPadding(p);}
  const pad=()=>PH()?{top:60,left:56,right:56,bottom:12}:{top:40,left:24,right:40,bottom:40};   /* marges du cadrage, en plus de la marge permanente */
  const EMPTY={type:"FeatureCollection",features:[]};
@@ -3523,11 +3551,12 @@ render();
   const F=V.sel[0]==="v"||V.sel[0]==="b"?ficheBien(V.sel):ficheQV(V.sel); if(!F){V.sel=null; el.hidden=true; return;}
   const tabs=FT.filter(([k,,ss])=>ss.some(s=>F.S[s])||(F.extra[k]&&F.extra[k].length)); let cur=tabs.some(t=>t[0]===V.ftab)?V.ftab:(tabs[0]||["bien"])[0];
   const g=FT.find(t=>t[0]===cur)||FT[0], zone=V.sel[0]==="c"||V.sel[0]==="q";
-  el.hidden=false; el.innerHTML=`<div class="v2fh"><button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?"Retour":"×"}</button><b>${esc(F.title)}</b></div>
+  const gp=PH()&&V.tab==="carte", half=gp&&!V.fbig; el.dataset.half=half?"1":"0";   /* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran, l'annonce reste visible au-dessus */
+  el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?"Retour":"×"}</button><b>${esc(F.title)}</b></div>
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>{const t=zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l, c=PH()?t.replace(/^L(e |')/,""):t; return `<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${c[0].toUpperCase()+c.slice(1)}</button>`;}).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
   if(M) requestAnimationFrame(()=>M.resize());}
- function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} V.sel=s; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; flyAd(s); if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
+ function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw) V.fbig=false; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
 
  /* ---------- ajouter un bien à la main ----------
     Le formulaire de l'app (recherche d'adresse, quartier, contrôles, envoi dans la liste commune) est déplacé dans une fenêtre,
@@ -3583,11 +3612,11 @@ render();
   else if(k==="tab"){V.tab="carte"; save(); show();}}
  addEventListener("popstate",()=>{if(BKSKIP){BKSKIP--; return;} const k=BK.pop(); if(!k) return; if(k==="x"){try{history.back();}catch(_){} return;} bkClose(k);});
  new MutationObserver(bkLater).observe(document.body,{childList:true});
- {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
+ {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); if(PH()) requestAnimationFrame(()=>padSync()); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
  window.V2CITY=()=>V.city||null;   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2fgrip],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.type){if(V.tous){V.tous=false; save(); FEED=null;} return;}   /* Studio, T2, T3 : le type est changé par 49-type-ui.js */
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
@@ -3605,6 +3634,7 @@ render();
    if(tb&&fe.scrollTop>top0-hh) fe.scrollTop=top0-hh;   /* on arrive au début de l'onglet, pas au milieu */
    const fo=d.v2focus&&$(d.v2focus); if(fo){fo.scrollIntoView({block:"center"}); fo.focus({preventScroll:true}); return;}
    const f=document.querySelector(`.v2tabs2 [data-v2ft="${d.v2ft}"]`); if(f) f.focus({preventScroll:true}); return;}
+  if(d.v2fgrip!=null){V.fbig=!V.fbig; const sc=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=sc; requestAnimationFrame(()=>{padSync(); if(!V.fbig&&V.sel) flyAd(V.sel);}); return;}
   if(d.v2close!=null){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); return;}
   if(d.v2crit!=null){critDlg(false); return;}
   if(d.v2theme!=null){setTheme(d.v2theme||(DARK()?"light":"dark")); return;}

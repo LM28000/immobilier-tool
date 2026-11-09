@@ -15,7 +15,7 @@ function ficheOf(ck,suf){const c=FD[ck]; if(c) return c[adId(suf)]||null; if(FIC
 function ficheLoad(ck){if(FICHES||FDL[ck]||!ck) return; FDL[ck]=1;
  /* annonces privées : les fiches complètes d'une ville sont lues dans Supabase quand on en a besoin (25-annonces-cloud.js) ;
     si la lecture échoue, la fiche dit qu'elle n'est pas relevée et on réessaie une minute plus tard */
- if(FPRIV){if(typeof sbAnn!=="function"){FD[ck]={}; return;} sbAnn("select=cle,data&cle=eq."+encodeURIComponent("fiches-"+ck)).then(rows=>{const d=Array.isArray(rows)&&rows[0]&&rows[0].data;
+ if(FPRIV){if(typeof sbAnn!=="function"){FD[ck]={}; return;} sbAnn("select=cle,data,maj&cle=eq."+encodeURIComponent("fiches-"+ck),["fiches-"+ck]).then(rows=>{const d=Array.isArray(rows)&&rows[0]&&rows[0].data;
    FD[ck]=d&&typeof d==="object"?d:{}; if(!d) setTimeout(()=>{delete FD[ck]; delete FDL[ck];},60000); ficheRefresh(ck);}); return;}
  fetch("data/fiches/"+encodeURIComponent(ck)+".json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{FD[ck]=j&&typeof j==="object"?j:{}; ficheRefresh(ck);});}
 function ficheRefresh(ck){document.querySelectorAll("[data-fwait]").forEach(el=>{const [c,...r]=el.dataset.fwait.split("|"); if(c!==ck) return; const s=r.join("|"), f=ficheOf(c,s); const sm=el.closest("details.fsec"); if(sm&&sm.querySelector(".fss")) sm.querySelector(".fss").textContent=ficheSum(f,s); el.outerHTML=f?ficheHtml(c,s,f):ficheNone(s);});}
@@ -69,10 +69,12 @@ const DFL={loue:["warn","loué","Vendu loué : un bail est en cours. Demandez le
  trav:["warn","travaux","La description annonce des travaux : chiffrez-les à la visite (champ « Travaux » de la visite)."],
  vote:["warn","copro : travaux","Travaux de copropriété mentionnés (ravalement, travaux votés) : demandez qui les paie et le montant."],
  meub:["ok","vendu meublé","Vendu meublé : moins de meubles à acheter."],
+ offre:["warn","sous offre","La description dit que le bien est sous offre, sous compromis ou déjà vendu : il n'est sans doute plus disponible. Demandez à l'agence avant d'aller plus loin."],
  nonloc:["bad","non louable","La description dit que ce bien ne peut pas être loué en l'état (insalubre, non habitable, interdit à la location ou moins de 9 m² habitables). Le calcul de l'outil ne s'applique pas."]};
 function ficheAttn(suf){const f=ficx(suf); if(!f) return []; const L=(f.fl||[]).filter(k=>DFL[k]).map(k=>[DFL[k][0]==="ok"?"ok":DFL[k][0],DFL[k][2]]); if(f.dup) L.push(["warn","Le même bien semble publié moins cher par une autre agence : comparez les deux annonces avant de contacter."]); return L;}
-function ficheBadges(suf,sansDpe){const f=ficx(suf); if(!f&&!prixAnormal(suf)) return ""; const b=[];
+function ficheBadges(suf,sansDpe){const f=ficx(suf); if(!f&&!prixAnormal(suf)&&!prixBas(suf)) return ""; const b=[];
  if(prixAnormal(suf)) b.push(`<span class="hb fbad" title="Prix au m² sous le quart de celui des ventes réelles de la ville : sans doute pas un logement ordinaire (cave, viager, enchères, part de bien). Hors calcul.">prix anormal</span>`);
+ else if(prixBas(suf)) b.push(`<span class="hb fwarn" title="Prix au m² sous 40 % de celui des ventes réelles de la ville : vérifiez avant de vous emballer (travaux lourds, viager, part de bien, annonce erronée ou déjà vendue).">à vérifier</span>`);
  if(!f) return b.join("");
  if(f.dpe&&!sansDpe) b.push(`<span class="hb ${/[FG]/.test(f.dpe)?"fbad":"old"}" title="${f.dpe0?esc("DPE "+dpeNote(f)):"DPE annoncé"}">DPE ${f.dpe}${f.dpe0?"*":""}</span>`);
  (f.fl||[]).forEach(k=>{const d=DFL[k]; if(d) b.push(`<span class="hb ${d[0]==="bad"?"fbad":d[0]==="warn"?"fwarn":"drop"}" title="${esc(d[2])}">${d[1]}</span>`);});
@@ -85,10 +87,12 @@ const _vuBadgesF=vuBadges; vuBadges=function(kind,ck,suf){return _vuBadgesF(kind
 /* annonces où le calcul de l'outil ne s'applique pas (résidence gérée, viager, non louable) : signalées partout, retirées des « Meilleures annonces » */
 /* prix au m² sous le quart de celui des ventes réelles de la ville pour ce type : pas un logement ordinaire (cave, viager,
    enchères, part de bien, résidence gérée non signalée…), le calcul n'a pas de sens ; la liste est refaite quand les annonces changent */
-let ANOM=null;
-function prixAnormal(suf){if(!ANOM){ANOM=new Set(); if(typeof ADS!=="undefined") Object.entries(ADS).forEach(([ck,A])=>{if(!A||typeof A!=="object") return;
-   [["studio",A.ventes],["t2",A.t&&A.t.t2&&A.t.t2.ventes],["t3",A.t&&A.t.t3&&A.t.t3.ventes]].forEach(([ty,L])=>{const D=dvfC(ck,ty); if(!D||!L) return; L.forEach(a=>{if(a&&a[0]>0&&a[2]>0&&a[2]/a[0]<0.25*D.med) ANOM.add(a[3]);});});});}
+let ANOM=null, ABAS=null;
+function prixAnormal(suf){if(!ANOM){ANOM=new Set(); ABAS=new Set(); if(typeof ADS!=="undefined") Object.entries(ADS).forEach(([ck,A])=>{if(!A||typeof A!=="object") return;
+   [["studio",A.ventes],["t2",A.t&&A.t.t2&&A.t.t2.ventes],["t3",A.t&&A.t.t3&&A.t.t3.ventes]].forEach(([ty,L])=>{const D=dvfC(ck,ty); if(!D||!L) return; L.forEach(a=>{if(!(a&&a[0]>0&&a[2]>0)) return; const r=a[2]/a[0]/D.med; if(r<0.25) ANOM.add(a[3]); else if(r<0.4) ABAS.add(a[3]);});});});}
  return ANOM.has(suf);}
+/* prix très bas, sans être anormal (de 25 à 40 % des ventes réelles de la ville pour le type) : gardé dans le calcul, signalé « à vérifier » */
+function prixBas(suf){prixAnormal(suf); return !!(ABAS&&ABAS.has(suf));}
 const horsCalcul=suf=>{const f=ficx(suf); return !!(f&&f.fl&&f.fl.some(k=>k==="serv"||k==="viager"||k==="nonloc"))||prixAnormal(suf);};
 
 /* ce que Claude a lu dans la description (tools/fiches.py lu) : loyer d'un bien vendu loué, travaux, taxe foncière.

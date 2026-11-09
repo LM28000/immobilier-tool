@@ -36,6 +36,8 @@ SIGNAUX = {
     "viager": r"viager|nue[- ]propri[ée]t[ée]",
     "trav": r"(?:à|a) r[ée]nover|travaux (?:à|a) pr[ée]voir|(?:à|a) rafra[iî]chir|(?:à|a) r[ée]habiliter|gros travaux|(?:à|a) remettre au go[uû]t",
     "vote": r"travaux vot[ée]s|ravalement",
+    # sous offre : le bien n'est sans doute plus disponible (titre ou description) ; pas « offre de prêt » ni « faire une offre »
+    "offre": r"sous offre|offre (?:d'achat )?accept[ée]e|sous compromis|compromis (?:sign[ée]|en cours)|d[ée]j[àa] vendu|\bvendu par (?:notre|l'agence)",
     "meub": r"vendu meubl[ée]|enti[eè]rement meubl[ée]|(?:livr[ée]|c[ée]d[ée]) meubl[ée]|meubl[ée] et [ée]quip[ée]",
     # non louable : insalubre, non habitable, interdit à la location, moins de 9 m² habitables (pas les seuils du DPE, ni la courte durée)
     "nonloc": r"insalubr(?![^.]{0,30}lev[ée])|non[- ]habitable|inhabitable|impropre [àa] l[’']habitation|non[- ]louable|pas louable|ne (?:peut|pourra) (?:pas )?(?:[êe]tre )?(?:lou[ée]|mis en location)(?!\s+(?:en\s+)?(?:courte|saisonni|meubl[ée]s? de tourisme|airbnb|tourisme))|interdit(?:e)? de louer|interdit(?:e)? [àa] la location|arr[êe]t[ée] de p[ée]ril|p[ée]ril imminent|non d[ée]cent|logement ind[ée]cent|(?:surface habitable|pi[èe]ce principale|surface)[^.]{0,40}(?:inf[ée]rieure? [àa]|moins de) 9 ?m",

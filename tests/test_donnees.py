@@ -106,4 +106,7 @@ ok("DPE : la page reçoit la classe à jour et la classe annoncée", x.get("dpe"
 rl = json.load(open(R + "/data/rail.json", encoding="utf-8"))
 ok("grandes lignes de train (data/rail.json) : grande vitesse et lignes rapides, dans l'Ouest", sum(f["properties"]["v"] == "lgv" for f in rl["features"]) >= 4 and sum(f["properties"]["v"] == "gl" for f in rl["features"]) >= 20 and all(len(f["geometry"]["coordinates"]) >= 2 for f in rl["features"]))
 
+ok("signal « sous offre » : sous offre, sous compromis, déjà vendu", all("offre" in F.signaux({"d": t}) for t in ("SOUS OFFRE ACCEPTÉE par nos soins", "Sous compromis : appartement T3", "DEJA VENDU PAR KADENCE IMMOBILIER", "Cet appartement vient d'être vendu par notre agence !")))
+ok("signal « sous offre » : pas « vendu loué », « vendu libre » ni « faire une offre »", not any("offre" in F.signaux({"d": t}) for t in ("Bien vendu loué, bail en cours", "Bien vendu libre de toute occupation", "N'hésitez pas à faire une offre", "Bien vendu avec locataire en place")))
+
 print(f"\n{n - bad}/{n} tests de données réussis"); sys.exit(1 if bad else 0)

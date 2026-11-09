@@ -9,9 +9,19 @@ let ADSCLOUD=null;
    Novembre 2026 : tout lire d'un coup (34 Mo avec les fiches complètes) dépassait le temps accordé aux requêtes par Supabase
    (« statement timeout ») et plus aucune annonce n'arrivait ; la page lit d'abord annonces, historique et champs de calcul (6 Mo),
    puis les fiches complètes d'une ville quand on ouvre une de ses annonces (24-fiches-annonces.js, ficheLoad). */
-async function sbAnn(q){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url) return null;
- const pub=await sbLit("annonces_publiques",q,null); if(pub) return pub;   /* la vue publique, sans code */
- return code?sbLit("annonces",q,code):null;}
+/* ouverture rapide : une petite lecture des dates de mise à jour (cle, maj) ; si celles des morceaux demandés n'ont pas changé
+   depuis la dernière lecture, la copie gardée dans le navigateur suffit (plus de 6 Mo retéléchargés à chaque ouverture) */
+let ANNMAJ={}; try{ANNMAJ=JSON.parse(localStorage.getItem("ann-maj")||"{}")||{};}catch(_){}
+let ANNM=null;
+async function annMaj(){if(ANNM) return ANNM; try{const r=await fetch(SB.url.replace(/\/$/,"")+"/rest/v1/annonces_publiques?select=cle,maj",{headers:{apikey:SB.key}}); if(r.ok){const L=await r.json(); if(Array.isArray(L)&&L.length){ANNM={}; L.forEach(x=>{ANNM[x.cle]=x.maj;});}}}catch(_){} return ANNM;}
+async function sbCache(q){const base=SB.url.replace(/\/$/,"")+"/rest/v1/", code=typeof sbCode==="function"?sbCode():"";
+ for(const u of [base+"annonces_publiques?"+q+"&pub=1"].concat(code?[base+"annonces?"+q+"&g="+encodeURIComponent(code.slice(0,4))]:[])){try{const c=await caches.open("studio-annonces"), h=await c.match(new Request(u)); if(h) return await h.json();}catch(_){}}
+ return null;}
+async function sbAnn(q,keys){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url) return null;
+ if(keys){const m=await annMaj(); if(m&&keys.every(k=>m[k]&&ANNMAJ[k]===m[k])){const c=await sbCache(q); if(Array.isArray(c)&&c.length) return c;}}
+ const rows=await sbLit("annonces_publiques",q,null)||(code?await sbLit("annonces",q,code):null);   /* la vue publique, sans code ; sinon la table avec le code */
+ if(Array.isArray(rows)&&keys){rows.forEach(r=>{if(r&&r.cle&&r.maj) ANNMAJ[r.cle]=r.maj;}); try{localStorage.setItem("ann-maj",JSON.stringify(ANNMAJ));}catch(_){}}
+ return rows;}
 async function sbLit(table,q,code){
  const url=SB.url.replace(/\/$/,"")+"/rest/v1/"+table+"?"+q, req=new Request(url+(code?"&g="+encodeURIComponent(code.slice(0,4)):"&pub=1")), h={apikey:SB.key};
  if(code) h["x-groupe"]=code;
@@ -22,7 +32,7 @@ async function sbLit(table,q,code){
  return null;}
 async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url||window.claude) return;
  if(code) try{const c=await caches.open("studio-annonces"); await c.delete(new Request(SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj&g="+encodeURIComponent(code.slice(0,4))));}catch(_){}   /* l'ancienne copie complète (34 Mo) */
- const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)");
+ const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)",["ads","hist","ficx"]);
  if(!Array.isArray(rows)||!rows.length) return;
  const by={}; rows.forEach(x=>{if(x&&x.cle&&x.data&&typeof x.data==="object") by[x.cle]=x.data;});
  const ads=by.ads; if(!ads||typeof ads!=="object") return;

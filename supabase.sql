@@ -83,3 +83,29 @@ grant select on public.annonces_publiques to anon, authenticated;
 drop policy if exists "annonces : écriture du groupe" on public.annonces;
 create policy "annonces : écriture du groupe" on public.annonces for insert to anon
   with check (groupe = public.code_groupe() and exists (select 1 from public.annonces a where a.groupe = public.code_groupe()));
+
+-- ============ 10 novembre 2026 : le code de groupe n'est plus gardé en clair (à coller dans SQL Editor puis « Run ») ============
+-- 4. Les tables ne gardent plus que l'empreinte (SHA-256) du code ; la page envoie toujours le code dans l'en-tête x-groupe,
+--    la base calcule son empreinte et la compare. Rien ne change pour la page, l'outil d'envoi ni le serveur MCP.
+--    Un code de moins de 12 caractères ne donne aucune empreinte : rien n'est lisible ni écrit sans un vrai code.
+create or replace function public.code_groupe() returns text language sql stable as $$
+  select case when length(h) >= 12 then encode(sha256(convert_to(h, 'UTF8')), 'hex') end
+  from (select coalesce(current_setting('request.headers', true)::json->>'x-groupe', '') as h) x
+$$;
+-- les lignes existantes : le code devient son empreinte (une seule fois : une empreinte n'est pas recalculée)
+update public.biens set groupe = encode(sha256(convert_to(groupe, 'UTF8')), 'hex') where groupe !~ '^[0-9a-f]{64}$';
+update public.annonces set groupe = encode(sha256(convert_to(groupe, 'UTF8')), 'hex') where groupe !~ '^[0-9a-f]{64}$';
+-- toute écriture prend l'empreinte du code envoyé, quoi que contienne la colonne « groupe » de la requête
+create or replace function public.groupe_empreinte() returns trigger language plpgsql as $$
+begin new.groupe = public.code_groupe(); return new; end $$;
+drop trigger if exists a_groupe_empreinte on public.biens;
+create trigger a_groupe_empreinte before insert or update on public.biens for each row execute function public.groupe_empreinte();
+drop trigger if exists a_groupe_empreinte on public.annonces;
+create trigger a_groupe_empreinte before insert or update on public.annonces for each row execute function public.groupe_empreinte();
+-- la vue publique suit les nouvelles valeurs de « groupe »
+do $$ declare g text; begin
+  select groupe into g from public.annonces where cle = 'ads' order by maj desc limit 1;
+  execute format('create or replace view public.annonces_publiques with (security_barrier = true) as select cle, data, maj from public.annonces where md5(groupe) = %L', md5(g));
+end $$;
+revoke all on public.annonces_publiques from public, anon, authenticated;
+grant select on public.annonces_publiques to anon, authenticated;

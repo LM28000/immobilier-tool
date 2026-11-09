@@ -1,5 +1,5 @@
 // Lit les cartes d'annonces d'une page de résultats Bien'ici déjà ouverte (à lancer dans la page), quel que soit le type (studio, T2, T3).
-// Renvoie {loc, n, cartes, page, suivante, rows} : suivante = le site propose une page après celle-ci (à ouvrir, jusqu'à 5 pages) : rows = [surface, secteur, loyer, meublé, lien, photo] (location)
+// Renvoie {loc, n, cartes, page, suivante, rows, erreur} (erreur : null, ou la raison d'une page restée vide) : suivante = le site propose une page après celle-ci (à ouvrir, jusqu'à 5 pages) : rows = [surface, secteur, loyer, meublé, lien, photo] (location)
 // ou [surface, secteur, prix, lien, photo] (vente). Les programmes neufs sont ignorés.
 (()=>{const loc=location.pathname.includes('/location/');const rows=[];const seen=new Set();
 for(const a of document.querySelectorAll('article')){const t=a.innerText.replace(/\s+/g,' ');
@@ -14,4 +14,8 @@ for(const a of document.querySelectorAll('article')){const t=a.innerText.replace
  const suf=link.replace(/^\/annonce\/(location|vente)\//,'');
  if(!s||!pr) continue; rows.push(loc?[s,sec,pr,meu,suf,ph]:[s,sec,pr,suf,ph]);}
 const page=+(new URLSearchParams(location.search).get('page')||1), suivante=!!document.querySelector(`a[href*="page=${page+1}"]`);
-return JSON.stringify({loc,n:rows.length,cartes:document.querySelectorAll('article').length,page,suivante,rows});})()
+/* page restée vide (ni annonce ni texte) : le site ne s'est pas affiché. Cause vue le 9 novembre 2026 : un réseau dont le DNS
+   ne trouvait pas karto.habiteo.com, un script dont Bien'ici a besoin pour afficher ses annonces. « erreur » le dit à la routine. */
+const cartes=document.querySelectorAll('article').length, txt=(document.body&&document.body.innerText||'').replace(/\s+/g,' ').trim();
+const erreur=!rows.length&&!cartes&&txt.length<300?"page Bien'ici restée vide : le site ne s'est pas affiché (réseau qui bloque un de ses scripts, souvent karto.habiteo.com, ou blocage). Relevé arrêté.":null;
+return JSON.stringify({loc,n:rows.length,cartes,page,suivante,rows,erreur});})()
