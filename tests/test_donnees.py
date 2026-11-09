@@ -53,6 +53,8 @@ shutil.rmtree(T)
 # --- signaux des descriptions
 spec = importlib.util.spec_from_file_location("fiches", R + "/tools/fiches.py"); F = importlib.util.module_from_spec(spec); spec.loader.exec_module(F)
 ok("signal : vendu loué", F.signaux({"d": "Studio vendu loué 450 € par mois, locataire en place depuis 2022"}) == ["loue"])
+ok("signal : non louable (insalubre, moins de 9 m²)", "nonloc" in F.signaux({"d": "GRENIER classé insalubre par la ville (non louable et non habitable), pièce principale d'une surface inférieure à 9m²"}))
+ok("pas de « non louable » pour les seuils du DPE ni la courte durée", not any("nonloc" in F.signaux({"d": t}) for t in ("Ce studio est bien au-dessus des seuils d'interdiction de location liés à la performance énergétique.", "Le règlement prévoit que le bien ne peut pas être loué en courte durée.", "Arrêté d'insalubrité levé en 2021, appartement rénové.")))
 ok("signal : résidence de services", "serv" in F.signaux({"d": "Studio en résidence étudiante avec gestionnaire, bail commercial"}))
 ok("signal : appart'hôtel", "serv" in F.signaux({"d": "Ce studio (appart'hôtel) bénéficie d'un emplacement idéal"}))
 ok("signal : travaux", F.signaux({"d": "Appartement à rénover entièrement"}) == ["trav"])

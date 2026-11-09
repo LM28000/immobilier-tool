@@ -52,7 +52,7 @@ async function aides() { const p = await getPage(); if (!(await p.evaluate(() =>
 
 const server = new McpServer({name: "notre-studio", version: "1.0.0"}, {instructions:
   "Outil « Où acheter notre studio ? » : 21 villes de l'Ouest, quartiers IRIS, annonces Bien'ici relevées chaque soir dans chaque ville, calcul LMNP (crédit, impôts, revente, TRI sur 15 ans). " +
-  "Les montants sont en euros ; « rendement_15ans_pct » est le rendement annuel de l'apport revente comprise. Les résidences gérées et viagers sont signalés : le calcul ne s'y applique pas. " +
+  "Les montants sont en euros ; « rendement_15ans_pct » est le rendement annuel de l'apport revente comprise. Les résidences gérées, viagers et biens non louables (insalubres, moins de 9 m² habitables) sont signalés : le calcul ne s'y applique pas. " +
   "Ce sont des estimations, pas un conseil financier ; citez les liens des annonces."});
 
 server.registerTool("classement_villes", {title: "Classement des villes", description: "Les 21 villes classées par rendement sur 15 ans pour le type de bien choisi, avec cash-flow, budget, loyer, endettement et nombre d'annonces. Le chiffre d'une ville est celui de son quartier du milieu (quartiers classés par rendement, comptés selon leurs ventes).",
@@ -71,7 +71,7 @@ server.registerTool("quartiers", {title: "Quartiers d'une ville", description: "
       .sort((a, b) => (b.rendement_15ans_pct ?? -99) - (a.rendement_15ans_pct ?? -99)).slice(0, n || 10);
     return {ville: c.name, type: H.type, quartiers: L}; }, [ville, n]); }));
 
-server.registerTool("annonces", {title: "Annonces à vendre", description: "Annonces à vendre du type choisi, classées et filtrées, avec le calcul complet et les prix à viser. Les résidences gérées et viagers sont exclus par défaut.",
+server.registerTool("annonces", {title: "Annonces à vendre", description: "Annonces à vendre du type choisi, classées et filtrées, avec le calcul complet et les prix à viser. Les résidences gérées, viagers et biens non louables sont exclus par défaut.",
   inputSchema: {ville: z.string().optional(), tri: z.enum(["rendement", "cashflow", "prix", "nouveautes", "ecart_prix_vise"]).optional(), n: z.number().int().min(1).max(50).optional(),
     prix_max: z.number().optional(), dpe_max: z.enum(["A", "B", "C", "D", "E", "F", "G"]).optional(), inclure_residences_gerees: z.boolean().optional(), seulement_banque_ok: z.boolean().optional()}},
   wrap(async a => { await aides(); return run(o => { const c = o.ville ? C.find(c => c.k === o.ville || c.name.toLowerCase() === o.ville.toLowerCase()) : null; if (o.ville && !c) throw new Error("ville inconnue : " + o.ville);
