@@ -9,14 +9,18 @@
    tools/fiches.py dpe_a_jour : électricité comptée 1,7 fois, seuils des petites surfaces) ; colocations (chambres) écartées des loyers de comparaison (src/ads-vue.js). */
 const adId=suf=>String(suf||"").split("?")[0].split("/").pop();
 const ficx=suf=>FICX[adId(suf)]||null;
-const FD=FICHES||{}, FDL={};
+const FD=FICHES||{}, FDL={}, FPRIV=!!ADSRAW.prive;   /* annonces privées : fiches dans Supabase (ADSRAW est remplacé par les annonces reçues, sans ce drapeau) */
 /* undefined : en cours de chargement · null : pas encore relevée */
 function ficheOf(ck,suf){const c=FD[ck]; if(c) return c[adId(suf)]||null; if(FICHES) return null; ficheLoad(ck); return undefined;}
-function ficheLoad(ck){if(FICHES||FDL[ck]||!ck||ADSRAW.prive) return;   /* annonces privées : les fiches arrivent de Supabase (25-annonces-cloud.js) */ FDL[ck]=1;
+function ficheLoad(ck){if(FICHES||FDL[ck]||!ck) return; FDL[ck]=1;
+ /* annonces privées : les fiches complètes d'une ville sont lues dans Supabase quand on en a besoin (25-annonces-cloud.js) ;
+    si la lecture échoue, la fiche dit qu'elle n'est pas relevée et on réessaie une minute plus tard */
+ if(FPRIV){if(typeof sbAnn!=="function"){FD[ck]={}; return;} sbAnn("select=cle,data&cle=eq."+encodeURIComponent("fiches-"+ck)).then(rows=>{const d=Array.isArray(rows)&&rows[0]&&rows[0].data;
+   FD[ck]=d&&typeof d==="object"?d:{}; if(!d) setTimeout(()=>{delete FD[ck]; delete FDL[ck];},60000); ficheRefresh(ck);}); return;}
  fetch("data/fiches/"+encodeURIComponent(ck)+".json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{FD[ck]=j&&typeof j==="object"?j:{}; ficheRefresh(ck);});}
 function ficheRefresh(ck){document.querySelectorAll("[data-fwait]").forEach(el=>{const [c,...r]=el.dataset.fwait.split("|"); if(c!==ck) return; const s=r.join("|"), f=ficheOf(c,s); const sm=el.closest("details.fsec"); if(sm&&sm.querySelector(".fss")) sm.querySelector(".fss").textContent=ficheSum(f,s); el.outerHTML=f?ficheHtml(c,s,f):ficheNone(s);});}
 /* la ville affichée est chargée en avance, sans gêner le démarrage */
-setTimeout(()=>{if(!FICHES&&typeof SEL!=="undefined"&&ADSRAW[SEL]) ficheLoad(SEL);},2500);
+setTimeout(()=>{if(!FICHES&&!FPRIV&&typeof SEL!=="undefined"&&ADSRAW[SEL]) ficheLoad(SEL);},2500);
 
 /* quartier d'une vente : la position de la fiche quand elle est assez précise, sinon le secteur Bien'ici */
 const VIP=new Map();

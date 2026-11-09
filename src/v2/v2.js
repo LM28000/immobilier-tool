@@ -669,6 +669,27 @@
  function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap();});}
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
+ /* ---------- bouton ou geste « retour » (téléphone, appli installée, navigateur) ----------
+    Chaque couche ouverte — un onglet autre que la carte, une fiche, une fenêtre, la visionneuse — ajoute une entrée à l'historique
+    du navigateur ; « retour » referme la plus récente au lieu de quitter l'app. Fermée par l'app (×, Retour, Échap, un autre choix),
+    la couche retire son entrée (BKSKIP : le retour qu'on provoque alors ne referme rien). Entrée devenue inutile au milieu : « x »,
+    sautée au retour suivant. */
+ const BK=[]; let BKSKIP=0, BKQ=0;
+ const BKON={tab:()=>V.tab!=="carte",sel:()=>!!V.sel,dlg:()=>!!document.querySelector(".v2dlg"),lb:()=>!!document.querySelector(".v2lb")};
+ function bkSync(){for(const k of ["tab","sel","dlg","lb"]){const on=BKON[k](), i=BK.lastIndexOf(k);
+   if(on&&i<0){BK.push(k); try{history.pushState({v2bk:BK.length},"");}catch(_){}}
+   else if(!on&&i>=0){if(i===BK.length-1){BK.pop(); BKSKIP++; try{history.back();}catch(_){BKSKIP--;}} else BK[i]="x";}}}
+ const bkLater=()=>{cancelAnimationFrame(BKQ); BKQ=requestAnimationFrame(bkSync);};
+ function bkClose(k){
+  if(k==="lb") lbClose();
+  else if(k==="dlg"){const d=document.querySelector(".v2dlg"); if(d){if(d.querySelector("#biensForm")) addClose(); else d.remove();}}
+  else if(k==="sel"){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab);}
+  else if(k==="tab"){V.tab="carte"; save(); show();}}
+ addEventListener("popstate",()=>{if(BKSKIP){BKSKIP--; return;} const k=BK.pop(); if(!k) return; if(k==="x"){try{history.back();}catch(_){} return;} bkClose(k);});
+ new MutationObserver(bkLater).observe(document.body,{childList:true});
+ {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
+ window.V2CITY=()=>V.city||null;   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
+
  /* ---------- événements ---------- */
  document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}

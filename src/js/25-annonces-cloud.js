@@ -4,10 +4,20 @@
    c'est la seule source : sans code de groupe, la page publique n'affiche aucune annonce.
    Une copie est gardée dans le cache du navigateur pour l'ouverture hors ligne. */
 let ADSCLOUD=null;
+/* une lecture de la table « annonces », réessayée une fois, copiée dans le cache du navigateur (ouverture hors ligne).
+   Novembre 2026 : tout lire d'un coup (34 Mo avec les fiches complètes) dépassait le temps accordé aux requêtes par Supabase
+   (« statement timeout ») et plus aucune annonce n'arrivait ; la page lit d'abord annonces, historique et champs de calcul (6 Mo),
+   puis les fiches complètes d'une ville quand on ouvre une de ses annonces (24-fiches-annonces.js, ficheLoad). */
+async function sbAnn(q){const code=typeof sbCode==="function"?sbCode():""; if(!code||!SB.url) return null;
+ const url=SB.url.replace(/\/$/,"")+"/rest/v1/annonces?"+q, req=new Request(url+"&g="+encodeURIComponent(code.slice(0,4)));
+ for(let i=0;i<2;i++){try{const r=await fetch(url,{headers:{apikey:SB.key,"x-groupe":code}}); if(r.ok){const rows=await r.json();
+   try{const c=await caches.open("studio-annonces"); await c.put(req,new Response(JSON.stringify(rows),{headers:{"Content-Type":"application/json"}}));}catch(_){} return rows;}}catch(_){}
+  if(!i) await new Promise(f=>setTimeout(f,1500));}
+ try{const c=await caches.open("studio-annonces"), h=await c.match(req); if(h) return await h.json();}catch(_){}
+ return null;}
 async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""; if(!code||!SB.url||window.claude) return;
- const url=SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj", req=new Request(url+"&g="+encodeURIComponent(code.slice(0,4))); let rows=null;
- try{const r=await fetch(url,{headers:{apikey:SB.key,"x-groupe":code}}); if(r.ok){rows=await r.json(); try{const c=await caches.open("studio-annonces"); await c.put(req,new Response(JSON.stringify(rows),{headers:{"Content-Type":"application/json"}}));}catch(_){}}}catch(_){}
- if(!rows){try{const c=await caches.open("studio-annonces"), h=await c.match(req); if(h) rows=await h.json();}catch(_){}}
+ try{const c=await caches.open("studio-annonces"); await c.delete(new Request(SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj&g="+encodeURIComponent(code.slice(0,4))));}catch(_){}   /* l'ancienne copie complète (34 Mo) */
+ const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)");
  if(!Array.isArray(rows)||!rows.length) return;
  const by={}; rows.forEach(x=>{if(x&&x.cle&&x.data&&typeof x.data==="object") by[x.cle]=x.data;});
  const ads=by.ads; if(!ads||typeof ads!=="object") return;
@@ -17,6 +27,7 @@ async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""
  if(by.hist){Object.keys(HIST).forEach(k=>delete HIST[k]); Object.assign(HIST,by.hist);}
  if(by.ficx){Object.keys(FICX).forEach(k=>delete FICX[k]); Object.assign(FICX,by.ficx);}
  Object.keys(by).filter(k=>k.startsWith("fiches-")).forEach(k=>{FD[k.slice(7)]=by[k];});
+ if(typeof V2CITY==="function"&&V2CITY()) ficheLoad(V2CITY());   /* les fiches de la ville affichée, en avance */
  adsPrep(); loyerRecal(); ADSCLOUD=ads.iso||true;
  [typeof ADSV!=="undefined"&&ADSV].forEach(o=>o&&Object.keys(o).forEach(k=>delete o[k]));
  [typeof VC!=="undefined"&&VC,typeof VIP!=="undefined"&&VIP,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear());

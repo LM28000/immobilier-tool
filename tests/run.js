@@ -82,6 +82,19 @@ async function mlRoutes(p) {
         ok('v2 tel · liste basse d\'une ville : au moins une annonce entière, cash-flow compris', await p.evaluate(() => { const L = document.getElementById('v2mlist').getBoundingClientRect(), r = document.querySelector('#v2mlist .v2row'), c = r && r.querySelector('.v2cfl');
           return !!c && r.getBoundingClientRect().bottom <= L.bottom + 1 && c.scrollWidth <= c.clientWidth + 1; }), await p.evaluate(() => { const L = document.getElementById('v2mlist').getBoundingClientRect(), r = document.querySelector('#v2mlist .v2row'), c = r && r.querySelector('.v2cfl');
           return JSON.stringify({liste: [Math.round(L.top), Math.round(L.bottom)], ligne: r && [Math.round(r.getBoundingClientRect().top), Math.round(r.getBoundingClientRect().bottom)], cf: c && [c.scrollWidth, c.clientWidth], vue: [innerWidth, innerHeight], tete: Math.round(document.querySelector('#v2mlist .v2mhead').getBoundingClientRect().height)}); }));
+        { // bouton ou geste « retour » : visionneuse, puis fiche, puis onglet ; fermer par l'app retire l'étape
+          const back = async () => { await p.evaluate(() => { if (history.state && history.state.v2bk) history.back(); }); await p.waitForTimeout(600); };
+          const st = () => p.evaluate(() => ({lb: !!document.querySelector('.v2lb'), fiche: !document.getElementById('v2fiche').hidden, tab: document.querySelector('#v2tabbar [aria-current="page"]').dataset.v2tab, h: history.state && history.state.v2bk || 0}));
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2open^="v|"]').click()); await p.waitForTimeout(800);
+          const s0 = await st(); await p.evaluate(() => { const b = document.querySelector('#v2fiche .v2fthb'); if (b) b.click(); }); await p.waitForTimeout(600); const s1 = await st();
+          await back(); const s2 = await st(); await back(); const s3 = await st();
+          await p.evaluate(() => document.querySelector('#v2tabbar [data-v2tab="annonces"]').click()); await p.waitForTimeout(600); await back(); const s4 = await st();
+          ok('v2 tel · retour : ferme la visionneuse, puis la fiche, puis revient à la carte', s0.fiche && (!s1.lb || (!s2.lb && s2.fiche)) && !s3.fiche && s4.tab === 'carte', JSON.stringify({s0, s1, s2, s3, s4}));
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2open^="v|"]').click()); await p.waitForTimeout(800); const h1 = (await st()).h;
+          await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(600); const s5 = await st();
+          ok('v2 tel · retour : une fiche fermée par son bouton ne laisse pas d\'étape en trop', h1 > 0 && !s5.fiche && s5.h < h1, JSON.stringify({h1, s5}));
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2city=""]').click()); await p.waitForTimeout(1200);   // la carte revient sur Le Mans pour la suite
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800); }
         await p.tap('#v2mlist [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
         ok('v2 tel · fiche de la ville depuis l\'en-tête de la liste', await p.evaluate(() => !document.getElementById('v2fiche').hidden && /Le Mans/.test(document.querySelector('#v2fiche .v2ft').textContent)));
         await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);

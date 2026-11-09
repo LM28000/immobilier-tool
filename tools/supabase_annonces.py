@@ -10,7 +10,7 @@ Le code de groupe (le même que dans la page, rubrique « Liste commune ») est 
 ou dans la variable SB_GROUPE. Il ne doit jamais être dans le dépôt. Sans code : rien n'est envoyé, sortie sans erreur.
 Adresse et clé publique du projet Supabase : celles de la page (src/js/21-shortlist-partage.js).
 """
-import json, os, re, sys, glob, datetime, urllib.request, urllib.error
+import json, urllib.parse, os, re, sys, glob, datetime, urllib.request, urllib.error
 
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CFG = os.path.expanduser("~/.config/immobilier-tool/groupe")
@@ -63,7 +63,10 @@ def main():
         except urllib.error.HTTPError as e: print(json.dumps({"erreur": e.code, "detail": e.read().decode()[:300]}, ensure_ascii=False)); sys.exit(1)
         print(json.dumps({"en_ligne": got}, ensure_ascii=False, indent=1)); return
     if cmd == "pull":
-        rows_ = json.loads(call("GET", base + "?select=cle,data", key, code)); by = {x["cle"]: x["data"] for x in rows_}
+        # ligne par ligne : tout lire d'un coup dépasse le temps accordé aux requêtes par Supabase
+        cles = [x["cle"] for x in json.loads(call("GET", base + "?select=cle", key, code))]
+        by = {}
+        for c_ in cles: by.update({x["cle"]: x["data"] for x in json.loads(call("GET", base + "?select=cle,data&cle=eq." + urllib.parse.quote(c_), key, code))})
         if "ads" not in by: print(json.dumps({"erreur": "rien dans Supabase"}, ensure_ascii=False)); sys.exit(1)
         force = "--force" in sys.argv; out = []
         def put(rel, txt):

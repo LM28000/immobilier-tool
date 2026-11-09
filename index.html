@@ -2064,14 +2064,18 @@ function poiBlock(t){const p=poiOf(t); if(!p) return "";
    tools/fiches.py dpe_a_jour : électricité comptée 1,7 fois, seuils des petites surfaces) ; colocations (chambres) écartées des loyers de comparaison (src/ads-vue.js). */
 const adId=suf=>String(suf||"").split("?")[0].split("/").pop();
 const ficx=suf=>FICX[adId(suf)]||null;
-const FD=FICHES||{}, FDL={};
+const FD=FICHES||{}, FDL={}, FPRIV=!!ADSRAW.prive;   /* annonces privées : fiches dans Supabase (ADSRAW est remplacé par les annonces reçues, sans ce drapeau) */
 /* undefined : en cours de chargement · null : pas encore relevée */
 function ficheOf(ck,suf){const c=FD[ck]; if(c) return c[adId(suf)]||null; if(FICHES) return null; ficheLoad(ck); return undefined;}
-function ficheLoad(ck){if(FICHES||FDL[ck]||!ck||ADSRAW.prive) return;   /* annonces privées : les fiches arrivent de Supabase (25-annonces-cloud.js) */ FDL[ck]=1;
+function ficheLoad(ck){if(FICHES||FDL[ck]||!ck) return; FDL[ck]=1;
+ /* annonces privées : les fiches complètes d'une ville sont lues dans Supabase quand on en a besoin (25-annonces-cloud.js) ;
+    si la lecture échoue, la fiche dit qu'elle n'est pas relevée et on réessaie une minute plus tard */
+ if(FPRIV){if(typeof sbAnn!=="function"){FD[ck]={}; return;} sbAnn("select=cle,data&cle=eq."+encodeURIComponent("fiches-"+ck)).then(rows=>{const d=Array.isArray(rows)&&rows[0]&&rows[0].data;
+   FD[ck]=d&&typeof d==="object"?d:{}; if(!d) setTimeout(()=>{delete FD[ck]; delete FDL[ck];},60000); ficheRefresh(ck);}); return;}
  fetch("data/fiches/"+encodeURIComponent(ck)+".json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{FD[ck]=j&&typeof j==="object"?j:{}; ficheRefresh(ck);});}
 function ficheRefresh(ck){document.querySelectorAll("[data-fwait]").forEach(el=>{const [c,...r]=el.dataset.fwait.split("|"); if(c!==ck) return; const s=r.join("|"), f=ficheOf(c,s); const sm=el.closest("details.fsec"); if(sm&&sm.querySelector(".fss")) sm.querySelector(".fss").textContent=ficheSum(f,s); el.outerHTML=f?ficheHtml(c,s,f):ficheNone(s);});}
 /* la ville affichée est chargée en avance, sans gêner le démarrage */
-setTimeout(()=>{if(!FICHES&&typeof SEL!=="undefined"&&ADSRAW[SEL]) ficheLoad(SEL);},2500);
+setTimeout(()=>{if(!FICHES&&!FPRIV&&typeof SEL!=="undefined"&&ADSRAW[SEL]) ficheLoad(SEL);},2500);
 
 /* quartier d'une vente : la position de la fiche quand elle est assez précise, sinon le secteur Bien'ici */
 const VIP=new Map();
@@ -2177,10 +2181,20 @@ function ecartMarche(ck){const key=ck+"|"+H.type+"|"+H.dvf+"|"+H.surcote; if(EMC
    c'est la seule source : sans code de groupe, la page publique n'affiche aucune annonce.
    Une copie est gardée dans le cache du navigateur pour l'ouverture hors ligne. */
 let ADSCLOUD=null;
+/* une lecture de la table « annonces », réessayée une fois, copiée dans le cache du navigateur (ouverture hors ligne).
+   Novembre 2026 : tout lire d'un coup (34 Mo avec les fiches complètes) dépassait le temps accordé aux requêtes par Supabase
+   (« statement timeout ») et plus aucune annonce n'arrivait ; la page lit d'abord annonces, historique et champs de calcul (6 Mo),
+   puis les fiches complètes d'une ville quand on ouvre une de ses annonces (24-fiches-annonces.js, ficheLoad). */
+async function sbAnn(q){const code=typeof sbCode==="function"?sbCode():""; if(!code||!SB.url) return null;
+ const url=SB.url.replace(/\/$/,"")+"/rest/v1/annonces?"+q, req=new Request(url+"&g="+encodeURIComponent(code.slice(0,4)));
+ for(let i=0;i<2;i++){try{const r=await fetch(url,{headers:{apikey:SB.key,"x-groupe":code}}); if(r.ok){const rows=await r.json();
+   try{const c=await caches.open("studio-annonces"); await c.put(req,new Response(JSON.stringify(rows),{headers:{"Content-Type":"application/json"}}));}catch(_){} return rows;}}catch(_){}
+  if(!i) await new Promise(f=>setTimeout(f,1500));}
+ try{const c=await caches.open("studio-annonces"), h=await c.match(req); if(h) return await h.json();}catch(_){}
+ return null;}
 async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""; if(!code||!SB.url||window.claude) return;
- const url=SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj", req=new Request(url+"&g="+encodeURIComponent(code.slice(0,4))); let rows=null;
- try{const r=await fetch(url,{headers:{apikey:SB.key,"x-groupe":code}}); if(r.ok){rows=await r.json(); try{const c=await caches.open("studio-annonces"); await c.put(req,new Response(JSON.stringify(rows),{headers:{"Content-Type":"application/json"}}));}catch(_){}}}catch(_){}
- if(!rows){try{const c=await caches.open("studio-annonces"), h=await c.match(req); if(h) rows=await h.json();}catch(_){}}
+ try{const c=await caches.open("studio-annonces"); await c.delete(new Request(SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj&g="+encodeURIComponent(code.slice(0,4))));}catch(_){}   /* l'ancienne copie complète (34 Mo) */
+ const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)");
  if(!Array.isArray(rows)||!rows.length) return;
  const by={}; rows.forEach(x=>{if(x&&x.cle&&x.data&&typeof x.data==="object") by[x.cle]=x.data;});
  const ads=by.ads; if(!ads||typeof ads!=="object") return;
@@ -2190,6 +2204,7 @@ async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""
  if(by.hist){Object.keys(HIST).forEach(k=>delete HIST[k]); Object.assign(HIST,by.hist);}
  if(by.ficx){Object.keys(FICX).forEach(k=>delete FICX[k]); Object.assign(FICX,by.ficx);}
  Object.keys(by).filter(k=>k.startsWith("fiches-")).forEach(k=>{FD[k.slice(7)]=by[k];});
+ if(typeof V2CITY==="function"&&V2CITY()) ficheLoad(V2CITY());   /* les fiches de la ville affichée, en avance */
  adsPrep(); loyerRecal(); ADSCLOUD=ads.iso||true;
  [typeof ADSV!=="undefined"&&ADSV].forEach(o=>o&&Object.keys(o).forEach(k=>delete o[k]));
  [typeof VC!=="undefined"&&VC,typeof VIP!=="undefined"&&VIP,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear());
@@ -3519,6 +3534,27 @@ render();
  let RQ=0, RWAIT=false; const typing=()=>{const a=document.activeElement; return !!(a&&app.contains(a)&&a.matches("input:not([type=range]):not([type=checkbox]),select,textarea"));};
  function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap();});}
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
+
+ /* ---------- bouton ou geste « retour » (téléphone, appli installée, navigateur) ----------
+    Chaque couche ouverte — un onglet autre que la carte, une fiche, une fenêtre, la visionneuse — ajoute une entrée à l'historique
+    du navigateur ; « retour » referme la plus récente au lieu de quitter l'app. Fermée par l'app (×, Retour, Échap, un autre choix),
+    la couche retire son entrée (BKSKIP : le retour qu'on provoque alors ne referme rien). Entrée devenue inutile au milieu : « x »,
+    sautée au retour suivant. */
+ const BK=[]; let BKSKIP=0, BKQ=0;
+ const BKON={tab:()=>V.tab!=="carte",sel:()=>!!V.sel,dlg:()=>!!document.querySelector(".v2dlg"),lb:()=>!!document.querySelector(".v2lb")};
+ function bkSync(){for(const k of ["tab","sel","dlg","lb"]){const on=BKON[k](), i=BK.lastIndexOf(k);
+   if(on&&i<0){BK.push(k); try{history.pushState({v2bk:BK.length},"");}catch(_){}}
+   else if(!on&&i>=0){if(i===BK.length-1){BK.pop(); BKSKIP++; try{history.back();}catch(_){BKSKIP--;}} else BK[i]="x";}}}
+ const bkLater=()=>{cancelAnimationFrame(BKQ); BKQ=requestAnimationFrame(bkSync);};
+ function bkClose(k){
+  if(k==="lb") lbClose();
+  else if(k==="dlg"){const d=document.querySelector(".v2dlg"); if(d){if(d.querySelector("#biensForm")) addClose(); else d.remove();}}
+  else if(k==="sel"){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab);}
+  else if(k==="tab"){V.tab="carte"; save(); show();}}
+ addEventListener("popstate",()=>{if(BKSKIP){BKSKIP--; return;} const k=BK.pop(); if(!k) return; if(k==="x"){try{history.back();}catch(_){} return;} bkClose(k);});
+ new MutationObserver(bkLater).observe(document.body,{childList:true});
+ {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
+ window.V2CITY=()=>V.city||null;   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
 
  /* ---------- événements ---------- */
  document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
