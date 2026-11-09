@@ -2675,7 +2675,7 @@ function pxRows(c){const pt=typeof PXTQ!=="undefined"&&PXTQ&&PXTQ.villes&&PXTQ.v
 /* mois vides retenus pour une ville : réglage × délai de location mesuré sur le relevé (vacMes), puis le quartier du milieu */
 function vacRow(c,x){const m=typeof vacMes==="function"?vacMes():null, v=m&&m.V[c.k], vv=vacVille(c.k), q=x.qt&&H.vacQ&&x._c&&x._c.vac!=null;
  const why=m&&m.ref&&v&&v.med?`réglage ${fr(H.vacance,1)} × ${fr(v.f,2)} : les locations du type y restent ${v.med} jours en ligne (médiane, ${v.gone} parties), contre ${fr(m.ref,0)} jours pour la ville médiane`
-  :v&&v.n?`votre réglage (${fr(H.vacance,1)}) : délai de location en cours de mesure, ${v.n} locations suivies depuis le ${dm(v.s0)}, ${v.gone} parties (il en faut 10, et 8 villes mesurées)`:`votre réglage (${fr(H.vacance,1)})`;
+  :v&&v.s0?`votre réglage (${fr(H.vacance,1)}) : délai de location en cours de mesure (annonces suivies depuis le ${dm(v.s0)} : ${v.n} nouvelle${v.n>1?"s":""}, ${v.gone} partie${v.gone>1?"s":""} ; il en faut 10 parties dans la ville, et 8 villes mesurées)`:`votre réglage (${fr(H.vacance,1)})`;
  return ["Mois vides retenus",`${fr(q?x._c.vac:vv,1)} par an`,why+(q?` ; quartier du milieu, selon son emplacement (ville : ${fr(vv,1)})`:"")];}
 function villeFiche(c){const x=calcVille(c), [bc,bt]=bank(x.ratio), {bar,cv}=cityCharts(c,x), [pop,vac,cho]=RISK[c.k]||[0,0,null], fg=fgOf(dpeCity(c.k)), A=ADS[c.k], nv=A&&A.ventes?A.ventes.length:0, nl=A&&A.ads?A.ads.length:0;
  const L=typeof LOYQ!=="undefined"&&LOYQ.c&&LOYQ.c[c.k], le=loyEtat(c,x), poi=cityPoi(c.k), rq=cityRisq(c.k);
