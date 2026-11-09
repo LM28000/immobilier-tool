@@ -183,7 +183,26 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2bdg{position:absolute;top:3px;left:calc(50% + 5px);background:var(--accent);color:var(--surface);border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;line-height:16px;padding:0 4px;box-sizing:border-box;margin:0}
 /* fiche : en-tête compact (vignette, titre, trois chiffres sur une ligne) ; « En bref » des villes et quartiers */
 .v2fhd{display:flex;gap:12px;align-items:flex-start}
-.v2fth{width:112px;height:84px;object-fit:cover;border-radius:10px;flex-shrink:0;background:var(--sunk)}
+.v2fth{width:128px;height:96px;object-fit:cover;border-radius:10px;flex-shrink:0;background:var(--sunk);display:block}
+/* la photo de la fiche : un bouton qui ouvre toutes les photos en grand (la bande de photos de « L'annonce » ne s'affiche plus) */
+.v2fthb{position:relative;border:0;padding:0;background:none;border-radius:10px;cursor:zoom-in;flex-shrink:0;line-height:0}
+.v2fthb:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.v2fthn{position:absolute;right:5px;bottom:5px;font:700 11px/1.4 var(--f-ui);color:#fff;background:rgb(0 0 0 / .62);border-radius:6px;padding:1px 6px}
+#v2fiche .fgal{display:none}
+/* visionneuse */
+.v2lb{position:fixed;inset:0;z-index:3000;background:rgb(8 10 14 / .94);display:flex;flex-direction:column;color:#fff;touch-action:pan-y}
+.v2lbbar{display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px) 16px;padding-top:max(10px,env(safe-area-inset-top,0px))}
+.v2lbc{font:600 14px var(--f-ui)}
+.v2lbx{width:44px;height:44px;border:0;border-radius:50%;background:rgb(255 255 255 / .12);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+.v2lbm{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;user-select:none}
+.v2lbm img{max-width:calc(100% - 120px);max-height:100%;object-fit:contain;border-radius:6px;-webkit-user-drag:none}
+.v2lbnav{width:48px;height:64px;flex-shrink:0;border:0;border-radius:12px;background:rgb(255 255 255 / .12);color:#fff;font-size:34px;line-height:1;cursor:pointer}
+.v2lbnav:hover,.v2lbx:hover{background:rgb(255 255 255 / .22)}
+.v2lbt{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
+.v2lbt button{flex:none;border:2px solid transparent;border-radius:8px;padding:0;background:none;line-height:0;cursor:pointer;opacity:.6}
+.v2lbt button[aria-current="true"]{border-color:#fff;opacity:1}
+.v2lbt img{width:80px;height:60px;object-fit:cover;border-radius:6px}
+@media (max-width:860px){.v2lbm img{max-width:100%}.v2lbnav{display:none}.v2lbt img{width:64px;height:48px}}
 .v2fhdt{min-width:0}
 .v2kp3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .v2kp3 .v2k{padding:9px 10px}
@@ -193,7 +212,7 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2kp3 .v2bigbar b{width:12px;height:12px;margin-left:-6px;top:-3px;border-width:2px}
 .v2dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:0;font-size:13.5px}
 .v2dl dt{color:var(--muted)} .v2dl dd{margin:0}
-@media (max-width:860px){.v2fth{width:88px;height:66px}.v2kp3 .v2k b{font-size:17px}.v2kp3 .v2k small{font-size:11px}}
+@media (max-width:860px){.v2fth{width:104px;height:78px}.v2kp3 .v2k b{font-size:17px}.v2kp3 .v2k small{font-size:11px}}
 /* la règle générale table{min-width:960px} de l'app ne vaut que pour les grands tableaux de la v2 */
 #v2app table.v2t{min-width:0}
 #v2app table.v2t.v2wide{min-width:880px}

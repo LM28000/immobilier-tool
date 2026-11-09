@@ -622,7 +622,26 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2bdg{position:absolute;top:3px;left:calc(50% + 5px);background:var(--accent);color:var(--surface);border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;line-height:16px;padding:0 4px;box-sizing:border-box;margin:0}
 /* fiche : en-tête compact (vignette, titre, trois chiffres sur une ligne) ; « En bref » des villes et quartiers */
 .v2fhd{display:flex;gap:12px;align-items:flex-start}
-.v2fth{width:112px;height:84px;object-fit:cover;border-radius:10px;flex-shrink:0;background:var(--sunk)}
+.v2fth{width:128px;height:96px;object-fit:cover;border-radius:10px;flex-shrink:0;background:var(--sunk);display:block}
+/* la photo de la fiche : un bouton qui ouvre toutes les photos en grand (la bande de photos de « L'annonce » ne s'affiche plus) */
+.v2fthb{position:relative;border:0;padding:0;background:none;border-radius:10px;cursor:zoom-in;flex-shrink:0;line-height:0}
+.v2fthb:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.v2fthn{position:absolute;right:5px;bottom:5px;font:700 11px/1.4 var(--f-ui);color:#fff;background:rgb(0 0 0 / .62);border-radius:6px;padding:1px 6px}
+#v2fiche .fgal{display:none}
+/* visionneuse */
+.v2lb{position:fixed;inset:0;z-index:3000;background:rgb(8 10 14 / .94);display:flex;flex-direction:column;color:#fff;touch-action:pan-y}
+.v2lbbar{display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px) 16px;padding-top:max(10px,env(safe-area-inset-top,0px))}
+.v2lbc{font:600 14px var(--f-ui)}
+.v2lbx{width:44px;height:44px;border:0;border-radius:50%;background:rgb(255 255 255 / .12);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+.v2lbm{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;user-select:none}
+.v2lbm img{max-width:calc(100% - 120px);max-height:100%;object-fit:contain;border-radius:6px;-webkit-user-drag:none}
+.v2lbnav{width:48px;height:64px;flex-shrink:0;border:0;border-radius:12px;background:rgb(255 255 255 / .12);color:#fff;font-size:34px;line-height:1;cursor:pointer}
+.v2lbnav:hover,.v2lbx:hover{background:rgb(255 255 255 / .22)}
+.v2lbt{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
+.v2lbt button{flex:none;border:2px solid transparent;border-radius:8px;padding:0;background:none;line-height:0;cursor:pointer;opacity:.6}
+.v2lbt button[aria-current="true"]{border-color:#fff;opacity:1}
+.v2lbt img{width:80px;height:60px;object-fit:cover;border-radius:6px}
+@media (max-width:860px){.v2lbm img{max-width:100%}.v2lbnav{display:none}.v2lbt img{width:64px;height:48px}}
 .v2fhdt{min-width:0}
 .v2kp3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .v2kp3 .v2k{padding:9px 10px}
@@ -632,7 +651,7 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2kp3 .v2bigbar b{width:12px;height:12px;margin-left:-6px;top:-3px;border-width:2px}
 .v2dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:0;font-size:13.5px}
 .v2dl dt{color:var(--muted)} .v2dl dd{margin:0}
-@media (max-width:860px){.v2fth{width:88px;height:66px}.v2kp3 .v2k b{font-size:17px}.v2kp3 .v2k small{font-size:11px}}
+@media (max-width:860px){.v2fth{width:104px;height:78px}.v2kp3 .v2k b{font-size:17px}.v2kp3 .v2k small{font-size:11px}}
 /* la règle générale table{min-width:960px} de l'app ne vaut que pour les grands tableaux de la v2 */
 #v2app table.v2t{min-width:0}
 #v2app table.v2t.v2wide{min-width:880px}
@@ -2823,6 +2842,31 @@ render();
   if(el._h!==html){el._h=html; el.innerHTML=html;}}
  function goCity(ck){V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}
 
+ /* ---------- photos en grand : la photo de la fiche ouvre toutes les photos de l'annonce (flèches, clavier, glisser au doigt) ---------- */
+ let LB=null;
+ function lbList(ck,suf,p0){const f=suf?ficheOf(ck,suf):null, P=f&&f.ph&&f.ph.length?f.ph:[];
+  return {L:P.length?P.map(p=>photoFull(suf,p)):(p0?[p0]:[]), T:P.length?P.map(p=>photoUrl(suf,p,160,120)):(p0?[p0]:[]), wait:f===undefined};}
+ function lbOpen(ck,suf,p0){const x=lbList(ck,suf,p0); if(!x.L.length) return; LB=Object.assign({ck,suf,p0,i:0,back:document.activeElement},x); lbDraw(true);}
+ function lbClose(){const b=LB&&LB.back; LB=null; const el=document.querySelector(".v2lb"); if(el) el.remove(); if(b&&b.focus) try{b.focus();}catch(_){}}
+ function lbGo(i){if(!LB) return; const n=LB.L.length; LB.i=(i+n)%n; lbDraw();}
+ function lbDraw(first){let el=document.querySelector(".v2lb"); if(!LB){if(el) el.remove(); return;}
+  if(!el){el=document.createElement("div"); el.className="v2lb"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Photos de l'annonce"); document.body.appendChild(el);
+   el.addEventListener("click",e=>{const t=e.target.closest("[data-lb]"); if(t){const v=t.dataset.lb; if(v==="x") lbClose(); else if(v.startsWith("go")) lbGo(+v.slice(2)); else lbGo(LB.i+(+v)); return;} if(e.target.classList.contains("v2lbm")) lbClose();});
+   let x0=null; el.addEventListener("pointerdown",e=>{if(e.target.closest(".v2lbm")) x0=e.clientX;}); el.addEventListener("pointerup",e=>{if(x0==null) return; const dx=e.clientX-x0; x0=null; if(Math.abs(dx)>50) lbGo(LB.i+(dx<0?1:-1));});}
+  const n=LB.L.length, i=LB.i;
+  el.innerHTML=`<div class="v2lbbar"><span class="v2lbc">${i+1} / ${n}${LB.wait?" · chargement des autres photos…":""}</span><span class="v2sp"></span><button type="button" class="v2lbx" data-lb="x" aria-label="Fermer les photos">×</button></div>
+   <div class="v2lbm"><button type="button" class="v2lbnav" data-lb="-1" aria-label="Photo précédente"${n<2?" hidden":""}>‹</button><img src="${esc(LB.L[i])}" alt="Photo ${i+1} sur ${n}" referrerpolicy="no-referrer" draggable="false"><button type="button" class="v2lbnav" data-lb="1" aria-label="Photo suivante"${n<2?" hidden":""}>›</button></div>
+   ${n>1?`<div class="v2lbt">${LB.T.map((u,k)=>`<button type="button" data-lb="go${k}" aria-label="Photo ${k+1}" aria-current="${k===i}"><img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`).join("")}</div>`:""}`;
+  const cur=el.querySelector('.v2lbt [aria-current="true"]'); if(cur&&cur.scrollIntoView) cur.scrollIntoView({block:"nearest",inline:"center"});
+  if(n>1){const im=new Image(); im.referrerPolicy="no-referrer"; im.src=LB.L[(i+1)%n];}   /* la suivante est prête */
+  if(first){const x=el.querySelector(".v2lbx"); if(x) x.focus();}}
+ /* clavier : Échap ferme la visionneuse (pas la fiche), flèches pour naviguer */
+ document.addEventListener("keydown",e=>{if(!LB) return; if(e.key==="Escape"){e.stopImmediatePropagation(); e.preventDefault(); lbClose();} else if(e.key==="ArrowRight"){e.preventDefault(); lbGo(LB.i+1);} else if(e.key==="ArrowLeft"){e.preventDefault(); lbGo(LB.i-1);}},true);
+ /* les photos d'une fiche arrivent après coup (liste commune) : la visionneuse et le compte de la photo se mettent à jour */
+ if(typeof ficheRefresh==="function"){const _fr=ficheRefresh; ficheRefresh=function(ck){_fr.apply(this,arguments);
+  document.querySelectorAll("[data-v2photos]").forEach(bt=>{const [c,...r]=bt.dataset.v2photos.split("|"); if(c!==ck) return; const f=ficheOf(c,r.join("|")), n=f&&f.ph?f.ph.length:0, z=bt.querySelector(".v2fthn"); if(z) z.textContent=n>1?`${n} photos`:"agrandir";});
+  if(LB&&LB.ck===ck&&LB.wait){const x=lbList(ck,LB.suf,LB.p0); if(x.L.length){Object.assign(LB,x); LB.i=Math.min(LB.i,LB.L.length-1); lbDraw();}}};}
+
  /* ---------- nuage (même échelle partout) ---------- */
  function nuage(o){const W=o.w||900,Hh=o.h||460,l=56,r=16,t=30,b=40, X=v=>l+(v-o.x[0])/(o.x[1]-o.x[0]||1)*(W-l-r), Y=v=>t+(o.y[1]-Math.max(o.y[0],Math.min(o.y[1],v)))/(o.y[1]-o.y[0])*(Hh-t-b);
   const tk=(a,z,n)=>{const st=Math.pow(10,Math.floor(Math.log10((z-a)/n))), m=[1,2,2.5,5,10].find(m=>(z-a)/(st*m)<=n)*st, out=[]; for(let v=Math.ceil(a/m)*m; v<=z+1e-9; v+=m) out.push(+v.toFixed(6)); return out;};
@@ -2965,7 +3009,8 @@ render();
   const [me,oth]=people(), dpe=b.dpe||fx.dpe;
   const tit=String(R.kind==="b"?(b.titre||"Bien"):b.titre).split(" · ")[0], ann=R.kind==="v"?R.a[1]:b.quartier, qn=t?t.name:b.quartier||"";
   const chips=`${bc!=="p-ok"?`<span class="v2pill ${bc==="p-warn"?"warn":"bad"}" title="part des revenus prise par les crédits">Banque : ${bt.toLowerCase()} · ${Math.round(x.ratio*100)} % des revenus</span>`:""}${dpe?`<span class="v2pill ${"FG".includes(dpe)?"bad":dpe==="E"?"warn":""}">DPE ${dpe}${dpe==="G"?" · location interdite":dpe==="F"?" · interdite en 2028":dpe==="E"?" · interdite en 2034":""}</span>`:""}${R.kind==="v"?ficheBadges(R.suf,true)||"":""}`;
-  const head=`<div class="v2fhd">${ph?`<img class="v2fth" src="${esc(ph)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="v2fhdt"><h2 class="v2ft">${keur(+b.prix)} · ${esc(tit)}</h2><p class="v2sub">${esc(cityName(b.ville))}${qn?" · quartier "+esc(qn):""}${ann&&qn&&ann!==qn?` <span title="nom du secteur dans l'annonce">(« ${esc(ann)} » dans l'annonce)</span>`:""} · ${eur(+b.prix/(+b.surface||1))}/m² ${R.kind==="v"?_vuBadgesF("v",R.ck,R.suf):""}</p></div></div>
+  const psuf=R.kind==="v"?R.suf:(typeof bienSuf==="function"?bienSuf(b)||"":""), pf=psuf?ficheOf(b.ville,psuf):null, pn=pf&&pf.ph?pf.ph.length:0;
+  const head=`<div class="v2fhd">${ph?`<button type="button" class="v2fthb" data-v2photos="${esc(b.ville)}|${esc(psuf)}" aria-label="Voir les photos en grand"><img class="v2fth" src="${esc(ph)}" alt="" referrerpolicy="no-referrer" onerror="this.closest('.v2fthb').remove()"><span class="v2fthn">${pn>1?`${pn} photos`:"agrandir"}</span></button>`:""}<div class="v2fhdt"><h2 class="v2ft">${keur(+b.prix)} · ${esc(tit)}</h2><p class="v2sub">${esc(cityName(b.ville))}${qn?" · quartier "+esc(qn):""}${ann&&qn&&ann!==qn?` <span title="nom du secteur dans l'annonce">(« ${esc(ann)} » dans l'annonce)</span>`:""} · ${eur(+b.prix/(+b.surface||1))}/m² ${R.kind==="v"?_vuBadgesF("v",R.ck,R.suf):""}</p></div></div>
    <div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${c}">${pctS(x.irr)}</b><div class="v2bigbar" aria-hidden="true">${z.prudent!=null?`<i style="left:${p(z.prudent)}%;width:${p(z.favorable)-p(z.prudent)}%;background:${c}"></i>`:""}<b style="left:${p(x.irr)}%;background:${c}"></b></div><small>prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}</small></div>
     <div class="v2k"><span>Cash-flow${H.assoc.length>1?" à "+H.assoc.length:""}</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois · loyer ${eur(x.rentHC)} HC</small></div><div class="v2k"><span>Mensualité</span><b>${eur(x.mens)}</b><small>budget ${keur(x.cost)} tout compris</small></div></div>
    <p class="v2sub v2pos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/>${hasLL(bb)||posQ(fx)===0?'<circle cx="12" cy="10" r="2.6"/>':""}</svg>Sur la carte : ${esc(posTxt(R.kind==="v"||(b.url&&feed().some(o=>o.url===b.url))?fx:null,hasLL(bb),R.kind==="b"))}</p>
@@ -3032,7 +3077,7 @@ render();
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.type){if(V.tous){V.tous=false; save(); FEED=null;} return;}   /* Studio, T2, T3 : le type est changé par 49-type-ui.js */
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
@@ -3062,7 +3107,8 @@ render();
   if(d.v2offkeep){const [k,ck,...r]=d.v2offkeep.split("|"), suf=r.join("|"), P=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!P) return; const pr=Math.round(P[2]*(OFFT[d.v2offkeep]??100)/100/500)*500;
    Promise.resolve(mStar(ck,suf)).then(()=>setTimeout(()=>{const b=bienOf(VTURL+suf); if(b){delete OFFT[d.v2offkeep]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}},600)); return;}
   if(d.v2min!=null){V.min=!V.min; save(); mapList(); return;}
-  if(d.v2cfiche){openSel(`c|${d.v2cfiche}`,true); return;}   /* fiche de la ville, depuis l'en-tête de la liste */
+  if(d.v2cfiche){openSel(`c|${d.v2cfiche}`,true); return;}
+  if(d.v2photos!=null){const [c,...r]=d.v2photos.split("|"), im=t.querySelector("img"); lbOpen(c,r.join("|"),im&&im.src); return;}   /* photos en grand */   /* fiche de la ville, depuis l'en-tête de la liste */
   if(d.v2nom!=null){const n=($("v2nom").value||"").trim(); if(n){try{localStorage.setItem("biens-nom",n);}catch(_){} refresh();} return;}
   if(d.v2share!=null){const n=($("v2nom2").value||"").trim(), c=($("v2code").value||"").trim(), chg=c!==sbCode(); try{localStorage.setItem("biens-nom",n); localStorage.setItem("biens-code",c);}catch(_){} if(chg) location.reload(); else {toast("Enregistré."); refresh();} return;}
   if(d.v2city!=null&&!e.target.closest("[data-v2open]")){goCity(d.v2city); return;}

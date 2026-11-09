@@ -143,6 +143,18 @@ async function mlRoutes(p) {
         await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
       }
       ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
+      // photos en grand : la photo de la fiche ouvre toutes les photos (pas de seconde bande de photos dans la fiche)
+      if (await p.$('#v2fiche .v2fthb')) {
+        await p.click('#v2fiche .v2fthb'); await p.waitForTimeout(500);
+        const lb = () => p.evaluate(() => { const e = document.querySelector('.v2lb'); return e ? e.querySelector('.v2lbc').textContent : null; });
+        const c0 = await lb(); const n = c0 ? +c0.split('/')[1] : 0;
+        if (dev === 'ordi') { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(300); }
+        const c1 = await lb();
+        ok(`v2 ${dev} · photos : la photo de la fiche ouvre la visionneuse, toutes les photos`, !!c0 && /^1 \//.test(c0) && n >= 1 && (dev !== 'ordi' || n < 2 || /^2 \//.test(c1)) && await p.evaluate(() => { const g = document.querySelector('#v2fiche .fgal'); return !g || getComputedStyle(g).display === 'none'; }), JSON.stringify({c0, c1}));
+        if (dev === 'ordi') await p.keyboard.press('Escape'); else await p.tap('.v2lb .v2lbx');
+        await p.waitForTimeout(300);
+        ok(`v2 ${dev} · photos : fermer la visionneuse laisse la fiche ouverte`, await p.evaluate(() => !document.querySelector('.v2lb') && !document.getElementById('v2fiche').hidden));
+      }
       ok(`v2 ${dev} · fiche : les onglets visibles dès l'ouverture`, await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'); return t.getBoundingClientRect().bottom < f.getBoundingClientRect().bottom - 40; }));
       ok(`v2 ${dev} · fiche : le DPE une seule fois dans l'en-tête`, await p.evaluate(() => { const h = document.querySelector('#v2fiche .v2fb'), t = h.querySelector('.v2tabs2'); let n = 0, e = h.firstElementChild; while (e && e !== t) { n += (e.innerText.match(/DPE [A-G]/g) || []).length; e = e.nextElementSibling; } return n <= 1; }));
       await p.evaluate(() => { document.querySelector('#v2fiche [data-v2ft="quartier"]').click(); }); await p.waitForTimeout(300);
