@@ -47,7 +47,7 @@ const AIDES = `
  window.__resume=(ck,a)=>{const vb=venteBien(ck,a), r=calcBien(vb), x=r.x, f=ficx(a[3])||{}, g=targetsFor(vb);
   return {lien:VTURL+a[3],ville:cityName(ck),quartier:vb.quartier||null,secteur:a[1]||null,type:vb.type,surface_m2:a[0],prix:a[2],prix_m2:Math.round(a[2]/a[0]),
    rendement_15ans_pct:__r(x.irr),cashflow_mois:Math.round(x.cf),budget_tout_compris:Math.round(x.cost),loyer_hc:Math.round(x.rentHC),endettement_pct:Math.round(x.ratio*100),
-   prix_autofinance:g.cf,prix_7pct:g.r7,dpe:f.dpe||null,charges_copro_an:f.cop||null,signaux:(f.fl||[]).map(k=>DFL[k]?DFL[k][1]:k),calcul_applicable:!horsCalcul(a[3])};};`;
+   prix_autofinance:g.cf,prix_7pct:g.r7,dpe:f.dpe||null,dpe_annonce:f.dpe0||null,charges_copro_an:f.cop||null,signaux:(f.fl||[]).map(k=>DFL[k]?DFL[k][1]:k),calcul_applicable:!horsCalcul(a[3])};};`;
 async function aides() { const p = await getPage(); if (!(await p.evaluate(() => !!window.__resume))) await p.evaluate(AIDES); }
 
 const server = new McpServer({name: "notre-studio", version: "1.0.0"}, {instructions:
@@ -58,7 +58,7 @@ const server = new McpServer({name: "notre-studio", version: "1.0.0"}, {instruct
 server.registerTool("classement_villes", {title: "Classement des villes", description: "Les 21 villes classées par rendement sur 15 ans pour le type de bien choisi, avec cash-flow, budget, loyer, endettement et nombre d'annonces. Le chiffre d'une ville est celui de son quartier du milieu (quartiers classés par rendement, comptés selon leurs ventes).",
   inputSchema: {type: z.enum(["studio", "t2", "t3"]).optional().describe("type de bien (par défaut : celui des réglages)")}},
   wrap(async ({type}) => { await aides(); return run(ty => { const t0 = H.type; if (ty) setType(ty, true);
-    const out = all().map(({c, x}) => ({ville: c.name, cle: c.k, rendement_15ans_pct: __r(x.irr), cashflow_mois: Math.round(x.cf), budget_tout_compris: Math.round(x.cost), loyer_hc: Math.round(x.rentHC), endettement_pct: Math.round(x.ratio * 100), banque: bank(x.ratio)[1], annonces_a_vendre: ADS[c.k] && ADS[c.k].ventes ? ADS[c.k].ventes.length : 0, quartier_du_milieu: x.qt ? x.qt.name : null, note: c.note || null}))
+    const out = all().map(({c, x}) => ({ville: c.name, cle: c.k, rendement_15ans_pct: __r(x.irr), cashflow_mois: Math.round(x.cf), budget_tout_compris: Math.round(x.cost), loyer_hc: Math.round(x.rentHC), endettement_pct: Math.round(x.ratio * 100), banque: bank(x.ratio)[1], annonces_a_vendre: ADS[c.k] && ADS[c.k].ventes ? ADS[c.k].ventes.length : 0, quartier_du_milieu: x.qt ? x.qt.name : null, hausse_prix_pct_an: __r(H.px + pxDev(c.k)), mois_vides_ville: __r(vacVille(c.k)), note: c.note || null}))
       .sort((a, b) => (b.rendement_15ans_pct ?? -99) - (a.rendement_15ans_pct ?? -99));
     if (ty) setType(t0, true); return {type: ty || H.type, villes: out}; }, type); }));
 
@@ -108,7 +108,7 @@ server.registerTool("nouveautes", {title: "Nouveautés du dernier relevé", desc
   wrap(async () => { await aides(); return run(() => { const N = nouveautes(); const f = o => ({lien: VTURL + o.suf, ville: cityName(o.ck), secteur: o.e.m && o.e.m[1] || null, surface_m2: o.e.m && o.e.m[0], prix: o.e.p[o.e.p.length - 1][1]});
     return {releve: ADS.date, type: H.type, nouvelles: N.nw.map(o => Object.assign(f(o), {calcul_applicable: !horsCalcul(o.suf)})), baisses: N.dr.map(o => Object.assign(f(o), {avant: o.e.p[o.e.p.length - 2][1]})), disparues: N.sold.map(f)}; }); }));
 
-const HYPK = ["type", "surface", "apport", "taux", "duree", "notaire", "salaires", "pretEtud", "fraisVente", "vacance", "px", "ly", "pess", "net", "regime", "tmiA", "tmiB"];
+const HYPK = ["type", "surface", "apport", "taux", "duree", "notaire", "salaires", "pretEtud", "fraisVente", "vacance", "px", "pxV", "ly", "gestion", "pess", "net", "regime", "tmiA", "tmiB"];
 server.registerTool("reglages", {title: "Réglages du calcul", description: "Lit ou change les hypothèses (apport, taux, durée, revenus, autres crédits, type de bien, tranches d'imposition…). Les changements sont gardés sur cet ordinateur (~/.config/immobilier-tool/hypotheses.json), jamais dans le dépôt.",
   inputSchema: {changer: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()])).optional().describe("ex. {\"taux\": 3.8, \"apport\": 20000, \"type\": \"t2\", \"salaires\": 3200}")}},
   wrap(async ({changer}) => { if (changer) { const bad = Object.keys(changer).filter(k => !HYPK.includes(k)); if (bad.length) throw new Error("réglages inconnus : " + bad.join(", ") + " (possibles : " + HYPK.join(", ") + ")");

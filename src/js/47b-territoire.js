@@ -70,3 +70,4 @@ function demRows(d,ref){if(!d) return []; return [["Marché locatif",`<span clas
  d.etud!=null&&["Étudiants par petit logement",fr(d.etud,1),`logements de moins de 30 m² : ${pp(d.s30p)} du parc${ref?` · ville : ${fr(ref.etud,1)}`:""}`]];}
 /* une seule source pour les logements vides */
 C.forEach(c=>{const d=demCity(c.k); if(d&&RISK[c.k]) RISK[c.k][1]=+d.vac.toFixed(1);});
+if(typeof PXP!=="undefined") PXP=null;   /* la pente prix / logements vides se recalcule avec ces valeurs */

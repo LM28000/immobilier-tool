@@ -194,8 +194,9 @@ async function mlRoutes(p) {
       // et le chiffre d'une ville est celui de son quartier du milieu
       if (dev === 'ordi') {
         const vq = () => p.evaluate(() => C.map(c => { const D = dvfC(c.k), L = IR[c.k].list.filter(t => t.type === 'H' && t.price), W = L.map(t => (D && D.q[t.code] && D.q[t.code].n) || 0), any = W.some(v => v > 0);
-          let s = 0, w = 0; L.forEach((t, i) => { const d = demandOf(t), wi = any ? W[i] : 1; if (d && wi) { s += d.vac * wi; w += wi; } }); return w ? s / w : H.vacance; }).every(m => Math.abs(m - H.vacance) < 1e-9));
-        ok('v2 · mois vides : la moyenne des quartiers de chaque ville est le réglage Vacance', await vq());
+          let s = 0, w = 0; L.forEach((t, i) => { const d = demandOf(t), wi = any ? W[i] : 1; if (d && wi) { s += d.vac * wi; w += wi; } }); return Math.abs((w ? s / w : vacVille(c.k)) - vacVille(c.k)) < 1e-9; }).every(Boolean));
+        ok('v2 · mois vides : la moyenne des quartiers de chaque ville est la vacance de la ville', await vq());
+        ok('v2 · mois vides de la ville : le réglage tant que le délai de location n\'est pas mesuré, sinon borné entre la moitié et le double', await p.evaluate(() => { const m = vacMes(); return C.every(c => { const v = vacVille(c.k) / H.vacance; return m.ref ? v >= 0.5 - 1e-9 && v <= 2 + 1e-9 : Math.abs(v - 1) < 1e-9; }); }));
         await p.evaluate(() => { const i = document.getElementById('v2h-vacance'); i.value = '2'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(500);
         ok('v2 · mois vides : changer le réglage déplace aussi les quartiers', await p.evaluate(() => H.vacance === 2) && await vq());
         await p.evaluate(() => { const i = document.getElementById('v2h-vacance'); i.value = '1'; i.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(500);
@@ -205,6 +206,9 @@ async function mlRoutes(p) {
           for (const o of R) { s += o.w; if (s >= T / 2) { m = o; break; } } return calcVille(c).irr === m.v; })));
         await p.evaluate(() => document.querySelector('[data-v2tab="villes"]').click()); await p.waitForTimeout(300);
         await p.evaluate(() => document.querySelector('#v2p-villes [data-v2city="lemans"]').click()); await p.waitForTimeout(800);
+        { const tx = async tab => { await p.evaluate(t => { const b = document.querySelector('#v2fiche [data-v2ft="' + t + '"]'); if (b) b.click(); }, tab); await p.waitForTimeout(300); return p.evaluate(() => (document.getElementById('v2fiche') || {}).textContent || ''); };
+          const tp = await tx('prix'), tc = await tx('calc'); await tx('bien');
+          ok('v2 · fiche d\'une ville : hausse des prix retenue, prix depuis 2014 et mois vides de la ville', /Hausse des prix retenue/.test(tp) && /Appartements anciens/.test(tp) && /Mois vides retenus/.test(tc), tp.slice(0, 120) + ' | ' + tc.slice(0, 120)); }
         ok('v2 · fiche d\'une ville : nomme son quartier du milieu', await p.evaluate(() => /Quartier du milieu : /.test((document.getElementById('v2fiche') || {}).innerText || '')), await p.evaluate(() => ((document.getElementById('v2fiche') || {}).innerText || '').slice(0, 300)));
         await p.evaluate(() => { const b = document.querySelector('[data-v2close]'); if (b) b.click(); }); await p.waitForTimeout(300);
       }
@@ -287,7 +291,7 @@ async function mlRoutes(p) {
     ok('v2 commun · ce qui a bougé : nouvelles annonces depuis la visite', /nouvelles? annonces? pour nos critères/.test(nws), nws.slice(0, 200));
     ok('v2 commun · Nos biens signale le bien à regarder', await B.p.evaluate(() => ((document.querySelector('#v2tabs [data-v2tab="biens"] small') || {}).textContent || '') === '1'));
     ok('v2 · le premier relevé d\'une ville ne compte pas comme nouveau', await B.p.evaluate(() => { const K = Object.keys(ADS).filter(k => ADS[k] && ADS[k].ventes && hStart(k, 'v') === ADS.iso); return K.length > 0 && K.every(k => ADS[k].ventes.every(a => !isNewAd(k, a[3]))); }));
-    ok('v2 · L\'Ouest compte les annonces pour nos critères', await B.p.evaluate(() => /pour nos critères/.test(document.querySelector('#v2mlist [data-v2city]').innerText)));
+    ok('v2 · L\'Ouest compte les annonces pour nos critères', await B.p.evaluate(() => { const R = [...document.querySelectorAll('#v2mlist [data-v2city]:not(.v2dim)')]; return R.length > 0 && R.every(e => /pour nos critères/.test(e.innerText)); }), await B.p.evaluate(() => { const e = document.querySelector('#v2mlist [data-v2city]:not(.v2dim)'); return e ? e.outerHTML.slice(0, 300) : 'aucune ville avec des annonces'; }));
     // grille de visite et fiche à emporter, ouvertes depuis la fiche du bien suivi
     await A.p.evaluate(() => document.querySelector('#v2fiche [data-v2ft="achat"]').click()); await A.p.waitForTimeout(300);
     await A.p.evaluate(() => document.querySelector('#v2fiche [data-visit]').click()); await A.p.waitForTimeout(500);
@@ -306,6 +310,11 @@ async function mlRoutes(p) {
     ok('v2 · comparer deux biens côte à côte', await A.p.evaluate(() => document.querySelectorAll('#v2p-biens .v2cmpt thead th').length === 3));
     await A.p.evaluate(() => document.querySelector('[data-v2tab="budget"]').click()); await A.p.waitForTimeout(400);
     ok('v2 · sources et fraîcheur des données dans Budget', await A.p.evaluate(() => !!document.querySelector('#v2p-budget #sources')));
+    ok('v2 · Budget : gestion par agence à 0, hausse des prix selon la ville cochée, et leur poids dans « Ce qui pèse »', await A.p.evaluate(() => { const g = document.getElementById('v2h-gestion'), x = document.querySelector('#v2p-budget [data-v2hb="pxV"]'), t = document.getElementById('v2p-budget').textContent;
+      return g && g.value === '0' && x && x.checked && /Gestion par agence/.test(t) && /Prix selon la ville/.test(t) && /logements vides/.test(t); }));
+    ok('v2 · DPE à jour : badge et travaux d\'après la classe de 2027, classe annoncée rappelée', await A.p.evaluate(() => { const K = Object.keys(FICX).filter(k => FICX[k].dpe0); if (!K.length) return false;
+      const k = K.find(k => /[EFG]/.test(FICX[k].dpe0)) || K[0], b = ficheBadges(k); let a = null; for (const ck in ADS) { const v = ADS[ck]; if (!v || !v.ventes) continue; a = v.ventes.find(x => adId(x[3]) === k); if (a) { a = [ck, a]; break; } }
+      const L = a ? valeursBien(venteBien(a[0], a[1])).travaux.L.map(z => z[0]).join(' ') : ''; return b.includes('DPE ' + FICX[k].dpe + '*') && /1er janvier 2027/.test(b) && (!a || !/[EFG]/.test(FICX[k].dpe) || /annoncé/.test(L)); }));
     { const rd = n => fs.readFileSync(path.resolve(__dirname, '..', n), 'utf8');
       ok('une seule interface : index.html est la v2, plus d\'ancienne page, v2.html y renvoie', rd('index.html').includes('app.id="v2app"') && !fs.existsSync(path.resolve(__dirname, '..', 'ancienne.html')) && !rd('index.html').includes('id="mApp"') && rd('v2.html').includes('location.replace')); }
     ok('v2 commun · sans erreur', !A.errs.length && !B.errs.length, A.errs.concat(B.errs).slice(0, 3).join(' | '));

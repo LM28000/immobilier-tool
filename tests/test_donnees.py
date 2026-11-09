@@ -87,4 +87,20 @@ ok("plan du relevé : toutes les villes, 6 listes chacune, ventes plafonnées à
 dvf = json.load(open(R + "/data/dvf.json", encoding="utf-8"))
 ok("ventes DVF studio pour toutes les villes", code_C <= set(dvf["t"]["studio"]), code_C - set(dvf["t"]["studio"]))
 
+pt = json.load(open(R + "/data/prix-tendance.json", encoding="utf-8"))["villes"]
+ok("prix des appartements depuis 2014 pour toutes les villes (data/prix-tendance.json)", code_C <= set(pt) and all("2025" in pt[k]["p"] for k in code_C), code_C - set(pt))
+ok("hausse sur 10 ans connue pour 15 villes au moins", sum(1 for k in code_C if pt[k]["g"] is not None) >= 15)
+
+# --- DPE à jour (1er janvier 2027) : électricité comptée 1,7 fois, seuils des petites surfaces, jamais plus mauvais
+DA = F.dpe_a_jour
+ok("DPE : F électrique de 2023, 22 m², 440 kWh → E (1,7 au lieu de 2,3)", DA({"dpe": "F", "kwh": 440, "surf": 22, "dpeDate": "2023-05-02", "chauf": "radiateur électrique individuel", "ges": "B"}) == ("E", "elec+petit"), DA({"dpe": "F", "kwh": 440, "surf": 22, "dpeDate": "2023-05-02", "chauf": "radiateur électrique individuel", "ges": "B"}))
+ok("DPE : F électrique de 2026, 60 m², 360 kWh → E (1,7 au lieu de 1,9)", DA({"dpe": "F", "kwh": 360, "surf": 60, "dpeDate": "2026-03-01", "chauf": "électrique", "ges": "A"}) == ("E", "elec"))
+ok("DPE : chauffage au gaz, grand logement : inchangé", DA({"dpe": "F", "kwh": 400, "surf": 60, "dpeDate": "2023-03-01", "chauf": "gaz individuel", "ges": "E"}) is None)
+ok("DPE : petit logement au gaz diagnostiqué avant juillet 2024 → seuils des petites surfaces", DA({"dpe": "F", "kwh": 380, "surf": 20, "dpeDate": "2023-03-01", "chauf": "gaz individuel", "ges": "D"}) == ("E", "petit"))
+ok("DPE : la classe GES annoncée limite le gain", DA({"dpe": "F", "kwh": 440, "surf": 22, "dpeDate": "2023-05-02", "chauf": "électrique", "ges": "F"}) is None)
+ok("DPE : diagnostic d'avant juillet 2021 (ancienne méthode) ou déjà à 1,7 : inchangé", DA({"dpe": "F", "kwh": 440, "surf": 22, "dpeDate": "2020-05-02", "chauf": "électrique"}) is None and DA({"dpe": "E", "kwh": 300, "surf": 60, "dpeDate": "2027-02-01", "chauf": "électrique"}) is None)
+ok("DPE : chauffage mixte gaz et électricité : pas de coefficient", DA({"dpe": "F", "kwh": 400, "surf": 60, "dpeDate": "2023-03-01", "chauf": "Individuel électrique Radiateur Gaz", "ges": "C"}) is None)
+x = F.ficx_de({"k": "v", "dpe": "F", "kwh": 440, "surf": 22, "dpeDate": "2023-05-02", "chauf": "électrique", "ges": "B"})
+ok("DPE : la page reçoit la classe à jour et la classe annoncée", x.get("dpe") == "E" and x.get("dpe0") == "F" and x.get("dpeW") == "elec+petit", x)
+
 print(f"\n{n - bad}/{n} tests de données réussis"); sys.exit(1 if bad else 0)

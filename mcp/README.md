@@ -18,7 +18,7 @@ Claude Desktop : dans `~/Library/Application Support/Claude/claude_desktop_confi
 
 | Outil | Ce qu'il fait |
 |---|---|
-| `classement_villes` | les 21 villes par rendement sur 15 ans, pour un studio, un T2 ou un T3 (chiffre de leur quartier du milieu, nommé) |
+| `classement_villes` | les 21 villes par rendement sur 15 ans, pour un studio, un T2 ou un T3 (chiffre de leur quartier du milieu, nommé), avec la hausse des prix et les mois vides retenus pour chaque ville |
 | `quartiers` | les quartiers d'une ville, classés |
 | `annonces` | annonces à vendre filtrées (ville, prix maximum, DPE, banque) et triées ; résidences gérées exclues par défaut |
 | `fiche_annonce` | description, photos, étage, DPE, charges, prix à proposer, points d'attention, historique du prix |

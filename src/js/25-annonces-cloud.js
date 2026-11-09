@@ -21,7 +21,7 @@ async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""
  [typeof ADSV!=="undefined"&&ADSV].forEach(o=>o&&Object.keys(o).forEach(k=>delete o[k]));
  [typeof VC!=="undefined"&&VC,typeof VIP!=="undefined"&&VIP,typeof RBL!=="undefined"&&RBL].forEach(m=>m&&m.clear&&m.clear());
  if(typeof TGC!=="undefined") Object.keys(TGC).forEach(k=>delete TGC[k]);
- if(typeof QBOXK!=="undefined") QBOXK=null; if(typeof ANOM!=="undefined") ANOM=null;
+ if(typeof QBOXK!=="undefined") QBOXK=null; if(typeof ANOM!=="undefined") ANOM=null; if(typeof VACM!=="undefined") VACM=null; if(typeof CALCC!=="undefined") CALCC.clear();   /* vacance mesurée sur l'historique arrivé */
  try{render();}catch(_){}
  Object.keys(FD).forEach(ck=>ficheRefresh(ck));}
 setTimeout(annoncesCloud,0);

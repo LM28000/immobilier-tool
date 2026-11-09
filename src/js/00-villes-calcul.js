@@ -32,14 +32,14 @@ const C=[
 ];
 const ORIG={laval:{name:"Laval",lat:48.07,lon:-0.77,mode:"en voiture"},nantes:{name:"Nantes",lat:47.22,lon:-1.55,mode:"en voiture"},paris:{name:"Paris",lat:48.86,lon:2.35,mode:"en train"}};
 
-const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:45,vacance:1,copro:21,autres:48,grosTrav:6,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,pess:false,vacQ:true,dvf:true};
+const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:45,vacance:1,copro:21,autres:48,grosTrav:6,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,gestion:0,pxV:1,pess:false,vacQ:true,dvf:true};
 const HDEF=Object.assign({},H);   /* valeurs de départ (bouton « valeurs par défaut ») */
 const hypDefs=[["surface","Surface","m²",1],["apport","Apport","€",500],["duree","Durée","ans",1],["notaire","Notaire","%",0.5],
  ["meubles","Meubles","€",250],["travaux","Petits travaux","€",250],["chLoc","Charges payées par le locataire","€/mois",5],["vacance","Vacance","mois/an",0.5],
- ["copro","Charges de copro (votre part)","€/mois",1],["grosTrav","Gros travaux copro (provision)","€/m²/an",1],["autres","Assurance PNO, entretien","€/mois",5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
+ ["copro","Charges de copro (votre part)","€/mois",1],["grosTrav","Gros travaux copro (provision)","€/m²/an",1],["autres","Assurance PNO, entretien","€/mois",5],["gestion","Gestion par agence","% du loyer",0.5],["px","Hausse des prix","%/an",0.5],["ly","Hausse des loyers","%/an",0.5],
  ["salaires","Revenus nets du foyer","€/mois",50],["pretEtud","Autres crédits en cours","€/mois",10],["fraisVente","Frais à la revente","%",0.5]];
 /* réglages gardés dans ce navigateur (le code ne contient que des valeurs d'exemple) ; communs à deux avec la liste commune (13-reglages-communs.js) */
-const HYPK=["apport","duree","notaire","grosTrav","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux"];
+const HYPK=["apport","duree","notaire","grosTrav","vacance","autres","px","ly","salaires","pretEtud","fraisVente","surcote","loyerAdj","taux","gestion","pxV"];
 let HYPOK=false; try{const s=JSON.parse(localStorage.getItem("hyp")||"null"); if(s&&typeof s==="object"){if(!s.v2&&s.fraisVente===5) delete s.fraisVente; /* ancienne valeur par défaut (5 %, novembre 2026), trop prudente */ HYPK.forEach(k=>{if(typeof s[k]==="number"&&isFinite(s[k])) H[k]=s[k];}); HYPOK=s.salaires!=null;}}catch(_){}
 function saveHyp(){try{const s={v2:1}; HYPK.forEach(k=>s[k]=H[k]); localStorage.setItem("hyp",JSON.stringify(s)); HYPOK=true;}catch(_){} const n=document.getElementById("hypNote"); if(n) n.hidden=true; if(typeof regPush==="function") regPush();}
 let SEL="lemans";

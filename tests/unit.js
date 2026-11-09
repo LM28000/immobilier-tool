@@ -64,4 +64,22 @@ ok('associés : impôt au taux moyen des parts', near(as3.tr, ((30 + 18.6) * 50 
 ok('associés : l\'impôt de chacun fait le total, un endettement par personne', as3.imps.length === 3 && near(as3.imps.reduce((a, b) => a + b, 0), as3.imp, 1e-6) && as3.ratios.length === 3 && as3.ratios.every(r => r > 0));
 ok('associés : réglage du serveur MCP réparti', E(`(()=>{const s=JSON.stringify(H.assoc); assocFromLegacy({salaires:4000,tmiB:41}); const r=[H.salaires,H.assoc[1].tmi]; H.assoc=JSON.parse(s); assocNorm(); return r;})()`).join() === '4000,41');
 
+// gestion par agence : une part du loyer encaissé, en moins chaque mois et déduite au réel
+const g0 = E('CALCC.clear(); calc(C.find(c=>c.k==="lemans"))'), g1 = E('H.gestion=9.5; CALCC.clear(); const r_=calc(C.find(c=>c.k==="lemans")); H.gestion=0; CALCC.clear(); r_');
+ok('gestion par agence : 0 par défaut, rien ne change', E('H.gestion') === 0 && g0.gest === 0);
+ok('gestion par agence 9,5 % : cash-flow brut plus bas de 9,5 % du loyer encaissé, rendement plus bas', near(g0.cfBrut - g1.cfBrut, g1.rentEff * 0.095, 1e-6) && g1.irr < g0.irr, `${g0.cfBrut} ${g1.cfBrut} ${g1.rentEff}`);
+// scénarios : prix 0,5 point plus bas (prudent) ou plus haut (favorable)
+const sx = E('(()=>{const c=C.find(c=>c.k==="lemans"); CALCC.clear(); const m=calc(c).px; H.pess=true; CALCC.clear(); const p=calc(c).px; H.pess=false; H.fav=true; CALCC.clear(); const f=calc(c).px; H.fav=false; CALCC.clear(); return [m,p,f];})()');
+ok('scénarios : prix 0,5 point par an plus bas ou plus haut', near(sx[1], sx[0] - 0.5, 1e-9) && near(sx[2], sx[0] + 0.5, 1e-9), sx.join());
+// mois vides mesurés : médiane de Kaplan-Meier (annonces encore en ligne comptées « au moins »)
+run(pick('src/js/10-reperes.js', 'function kmMed'), 'kmMed');
+ok('délai de location : médiane de Kaplan-Meier', E('kmMed([[5,1],[10,1],[20,0],[30,1]])') === 10 && E('kmMed([[5,1],[40,0],[40,0]])') === null && E('kmMed([[3,1],[3,1],[8,0],[9,1]])') === 3);
+// hausse des prix selon la ville : pente mesurée entre hausse et logements vides, la ville médiane prend le réglage
+run(`var PXTQ=${rd('data/prix-tendance.json')}; var RISK=(${rd('src/js/01-fiche-ville.js').match(/const RISK=(\{[\s\S]*?\});/)[1]});`, 'prix-tendance');
+const px = E('(()=>{PXP=null; const P=pxPente(), d=C.map(c=>[c.k,pxDev(c.k)]); H.pxV=0; const off=C.every(c=>pxDev(c.k)===0); H.pxV=1; PXP=null; return {P,d:Object.fromEntries(d),off};})()');
+ok('hausse des prix selon la ville : pente négative mesurée sur 15 villes au moins', px.P.b < 0 && px.P.b >= -1 && px.P.n >= 15, JSON.stringify(px.P));
+ok('hausse des prix selon la ville : moins de logements vides, plus de hausse ; écart borné à 2 points', px.d.angers > 0 && px.d.bourges < 0 && Object.values(px.d).every(v => Math.abs(v) <= 2), JSON.stringify(px.d));
+ok('hausse des prix selon la ville : décochée, la même partout', px.off);
+E('var RISK=undefined; PXP=null; CALCC.clear();');
+
 console.log(`\n${n - bad}/${n} tests unitaires réussis`); process.exit(bad ? 1 : 0);

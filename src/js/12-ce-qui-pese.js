@@ -7,6 +7,7 @@
      « à rafraîchir » → 200 €/m² ; « à rénover » → 650 €/m² (bas de fourchette : villes moyennes, hors Paris) ;
    - un montant écrit dans l'annonce remplace l'estimation par l'état ; les travaux votés en copropriété à la charge de l'acheteur s'ajoutent ;
    - DPE (location interdite : G depuis 2025, F en 2028, E en 2034, dans les 15 ans du calcul) : G 300 €/m², F 200 €/m², E 100 €/m² ;
+     le DPE d'une annonce est celui du calcul en vigueur au 1er janvier 2027 quand il donne mieux (tools/fiches.py dpe_a_jour) ;
    - meubles : réglage du type ; bien vendu meublé → un tiers (compléments).
    Une valeur du bien égale à celle de l'annonce a été recopiée à l'ajout dans la shortlist (biens ajoutés avant le 8 novembre 2026) :
    elle compte comme venant de l'annonce, pas comme saisie. */
@@ -27,7 +28,7 @@ function valeursBien(b,ty){
   else if(e) L.push([`État « ${etat} » d'après la description : quelques reprises`,r50(petits*e[1]),"description"]);
   else L.push(["Petits travaux (réglage du type)",petits,"réglage"]);
   if(votes>0) L.push(["Travaux votés en copropriété",votes,"annonce"]);
-  const dp=DPE_M2[dpe]; if(dp) L.push([`DPE ${dpe} : ${dp[0]} €/m² × ${fr(S,0)} m² (location ${dp[1]})`,r50(dp[0]*S),"DPE"]);
+  const dp=DPE_M2[dpe], aj=!b.dpe&&fx&&fx.dpe0?` (annoncé ${fx.dpe0}, recalcul de 2027)`:""; if(dp) L.push([`DPE ${dpe}${aj} : ${dp[0]} €/m² × ${fr(S,0)} m² (location ${dp[1]})`,r50(dp[0]*S),"DPE"]);
   const est=L.reduce((a,z)=>a+z[1],0);
   out.travaux=typed(b.travaux,ia.travaux)?{v:+b.travaux,src:"saisi",est,L}:{v:est,src:"estimé",est,L};}
  {const meub=fl.includes("meub"), est=meub?r50(D.meubles/3):D.meubles, L=[[meub?"Vendu meublé : compléments (un tiers des meubles du type)":"Meubles neufs (réglage du type)",est,meub?"description":"réglage"]];

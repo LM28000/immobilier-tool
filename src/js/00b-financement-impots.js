@@ -51,9 +51,23 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
   Y[y].crd=crd;}
  return {M,Y,months:m};}
 
+/* hausse des prix selon la ville (réglage pxV, oui par défaut) : le réglage « Hausse des prix » est celui d'une ville à la part médiane de logements vides
+   (Insee, 21 villes) ; chaque point de logements vides en plus retire la pente mesurée entre les deux, sur les prix des appartements anciens de 2014-2015
+   à 2024-2025 (PXTQ : Terralyse d'après DVF, villes à série longue, moindres carrés ; bornée entre −1 et 0, nulle sous 8 villes), un point de moins l'ajoute ;
+   écart d'une ville borné à ±2 points par an. Mesuré en novembre 2026 : −0,56 point par an par point de logements vides (−0,50 sur 2014-2019, −0,59 sur
+   2019-2025), alors que l'écart de hausse d'une ville sur 2014-2019 ne disait rien de celui de 2019-2025 (corrélation 0,03). */
+let PXP=null;
+function pxPente(){if(PXP) return PXP; let R=null; try{R=RISK;}catch(_){} const T=typeof PXTQ!=="undefined"&&PXTQ&&PXTQ.villes; if(!T||!R) return {b:0,n:0,vmed:null};
+ const P=C.filter(c=>T[c.k]&&T[c.k].g!=null&&R[c.k]&&R[c.k][1]!=null).map(c=>[R[c.k][1],T[c.k].g]), V=C.map(c=>R[c.k]&&R[c.k][1]).filter(v=>v!=null).sort((a,b)=>a-b);
+ const vmed=V.length?(V.length%2?V[V.length>>1]:(V[V.length/2-1]+V[V.length/2])/2):null; let b=0, r=null;
+ if(P.length>=8){const mx=P.reduce((s,p)=>s+p[0],0)/P.length, my=P.reduce((s,p)=>s+p[1],0)/P.length, sxx=P.reduce((s,p)=>s+(p[0]-mx)**2,0), syy=P.reduce((s,p)=>s+(p[1]-my)**2,0), sxy=P.reduce((s,p)=>s+(p[0]-mx)*(p[1]-my),0);
+  if(sxx>0){b=Math.min(0,Math.max(-1,sxy/sxx)); r=syy>0?sxy/Math.sqrt(sxx*syy):null;}}
+ return PXP={b,r,n:P.length,vmed};}
+function pxDev(ck){if(!H.pxV) return 0; let R=null; try{R=RISK;}catch(_){} const P=pxPente(), v=R&&R[ck]&&R[ck][1]; if(!P.b||v==null||P.vmed==null) return 0; return Math.min(2,Math.max(-2,P.b*(v-P.vmed)));}
 function calc(c){
- const S=c._s||{}, pe=H.pess, fa=H.fav&&!pe; /* fa : scénario favorable, miroir du prudent (loyer +5 %, ½ mois vide de moins, prix +0,5 %/an) */
- const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,(c.vac!=null?c.vac:H.vacance)+(pe?0.5:fa?-0.5:0)), px=pe?Math.min(H.px,0.5):fa?H.px+0.5:H.px, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
+ const S=c._s||{}, pe=H.pess, fa=H.fav&&!pe; /* fa : scénario favorable, miroir du prudent (loyer +5 %, ½ mois vide de moins, prix +0,5 point par an) */
+ const vac0=c.vac!=null?c.vac:typeof vacVille==="function"?vacVille(c.k):H.vacance, pxB=H.px+pxDev(c.k), gst=Math.max(0,+H.gestion||0)/100; /* gestion par agence : part du loyer encaissé */
+ const taux=H.taux+(S.taux?0.5:0), vac=S.vac3?3:Math.max(0,vac0+(pe?0.5:fa?-0.5:0)), px=pe?pxB-0.5:fa?pxB+0.5:pxB, la=H.loyerAdj+(pe?-5:fa?5:0)+(S.loyer?-5:0), HZ=S.hz||15;
  const tk=c.type||H.type, T=tyOf(tk), D=tk===H.type?H:Object.assign({},H,typeVals(tk));
  const SU=c.surf||D.surface, bien=c.prixTot!=null?c.prixTot:(c.spm2!=null?c.spm2:studioPm2(c.k,null,tk))*SU*pm2Adj(tk,SU), trav=(c.trav!=null?c.trav:D.travaux)+(S.trav?5000:0);
  const meu=c.meubles!=null?c.meubles:D.meubles, base=bien*(1+H.notaire/100)+meu+trav, gar=Math.max(base-H.apport,0)*H.garantie/100, cost=base+gar, P=Math.max(cost-H.apport,0);
@@ -74,7 +88,7 @@ function calc(c){
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
  // impôt année par année pour un régime
  function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
-  for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y), ly=L.Y[y]||{int:0,ins:0};
+  for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y)+gst*rent, ly=L.Y[y]||{int:0,ins:0};   /* gestion : déduite au réel */
    let fees=(rent+D.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
    if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
    else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
@@ -85,17 +99,17 @@ function calc(c){
   const pvT=(b,sa,k,t,a)=>gross?0:pvTax(b,sa,k,t,a);
   const f=[-H.apport], gains=[bien-P-H.apport]; let crd=P, cum=0, r=taux/1200;
   for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
-   const v=rentAt(y)*Math.pow(1+H.ly/100,y)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
+   const v=rentAt(y)*Math.pow(1+H.ly/100,y)*(1-gst)-charges*Math.pow(1+H.cg/100,y)-(m<=n?mens:0)-(T[y]+F[y])/12;
    if(m<=n) crd=crd*(1+r)-M0; cum+=v; if(m<=HZ*12) f.push(v);
    const sale=k=>bien*Math.pow(1+px/100,k)*(1-(H.fraisVente||0)/100); /* prix de revente net des frais (agence, diagnostics) */
    if(m===HZ*12) f[f.length-1]+=sale(HZ)-Math.max(crd,0)-pvT(bien,sale(HZ),HZ,trav,AB[HZ-1]);
    if(m%12===0){const k=m/12; gains.push(sale(k)-Math.max(crd,0)-(H.apport-cum)-pvT(bien,sale(k),k,trav,AB[k-1]));}}
   return {reg,T,F,AB,f,gains,irr:irrMonthly(f)};}
  let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
- const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], cfBrut=rentEff-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
+ const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], gest=rentEff*gst, cfBrut=rentEff-gest-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
  const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
  const W=H.assoc.map(a=>(a.tmi+FISC.ps)*a.part), Ws=W.reduce((s,w)=>s+w,0)||1, imps=W.map(w=>imp1*w/Ws), impA=imps[0];
- return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
+ return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,gest,vac,px,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
 

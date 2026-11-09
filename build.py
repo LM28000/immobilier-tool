@@ -43,7 +43,7 @@ names = [os.path.basename(p) for p in js]
 before = [p for p, n in zip(js, names) if n < "02"]   # villes, calcul, fiche
 after = [p for p, n in zip(js, names) if n >= "02"]   # carte et la suite
 DATA = [("DVFALL", "dvf.json"), ("TTQ", "temps-trajets.json"), ("RISQ", "risques-quartiers.json"), ("TCQ", "transports.json"), ("LOYQ", "loyers-etat.json"),
-        ("POIQ", "commerces.json"), ("TERQ", "territoire.json"), ("HABQ", "habitants.json"), ("REPQ", "reperes.json")]
+        ("POIQ", "commerces.json"), ("TERQ", "territoire.json"), ("HABQ", "habitants.json"), ("REPQ", "reperes.json"), ("PXTQ", "prix-tendance.json")]
 
 ads_txt, ads = jsobj("data/annoncesdata.js", "ADS")
 hist_txt, hist = jsobj("data/historique.js", "HIST")

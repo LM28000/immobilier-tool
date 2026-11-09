@@ -124,9 +124,64 @@ def valide_ia(x):
     return out
 
 IA_CALC = ("loue", "loyer_mensuel", "loyer_charges_comprises", "fin_bail", "etat", "taxe_fonciere", "travaux_a_prevoir", "travaux_votes", "surface_carrez")
+
+# DPE à jour : la classe que le même diagnostic aura au 1er janvier 2027, avant l'interdiction de louer les F (2028) et les E (2034).
+# - électricité : énergie primaire = énergie finale × 2,3 jusqu'au 31 décembre 2025, × 1,9 en 2026 (arrêté du 13 août 2025),
+#   × 1,7 dès le 1er janvier 2027 (arrêté du 19 août 2026, NOR VLOL2617030A) ; un logement chauffé à l'électricité voit sa consommation
+#   ramenée à 1,7 (eau chaude supposée électrique aussi : c'est le cas courant, sinon l'estimation est un peu trop favorable) ;
+# - petites surfaces : seuils des classes selon la surface de référence (arrêté du 25 mars 2024, annexe 1, 1.2.2.1, en vigueur le 1er juillet 2024),
+#   valeurs intermédiaires par interpolation linéaire ; au-delà de 40 m², les seuils ordinaires ;
+# - la classe GES annoncée est gardée (pas de valeur chiffrée dans les annonces) ; la classe ne se dégrade jamais (règle des deux arrêtés) ;
+# - diagnostics d'avant le 1er juillet 2021 : ancienne méthode, plus valables, laissés tels quels.
+# Les propriétaires obtiennent l'étiquette à jour gratuitement (attestation de l'Observatoire DPE de l'ADEME) : c'est à faire confirmer.
+CEP_PETIT = {   # surface de référence (m²) : limites hautes des classes A à F en kWh d'énergie primaire/m²/an (G au-delà)
+    8: (146, 186, 386, 505, 622, 739), 9: (134, 174, 355, 464, 574, 685), 10: (124, 164, 329, 428, 533, 640), 11: (117, 157, 311, 403, 503, 607),
+    12: (112, 152, 296, 381, 478, 578), 13: (108, 148, 283, 363, 456, 554), 14: (104, 144, 273, 348, 437, 532), 15: (100, 140, 263, 333, 421, 514),
+    16: (97, 137, 255, 325, 412, 504), 17: (95, 135, 248, 318, 404, 496), 18: (92, 132, 241, 311, 397, 489), 19: (90, 130, 235, 305, 390, 482),
+    20: (88, 128, 230, 300, 385, 476), 21: (87, 127, 225, 295, 380, 471), 22: (85, 125, 221, 291, 375, 466), 23: (84, 124, 217, 287, 371, 462),
+    24: (82, 122, 214, 284, 367, 458), 25: (81, 121, 210, 280, 363, 454), 26: (80, 120, 207, 277, 360, 451), 27: (79, 119, 204, 274, 357, 447),
+    28: (78, 118, 202, 272, 354, 444), 29: (77, 117, 199, 269, 351, 442), 30: (76, 116, 197, 267, 349, 439), 31: (76, 116, 195, 265, 346, 437),
+    32: (75, 115, 193, 263, 344, 434), 33: (74, 114, 191, 261, 342, 432), 34: (74, 114, 189, 259, 340, 430), 35: (73, 113, 188, 258, 338, 428),
+    36: (72, 112, 186, 256, 337, 427), 37: (72, 112, 185, 255, 335, 425), 38: (71, 111, 183, 253, 333, 423), 39: (71, 111, 182, 252, 332, 422),
+    40: (70, 110, 180, 250, 330, 420)}
+COEF_CIBLE = 1.7
+ELEC = re.compile(r"[ée]lectri|pompe [àa] chaleur", re.I)
+
+def cep_seuils(s):
+    import math
+    s = max(8.0, float(s))
+    if s >= 40: return CEP_PETIT[40]
+    a = int(math.floor(s)); b = min(40, a + 1); t = s - a
+    return tuple(x + (y - x) * t for x, y in zip(CEP_PETIT[a], CEP_PETIT[b]))
+
+def dpe_a_jour(f):
+    """(classe à jour, raison) si le même diagnostic donne une meilleure classe au 1er janvier 2027, sinon None ; raison : "elec", "petit" ou "elec+petit" """
+    import math
+    a, kwh, s, d = f.get("dpe"), f.get("kwh"), f.get("surf"), str(f.get("dpeDate") or "")
+    if a not in tuple("ABCDEFG") or not d or d < "2021-07-01": return None
+    try: kwh, s = float(kwh), float(s)
+    except (TypeError, ValueError): return None
+    if not (kwh > 0 and 8 <= s <= 400): return None
+    ch = str(f.get("chauf") or "")
+    elec = bool(ELEC.search(ch)) and not re.search(r"gaz|fioul|fuel|bois|r[ée]seau", ch, re.I)
+    coef = 2.3 if d < "2026-01-01" else 1.9 if d < "2027-01-01" else COEF_CIBLE
+    cep = kwh * COEF_CIBLE / coef if elec else kwh
+    sl = cep_seuils(s); c = "G"
+    for i, L in enumerate("ABCDEF"):
+        if math.floor(cep) < sl[i]: c = L; break
+    g = f.get("ges")
+    if g in tuple("ABCDEFG"): c = max(c, g)
+    if c >= a: return None
+    why = [w for w, ok in (("elec", elec and coef > COEF_CIBLE), ("petit", s < 40 and d < "2024-07-01")) if ok]
+    # sans l'une des deux réformes, une classe meilleure ne vient que d'un écart de saisie (surface, kWh) : on n'y touche pas
+    if not why: return None
+    return c, "+".join(why)
+
 def ficx_de(f):
     """champs d'une fiche utiles au calcul, inclus dans la page (FICX)"""
     x = {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f}
+    u = dpe_a_jour(f)
+    if u: x["dpe0"], x["dpe"], x["dpeW"] = f["dpe"], u[0], u[1]   # DPE à jour (1er janvier 2027) ; dpe0 = classe annoncée
     if f.get("k") == "v" and f.get("pub"): x["pub"] = str(f["pub"])[:10]   # date de publication (ancienneté de l'annonce)
     ia = {k: v for k, v in (f.get("ia") or {}).items() if k in IA_CALC}
     if ia: x["ia"] = ia
