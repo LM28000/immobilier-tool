@@ -333,4 +333,6 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .v2fgrip i{width:40px;height:5px;border-radius:3px;background:var(--line)}
   .v2fgrip:focus-visible i{background:var(--accent)}
   .v2fhg~.v2fb .v2tabs2{top:81px}
+  .v2fhg{touch-action:none}   /* l'en-tête se tire (réduire, fermer, agrandir) sans faire défiler la page */
+  .v2fsh .v2mlist{display:none}   /* une fiche ouverte sur la carte : un seul panneau en bas */
 }

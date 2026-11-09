@@ -103,7 +103,14 @@ async function mlRoutes(p) {
           await p.tap('#v2fiche [data-v2fgrip]'); await p.waitForTimeout(500); const f2 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
           await p.tap('#v2fiche [data-v2fgrip]'); await p.waitForTimeout(500); const f3 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
           ok('v2 tel · fiche en demi-écran sur la carte, annonce visible au-dessus, poignée pour l\'agrandir et la réduire', f1.half === '1' && f1.t >= 35 && f1.t <= 55 && f1.y < f1.top && f2 === '0' && f3 === '1', JSON.stringify({f1, f2, f3}));
-          await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);
+          ok('v2 tel · fiche ouverte : un seul panneau en bas (la liste est masquée), bouton « Fermer »', await p.evaluate(() => getComputedStyle(document.getElementById('v2mlist')).display === 'none' && document.querySelector('#v2fiche [data-v2close]').textContent.trim() === 'Fermer'));
+          const tire = dy => p.evaluate(dy => { const h = document.querySelector('#v2fiche .v2fhg'), r = h.getBoundingClientRect(), o = {bubbles: true, clientX: r.left + 160, clientY: r.top + 10, pointerId: 1};
+            h.dispatchEvent(new PointerEvent('pointerdown', o)); document.dispatchEvent(new PointerEvent('pointermove', Object.assign({}, o, {clientY: r.top + 10 + dy}))); document.dispatchEvent(new PointerEvent('pointerup', Object.assign({}, o, {clientY: r.top + 10 + dy}))); }, dy);
+          await tire(-120); await p.waitForTimeout(400); const g1 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+          await tire(120); await p.waitForTimeout(400); const g2 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+          await tire(120); await p.waitForTimeout(600); const g3 = await p.evaluate(() => ({fiche: !document.getElementById('v2fiche').hidden, liste: getComputedStyle(document.getElementById('v2mlist')).display}));
+          ok('v2 tel · fiche : tirée vers le haut elle s\'agrandit, vers le bas elle se réduit puis se ferme, et la liste revient', g1 === '0' && g2 === '1' && !g3.fiche && g3.liste !== 'none', JSON.stringify({g1, g2, g3}));
+          if (await p.evaluate(() => !document.getElementById('v2fiche').hidden)) await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);
           await p.evaluate(() => document.querySelector('#v2mlist [data-v2city=""]').click()); await p.waitForTimeout(1200);
           await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800); }
         await p.tap('#v2mlist [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
