@@ -49,4 +49,23 @@ Depuis le 7 novembre 2026, les annonces, leur historique et leurs fiches (descri
 4. Mettre `"annonces_publiques": false` dans `publication.json`, puis `python3 build.py` : la page publique ne contient plus d'annonces ; la page les lit dans Supabase avec le code.
 5. Retirer les fichiers du dépôt (ils restent sur le Mac) : `git rm --cached -r data/annoncesdata.js data/historique.js data/fiches` et les ajouter à `.gitignore`. L'historique git garde les anciennes versions tant qu'il n'est pas réécrit.
 
+## Licence
+
+Le code (`src/`, `tools/`, `tests/`, `mcp/`, `build.py`, scripts) est sous licence MIT (`LICENSE`), © 2026 Louis-Marie Perret du Cray. Les fichiers de `data/` n'en font pas partie : chacun garde la licence de sa source, à citer en cas de réutilisation.
+
+| Données | Source | Licence |
+|---|---|---|
+| ventes réelles (`dvf.json`), prix des appartements depuis 2014 (`prix-tendance.json`) | DVF (DGFiP) ; Terralyse d'après DVF | Licence Ouverte 2.0 |
+| contours des quartiers IRIS et fonds de carte (`irisdata.js`, `mapdata.js`, `citymaps.json`), mairies (`reperes.json`), urbanisme (`territoire.json`) | IGN | Licence Ouverte 2.0 |
+| DPE des quartiers (`irisdata.js`) | ADEME | Licence Ouverte 2.0 |
+| habitants, revenus, logements vides (`habitants.json`) | Insee | Licence Ouverte 2.0 |
+| loyers de référence (`loyers-etat.json`) | carte des loyers de l'État | Licence Ouverte 2.0 |
+| risques et catastrophes naturelles (`risques-quartiers.json`, `territoire.json`) | Géorisques | Licence Ouverte 2.0 |
+| écoles, quartiers prioritaires (`territoire.json`), campus (`reperes.json`) | Éducation nationale ; ANCT, via la Caisse des dépôts ; Enseignement supérieur | Licence Ouverte 2.0 |
+| gares et leur fréquentation (`reperes.json`) | SNCF | ODbL |
+| commerces (`commerces.json`), trajets à pied et à vélo (`temps-trajets.json`) | OpenStreetMap et ses contributeurs | ODbL |
+| lignes de bus et tram, trajets en bus (`lignes.js`, `transports.json`) | horaires GTFS des réseaux (transport.data.gouv.fr) | celle de chaque réseau (souvent ODbL) |
+| prix et loyers RealAdvisor des quartiers (dans `irisdata.js`) | RealAdvisor | non couverts : droits de RealAdvisor |
+| secteurs Bien'ici reliés aux quartiers (`secteurs-nouvelles-villes.json`) | Bien'ici | non couverts : droits de Bien'ici |
+
 Estimations, pas un conseil financier ni fiscal.
