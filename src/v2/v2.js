@@ -205,7 +205,7 @@
   /* gestes en cours (doigt ou bouton appuyé, molette récente) : l'inclinaison automatique attend qu'ils soient finis */
   const cont=M.getCanvasContainer(); cont.addEventListener("pointerdown",()=>{DOWN=true;},true); ["pointerup","pointercancel"].forEach(ev=>addEventListener(ev,()=>{DOWN=false;},true));
   cont.addEventListener("wheel",()=>{WHL=Date.now();},{capture:true,passive:true});
-  M.on("movestart",e=>{if(!(e&&e.v2auto)) clearTimeout(PT);});
+  M.on("movestart",e=>{if(!(e&&e.v2auto)) clearTimeout(PT); if(TPOP) TPOP.remove();});
   M.on("moveend",mapMoved);
   M.on("pitchstart",e=>{if(e&&e.originalEvent) MANP=true;});   /* inclinaison réglée à la main : on n'y touche plus */
   window.V2MAP=()=>M;}
@@ -354,10 +354,14 @@
  function mapClick(e){const r=PH()?12:6, box=[[e.point.x-r,e.point.y-r],[e.point.x+r,e.point.y+r]], at=(l,b)=>M.getLayer(l)?M.queryRenderedFeatures(b||e.point,{layers:[l]}):[];
   const a=at("a-sdot",box).concat(at("a-dot",box)); if(a.length){openSel(a[0].properties.k); return;}
   const g=at("a-clu",box); if(g.length){grpPop(g[0],e.lngLat); return;}
+  const pr=PH()?10:5, po=at("p-dot",[[e.point.x-pr,e.point.y-pr],[e.point.x+pr,e.point.y+pr]]); if(po.length){tapPop(poiTxt(po[0].properties),e.lngLat); return;}
   const v=M.getZoom()<ZQ+.3?at("v-dot",box).concat(at("v-lab")):[]; if(v.length){goCity(v[0].properties.k); return;}
   const q=at("q-fill"); if(q.length) openSel(`q|${q[0].properties.ck}|${q[0].properties.code}`);}
  /* les annonces d'un groupe, dans une bulle où l'on peut cliquer (la bulle du survol, elle, ne capte jamais la souris) */
- let GPOP=null;
+ let GPOP=null, TPOP=null, TPT=0;
+ /* bulle d'un arrêt ou d'un commerce touché : son nom, quelques secondes */
+ function tapPop(t,ll){if(!TPOP) TPOP=new ML.Popup({closeButton:false,closeOnClick:true,className:"v2pop",offset:10}); if(POP) POP.remove();
+  TPOP.setLngLat(ll).setText(t); if(!TPOP.isOpen()) TPOP.addTo(M); clearTimeout(TPT); TPT=setTimeout(()=>{if(TPOP) TPOP.remove();},4000);}
  function grpPop(f,ll){const src=M.getSource("annonces"), id=f.properties.cluster_id, n=f.properties.point_count; if(!src||id==null) return;
   Promise.resolve(src.getClusterLeaves(id,60,0)).then(L=>{if(!L||!L.length) return; if(POP) POP.remove(); if(GPOP) GPOP.remove();
    const F=L.map(x=>x.properties).sort((a,b)=>(b.irr??-99)-(a.irr??-99)), ap=F.every(x=>x.ap);
@@ -366,7 +370,7 @@
  function hoverQ(id){if(id===HQ) return; if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){}} HQ=id; if(id!=null){try{M.setFeatureState({source:"quartiers",id},{hover:true});}catch(_){}}}
  function hoverOff(){if(!M) return; if(POP) POP.remove(); hoverQ(null); M.getCanvas().style.cursor="";}
  function mapHover(e){if(!MREADY||!e||M.isMoving()) return; const L=["a-sdot","a-dot","a-clu","p-dot","p-lig","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
-  M.getCanvas().style.cursor=h&&h.layer.id!=="p-dot"&&h.layer.id!=="p-lig"?"pointer":"";
+  M.getCanvas().style.cursor=h&&h.layer.id!=="p-lig"?"pointer":"";
   hoverQ(h&&h.layer.id==="q-fill"&&h.id!=null?h.id:null);
   if(!h){if(POP) POP.remove(); return;}
   if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
@@ -382,13 +386,23 @@
   if(M&&MREADY){MREADY=false; QSIG=null; QNSET=false; hoverOff(); HQ=null; M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap();}); M.setStyle(MLSTYLE(),{diff:false});}
   render();}
  const themeSeg=()=>`<span class="v2seg" role="group" aria-label="Thème">${[["light","Clair"],["dark","Sombre"]].map(([k,l])=>`<button type="button" data-v2theme="${k}" aria-pressed="${(DARK()?"dark":"light")===k}">${l}</button>`).join("")}</span>`;
- function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0";
-  const head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span>`:""}<span>${t}</span><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
+ function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0"; el.dataset.big=V.big&&!V.min?"1":"0"; setTimeout(()=>{if(el.firstElementChild&&!el.querySelector(".v2grip")) el.insertAdjacentHTML("afterbegin",GRIP);},0);
+  const head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span>`:""}<span>${t}</span><span class="v2sp"></span>${V.city&&(PH()||V.sel!==`c|${V.city}`)?`<button type="button" class="v2btn sm" data-v2cfiche="${V.city}" title="Prix, loyer, calcul, quartiers, habitants…">Fiche</button>`:""}<button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
   if(!V.city){const rows=C.map(c=>({c,x:cx(c),k:cityCnt(c.k)})).sort((a,b)=>(b.x.irr??-99)-(a.x.irr??-99)), tot=rows.reduce((s,r)=>s+r.k[0],0);
    el.innerHTML=head("L'Ouest",`<p class="v2sub">${tyLabel()} · ${tot} annonce${tot>1?"s":""} pour nos critères, dans ${rows.filter(r=>r.k[0]).length} villes sur ${C.length}.</p>`)+`<div class="v2mrows">${newsHtml(NEWS||bouge())}<h2 class="v2mh2">Les villes · ${V.tous?"médiane de leurs annonces, tous types":`moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type`}</h2>${rows.map(({c,x,k:[m,n]})=>`<div class="v2row${m?"":" v2dim"}" role="button" tabindex="0" data-v2city="${c.k}" style="grid-template-columns:minmax(0,1fr) auto"><b>${esc(c.name)}</b><span class="v2rv" style="color:${colX(x)}">${pctS(x.irr)}</span><span class="v2rs">${x.cost!=null?`${keur(x.cost)} tout compris · ${sgn(x.cf)}/mois`:"trop peu d'annonces pour une médiane"}</span><span class="v2rs" style="text-align:right">${rng({x,z:cz(x)},70)}</span><span class="v2rs v2match">${n?(m?`<b>${m}</b> annonce${m>1?"s":""} sur ${n} pour nos critères`:n>1?`aucune des ${n} annonces pour nos critères`:"son annonce ne correspond pas à nos critères"):"pas d'annonces relevées"}</span></div>`).join("")}</div>`; return;}
   const L0=market(V.city), lim=L0.slice(0,80);
   el.innerHTML=head(esc(cityName(V.city)),`<div class="v2chips v2scroll">${vueChips(V.city)}</div><p class="v2sub">${L0.length} ${typlL()} · triés par rendement ${scn()}</p>`)
    +`<div class="v2mrows">${lim.length?lim.map(o=>`<div class="v2row${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${V.tous?` <span class="v2ty">${tyOfO(o)}</span>`:""}${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span style="color:var(--warn)">★</span>':""}${ageChip(o)}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(o.t?o.t.name:o.a[1]||"")}${o.f.dpe?" · DPE "+o.f.dpe:""} · ${sgn(o.x.cf)}/mois</span><span style="text-align:right">${rng(o,64)}</span></div>`).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`}${L0.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L0.length}.</p>`:""}</div>`;}
+ /* téléphone : la liste s'ouvre basse (la carte d'abord) ; sa poignée l'agrandit ou la réduit, au toucher ou en la tirant */
+ const GRIP=`<div class="v2grip" role="button" tabindex="0" aria-label="Agrandir ou réduire la liste" data-v2grip><i></i></div>`;
+ function sheetSet(big,min){V.big=!!big; V.min=!!min; save(); const el=$("v2mlist"); if(el) el.style.height=""; mapList(); setTimeout(padSync,280);}
+ (()=>{let y0=0, h0=0, el=null, moved=false;
+  document.addEventListener("pointerdown",e=>{const g=e.target.closest&&e.target.closest("[data-v2grip]"); if(!g||!PH()) return; el=$("v2mlist"); y0=e.clientY; h0=el.offsetHeight; moved=false; try{g.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault();});
+  document.addEventListener("pointermove",e=>{if(!el) return; const dy=e.clientY-y0; if(Math.abs(dy)>6) moved=true; if(moved){const H=$("v2map").offsetHeight; el.style.transition="none"; el.style.height=Math.max(56,Math.min(H*.9,h0-dy))+"px";}});
+  document.addEventListener("pointerup",()=>{if(!el) return; const H=$("v2map").offsetHeight, h=el.offsetHeight; el.style.transition=""; const e0=el; el=null;
+   if(!moved){e0.style.height=""; return V.min?sheetSet(false,false):sheetSet(!V.big,false);}
+   sheetSet(h>H*.55,h<H*.2);});
+  document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches("[data-v2grip]")){e.preventDefault(); if(V.min) sheetSet(false,false); else sheetSet(!V.big,false);}});})();
  function mapLegend(){const el=$("v2mleg"); if(!el) return; const z=M&&MREADY?M.getZoom():0, k=qmK(), m=QM[k], R=RAMP(), PC=POIC(), B=QBR;
   if(document.activeElement&&document.activeElement.matches&&document.activeElement.matches("[data-v2qm]")) return;
   const sw=c=>`<i style="background:${c}"></i>`, rdt=`<span>${sw(cv("var(--bad)"))}&lt; 2,5 %</span><span>${sw(cv("var(--warn)"))}2,5–5</span><span>${sw(cv("var(--ok)"))}≥ 5 %</span>`;
@@ -609,7 +623,7 @@
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.type){if(V.tous){V.tous=false; save(); FEED=null;} return;}   /* Studio, T2, T3 : le type est changé par 49-type-ui.js */
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
@@ -639,6 +653,7 @@
   if(d.v2offkeep){const [k,ck,...r]=d.v2offkeep.split("|"), suf=r.join("|"), P=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!P) return; const pr=Math.round(P[2]*(OFFT[d.v2offkeep]??100)/100/500)*500;
    Promise.resolve(mStar(ck,suf)).then(()=>setTimeout(()=>{const b=bienOf(VTURL+suf); if(b){delete OFFT[d.v2offkeep]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}},600)); return;}
   if(d.v2min!=null){V.min=!V.min; save(); mapList(); return;}
+  if(d.v2cfiche){openSel(`c|${d.v2cfiche}`,true); return;}   /* fiche de la ville, depuis l'en-tête de la liste */
   if(d.v2nom!=null){const n=($("v2nom").value||"").trim(); if(n){try{localStorage.setItem("biens-nom",n);}catch(_){} refresh();} return;}
   if(d.v2share!=null){const n=($("v2nom2").value||"").trim(), c=($("v2code").value||"").trim(), chg=c!==sbCode(); try{localStorage.setItem("biens-nom",n); localStorage.setItem("biens-code",c);}catch(_){} if(chg) location.reload(); else {toast("Enregistré."); refresh();} return;}
   if(d.v2city!=null&&!e.target.closest("[data-v2open]")){goCity(d.v2city); return;}

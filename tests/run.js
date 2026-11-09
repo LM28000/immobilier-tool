@@ -75,6 +75,14 @@ async function mlRoutes(p) {
       ok(`v2 ${dev} · dézoom : l'Ouest revient à plat, avec ses villes`, zout.pitch === 0 && zout.a === 0 && zout.v > (dev === 'tel' ? 4 : 10) && /L'Ouest/.test(zout.liste) && !/Le Mans/.test(zout.liste), JSON.stringify(zout));
       await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]').click()); await p.waitForTimeout(1800);
       ok(`v2 ${dev} · Le Mans : quartiers et annonces`, await p.evaluate(() => V2MAPN.quartiers > 20 && V2MAPN.annonces > 0 && document.querySelectorAll('#v2mlist [data-v2open]').length > 0));
+      if (dev === 'tel') {   // la liste s'ouvre basse, sa poignée l'agrandit puis la réduit ; la fiche de la ville s'ouvre depuis l'en-tête
+        const hs = () => p.evaluate(() => Math.round(document.getElementById('v2mlist').offsetHeight / document.getElementById('v2map').offsetHeight * 100));
+        const h0 = await hs(); await p.tap('#v2mlist [data-v2grip]'); await p.waitForTimeout(500); const h1 = await hs(); await p.tap('#v2mlist [data-v2grip]'); await p.waitForTimeout(500); const h2 = await hs();
+        ok('v2 tel · liste basse à l\'ouverture, poignée pour l\'agrandir et la réduire', h0 <= 40 && h1 >= 75 && h2 === h0, JSON.stringify({h0, h1, h2}));
+        await p.tap('#v2mlist [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
+        ok('v2 tel · fiche de la ville depuis l\'en-tête de la liste', await p.evaluate(() => !document.getElementById('v2fiche').hidden && /Le Mans/.test(document.querySelector('#v2fiche .v2ft').textContent)));
+        await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);
+      }
       ok(`v2 ${dev} · Le Mans : les points des annonces sont dessinés`, await p.evaluate(() => V2MAP().queryRenderedFeatures({layers: ['a-dot']}).length > 0 && V2MAP().getZoom() >= 10));
       ok(`v2 ${dev} · carte : positions exactes en points pleins, approchées en points creux`, await p.evaluate(() => { const M = V2MAP(), F = M.getSource('annonces')._data.features; return F.some(f => f.properties.ap) && F.some(f => !f.properties.ap) && M.queryRenderedFeatures({layers: ['a-hole']}).length > 0 && M.queryRenderedFeatures({layers: ['a-hole']}).length < M.queryRenderedFeatures({layers: ['a-dot']}).length; }));
       ok(`v2 ${dev} · carte : noms des quartiers prêts`, await p.evaluate(() => V2MAPN.qnoms > 500));
