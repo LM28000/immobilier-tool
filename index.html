@@ -3004,7 +3004,7 @@ render();
   if(!PH()) M.addControl(new ML.NavigationControl({visualizePitch:true}),"top-right");   /* boutons : zoom, boussole (inclinaison et rotation) */
   /* une couche refusée par MapLibre ne lève pas d'erreur : elle est notée (les tuiles et polices manquantes, elles, sont ignorées) */
   M.on("error",e=>{const er=e&&e.error, m=String(er&&er.message||er||""); if(!(er&&er.status)&&!/fetch|network|load|glyph|tile|abort/i.test(m)&&V2MAPN.err.length<10) V2MAPN.err.push(m);});
-  M.on("load",()=>{padSync(); mapLayers(); MREADY=true; drawMap(true); lignesLoad(); M.on("resize",()=>setTimeout(padSync,0)); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
+  M.on("load",()=>{padSync(); mapLayers(); MREADY=true; if(FLYP&&FLYP===V.sel&&selPos(FLYP).f){LCITY=V.city; drawMap(); flyAd(FLYP,true); FLYP=null;} else drawMap(true); lignesLoad(); M.on("resize",()=>setTimeout(padSync,0)); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
   M.on("click",mapClick);
   /* survol (souris seulement) : une fois par image au plus, rien pendant que la carte bouge ; la bulle disparaît dès que la carte bouge ou que la souris sort */
   if(!PH()){let HR=0, HE=null; M.on("mousemove",e=>{HE=e; if(!HR) HR=requestAnimationFrame(()=>{HR=0; mapHover(HE);});}); M.on("mouseout",hoverOff); M.on("movestart",hoverOff);}
@@ -3182,11 +3182,20 @@ render();
   if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
   POP.setLngLat(e.lngLat).setText(h.layer.id==="p-dot"?poiTxt(h.properties):h.layer.id==="a-clu"?`${h.properties.point_count} annonces ici · jusqu'à ${pctS(h.properties.irr)} · cliquez pour la liste`:h.properties.t); if(!POP.isOpen()) POP.addTo(M);}
  /* une annonce ouverte : la vue s'approche et s'incline, les immeubles autour apparaissent */
- function flyAd(s){if(!M||!MREADY||V.tab!=="carte") return; let f=null;
-  if(s.startsWith("b|")){const b=BIENS.find(x=>x.id===s.slice(2)); if(hasLL(b)) f={la:+b.lat,lo:+b.lon,r:0};}
-  else if(s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o){const bb=bienOf(o.url); f=hasLL(bb)?{la:+bb.lat,lo:+bb.lon,r:0}:o.f;}}
-  if(!f||f.la==null) return; MANP=false; const r=f.r==null?400:+f.r, zt=r<=100?16:r<=300?15.2:r<=600?14.5:13.8;
-  camAuto({center:[f.lo,f.la],zoom:r<=100?Math.max(M.getZoom(),zt):zt,pitch:P2(),duration:1200,essential:true},"flyTo");}
+ /* position d'une annonce ou d'un bien ouvert ({la, lo, r} ; r = flou en mètres) et sa ville */
+ function selPos(s){let f=null, ck=null;
+  if(s.startsWith("b|")){const b=BIENS.find(x=>x.id===s.slice(2)); if(b){ck=b.ville; if(hasLL(b)) f={la:+b.lat,lo:+b.lon,r:0};}}
+  else if(s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o){ck=o.ck; const bb=bienOf(o.url); f=hasLL(bb)?{la:+bb.lat,lo:+bb.lon,r:0}:o.f;}}
+  return {f:f&&f.la!=null&&f.lo!=null?f:null,ck};}
+ /* now : la carte s'y place d'un coup (retour sur la carte après avoir ouvert l'annonce dans un autre onglet) */
+ function flyAd(s,now){if(!M||!MREADY||V.tab!=="carte") return; const f=selPos(s).f;
+  if(!f) return; MANP=false; const r=f.r==null?400:+f.r, zt=r<=100?16:r<=300?15.2:r<=600?14.5:13.8, o={center:[f.lo,f.la],zoom:r<=100&&!now?Math.max(M.getZoom(),zt):zt,pitch:P2()};
+  if(now) camAuto(o,"jumpTo"); else camAuto(Object.assign(o,{duration:1200,essential:true}),"flyTo");}
+ /* annonce ou bien ouvert depuis un autre onglet (Annonces, Nos biens…) : la carte s'y placera quand on y reviendra */
+ let FLYP=null;
+ function flyPending(){if(!FLYP||FLYP!==V.sel){FLYP=null; return false;} const p=selPos(FLYP);
+  if(!p.f){FLYP=null; if(p.ck&&p.ck!==V.city){V.city=p.ck; save();} return false;}   /* sans position : la carte montre sa ville */
+  if(p.ck){V.city=p.ck; LCITY=p.ck; save();} return true;}   /* la liste montre sa ville, sans recadrer la carte sur la ville entière */
  /* thème clair (par défaut) ou sombre : propre à chacun ; la carte change de fond et garde ses couches */
  function setTheme(t){document.documentElement.setAttribute("data-theme",t); try{localStorage.setItem("theme-v2",t);}catch(_){}
   if(M&&MREADY){MREADY=false; QSIG=null; QNSET=false; hoverOff(); HQ=null; M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap();}); M.setStyle(MLSTYLE(),{diff:false});}
@@ -3419,7 +3428,7 @@ render();
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>`<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l}</button>`).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
   if(M) requestAnimationFrame(()=>M.resize());}
- function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} V.sel=s; flyAd(s); if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
+ function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} V.sel=s; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; flyAd(s); if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0;}
 
  /* ---------- ajouter un bien à la main ----------
     Le formulaire de l'app (recherche d'adresse, quartier, contrôles, envoi dans la liste commune) est déplacé dans une fenêtre,
@@ -3450,8 +3459,8 @@ render();
 
  /* ---------- affichage ---------- */
  function paint(k){if(k==="annonces") pAnnonces(); else if(k==="villes") pVilles(); else if(k==="biens") pBiens(); else if(k==="budget") pBudget(); else {mapList(); mapLegend(); drawMap();}}
- function show(){TABS.forEach(([k])=>{$("v2p-"+k).hidden=k!==V.tab;}); top(); paint(V.tab); fiche(); vuSnap();
-  if(V.tab==="carte") mapLib(()=>{mapInit(); requestAnimationFrame(()=>M&&M.resize());});}
+ function show(){TABS.forEach(([k])=>{$("v2p-"+k).hidden=k!==V.tab;}); const fp=V.tab==="carte"&&flyPending(); top(); paint(V.tab); fiche(); vuSnap();
+  if(V.tab==="carte") mapLib(()=>{mapInit(); requestAnimationFrame(()=>{if(!M) return; M.resize(); if(fp&&MREADY&&FLYP===V.sel){padSync(); flyAd(FLYP,true); FLYP=null;}});});}
  /* une relecture de la liste commune (toutes les 20 s) ne repeint pas la page pendant qu'on tape dans un champ : elle attend qu'on en sorte */
  let RQ=0, RWAIT=false; const typing=()=>{const a=document.activeElement; return !!(a&&app.contains(a)&&a.matches("input:not([type=range]):not([type=checkbox]),select,textarea"));};
  function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap();});}

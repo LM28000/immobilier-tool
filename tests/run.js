@@ -170,6 +170,13 @@ async function mlRoutes(p) {
       const n0 = await p.evaluate(() => document.querySelectorAll('#v2p-annonces [data-v2open]').length);
       await p.evaluate(() => document.querySelectorAll('#v2p-annonces [data-v2open]')[2].click()); await p.waitForTimeout(500);
       ok(`v2 ${dev} · ouvrir une annonce ne filtre pas le tableau`, n0 > 2 && await p.evaluate(n0 => document.querySelectorAll('#v2p-annonces [data-v2open]').length === n0 && !document.getElementById('v2fiche').hidden, n0));
+      // une annonce ouverte depuis l'onglet Annonces : en revenant sur la carte, celle-ci s'ouvre sur l'annonce
+      { const tgt = await p.evaluate(() => { for (const e of document.querySelectorAll('#v2p-annonces [data-v2open]')) { const s = e.getAttribute('data-v2open'); if (!s.startsWith('v|')) continue;
+          const f = FICX[adId(s.split('|').slice(2).join('|'))]; if (f && f.la != null && f.lo != null && f.r != null && f.r <= 300) { e.click(); return {la: +f.la, lo: +f.lo, r: f.r}; } } return null; });
+        await p.waitForTimeout(500); await p.evaluate(() => document.querySelector('[data-v2tab="carte"]').click()); await p.waitForTimeout(1500);
+        const at = tgt && await p.evaluate(t => { const M = V2MAP(), c = M.getCenter(); return {d: Math.round(Math.hypot((c.lat - t.la) * 111000, (c.lng - t.lo) * 111000 * Math.cos(t.la * Math.PI / 180))), z: +M.getZoom().toFixed(2), fiche: !document.getElementById('v2fiche').hidden}; }, tgt);
+        ok(`v2 ${dev} · annonce ouverte depuis l'onglet Annonces : la carte s'ouvre sur elle, fiche ouverte`, !!at && at.d < 60 && at.z >= 13.8 && at.fiche, JSON.stringify({tgt, at}));
+        await p.evaluate(() => document.querySelector('[data-v2tab="annonces"]').click()); await p.waitForTimeout(500); }
       if (dev === 'ordi') {
         await p.evaluate(() => { document.querySelector('[data-v2close]').click(); document.querySelector('[data-v2av="nuage"]').click(); }); await p.waitForTimeout(400);
         ok(`v2 ${dev} · nuage des annonces`, await p.evaluate(() => document.querySelectorAll('#v2p-annonces svg [data-v2open]').length > 2));
