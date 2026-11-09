@@ -67,3 +67,19 @@ create policy "annonces : lecture du groupe" on public.annonces for select to an
 create policy "annonces : écriture du groupe" on public.annonces for insert to anon with check (groupe = public.code_groupe());
 create policy "annonces : mise à jour du groupe" on public.annonces for update to anon using (groupe = public.code_groupe()) with check (groupe = public.code_groupe());
 grant select, insert, update on public.annonces to anon;
+
+-- ============ 9 novembre 2026 : annonces visibles par tout le monde (à coller dans SQL Editor puis « Run ») ============
+-- 3. La table « annonces » garde le code en clair dans « groupe » : elle reste fermée. Une vue en lecture seule n'en montre que
+--    cle, data et maj, pour le groupe des annonces, repéré par l'empreinte de son code (jamais le code lui-même).
+--    Le code de groupe ne sert plus qu'à « Nos biens » et aux réglages communs (table « biens », inchangée).
+do $$ declare g text; begin
+  select groupe into g from public.annonces where cle = 'ads' order by maj desc limit 1;
+  if g is null then raise exception 'pas encore d''annonces : lancer d''abord python3 tools/supabase_annonces.py push'; end if;
+  execute format('create or replace view public.annonces_publiques with (security_barrier = true) as select cle, data, maj from public.annonces where md5(groupe) = %L', md5(g));
+end $$;
+revoke all on public.annonces_publiques from public, anon, authenticated;
+grant select on public.annonces_publiques to anon, authenticated;
+-- seul un groupe qui a déjà des annonces peut en ajouter : personne d'autre ne peut en glisser
+drop policy if exists "annonces : écriture du groupe" on public.annonces;
+create policy "annonces : écriture du groupe" on public.annonces for insert to anon
+  with check (groupe = public.code_groupe() and exists (select 1 from public.annonces a where a.groupe = public.code_groupe()));

@@ -40,7 +40,7 @@ Les annonces sont relevées chaque jour dans les 22 villes par une routine Claud
 
 ## Annonces privées (Supabase)
 
-Depuis le 7 novembre 2026, les annonces, leur historique et leurs fiches (descriptions, photos d'agences) ne sont plus dans le dépôt public : la page les lit dans Supabase avec le code de groupe ; sans code, elle n'en affiche aucune. Sur un nouvel ordinateur : `python3 tools/supabase_annonces.py pull`. Mise en place (déjà faite) :
+Depuis le 7 novembre 2026, les annonces, leur historique et leurs fiches (descriptions, photos d'agences) ne sont plus dans le dépôt public : la page les lit dans Supabase. Depuis le 9 novembre 2026, tout le monde les voit, sans code, par la vue en lecture seule « annonces_publiques » (partie 3 de `supabase.sql` : elle ne montre jamais la colonne du code) ; le code de groupe ne sert plus qu'à « Nos biens » et aux réglages communs. Sur un nouvel ordinateur : `python3 tools/supabase_annonces.py pull`. Mise en place (déjà faite) :
 
 1. Dans Supabase > SQL Editor, coller la partie « Novembre 2026 » de `supabase.sql`, puis Run.
 2. Sur le Mac, enregistrer le code de groupe (le même que dans la page, « Liste commune ») :

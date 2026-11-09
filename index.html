@@ -2195,23 +2195,28 @@ function ecartMarche(ck){const key=ck+"|"+H.type+"|"+H.dvf+"|"+H.surcote; if(EMC
 
 /* ---------- annonces, historique et fiches dans Supabase (table « annonces », supabase.sql) ----------
    tools/supabase_annonces.py y envoie chaque soir : ads (annonces du jour), hist (historique), ficx (champs de calcul) et fiches-<ville>.
-   La page les lit avec le code de groupe, comme « Nos biens ». Quand publication.json retire les annonces de la page publique,
-   c'est la seule source : sans code de groupe, la page publique n'affiche aucune annonce.
+   Depuis le 9 novembre 2026, tout le monde les lit, sans code, dans la vue « annonces_publiques » (supabase.sql : cle, data et maj
+   seulement, jamais la colonne du code) ; le code de groupe ne sert plus qu'à « Nos biens » et aux réglages communs.
+   Si la vue n'existe pas encore, la page lit la table avec le code, comme avant.
    Une copie est gardée dans le cache du navigateur pour l'ouverture hors ligne. */
 let ADSCLOUD=null;
 /* une lecture de la table « annonces », réessayée une fois, copiée dans le cache du navigateur (ouverture hors ligne).
    Novembre 2026 : tout lire d'un coup (34 Mo avec les fiches complètes) dépassait le temps accordé aux requêtes par Supabase
    (« statement timeout ») et plus aucune annonce n'arrivait ; la page lit d'abord annonces, historique et champs de calcul (6 Mo),
    puis les fiches complètes d'une ville quand on ouvre une de ses annonces (24-fiches-annonces.js, ficheLoad). */
-async function sbAnn(q){const code=typeof sbCode==="function"?sbCode():""; if(!code||!SB.url) return null;
- const url=SB.url.replace(/\/$/,"")+"/rest/v1/annonces?"+q, req=new Request(url+"&g="+encodeURIComponent(code.slice(0,4)));
- for(let i=0;i<2;i++){try{const r=await fetch(url,{headers:{apikey:SB.key,"x-groupe":code}}); if(r.ok){const rows=await r.json();
+async function sbAnn(q){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url) return null;
+ const pub=await sbLit("annonces_publiques",q,null); if(pub) return pub;   /* la vue publique, sans code */
+ return code?sbLit("annonces",q,code):null;}
+async function sbLit(table,q,code){
+ const url=SB.url.replace(/\/$/,"")+"/rest/v1/"+table+"?"+q, req=new Request(url+(code?"&g="+encodeURIComponent(code.slice(0,4)):"&pub=1")), h={apikey:SB.key};
+ if(code) h["x-groupe"]=code;
+ for(let i=0;i<2;i++){try{const r=await fetch(url,{headers:h}); if(r.status===404) break; if(r.ok){const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) break;
    try{const c=await caches.open("studio-annonces"); await c.put(req,new Response(JSON.stringify(rows),{headers:{"Content-Type":"application/json"}}));}catch(_){} return rows;}}catch(_){}
   if(!i) await new Promise(f=>setTimeout(f,1500));}
  try{const c=await caches.open("studio-annonces"), h=await c.match(req); if(h) return await h.json();}catch(_){}
  return null;}
-async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""; if(!code||!SB.url||window.claude) return;
- try{const c=await caches.open("studio-annonces"); await c.delete(new Request(SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj&g="+encodeURIComponent(code.slice(0,4))));}catch(_){}   /* l'ancienne copie complète (34 Mo) */
+async function annoncesCloud(){const code=typeof sbCode==="function"?sbCode():""; if(!SB.url||window.claude) return;
+ if(code) try{const c=await caches.open("studio-annonces"); await c.delete(new Request(SB.url.replace(/\/$/,"")+"/rest/v1/annonces?select=cle,data,maj&g="+encodeURIComponent(code.slice(0,4))));}catch(_){}   /* l'ancienne copie complète (34 Mo) */
  const rows=await sbAnn("select=cle,data,maj&cle=in.(ads,hist,ficx)");
  if(!Array.isArray(rows)||!rows.length) return;
  const by={}; rows.forEach(x=>{if(x&&x.cle&&x.data&&typeof x.data==="object") by[x.cle]=x.data;});
