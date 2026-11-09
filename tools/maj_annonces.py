@@ -8,6 +8,8 @@ releve.json = {"date": "AAAA-MM-JJ", "villes": {"lemans": {"ads": [...], "ventes
   ads    : [surface, secteur, loyer CC, meublé 0/1, lien après /annonce/location/, photo]
   ventes : [surface, secteur, prix, lien après /annonce/vente/, photo]
 Une liste absente du relevé (page en échec) garde celle de la veille, sans compter ses annonces comme vues ce jour-là.
+« plafond » (facultatif, tools/releve_plan.py) : prix au-delà duquel les ventes ne sont pas relevées ; elles quittent la liste sans être
+comptées vendues, et le garde-fou ci-dessous compare avec la liste de la veille ramenée au même plafond.
 Garde-fou : une liste qui perd plus de la moitié de ses annonces (6 au moins la veille) est tenue pour un relevé partiel et gardée telle quelle,
 sauf avec --force. Disparue = absente de 2 relevés de suite où sa liste a bien été relevée.
 
@@ -46,6 +48,8 @@ def main():
     SEC = json.load(open(P_SEC, encoding="utf-8")) if os.path.exists(P_SEC) else {}
     force = "--force" in sys.argv
     out = {"date": today, "villes": {}, "baisses": [], "affaires": [], "echecs": [], "gardes": []}
+    cap = rel.get("plafond") if isinstance(rel.get("plafond"), (int, float)) and rel.get("plafond") > 0 else None
+    sous = lambda key, a: key != "ventes" or not cap or a[2] <= cap   # annonce dans le champ du relevé
     maj = 0
     for ck, new in rel.get("villes", {}).items():
         if not new or not any((new if ty == "studio" else new.get(ty) or {}).get(k) for ty in TYPES for k in ("ads", "ventes")):
@@ -64,10 +68,14 @@ def main():
             for key in ("ads", "ventes"):
                 nw, od = [a for a in (N.get(key) or []) if a and a[0] and a[0] > 0 and a[2] and a[2] > 0], B.get(key) or []
                 if not nw: continue
+                od = [a for a in od if sous(key, a)]
                 if not force and len(od) >= 6 and len(nw) < len(od) / 2:
                     out["gardes"].append(f"{ck} {ty} {key} : {len(nw)} annonces au lieu de {len(od)}, liste de la veille gardée (--force pour accepter)"); continue
                 B[key] = nw; fresh[key] = True
-            if fresh: maj += 1; A["iso"] = today
+            if fresh:
+                maj += 1; A["iso"] = today
+                if cap: A["plafond"] = cap   # affiché dans l'app : ventes de la ville relevées jusqu'à ce prix
+                else: A.pop("plafond", None)
             tag = [] if ty == "studio" else [ty]
             for kind, lst, ip, il, meta in (("v", B["ventes"] if fresh.get("ventes") else [], 2, 3, lambda a: [a[0], a[1], a[4]] + tag), ("l", B["ads"] if fresh.get("ads") else [], 2, 4, lambda a: [a[0], a[1], a[5]] + tag)):
                 if not lst: continue
@@ -84,6 +92,7 @@ def main():
                         e["s"] = today; e["m"] = meta(a); e.pop("g", None); e.pop("a", None); e.pop("ad", None)
                 for k, e in H[kind].items():
                     if (e["m"][3] if len(e["m"]) > 3 else "studio") != ty: continue
+                    if kind == "v" and cap and e["p"][-1][1] > cap: continue   # au-dessus du plafond : plus relevée, pas vendue
                     if k not in seen and "g" not in e and e["s"] != today and e.get("ad") != today:
                         e["a"] = e.get("a", 0) + 1; e["ad"] = today   # absente d'un relevé de plus (une fois par jour)
                         if e["a"] >= 2: e["g"] = today; e.pop("a", None); e.pop("ad", None)

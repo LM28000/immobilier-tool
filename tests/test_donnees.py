@@ -38,6 +38,16 @@ ok("relance le même jour : rien ne change", e.get("a") == 1 and "g" not in e, e
 run(sans, "2030-01-04"); e = L(T + "/data/historique.js")[ck]["v"][k]
 ok("deux absences : disparue", e.get("g") == "2030-01-04", e)
 c, o = run({}, "2030-01-05"); ok("relevé vide refusé, date inchangée", c == 1 and L(T + "/data/annoncesdata.js")["iso"] == "2030-01-04")
+# plafond des ventes : les ventes plus chères quittent la liste sans être comptées vendues, et la liste plafonnée n'est pas prise pour un relevé partiel
+def runp(villes, d, cap):
+    json.dump({"date": d, "plafond": cap, "villes": villes}, open(T + "/data/r.json", "w"))
+    p = subprocess.run([sys.executable, "tools/maj_annonces.py", "data/r.json", "--date", d], cwd=T, capture_output=True, text=True)
+    return p.returncode, json.loads(p.stdout)
+run(villes, "2030-02-01"); cap = sorted(a[2] for a in V)[len(V) // 3]; dessous = [a for a in V if a[2] <= cap]
+pl = json.loads(json.dumps(villes)); pl[ck]["ventes"] = dessous
+c, o = runp(pl, "2030-02-02", cap); runp(pl, "2030-02-03", cap); H2 = L(T + "/data/historique.js")[ck]["v"]
+cher = [a[3] for a in V if a[2] > cap]
+ok("plafond : liste plafonnée acceptée, ventes plus chères ni gardées ni vendues", not o.get("gardes") and len(L(T + "/data/annoncesdata.js")[ck]["ventes"]) == len(dessous) and cher and all("g" not in H2[x] for x in cher) and L(T + "/data/annoncesdata.js")[ck].get("plafond") == cap, (o.get("gardes"), len(cher)))
 shutil.rmtree(T)
 
 # --- signaux des descriptions
@@ -66,6 +76,12 @@ for f in ("temps-trajets.json", "risques-quartiers.json", "commerces.json", "tra
 ok("toutes les villes dans data/irisdata.js", code_C <= set(L(R + "/data/irisdata.js")), code_C - set(L(R + "/data/irisdata.js")))
 lig = open(R + "/data/lignes.js", encoding="utf-8").read(); lig = json.loads(lig[lig.index("=") + 1:lig.rstrip().rindex(";")])["villes"]
 ok("lignes de bus et tram pour toutes les villes (data/lignes.js)", code_C <= {k for k, v in lig.items() if v.get("l")}, code_C - set(lig))
+bi = json.load(open(R + "/tools/bienici.json", encoding="utf-8"))["villes"]
+ok("adresse Bien'ici pour toutes les villes (tools/bienici.json)", villes_json <= set(bi), villes_json - set(bi))
+pl = subprocess.run([sys.executable, R + "/tools/releve_plan.py", "--budget", "90000"], capture_output=True, text=True)
+try: PL = json.loads(pl.stdout)
+except Exception: PL = {}
+ok("plan du relevé : toutes les villes, 6 listes chacune, ventes plafonnées à 120 000 €", PL.get("plafond") == 120000 and {l["ville"] for l in PL.get("listes", [])} == villes_json and len(PL["listes"]) == 6 * len(villes_json) and all("prix-max=120000" in l["pages"][-1] for l in PL["listes"] if l["quoi"] == "ventes"), pl.stderr[-300:])
 dvf = json.load(open(R + "/data/dvf.json", encoding="utf-8"))
 ok("ventes DVF studio pour toutes les villes", code_C <= set(dvf["t"]["studio"]), code_C - set(dvf["t"]["studio"]))
 

@@ -125,6 +125,7 @@ IA_CALC = ("loue", "loyer_mensuel", "loyer_charges_comprises", "fin_bail", "etat
 def ficx_de(f):
     """champs d'une fiche utiles au calcul, inclus dans la page (FICX)"""
     x = {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f}
+    if f.get("k") == "v" and f.get("pub"): x["pub"] = str(f["pub"])[:10]   # date de publication (ancienneté de l'annonce)
     ia = {k: v for k, v in (f.get("ia") or {}).items() if k in IA_CALC}
     if ia: x["ia"] = ia
     return x

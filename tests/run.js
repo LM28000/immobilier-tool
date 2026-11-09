@@ -60,7 +60,7 @@ async function mlRoutes(p) {
       ok(`v2 ${dev} · critères au premier lancement`, await p.evaluate(() => !!document.querySelector('.v2dlg') && +document.getElementById('v2cN').textContent > 0));
       await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(1200);
       ok(`v2 ${dev} · carte de l'Ouest et ses 21 villes`, await p.evaluate(() => !!(window.V2MAP && V2MAP()) && V2MAPN.villes === C.length && document.querySelectorAll('#v2mlist [data-v2city]').length === C.length && C.length === 21));
-      ok(`v2 ${dev} · carte : toutes les couches acceptées (quartiers, annonces, villes, immeubles 3D)`, await p.evaluate(() => { const M = V2MAP(); return ['q-fill', 'q-line', 'q-lab', 'a-dot', 'a-hole', 'a-zone', 'v-dot', 'v-lab', 'b3d', 'p-rail', 'p-rail2', 'p-lig', 'p-dot'].every(l => M.getLayer(l)) && V2MAPN.err.length === 0; }), await p.evaluate(() => V2MAPN.err.join(' | ')));
+      ok(`v2 ${dev} · carte : toutes les couches acceptées (quartiers, annonces, villes, immeubles 3D)`, await p.evaluate(() => { const M = V2MAP(); return ['q-fill', 'q-line', 'q-lab', 'a-dot', 'a-hole', 'a-zone', 'a-clu', 'a-clu-n', 'a-sdot', 'a-shole', 'v-dot', 'v-lab', 'b3d', 'p-rail', 'p-rail2', 'p-lig', 'p-dot'].every(l => M.getLayer(l)) && V2MAPN.err.length === 0; }), await p.evaluate(() => V2MAPN.err.join(' | ')));
       ok(`v2 ${dev} · carte de l'Ouest à plat, sans quartiers ni annonces de loin`, await p.evaluate(() => { const M = V2MAP(); return M.getPitch() === 0 && M.queryRenderedFeatures({layers: ['v-dot']}).length > 10 && !M.queryRenderedFeatures({layers: ['a-dot']}).length; }));
       // zoomer suffit : quartiers et annonces apparaissent, la carte s'incline, la liste passe à la ville au centre
       const rendu = () => p.evaluate(() => { const M = V2MAP(); return {q: M.queryRenderedFeatures({layers: ['q-fill']}).length, a: M.queryRenderedFeatures({layers: ['a-dot']}).length, v: M.queryRenderedFeatures({layers: ['v-dot']}).length, pitch: Math.round(M.getPitch()), liste: document.querySelector('#v2mlist .v2mhead').innerText}; });
@@ -97,6 +97,27 @@ async function mlRoutes(p) {
         const pi1 = await p.evaluate(() => V2MAP().getPitch());
         ok('v2 ordi · carte : glisser pendant l\'inclinaison automatique suit la souris', pi0 > 2 && pi0 < 40 && Math.hypot(sous[0] - 600, sous[1] - 546) < 30 && pi1 > 40, JSON.stringify({pi0, sous, pi1}));
         await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="lemans"]') || V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.3}));
+        // zoom au bouton : il pivote autour du centre de la partie visible (pas sous la liste) ; avant, la ville glissait vers la droite
+        await p.evaluate(() => V2MAP().jumpTo({center: [-1.6795, 48.111], zoom: 11.5, pitch: 0, bearing: 0})); await p.waitForTimeout(600);
+        for (let i = 0; i < 2; i++) { await p.click('.maplibregl-ctrl-zoom-in'); await p.waitForTimeout(900); } await p.waitForTimeout(900);
+        ok('v2 ordi · carte : le zoom au bouton reste centré sur la partie visible', await p.evaluate(() => { const M = V2MAP(), q = M.project([-1.6795, 48.111]), cv = M.getCanvas().getBoundingClientRect(), L = document.getElementById('v2mlist').getBoundingClientRect(); return M.getZoom() > 12.8 && Math.abs(q.x - ((L.right - cv.left) + cv.width) / 2) < 4; }), await p.evaluate(() => JSON.stringify({z: V2MAP().getZoom(), pad: V2MAP().getPadding()})));
+        // plusieurs annonces au même endroit : une pastille avec leur nombre, et la liste au clic
+        const grp = await p.evaluate(() => { const F = V2MAP().getSource('annonces')._data.features, G = {}; F.forEach(f => { const k = f.geometry.coordinates.map(v => v.toFixed(5)).join(','); (G[k] = G[k] || []).push(f); }); const g = Object.values(G).sort((a, b) => b.length - a.length)[0]; return {n: g.length, ll: g[0].geometry.coordinates}; });
+        await p.evaluate(ll => V2MAP().jumpTo({center: ll, zoom: 16.5, pitch: 0}), grp.ll); await p.waitForTimeout(1800);
+        const gpt = await p.evaluate(ll => { const M = V2MAP(), q = M.project(ll), r = M.getCanvas().getBoundingClientRect(); return [q.x + r.left, q.y + r.top]; }, grp.ll);
+        ok('v2 ordi · carte : annonces au même endroit regroupées, avec leur nombre', grp.n >= 2 && await p.evaluate(n => V2MAP().queryRenderedFeatures({layers: ['a-clu']}).some(f => f.properties.point_count === n), grp.n), JSON.stringify(grp));
+        await p.mouse.click(gpt[0], gpt[1]); await p.waitForTimeout(900);
+        ok('v2 ordi · carte : clic sur le groupe, la liste de ses annonces', await p.evaluate(n => document.querySelectorAll('.v2gpop [data-v2open]').length === Math.min(n, 12), grp.n));
+        await p.click('.v2gpop [data-v2open]'); await p.waitForTimeout(1800);
+        ok('v2 ordi · carte : une annonce du groupe s\'ouvre, et reste visible hors du groupe', await p.evaluate(() => !document.getElementById('v2fiche').hidden && !document.querySelector('.v2gpop') && V2MAP().queryRenderedFeatures({layers: ['a-sdot']}).length === 1));
+        await p.evaluate(() => { const b = document.querySelector('[data-v2close]'); if (b) b.click(); }); await p.waitForTimeout(400);
+        // la fiche d'une ville suit la ville au centre
+        await p.evaluate(() => { const r = document.querySelector('#v2mlist [data-v2city=""]'); if (r) r.click(); }); await p.waitForTimeout(1500);
+        await p.evaluate(() => document.querySelector('#v2mlist [data-v2city="angers"]').click()); await p.waitForTimeout(2500);
+        await p.evaluate(() => V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 12})); await p.waitForTimeout(2000);
+        ok('v2 ordi · carte : la fiche d\'une ville suit la ville au centre', await p.evaluate(() => /Le Mans/.test((document.querySelector('#v2fiche .v2ft') || {}).textContent || '')));
+        await p.evaluate(() => { const b = document.querySelector('[data-v2close]'); if (b) b.click(); }); await p.waitForTimeout(400);
+        await p.evaluate(() => V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.3})); await p.waitForTimeout(1200);
         // couleur des quartiers au choix : prix au m² en bleu, avec son échelle ; retour au rendement
         await p.evaluate(() => V2MAP().jumpTo({center: [0.1966, 48.0061], zoom: 11.3})); await p.waitForTimeout(1200);
         ok('v2 ordi · carte : lignes de bus et tram des réseaux (fichier à part), dessinées en ville', await p.evaluate(() => V2MAPN.lignes > 500 && V2MAP().queryRenderedFeatures({layers: ['p-lig']}).length > 5 && /Tram|Bus/.test(V2MAP().queryRenderedFeatures({layers: ['p-lig']})[0].properties.t)), await p.evaluate(() => V2MAPN.lignes));
@@ -136,6 +157,10 @@ async function mlRoutes(p) {
         await p.evaluate(() => document.querySelector('[data-v2av="tableau"]').click()); await p.waitForTimeout(300);
       } else {
         await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(300);
+        await p.evaluate(() => document.querySelector('[data-v2tab="carte"]').click()); await p.waitForTimeout(600);
+        const lh = await p.evaluate(() => document.getElementById('v2mleg').getBoundingClientRect().height);
+        ok('v2 tel · carte : légende sur une ligne (menu des quartiers et échelle seulement)', lh > 20 && lh < 60, String(lh));
+        await p.evaluate(() => document.querySelector('[data-v2tab="annonces"]').click()); await p.waitForTimeout(600);
         ok(`v2 ${dev} · téléphone : pas de nuage, filtres sur une ligne`, await p.evaluate(() => !document.querySelector('[data-v2av]') && getComputedStyle(document.querySelector('#v2p-annonces .v2chips')).flexWrap === 'nowrap'));
       }
       await p.evaluate(() => document.querySelector('[data-v2tab="villes"]').click()); await p.waitForTimeout(400);

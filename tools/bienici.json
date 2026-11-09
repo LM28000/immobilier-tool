@@ -1,0 +1,36 @@
+{
+ "note": "Relevé Bien'ici (tools/releve_plan.py) : adresse de chaque ville sur Bien'ici, types relevés, plafond des ventes = budget commun × marge, tranches de prix pour qu'aucune liste ne dépasse pages_max pages.",
+ "marge": 1.3,
+ "budget_defaut": 90000,
+ "pages_max": 12,
+ "par_page": 25,
+ "cible_par_tranche": 180,
+ "types": {
+  "studio": ["appartement/studio", "surface-min=9&surface-max=45"],
+  "t2": ["appartement/2-pieces", "surface-min=25&surface-max=75"],
+  "t3": ["appartement/3-pieces", "surface-min=40&surface-max=110"]
+ },
+ "villes": {
+  "lemans": "le-mans-72000",
+  "stnazaire": "saint-nazaire-44600",
+  "angers": "angers-49000",
+  "caen": "caen-14000",
+  "orleans": "orleans-45000",
+  "tours": "tours-37000",
+  "poitiers": "poitiers-86000",
+  "laval": "laval-53000",
+  "chartres": "chartres-28000",
+  "rennes": "rennes-35000",
+  "blois": "blois-41000",
+  "cholet": "cholet-49300",
+  "laroche": "la-roche-sur-yon-85000",
+  "evreux": "evreux-27000",
+  "bourges": "bourges-18000",
+  "niort": "niort-79000",
+  "limoges": "limoges-87000",
+  "brest": "brest-29200",
+  "alencon": "alencon-61000",
+  "cherbourg": "cherbourg-en-cotentin-50100",
+  "nantes": "nantes-44000"
+ }
+}

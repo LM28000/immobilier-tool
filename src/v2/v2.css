@@ -48,6 +48,9 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2t img.v2th{width:64px;height:46px;object-fit:cover;border-radius:7px;display:block;background:var(--sunk)}
 .v2new{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:var(--surface);border-radius:5px;padding:1px 5px;margin-left:5px;vertical-align:1px}
 .v2drop{display:inline-block;font-size:10.5px;font-weight:800;color:var(--ok);margin-left:5px}
+/* ancienneté de l'annonce : à partir de 30 jours ou d'une baisse ; appuyée à 60 jours et plus (vendeur peut-être pressé) */
+.v2age{display:inline-block;font:700 10.5px/1.5 var(--f-ui,inherit);color:var(--muted);background:var(--sunk);border-radius:5px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.v2age.long{color:var(--fg);background:color-mix(in srgb,var(--warn) 22%,var(--sunk))}
 .v2star{border:0;background:transparent;font-size:18px;line-height:1;padding:6px;cursor:pointer;color:var(--muted);min-width:34px;min-height:34px}
 .v2star[aria-pressed="true"]{color:var(--warn)}
 .v2rng{position:relative;display:inline-block;width:80px;height:6px;background:var(--sunk);border-radius:999px;vertical-align:middle}
@@ -86,6 +89,7 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2mlq select{font:inherit;font-weight:600;color:var(--fg);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:3px 6px;min-height:28px;cursor:pointer}
 .v2mleg .v2ramp{gap:0}.v2mleg .v2ramp i{width:16px;margin:0;border-radius:0}.v2mleg .v2ramp i:first-of-type{margin-left:5px;border-radius:3px 0 0 3px}.v2mleg .v2ramp i:last-of-type{margin-right:5px;border-radius:0 3px 3px 0}
 .v2mleg i.v2pl{width:11px;height:11px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 1px var(--surface)}
+.v2mleg i.v2pn{width:15px;height:15px;font:800 9px/15px var(--f-ui);font-style:normal;text-align:center;color:#fff;background:var(--muted)}
 .v2mleg i.v2ph{background:radial-gradient(circle,var(--surface) 0 32%,var(--muted) 34%)}
 .v2mleg i.v2ln{width:16px;height:3px;border-radius:2px;vertical-align:3px}
 .v2mleg i.v2rl{height:4px;background:repeating-linear-gradient(90deg,#5b6472 0 5px,var(--surface) 5px 8px);box-shadow:0 0 0 1px #5b6472}
@@ -217,6 +221,19 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2pop .maplibregl-popup-tip{display:none}
 /* la bulle du survol ne capte jamais la souris : sinon, restée sous le curseur quand la carte bouge, elle bloque molette, clic et glisser */
 .v2pop,.v2pop *{pointer-events:none!important}
+/* groupe d'annonces au même endroit : bulle où l'on clique une annonce */
+.v2gpop .maplibregl-popup-content{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgb(0 0 0 / .2);padding:10px 10px 8px;font:13px/1.35 var(--f-ui)}
+.v2gpop .maplibregl-popup-tip{display:none}
+.v2gpop .maplibregl-popup-close-button{font-size:18px;width:28px;height:28px;color:var(--muted)}
+.v2gph{padding:0 26px 6px 2px}.v2gph small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.v2gpl{display:flex;flex-direction:column;gap:2px;max-height:260px;overflow:auto}
+.v2gpl button{display:flex;align-items:center;gap:8px;text-align:left;border:0;background:transparent;color:var(--fg);font:inherit;padding:7px 6px;border-radius:8px;cursor:pointer;min-height:36px}
+.v2gpl button:hover,.v2gpl button:focus-visible{background:var(--sunk)}
+.v2gpl i{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.v2gpl small{color:var(--muted);padding:4px 6px}
+/* repères : de loin, l'icône seule (les noms se chevauchaient) ; le nom en approchant */
+#v2map.v2zlo .v2rep span{display:none}
+#v2map.v2zlo .v2rep{padding:4px}
 @media (max-width:860px){#v2map .maplibregl-ctrl-attrib{font-size:10px}}
 /* dans une fiche de ville, « toutes les annonces » et « voir les quartiers » sont déjà sur la carte à côté */
 #v2fiche [data-annall],#v2fiche [data-zq]{display:none}
