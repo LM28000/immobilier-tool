@@ -49,6 +49,7 @@ VILLES = {
     "alencon": ("Alto", "https://transport.data.gouv.fr/resources/81942/download", 48.43, 0.092),
     "cherbourg": ("Cap Cotentin", D + "2e97c9b3-a59f-42dd-9b9e-a232fa771f21", 49.63, -1.636),
     "nantes": ("Naolib", D + "65bdd7e4-a8e7-4a54-893a-808e71c34d68", 47.2184, -1.5536),
+    "rouen": ("Astuce", D + "c0ebcf01-954a-4d24-b2d8-a00333ffe937", 49.443, 1.099),
 }
 # filtre d'agence par ville (flux régional) : expression sur agency_name
 AGENCE = {"alencon": r"alto|alen[cç]on"}

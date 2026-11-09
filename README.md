@@ -1,6 +1,6 @@
 # Où acheter notre studio ?
 
-Comparateur de 21 villes de l'Ouest pour un studio meublé en location : prix, loyers, quartiers (IRIS), DPE, annonces Bien'ici, financement et rendement.
+Comparateur de 22 villes de l'Ouest pour un studio meublé en location : prix, loyers, quartiers (IRIS), DPE, annonces Bien'ici, financement et rendement.
 
 Page en ligne : https://lm28000.github.io/immobilier-tool/
 
@@ -12,7 +12,7 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `src/js/` | le code, découpé par thème ; les fichiers sont assemblés dans l'ordre de leur numéro |
 | `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour (`annoncesdata.js`), historique des prix (`historique.js`), secteurs Bien'ici → IRIS (`secteurs-nouvelles-villes.json` : toutes les villes sauf Le Mans et Saint-Nazaire, dont la carte est d'origine) |
 | `mcp/` | serveur MCP : brancher l'outil sur une IA (voir `mcp/README.md`) |
-| `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE à jour du calcul de 2027, étage, position), `prix_tendance.py` (prix des appartements depuis 2014, pour la hausse des prix selon la ville) |
+| `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE à jour du calcul de 2027, étage, position), `prix_tendance.py` (prix des appartements depuis 2014, pour la hausse des prix selon la ville), `rail_rfn.py` (grandes lignes de train de la vue dézoomée) |
 | `data/fiches/` | fiches complètes des annonces, une par ville, lues une seule fois par annonce |
 | `tests/run.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright, dont la carte (ce qui est réellement dessiné à chaque zoom), le thème et les réglages communs à deux personnes sur une liste commune simulée ; `tests/vendor/` : MapLibre pour tester la carte 3D sans réseau |
 | `tests/unit.js`, `tests/test_donnees.py` | tests rapides : calcul financier et fiscal, nettoyage des biens partagés, scripts de données, cohérence des villes |
@@ -36,7 +36,7 @@ npm test                  # build + tests du calcul + tests des données + tests
 
 `sync.sh` lance aussi les tests rapides avant chaque publication et n'envoie rien s'ils échouent (notification macOS, ligne « NON PUBLIÉ » dans `sync.log`). GitHub relance tous les tests à chaque envoi (`.github/workflows/tests.yml`).
 
-Les annonces sont relevées chaque jour dans les 21 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 60 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
+Les annonces sont relevées chaque jour dans les 22 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 60 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
 
 ## Annonces privées (Supabase)
 

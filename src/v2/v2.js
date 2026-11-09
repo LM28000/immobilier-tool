@@ -126,7 +126,7 @@
 
  /* ---------- carte (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
     Tout est sur la carte en même temps et le zoom décide de ce qu'on voit, sans bouton :
-    - de loin, l'Ouest à plat : les 21 villes, colorées par leur rendement ;
+    - de loin, l'Ouest à plat : les 22 villes, colorées par leur rendement ;
     - en approchant d'une ville (zoom 9 à 10) : ses quartiers colorés, puis ses annonces ; la carte s'incline et la liste suit
       la ville la plus proche du centre ;
     - de près (zoom 13 et plus, là où les tuiles ont les immeubles) : les immeubles montent en 3D, la carte s'incline davantage.
@@ -140,7 +140,7 @@
  const P1=()=>PH()?35:45, P2=()=>PH()?45:58;   /* inclinaison en ville, puis de près */
  let ML=null, M=null, MREADY=false, LCITY=null, LTRY=false, RMK=[], RCK=null, POP=null, HQ=null, PB=0, MANP=false, QSIG=null, QSK="", QNSET=false, QBR=null, PT=0, DOWN=false, WHL=0;
  window.V2MAPN={villes:0,quartiers:0,annonces:0,qnoms:0,lignes:0,err:[]};
- /* lignes de bus, tram et métro des 21 réseaux (data/lignes.js, tools/gtfs_lignes.py) : chargées à part, une fois, quand la carte s'ouvre */
+ /* lignes de bus, tram et métro des 22 réseaux (data/lignes.js, tools/gtfs_lignes.py) : chargées à part, une fois, quand la carte s'ouvre */
  let LIGF=null, LIGT=false;
  function polyDec(s){const P=[]; let i=0, la=0, lo=0; while(i<s.length){for(const k of [0,1]){let r=0, sh=0, b; do{b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5;}while(b>=32&&i<=s.length); const d=r&1?~(r>>1):r>>1; if(k) lo+=d; else la+=d;} P.push([lo/1e5,la/1e5]);} return P;}
  const TTYP={0:"Tram",1:"Métro",3:"Bus",11:"Trolleybus"};
@@ -150,7 +150,7 @@
   if(typeof LIGNES!=="undefined") return go();
   const sc=document.createElement("script"); sc.src=(/\/dist\//.test(location.pathname)?"../":"")+"data/lignes.js"+(typeof LIGNESV!=="undefined"?"?v="+LIGNESV:""); sc.onload=go; sc.onerror=()=>{LIGT=false;}; document.head.appendChild(sc);}
  /* quartiers colorés par le rendement (par défaut) ou une autre mesure : une seule teinte, du clair au foncé (inversée en sombre),
-    5 classes dont les bornes sont les quintiles des quartiers des 21 villes ; le rouge, l'orange et le vert restent au rendement */
+    5 classes dont les bornes sont les quintiles des quartiers des 22 villes ; le rouge, l'orange et le vert restent au rendement */
  const RAMP=()=>DARK()?["#104281","#1c5cab","#2a78d6","#6da7ec","#b7d3f6"]:["#b7d3f6","#86b6ef","#3987e5","#1c5cab","#0d366b"];
  const POIC=()=>DARK()?["#9085e9","#d55181"]:["#6250d6","#e87ba4"];   /* autour d'un bien : arrêts et gares (violet), commerces du quotidien (rose) */
  const nb=v=>{if(!isFinite(v)||!v) return v; const e=Math.pow(10,Math.floor(Math.log10(Math.abs(v)))-1); return Math.round(v/e)*e;};   /* deux chiffres significatifs */
@@ -240,6 +240,13 @@
     paint:{"line-color":dk?"#8b96a6":"#5b6472","line-width":zf(8,15,1,3),"line-opacity":zf(8,8.6,0,.85)}},lab);
    M.addLayer({id:"p-rail2",type:"line",source:"openmaptiles","source-layer":"transportation",minzoom:11,filter:rail,
     paint:{"line-color":dk?"#0b1020":"#ffffff","line-width":zf(11,15,.6,1.6),"line-dasharray":[2,3],"line-opacity":zf(11,11.6,0,1)}},lab);
+   /* vue dézoomée : les grandes lignes (SNCF Réseau, data/rail.json : grande vitesse, et lignes à 140 km/h et plus) ; le fond de carte
+      n'a pas de voies ferrées sous le zoom 8 ; en approchant, elles laissent la place aux voies du fond de carte */
+   if(!M.getSource("rfn")) M.addSource("rfn",{type:"geojson",data:typeof RAILQ!=="undefined"&&RAILQ&&RAILQ.features?RAILQ:EMPTY});
+   M.addLayer({id:"p-rfn",type:"line",source:"rfn",maxzoom:8.6,filter:["==",["get","v"],"gl"],layout:{"line-join":"round","line-cap":"round"},
+    paint:{"line-color":dk?"#8b96a6":"#5b6472","line-width":zf(4,8,.8,1.6),"line-opacity":zf(8,8.6,.55,0)}},lab);
+   M.addLayer({id:"p-rfn2",type:"line",source:"rfn",maxzoom:8.6,filter:["==",["get","v"],"lgv"],layout:{"line-join":"round","line-cap":"round"},
+    paint:{"line-color":dk?"#b4bdca":"#3f4756","line-width":zf(4,8,1.8,3.2),"line-opacity":zf(8,8.6,.65,0)}},lab);
    M.addLayer({id:"p-dot",type:"circle",source:"openmaptiles","source-layer":"poi",minzoom:14,
     filter:["any",["match",["get","class"],["bus","rail"],true,false],["match",["get","subclass"],["supermarket","convenience","bakery","pharmacy","greengrocer","butcher","deli"],true,false]],
     paint:{"circle-color":["case",["match",["get","class"],["bus","rail"],true,false],PC[0],PC[1]],"circle-radius":zf(14,18,2.6,5.5),
@@ -290,7 +297,7 @@
  function reperes(ck){RCK=ck||null; RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
   Object.entries(REPQ[ck]).forEach(([k,p])=>{const d=REPL[k.replace(/\d+$/,"")]; if(!d||!Array.isArray(p)||!isFinite(p[0])) return; const el=document.createElement("div"); el.className="v2rep"; el.title=d[0];
    el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d[1]}"/></svg><span>${d[0]}</span>`; RMK.push(new ML.Marker({element:el,anchor:"bottom"}).setLngLat([p[1],p[0]]).addTo(M));});}
- /* les quartiers des 21 villes (≈ 900 contours, quelques millisecondes) : refaits seulement quand le calcul a changé */
+ /* les quartiers des 22 villes (≈ 900 contours, quelques millisecondes) : refaits seulement quand le calcul a changé */
  function quartiersGeo(){const Q=[]; let id=0; const k=qmK(), m=QM[k]; QBR=k==="irr"?null:qBreaks(k);
   C.forEach(c=>{const ck=c.k; if(!IR[ck]||typeof IRIS==="undefined"||!IRIS[ck]) return; const ll=irisLL(ck);
    IR[ck].list.forEach(t=>{const g=ll[t.i], geo=g&&geoPoly(g); if(!geo) return; let x=null;
@@ -309,7 +316,7 @@
   return N;}
  function drawMap(fit){if(!M||!MREADY) return; const set=(s,f)=>{const src=M.getSource(s); if(src) src.setData({type:"FeatureCollection",features:f}); V2MAPN[s]=f.length;};
   const VF=C.map((c,i)=>{const x=cx(c), [m]=cityCnt(c.k);
-   return {type:"Feature",id:i,properties:{k:c.k,c:colX(x),op:m?1:.45,r:m?Math.round((PH()?6:8)+Math.sqrt(m)*1.7):5,lab:`${c.name} ${pctS(x.irr)}${m?` · ${m}`:""}`,rk:-m,t:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères`},geometry:{type:"Point",coordinates:[c.lon,c.lat]}};});
+   return {type:"Feature",id:i,properties:{k:c.k,c:colX(x),op:m?1:.45,r:m?Math.round((PH()?6:8)+Math.sqrt(m)*1.7):5,lab:`${c.name} ${pctS(x.irr)}${m?` · ${m}`:""}`,rk:-m,t:`${c.name} · ${pctS(x.irr)} · ${m} annonce${m>1?"s":""} pour nos critères · Paris en train : ${hm(c.paris)}`},geometry:{type:"Point",coordinates:[c.lon,c.lat]}};});
   set("villes",VF); set("vnoms",VF);
   const f0=feed(), qk=qmK()+(DARK()?"d":"c"); if(QSIG!==f0||QSK!==qk){QSIG=f0; QSK=qk; set("quartiers",quartiersGeo());}
   if(!QNSET){QNSET=true; set("qnoms",quartiersNoms());}
@@ -325,7 +332,7 @@
   const AS=AF.filter(f=>f.properties.sel), AO=AF.filter(f=>!f.properties.sel); set("annonces",AO); set("anombres",AO); set("asel",AS); V2MAPN.annonces=AF.length; V2MAPN.groupes=null;
   if(RCK!==(V.city||null)) reperes(V.city);
   if(fit||LCITY!==V.city){LCITY=V.city; MANP=false;
-   if(V.city) fitCity(V.city,fit); else {const b=bbox(C.map(c=>[c.lon,c.lat])); if(b) fitLater(b,{pitch:0,bearing:0,duration:fit?0:800,pad:PH()?{top:60,left:56,right:100,bottom:12}:null});}}   /* téléphone : place des noms des villes à droite des points */
+   if(V.city) fitCity(V.city,fit); else {const b=bbox(C.map(c=>[c.lon,c.lat])); if(b) fitLater(b,{pitch:0,bearing:0,duration:fit?0:800,pad:PH()?{top:56,left:20,right:44,bottom:8}:null});}}   /* téléphone : place des noms des villes à droite des points */
   mapLegend();}
  /* une ville : tous ses quartiers dans le cadre, assez près pour être « en ville » (inclinée) */
  function fitCity(ck,now){const P=[]; if(typeof IRIS!=="undefined"&&IRIS[ck]) Object.values(irisLL(ck)).forEach(g=>{const w=a=>{if(typeof a[0]==="number") P.push([a[1],a[0]]); else a.forEach(w);}; w(g);});
@@ -400,7 +407,7 @@
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0"; el.dataset.big=V.big&&!V.min?"1":"0"; setTimeout(()=>{if(el.firstElementChild&&!el.querySelector(".v2grip")) el.insertAdjacentHTML("afterbegin",GRIP);},0);
   const head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span>`:""}<span>${t}</span><span class="v2sp"></span>${V.city&&(PH()||V.sel!==`c|${V.city}`)?`<button type="button" class="v2btn sm" data-v2cfiche="${V.city}" title="Prix, loyer, calcul, quartiers, habitants…">Fiche</button>`:""}<button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
   if(!V.city){const rows=C.map(c=>({c,x:cx(c),k:cityCnt(c.k)})).sort((a,b)=>(b.x.irr??-99)-(a.x.irr??-99)), tot=rows.reduce((s,r)=>s+r.k[0],0);
-   el.innerHTML=head("L'Ouest",`<p class="v2sub">${tyLabel()} · ${tot} annonce${tot>1?"s":""} pour nos critères, dans ${rows.filter(r=>r.k[0]).length} villes sur ${C.length}.</p>`)+`<div class="v2mrows">${newsHtml(NEWS||bouge())}<h2 class="v2mh2">Les villes · ${V.tous?"médiane de leurs annonces, tous types":`moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type`}</h2>${rows.map(({c,x,k:[m,n]})=>`<div class="v2row${m?"":" v2dim"}" role="button" tabindex="0" data-v2city="${c.k}" style="grid-template-columns:minmax(0,1fr) auto"><b>${esc(c.name)}</b><span class="v2rv" style="color:${colX(x)}">${pctS(x.irr)}</span><span class="v2rs">${x.cost!=null?`${keur(x.cost)} tout compris · ${sgn(x.cf)}/mois`:"trop peu d'annonces pour une médiane"}</span><span class="v2rs" style="text-align:right">${rng({x,z:cz(x)},70)}</span><span class="v2rs v2match">${n?(m?`<b>${m}</b> annonce${m>1?"s":""} sur ${n} pour nos critères`:n>1?`aucune des ${n} annonces pour nos critères`:"son annonce ne correspond pas à nos critères"):"pas d'annonces relevées"}</span></div>`).join("")}</div>`; return;}
+   el.innerHTML=head("L'Ouest",`<p class="v2sub">${tyLabel()} · ${tot} annonce${tot>1?"s":""} pour nos critères, dans ${rows.filter(r=>r.k[0]).length} villes sur ${C.length}.</p>`)+`<div class="v2mrows">${newsHtml(NEWS||bouge())}<h2 class="v2mh2">Les villes · ${V.tous?"médiane de leurs annonces, tous types":`moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type`}</h2>${rows.map(({c,x,k:[m,n]})=>`<div class="v2row${m?"":" v2dim"}" role="button" tabindex="0" data-v2city="${c.k}" style="grid-template-columns:minmax(0,1fr) auto"><b>${esc(c.name)}</b><span class="v2rv" style="color:${colX(x)}">${pctS(x.irr)}</span><span class="v2rs">${x.cost!=null?`${keur(x.cost)} tout compris · ${sgn(x.cf)}/mois`:"trop peu d'annonces pour une médiane"} · Paris ${hm(c.paris)}</span><span class="v2rs" style="text-align:right">${rng({x,z:cz(x)},70)}</span><span class="v2rs v2match">${n?(m?`<b>${m}</b> annonce${m>1?"s":""} sur ${n} pour nos critères`:n>1?`aucune des ${n} annonces pour nos critères`:"son annonce ne correspond pas à nos critères"):"pas d'annonces relevées"}</span></div>`).join("")}</div>`; return;}
   const L0=market(V.city), lim=L0.slice(0,80);
   el.innerHTML=head(esc(cityName(V.city)),`<div class="v2chips v2scroll">${vueChips(V.city)}</div><p class="v2sub">${L0.length} ${typlL()} · triés par rendement ${scn()}</p>`)
    +`<div class="v2mrows">${lim.length?lim.map(o=>`<div class="v2row v2r3${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${V.tous?` <span class="v2ty">${tyOfO(o)}</span>`:""}${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span style="color:var(--warn)">★</span>':""}${ageChip(o)}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(o.t?o.t.name:o.a[1]||"")}${o.f.dpe?" · DPE "+o.f.dpe:""}</span><span style="text-align:right">${rng(o,64)}</span>${cfLine(o)}</div>`).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`}${L0.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L0.length}.</p>`:""}</div>`;}
@@ -420,7 +427,7 @@
   const selq=`<label class="v2mlq"><span>Quartiers</span><select data-v2qm aria-label="Couleur des quartiers">${Object.entries(QM).map(([kk,o])=>`<option value="${kk}"${kk===k?" selected":""}>${o.l}</option>`).join("")}</select></label>`;
   const qleg=k==="irr"?`<span class="v2mlr">${rdt}</span>`:!B?"":m.bin?`<span title="${esc(m.d())}">${sw(R[4])}zone inondable</span>`:`<span class="v2ramp" title="${esc(m.d())}">&lt; ${esc(m.u(B[0]))} ${R.map(sw).join("")} ≥ ${esc(m.u(B[B.length-1]))}</span>`;
   const near=z>=ZQ||PB, ann=near?`<span class="v2mlx">${k==="irr"?"":`<b>Annonces</b> <span>${rdt}</span> · `}<span><i class="v2pl"></i>adresse ou à 100 m près</span><span><i class="v2pl v2ph"></i>position approchée</span><span><i class="v2pl v2pn">2</i>plusieurs au même endroit</span> · contour bleu : nouvelle · orange : shortlist</span>`:"";
-  const aut=z>=8?`<span class="v2mlx"><b>Autour</b> <span><i class="v2ln v2rl"></i>train</span>${z>=10.5?`<span><i class="v2ln v2lg"></i>bus et tram (couleurs du réseau)</span>`:""}${z<10.5?"":z>=14.2?`<span><i class="v2pl" style="background:${PC[0]}"></i>arrêts, gares</span><span><i class="v2pl" style="background:${PC[1]}"></i>commerces</span>`:" · approchez : arrêts et commerces"}</span>`:"";
+  const aut=z>=8?`<span class="v2mlx"><b>Autour</b> <span><i class="v2ln v2rl"></i>train</span>${z>=10.5?`<span><i class="v2ln v2lg"></i>bus et tram (couleurs du réseau)</span>`:""}${z<10.5?"":z>=14.2?`<span><i class="v2pl" style="background:${PC[0]}"></i>arrêts, gares</span><span><i class="v2pl" style="background:${PC[1]}"></i>commerces</span>`:" · approchez : arrêts et commerces"}</span>`:`<span class="v2mlx"><b>Train</b> <span><i class="v2ln v2lgv"></i>grande vitesse</span><span><i class="v2ln v2lr2"></i>140 km/h et plus</span></span>`;
   const html=`${selq}${qleg}${near?"":`<span class="v2mlx">villes : ${k==="irr"?"même couleur":`rendement ${rdt}`} · taille : annonces pour nos critères · approchez : quartiers et annonces</span>`}${ann}${aut}${PB===1?`<span class="v2mlx">approchez : immeubles en 3D</span>`:""}`;
   if(el._h!==html){el._h=html; el.innerHTML=html;}}
  function goCity(ck){V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}

@@ -103,4 +103,7 @@ ok("DPE : chauffage mixte gaz et électricité : pas de coefficient", DA({"dpe":
 x = F.ficx_de({"k": "v", "dpe": "F", "kwh": 440, "surf": 22, "dpeDate": "2023-05-02", "chauf": "électrique", "ges": "B"})
 ok("DPE : la page reçoit la classe à jour et la classe annoncée", x.get("dpe") == "E" and x.get("dpe0") == "F" and x.get("dpeW") == "elec+petit", x)
 
+rl = json.load(open(R + "/data/rail.json", encoding="utf-8"))
+ok("grandes lignes de train (data/rail.json) : grande vitesse et lignes rapides, dans l'Ouest", sum(f["properties"]["v"] == "lgv" for f in rl["features"]) >= 4 and sum(f["properties"]["v"] == "gl" for f in rl["features"]) >= 20 and all(len(f["geometry"]["coordinates"]) >= 2 for f in rl["features"]))
+
 print(f"\n{n - bad}/{n} tests de données réussis"); sys.exit(1 if bad else 0)

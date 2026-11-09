@@ -52,7 +52,7 @@ function loanYears(P,taux,ans,ins,extra){const r=taux/1200, n=ans*12, M=r>0?P*r/
  return {M,Y,months:m};}
 
 /* hausse des prix selon la ville (réglage pxV, oui par défaut) : le réglage « Hausse des prix » est celui d'une ville à la part médiane de logements vides
-   (Insee, 21 villes) ; chaque point de logements vides en plus retire la pente mesurée entre les deux, sur les prix des appartements anciens de 2014-2015
+   (Insee, 22 villes) ; chaque point de logements vides en plus retire la pente mesurée entre les deux, sur les prix des appartements anciens de 2014-2015
    à 2024-2025 (PXTQ : Terralyse d'après DVF, villes à série longue, moindres carrés ; bornée entre −1 et 0, nulle sous 8 villes), un point de moins l'ajoute ;
    écart d'une ville borné à ±2 points par an. Mesuré en novembre 2026 : −0,56 point par an par point de logements vides (−0,50 sur 2014-2019, −0,59 sur
    2019-2025), alors que l'écart de hausse d'une ville sur 2014-2019 ne disait rien de celui de 2019-2025 (corrélation 0,03). */

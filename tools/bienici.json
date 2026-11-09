@@ -6,9 +6,18 @@
  "par_page": 25,
  "cible_par_tranche": 180,
  "types": {
-  "studio": ["appartement/studio", "surface-min=9&surface-max=45"],
-  "t2": ["appartement/2-pieces", "surface-min=25&surface-max=75"],
-  "t3": ["appartement/3-pieces", "surface-min=40&surface-max=110"]
+  "studio": [
+   "appartement/studio",
+   "surface-min=9&surface-max=45"
+  ],
+  "t2": [
+   "appartement/2-pieces",
+   "surface-min=25&surface-max=75"
+  ],
+  "t3": [
+   "appartement/3-pieces",
+   "surface-min=40&surface-max=110"
+  ]
  },
  "villes": {
   "lemans": "le-mans-72000",
@@ -31,6 +40,7 @@
   "brest": "brest-29200",
   "alencon": "alencon-61000",
   "cherbourg": "cherbourg-en-cotentin-50100",
-  "nantes": "nantes-44000"
+  "nantes": "nantes-44000",
+  "rouen": "rouen-76000"
  }
 }
