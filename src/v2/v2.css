@@ -275,3 +275,48 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 /* bouton du thème (clair / sombre) dans l'en-tête ; sur un téléphone étroit, le choix reste dans Budget */
 .v2btn.v2thm{padding:0;width:38px;display:inline-grid;place-items:center;flex-shrink:0}.v2thm svg{width:18px;height:18px;display:block}
 @media (max-width:480px){.v2top .v2thm{display:none}}
+/* listes : le cash-flow sur sa ligne (il était coupé en bout de ligne) ; Nos biens en lignes sur téléphone ; tri sur téléphone */
+.v2row.v2r3 img,.v2row.v2r3 .v2ph{grid-row:span 3}
+.v2row .v2cfl{grid-column:2/-1}
+.v2row .v2cfl b{font-size:inherit;font-family:var(--f-num)}
+.v2brow .v2bmeta,.v2brow .v2bact{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.v2brow .v2bmeta{margin-top:4px}
+.v2brow .v2bact{justify-content:space-between}
+.v2bvo{font-size:12.5px;color:var(--muted);display:inline-flex;gap:4px;align-items:center}
+.v2cmpl{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 4px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+.v2cmpl input{width:22px;height:22px;accent-color:var(--accent);margin:0}
+.v2sortm{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:700}
+.v2sortm select{flex:1;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);padding:0 10px;font:inherit;font-size:16px;font-weight:600}
+.v2news0{padding:8px 14px;margin:0;border-bottom:1px solid var(--line);font-size:12.5px}
+/* fenêtres (hors de #v2app) : un titre, pas une étiquette grise ; champs de texte dans la police de l'app */
+.v2dlg input:not([type]),.v2dlg input[type=text],.v2dlg input[type=url],.v2dlg input[type=search],.v2dlg textarea{font-family:var(--f-ui)}
+.v2dlg .v2h1,.v2dlg h2.v2h1{text-transform:none;letter-spacing:-.01em;color:var(--fg);font-size:21px}
+@media (max-width:860px){
+  /* onglets de la fiche : les cinq sur une ligne, de même largeur (le dernier était caché) */
+  .v2tabs2{flex-wrap:nowrap;overflow:visible;gap:3px}
+  .v2tabs2 button{flex:1 1 0;min-width:0;padding:6px 2px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:10px}
+  /* liste de la carte : en-tête compact, pour que la liste basse montre déjà des lignes */
+  .v2mhead{padding:0 12px 6px;gap:4px}
+  .v2mhead .v2chip{min-height:38px;padding:4px 10px}
+  .v2mrows .v2row{padding-top:7px;padding-bottom:7px}
+  .v2mhead>.v2sub{margin:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .v2grip{height:24px}
+  .v2mhead .v2chips+.v2sub{display:none}   /* « 20 studios · triés par… » : le nombre est déjà sur la pastille */
+  /* légende des quartiers : seulement à partir du zoom des quartiers (sur l'Ouest, elle cachait le haut de la carte) */
+  .v2zw .v2mleg{display:none}
+  .v2mlq select{min-height:40px}
+  /* barre du haut : le choix du type prend la place libre, cases de 44 px */
+  .v2top>.v2sp{display:none}
+  #v2type{flex:1;display:flex;min-width:0}
+  #v2type .v2seg{flex:1}
+  #v2type .v2seg button{flex:1;min-height:44px;padding:6px 4px}
+  /* curseurs (critères, offre) plus faciles à attraper ; champs des fenêtres de 44 px */
+  input[type=range]{height:36px}
+  .v2dlg input:not([type=checkbox]):not([type=radio]):not([type=range]),.v2dlg select{min-height:44px;box-sizing:border-box}
+  /* menu du statut d'un bien, boutons « ? » : plus grands sous le doigt */
+  .stp{min-height:36px;padding:6px 12px 6px 10px}
+  .tipb{position:relative}
+  .tipb::after{content:"";position:absolute;inset:-12px}
+  /* pastilles lisibles */
+  .hb,.v2new,.v2age,.v2fthn{font-size:12px}
+}

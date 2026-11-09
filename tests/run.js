@@ -79,6 +79,9 @@ async function mlRoutes(p) {
         const hs = () => p.evaluate(() => Math.round(document.getElementById('v2mlist').offsetHeight / document.getElementById('v2map').offsetHeight * 100));
         const h0 = await hs(); await p.tap('#v2mlist [data-v2grip]'); await p.waitForTimeout(500); const h1 = await hs(); await p.tap('#v2mlist [data-v2grip]'); await p.waitForTimeout(500); const h2 = await hs();
         ok('v2 tel · liste basse à l\'ouverture, poignée pour l\'agrandir et la réduire', h0 <= 40 && h1 >= 75 && h2 === h0, JSON.stringify({h0, h1, h2}));
+        ok('v2 tel · liste basse d\'une ville : au moins une annonce entière, cash-flow compris', await p.evaluate(() => { const L = document.getElementById('v2mlist').getBoundingClientRect(), r = document.querySelector('#v2mlist .v2row'), c = r && r.querySelector('.v2cfl');
+          return !!c && r.getBoundingClientRect().bottom <= L.bottom + 1 && c.scrollWidth <= c.clientWidth + 1; }), await p.evaluate(() => { const L = document.getElementById('v2mlist').getBoundingClientRect(), r = document.querySelector('#v2mlist .v2row'), c = r && r.querySelector('.v2cfl');
+          return JSON.stringify({liste: [Math.round(L.top), Math.round(L.bottom)], ligne: r && [Math.round(r.getBoundingClientRect().top), Math.round(r.getBoundingClientRect().bottom)], cf: c && [c.scrollWidth, c.clientWidth], vue: [innerWidth, innerHeight], tete: Math.round(document.querySelector('#v2mlist .v2mhead').getBoundingClientRect().height)}); }));
         await p.tap('#v2mlist [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
         ok('v2 tel · fiche de la ville depuis l\'en-tête de la liste', await p.evaluate(() => !document.getElementById('v2fiche').hidden && /Le Mans/.test(document.querySelector('#v2fiche .v2ft').textContent)));
         await p.evaluate(() => document.querySelector('[data-v2close]').click()); await p.waitForTimeout(400);
@@ -177,6 +180,18 @@ async function mlRoutes(p) {
         const at = tgt && await p.evaluate(t => { const M = V2MAP(), c = M.getCenter(); return {d: Math.round(Math.hypot((c.lat - t.la) * 111000, (c.lng - t.lo) * 111000 * Math.cos(t.la * Math.PI / 180))), z: +M.getZoom().toFixed(2), fiche: !document.getElementById('v2fiche').hidden}; }, tgt);
         ok(`v2 ${dev} · annonce ouverte depuis l'onglet Annonces : la carte s'ouvre sur elle, fiche ouverte`, !!at && at.d < 60 && at.z >= 13.8 && at.fiche, JSON.stringify({tgt, at}));
         await p.evaluate(() => document.querySelector('[data-v2tab="annonces"]').click()); await p.waitForTimeout(500); }
+      if (dev === 'tel') {   // fiche : les cinq onglets visibles ; Annonces : cash-flow sur sa ligne, tri ; Nos biens en lignes
+        ok('v2 tel · fiche : les cinq onglets tiennent sur l\'écran, libellés courts', await p.evaluate(() => { const B = [...document.querySelectorAll('#v2fiche .v2tabs2 [data-v2ft]')], W = document.getElementById('v2fiche').clientWidth;
+          return B.length === 5 && B.every(b => b.getBoundingClientRect().right <= W + 1 && b.scrollWidth <= b.clientWidth + 1) && B.map(b => b.textContent).join() === 'Bien,Prix,Calcul,Quartier,Achat'; }), await p.evaluate(() => [...document.querySelectorAll('#v2fiche .v2tabs2 [data-v2ft]')].map(b => b.textContent + ':' + Math.round(b.getBoundingClientRect().right)).join(' ')));
+        ok('v2 tel · Annonces : le cash-flow a sa ligne, entière', await p.evaluate(() => { const C = [...document.querySelectorAll('#v2p-annonces .v2row .v2cfl')]; return C.length > 2 && C.every(c => c.scrollWidth <= c.clientWidth + 1); }));
+        const prix = () => p.evaluate(() => [...document.querySelectorAll('#v2p-annonces .v2row > b')].slice(0, 6).map(b => parseFloat(b.textContent.replace(',', '.'))));
+        await p.evaluate(() => { const s = document.querySelector('#v2p-annonces [data-v2sortm]'); s.value = 'p|1'; s.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(500);
+        const pr = await prix(); ok('v2 tel · Annonces : tri par prix, le moins cher d\'abord', pr.length > 3 && pr.every((v, i) => !i || v >= pr[i - 1]), pr.join());
+        await p.evaluate(() => { const s = document.querySelector('#v2p-annonces [data-v2sortm]'); s.value = 'irr|-1'; s.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(400);
+        await p.evaluate(() => document.querySelector('#v2tabbar [data-v2tab="biens"]').click()); await p.waitForTimeout(500);
+        ok('v2 tel · Nos biens : des lignes, pas un tableau', await p.evaluate(() => !document.querySelector('#v2p-biens table') && document.querySelectorAll('#v2p-biens .v2brow').length === BIENS.filter(b => !isOut(b)).length), await p.evaluate(() => BIENS.length + ' biens, ' + document.querySelectorAll('#v2p-biens .v2brow').length + ' lignes'));
+        await p.evaluate(() => document.querySelector('#v2tabbar [data-v2tab="annonces"]').click()); await p.waitForTimeout(400);
+      }
       if (dev === 'ordi') {
         await p.evaluate(() => { document.querySelector('[data-v2close]').click(); document.querySelector('[data-v2av="nuage"]').click(); }); await p.waitForTimeout(400);
         ok(`v2 ${dev} · nuage des annonces`, await p.evaluate(() => document.querySelectorAll('#v2p-annonces svg [data-v2open]').length > 2));
