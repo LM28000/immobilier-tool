@@ -121,7 +121,7 @@
 
  /* ---------- carte (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
     Tout est sur la carte en même temps et le zoom décide de ce qu'on voit, sans bouton :
-    - de loin, l'Ouest à plat : les 20 villes, colorées par leur rendement ;
+    - de loin, l'Ouest à plat : les 21 villes, colorées par leur rendement ;
     - en approchant d'une ville (zoom 9 à 10) : ses quartiers colorés, puis ses annonces ; la carte s'incline et la liste suit
       la ville la plus proche du centre ;
     - de près (zoom 13 et plus, là où les tuiles ont les immeubles) : les immeubles montent en 3D, la carte s'incline davantage.
@@ -134,9 +134,18 @@
  const ZQ=9, ZA=9.5, ZV=10, Z3=13.2;   /* paliers : quartiers, annonces, ville (inclinée, liste de la ville), immeubles */
  const P1=()=>PH()?35:45, P2=()=>PH()?45:58;   /* inclinaison en ville, puis de près */
  let ML=null, M=null, MREADY=false, LCITY=null, LTRY=false, RMK=[], RCK=null, POP=null, HQ=null, PB=0, MANP=false, QSIG=null, QSK="", QNSET=false, QBR=null, PT=0, DOWN=false, WHL=0;
- window.V2MAPN={villes:0,quartiers:0,annonces:0,qnoms:0,err:[]};
+ window.V2MAPN={villes:0,quartiers:0,annonces:0,qnoms:0,lignes:0,err:[]};
+ /* lignes de bus, tram et métro des 21 réseaux (data/lignes.js, tools/gtfs_lignes.py) : chargées à part, une fois, quand la carte s'ouvre */
+ let LIGF=null, LIGT=false;
+ function polyDec(s){const P=[]; let i=0, la=0, lo=0; while(i<s.length){for(const k of [0,1]){let r=0, sh=0, b; do{b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5;}while(b>=32&&i<=s.length); const d=r&1?~(r>>1):r>>1; if(k) lo+=d; else la+=d;} P.push([lo/1e5,la/1e5]);} return P;}
+ const TTYP={0:"Tram",1:"Métro",3:"Bus",11:"Trolleybus"};
+ function lignesLoad(){if(LIGF||LIGT) return; LIGT=true; const go=()=>{if(typeof LIGNES==="undefined"||!LIGNES.villes) return; const F=[];
+   Object.entries(LIGNES.villes).forEach(([ck,v])=>(v.l||[]).forEach(l=>(l.g||[]).forEach(g=>{const P=polyDec(g); if(P.length>1) F.push({type:"Feature",properties:{c:l.c,tr:l.t===0||l.t===1,f:l.f||0,t:`${TTYP[l.t]||"Ligne"} ${l.n}${l.nm?" · "+l.nm:""} (${v.reseau})`},geometry:{type:"LineString",coordinates:P}});})));
+   LIGF=F; if(M&&MREADY){const s=M.getSource("lignes"); if(s) s.setData({type:"FeatureCollection",features:F}); V2MAPN.lignes=F.length;}};
+  if(typeof LIGNES!=="undefined") return go();
+  const sc=document.createElement("script"); sc.src=(/\/dist\//.test(location.pathname)?"../":"")+"data/lignes.js"+(typeof LIGNESV!=="undefined"?"?v="+LIGNESV:""); sc.onload=go; sc.onerror=()=>{LIGT=false;}; document.head.appendChild(sc);}
  /* quartiers colorés par le rendement (par défaut) ou une autre mesure : une seule teinte, du clair au foncé (inversée en sombre),
-    5 classes dont les bornes sont les quintiles des quartiers des 20 villes ; le rouge, l'orange et le vert restent au rendement */
+    5 classes dont les bornes sont les quintiles des quartiers des 21 villes ; le rouge, l'orange et le vert restent au rendement */
  const RAMP=()=>DARK()?["#104281","#1c5cab","#2a78d6","#6da7ec","#b7d3f6"]:["#b7d3f6","#86b6ef","#3987e5","#1c5cab","#0d366b"];
  const POIC=()=>DARK()?["#9085e9","#d55181"]:["#6250d6","#e87ba4"];   /* autour d'un bien : arrêts et gares (violet), commerces du quotidien (rose) */
  const nb=v=>{if(!isFinite(v)||!v) return v; const e=Math.pow(10,Math.floor(Math.log10(Math.abs(v)))-1); return Math.round(v/e)*e;};   /* deux chiffres significatifs */
@@ -179,7 +188,7 @@
   if(!PH()) M.addControl(new ML.NavigationControl({visualizePitch:true}),"top-right");   /* boutons : zoom, boussole (inclinaison et rotation) */
   /* une couche refusée par MapLibre ne lève pas d'erreur : elle est notée (les tuiles et polices manquantes, elles, sont ignorées) */
   M.on("error",e=>{const er=e&&e.error, m=String(er&&er.message||er||""); if(!(er&&er.status)&&!/fetch|network|load|glyph|tile|abort/i.test(m)&&V2MAPN.err.length<10) V2MAPN.err.push(m);});
-  M.on("load",()=>{mapLayers(); MREADY=true; drawMap(true); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
+  M.on("load",()=>{mapLayers(); MREADY=true; drawMap(true); lignesLoad(); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
   M.on("click",mapClick);
   /* survol (souris seulement) : une fois par image au plus, rien pendant que la carte bouge ; la bulle disparaît dès que la carte bouge ou que la souris sort */
   if(!PH()){let HR=0, HE=null; M.on("mousemove",e=>{HE=e; if(!HR) HR=requestAnimationFrame(()=>{HR=0; mapHover(HE);});}); M.on("mouseout",hoverOff); M.on("movestart",hoverOff);}
@@ -193,6 +202,7 @@
  function mapLayers(){const dk=DARK(), L=M.getStyle().layers, lab=(L.find(l=>l.type==="symbol")||{}).id, below=M.getLayer("building")?"building":lab;
   /* les noms des villes ont leur propre source : sans police (hors ligne), seuls les noms manquent, pas les cercles */
   ["villes","vnoms","quartiers","qnoms","annonces"].forEach(s=>{if(!M.getSource(s)) M.addSource(s,{type:"geojson",data:EMPTY});});
+  if(!M.getSource("lignes")) M.addSource("lignes",{type:"geojson",data:LIGF?{type:"FeatureCollection",features:LIGF}:EMPTY}); V2MAPN.lignes=LIGF?LIGF.length:0;
   const zf=(a,b,v0,v1)=>["interpolate",["linear"],["zoom"],a,v0,b,v1], hov=["boolean",["feature-state","hover"],false];
   /* quartiers : apparaissent en approchant d'une ville, sous les immeubles et les rues (la ville se lit à travers) ;
      de près, la teinte s'éclaircit pour laisser voir les immeubles */
@@ -208,12 +218,21 @@
      "fill-extrusion-height":zf(13,14,0,["coalesce",["get","render_height"],8]),"fill-extrusion-base":zf(13,14,0,["coalesce",["get","render_min_height"],0])}},lab);
    /* autour : lignes de tram et de métro en ville ; de près, arrêts, gares et commerces du quotidien (données du fond de carte) */
    const PC=POIC();
-   M.addLayer({id:"p-tram",type:"line",source:"openmaptiles","source-layer":"transportation",minzoom:11.5,filter:["==",["get","class"],"transit"],
-    paint:{"line-color":PC[0],"line-width":zf(11.5,16,1.2,3.2),"line-opacity":zf(11.5,12.2,0,.75)}},lab);
+   /* trains : voies principales du fond de carte, en traits de chemin de fer, dès que l'on voit la région */
+   const rail=["all",["==",["get","class"],"rail"],["!",["has","service"]],["match",["get","brunnel"],["tunnel"],false,true]];
+   M.addLayer({id:"p-rail",type:"line",source:"openmaptiles","source-layer":"transportation",minzoom:8,filter:rail,layout:{"line-join":"round"},
+    paint:{"line-color":dk?"#8b96a6":"#5b6472","line-width":zf(8,15,1,3),"line-opacity":zf(8,8.6,0,.85)}},lab);
+   M.addLayer({id:"p-rail2",type:"line",source:"openmaptiles","source-layer":"transportation",minzoom:11,filter:rail,
+    paint:{"line-color":dk?"#0b1020":"#ffffff","line-width":zf(11,15,.6,1.6),"line-dasharray":[2,3],"line-opacity":zf(11,11.6,0,1)}},lab);
    M.addLayer({id:"p-dot",type:"circle",source:"openmaptiles","source-layer":"poi",minzoom:14,
     filter:["any",["match",["get","class"],["bus","rail"],true,false],["match",["get","subclass"],["supermarket","convenience","bakery","pharmacy","greengrocer","butcher","deli"],true,false]],
     paint:{"circle-color":["case",["match",["get","class"],["bus","rail"],true,false],PC[0],PC[1]],"circle-radius":zf(14,18,2.6,5.5),
      "circle-opacity":zf(14,14.4,0,1),"circle-stroke-color":dk?"#0b1020":"#ffffff","circle-stroke-width":1,"circle-stroke-opacity":zf(14,14.4,0,1)}});}
+  /* lignes de bus, tram et métro, aux couleurs du réseau ; les plus fréquentées un peu plus épaisses, tram et métro par-dessus */
+  const tr=["boolean",["get","tr"],false], fq=["min",1,["/",["get","f"],150]];
+  M.addLayer({id:"p-lig",type:"line",source:"lignes",minzoom:10.5,layout:{"line-join":"round","line-cap":"round","line-sort-key":["case",tr,2,1]},
+   paint:{"line-color":["get","c"],"line-width":["interpolate",["linear"],["zoom"],10.5,["case",tr,1.8,["+",.5,fq]],16,["case",tr,5.5,["+",1.6,["*",2,fq]]]],
+    "line-opacity":["interpolate",["linear"],["zoom"],10.5,0,11.2,["case",tr,.9,.55]]}},M.getLayer("p-dot")?"p-dot":undefined);   /* sous les arrêts, les annonces et les noms */
   /* noms des quartiers, en approchant (source à part : sans police, seuls les noms manquent) */
   M.addLayer({id:"q-lab",type:"symbol",source:"qnoms",minzoom:12.3,layout:{"text-field":["get","lab"],"text-font":["Noto Sans Regular"],"text-size":zf(12.3,16,11,13.5),"text-max-width":8,"symbol-sort-key":["get","rk"],"text-padding":4},
    paint:{"text-color":dk?"#c9d1dc":"#3b4656","text-halo-color":dk?"#0b1020":"#ffffff","text-halo-width":1.5,"text-opacity":zf(12.3,12.9,0,1)}});
@@ -245,7 +264,7 @@
  function reperes(ck){RCK=ck||null; RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
   Object.entries(REPQ[ck]).forEach(([k,p])=>{const d=REPL[k.replace(/\d+$/,"")]; if(!d||!Array.isArray(p)||!isFinite(p[0])) return; const el=document.createElement("div"); el.className="v2rep"; el.title=d[0];
    el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d[1]}"/></svg><span>${d[0]}</span>`; RMK.push(new ML.Marker({element:el,anchor:"bottom"}).setLngLat([p[1],p[0]]).addTo(M));});}
- /* les quartiers des 20 villes (≈ 800 contours, quelques millisecondes) : refaits seulement quand le calcul a changé */
+ /* les quartiers des 21 villes (≈ 900 contours, quelques millisecondes) : refaits seulement quand le calcul a changé */
  function quartiersGeo(){const Q=[]; let id=0; const k=qmK(), m=QM[k]; QBR=k==="irr"?null:qBreaks(k);
   C.forEach(c=>{const ck=c.k; if(!IR[ck]||typeof IRIS==="undefined"||!IRIS[ck]) return; const ll=irisLL(ck);
    IR[ck].list.forEach(t=>{const g=ll[t.i], geo=g&&geoPoly(g); if(!geo) return; let x=null;
@@ -312,8 +331,8 @@
   const q=at("q-fill"); if(q.length) openSel(`q|${q[0].properties.ck}|${q[0].properties.code}`);}
  function hoverQ(id){if(id===HQ) return; if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){}} HQ=id; if(id!=null){try{M.setFeatureState({source:"quartiers",id},{hover:true});}catch(_){}}}
  function hoverOff(){if(!M) return; if(POP) POP.remove(); hoverQ(null); M.getCanvas().style.cursor="";}
- function mapHover(e){if(!MREADY||!e||M.isMoving()) return; const L=["a-dot","p-dot","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
-  M.getCanvas().style.cursor=h&&h.layer.id!=="p-dot"?"pointer":"";
+ function mapHover(e){if(!MREADY||!e||M.isMoving()) return; const L=["a-dot","p-dot","p-lig","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
+  M.getCanvas().style.cursor=h&&h.layer.id!=="p-dot"&&h.layer.id!=="p-lig"?"pointer":"";
   hoverQ(h&&h.layer.id==="q-fill"&&h.id!=null?h.id:null);
   if(!h){if(POP) POP.remove(); return;}
   if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
@@ -342,7 +361,7 @@
   const selq=`<label class="v2mlq"><span>Quartiers</span><select data-v2qm aria-label="Couleur des quartiers">${Object.entries(QM).map(([kk,o])=>`<option value="${kk}"${kk===k?" selected":""}>${o.l}</option>`).join("")}</select></label>`;
   const qleg=k==="irr"?`<span class="v2mlr">${rdt}</span>`:!B?"":m.bin?`<span title="${esc(m.d())}">${sw(R[4])}zone inondable</span>`:`<span class="v2ramp" title="${esc(m.d())}">&lt; ${esc(m.u(B[0]))} ${R.map(sw).join("")} ≥ ${esc(m.u(B[B.length-1]))}</span>`;
   const near=z>=ZQ||PB, ann=near?`<span class="v2mlx">${k==="irr"?"":`<b>Annonces</b> <span>${rdt}</span> · `}<span><i class="v2pl"></i>adresse ou à 100 m près</span><span><i class="v2pl v2ph"></i>position approchée</span> · contour bleu : nouvelle · orange : shortlist</span>`:"";
-  const aut=z>=11.5?`<span class="v2mlx"><b>Autour</b> <span><i class="v2ln" style="background:${PC[0]}"></i>tram</span>${z>=14.2?`<span><i class="v2pl" style="background:${PC[0]}"></i>arrêts, gares</span><span><i class="v2pl" style="background:${PC[1]}"></i>commerces</span>`:" · approchez : arrêts et commerces"}</span>`:"";
+  const aut=z>=8?`<span class="v2mlx"><b>Autour</b> <span><i class="v2ln v2rl"></i>train</span>${z>=10.5?`<span><i class="v2ln v2lg"></i>bus et tram (couleurs du réseau)</span>`:""}${z<10.5?"":z>=14.2?`<span><i class="v2pl" style="background:${PC[0]}"></i>arrêts, gares</span><span><i class="v2pl" style="background:${PC[1]}"></i>commerces</span>`:" · approchez : arrêts et commerces"}</span>`:"";
   const html=`${selq}${qleg}${near?"":`<span class="v2mlx">villes : ${k==="irr"?"même couleur":`rendement ${rdt}`} · taille : annonces pour nos critères · approchez : quartiers et annonces</span>`}${ann}${aut}${PB===1?`<span class="v2mlx">approchez : immeubles en 3D</span>`:""}`;
   if(el._h!==html){el._h=html; el.innerHTML=html;}}
  function goCity(ck){V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}

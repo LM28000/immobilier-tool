@@ -10,7 +10,7 @@ function dpeBar(d,w){const tot=d.reduce((a,b)=>a+b,0)||1; let x=0, s=`<svg viewB
 /* ---------- risques ---------- */
 const RISK={lemans:[0.4,9.5,15.7],angers:[0.6,5.9,15.4],tours:[0.4,11.2,null],poitiers:[0.3,9.2,null],laval:[-0.1,9.3,12.4],orleans:[-0.05,10.3,14.6],chartres:[-0.1,10.9,12.5],
  stnazaire:[1.1,7.1,13.0],rennes:[1.1,6.5,13.8],blois:[0.4,11.6,17.6],caen:[0.6,8.9,15.0],cholet:[0.1,5.9,12.2],laroche:[0.1,6.6,11.3],
- evreux:[0.6,9.5,null],bourges:[-0.1,11.6,null],niort:[0.3,8.0,null],limoges:[-0.3,9.2,null],brest:[0.3,6.5,null],alencon:[-0.2,10.0,null],cherbourg:[-0.2,5.9,null]};  /* population : évolution annuelle 2017-2023, logements vides 2023 (Insee, comparateur de territoires) ; chômage n.d. pour les villes ajoutées */
+ evreux:[0.6,9.5,null],bourges:[-0.1,11.6,null],niort:[0.3,8.0,null],limoges:[-0.3,9.2,null],brest:[0.3,6.5,null],alencon:[-0.2,10.0,null],cherbourg:[-0.2,5.9,null],nantes:[1.0,6.1,null]};  /* population : évolution annuelle 2017-2023, logements vides 2023 (Insee, comparateur de territoires) ; chômage n.d. pour les villes ajoutées */
 const fr=(v,d=1)=>v.toFixed(d).replace(".",",");
 const rPop=v=>v>=0.5?"p-ok":v>=0?"p-n":"p-warn", rVac=v=>v<7?"p-ok":v<=10?"p-n":"p-warn", rCho=v=>v==null?"p-n":v<13?"p-ok":v<=16?"p-n":"p-warn";
 

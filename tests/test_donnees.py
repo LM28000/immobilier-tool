@@ -64,6 +64,8 @@ for f in ("temps-trajets.json", "risques-quartiers.json", "commerces.json", "tra
     keys = set(json.load(open(R + "/data/" + f, encoding="utf-8")))
     ok(f"toutes les villes dans data/{f}", code_C <= keys, code_C - keys)
 ok("toutes les villes dans data/irisdata.js", code_C <= set(L(R + "/data/irisdata.js")), code_C - set(L(R + "/data/irisdata.js")))
+lig = open(R + "/data/lignes.js", encoding="utf-8").read(); lig = json.loads(lig[lig.index("=") + 1:lig.rstrip().rindex(";")])["villes"]
+ok("lignes de bus et tram pour toutes les villes (data/lignes.js)", code_C <= {k for k, v in lig.items() if v.get("l")}, code_C - set(lig))
 dvf = json.load(open(R + "/data/dvf.json", encoding="utf-8"))
 ok("ventes DVF studio pour toutes les villes", code_C <= set(dvf["t"]["studio"]), code_C - set(dvf["t"]["studio"]))
 

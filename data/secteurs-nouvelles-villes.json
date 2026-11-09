@@ -1152,5 +1152,175 @@
    "1003",
    "1004"
   ]
+ },
+ "nantes": {
+  "Ile de Nantes": [
+   "0601",
+   "0602",
+   "0603",
+   "0604"
+  ],
+  "Centre-ville": [
+   "0101",
+   "0102",
+   "0103",
+   "0104",
+   "0105",
+   "0106"
+  ],
+  "Canclaux - Mellinet": [
+   "0101",
+   "0104",
+   "0305",
+   "0306",
+   "0307",
+   "0308",
+   "0309",
+   "0311",
+   "0312",
+   "0401",
+   "0402"
+  ],
+  "Le Béaut": [
+   "0808"
+  ],
+  "Le Pont du Cens": [
+   "0801",
+   "0807",
+   "0808"
+  ],
+  "Malakoff": [
+   "0506",
+   "0507"
+  ],
+  "Hauts-Pavés - Saint-Pasquier - Saint-Félix - Université": [
+   "0403",
+   "0404",
+   "0405",
+   "0406",
+   "0407",
+   "0408",
+   "0409",
+   "0410"
+  ],
+  "Saint-Donatien - Tortière": [
+   "0106",
+   "0508",
+   "0509",
+   "0510",
+   "0511",
+   "0901",
+   "0902",
+   "0903"
+  ],
+  "Cité des Congrès - Champs de Mars": [
+   "0102",
+   "0108",
+   "0109"
+  ],
+  "Les Bruyères - La Géraudière": [
+   "0804",
+   "0805"
+  ],
+  "Sainte-Thérèse - Rond-Point de Vannes": [
+   "0701",
+   "0702",
+   "0703",
+   "0705"
+  ],
+  "Nantes Erdre - La Beaujoire - Saint-Joseph de Porterie": [
+   "0906",
+   "0909",
+   "0910",
+   "1012"
+  ],
+  "Monselet": [
+   "0401",
+   "0402",
+   "0403",
+   "0405",
+   "0406"
+  ],
+  "Doulon - Bottières - Toutes Aides - Le Grand Blottereau": [
+   "0502",
+   "0503",
+   "0504",
+   "1001",
+   "1002",
+   "1010",
+   "1011"
+  ],
+  "La Jonelière - Le Petit Port": [
+   "0809"
+  ],
+  "Saint-Clément - Jardin des plantes - Caserne Lamoricière": [
+   "0106",
+   "0501",
+   "0502",
+   "0504",
+   "0505",
+   "0508",
+   "0510"
+  ],
+  "Longchamp - Rond-Point de Rennes - Perverie - Américains": [
+   "0410",
+   "0703",
+   "0705",
+   "0706",
+   "0707",
+   "0708",
+   "0709",
+   "0710"
+  ],
+  "Eraudière - La Marrière - Rond-point de Paris": [
+   "0901",
+   "0903",
+   "0904",
+   "0905",
+   "1003",
+   "1005",
+   "1006",
+   "1007",
+   "1008",
+   "1009"
+  ],
+  "Chantenay - Sainte-Anne": [
+   "0201",
+   "0202",
+   "0203",
+   "0204",
+   "0205",
+   "0206",
+   "0207",
+   "0208",
+   "0209"
+  ],
+  "La Boissière - La Petite Censive": [
+   "0806",
+   "0807"
+  ],
+  "Zola - Dervallières": [
+   "0301",
+   "0302",
+   "0303",
+   "0304",
+   "0306"
+  ],
+  "Sèvres - Gilarderie - Lion d'Or": [
+   "1104",
+   "1105"
+  ],
+  "Saint-Jacques - Pirmil": [
+   "1101",
+   "1102",
+   "1103"
+  ],
+  "Le Chêne des Anglais": [
+   "0802",
+   "0803"
+  ],
+  "Le Bout des Pavés - Fantaisie": [
+   "0802"
+  ]
  }
 }
