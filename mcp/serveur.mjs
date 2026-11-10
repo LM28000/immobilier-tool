@@ -28,7 +28,7 @@ async function getPage() {
   await page.goto("file://" + PAGE); await page.waitForFunction(() => typeof calcBien === "function" && typeof IR === "object", null, {timeout: 20000});
   loadedAt = mt;
   // registre des copropriétés (data/copro/<ville>.js, fichiers locaux) : toutes les villes, une fois
-  await page.evaluate(async () => { const L = [typeof coproData === "function" && coproData, typeof concData === "function" && concData].filter(Boolean); Object.keys(ADS).forEach(ck => L.forEach(f => f(ck)));
+  await page.evaluate(async () => { const L = [typeof coproData === "function" && coproData, typeof concData === "function" && concData, typeof brVoies === "function" && brVoies].filter(Boolean); Object.keys(ADS).forEach(ck => L.forEach(f => f(ck)));
     for (let i = 0; i < 200 && Object.keys(ADS).some(ck => L.some(f => f(ck) === undefined)); i++) await new Promise(r => setTimeout(r, 50)); }).catch(() => {});
   const hyp = lireHyp(); if (Object.keys(hyp).length) await page.evaluate(h => { Object.assign(H, h); if (typeof assocFromLegacy === "function") assocFromLegacy(h); if (h.type) setType(h.type, true); CALCC.clear(); VC.clear(); Object.keys(TGC).forEach(k => delete TGC[k]); }, hyp);
   log("page chargée", new Date(mt).toISOString());
@@ -91,7 +91,7 @@ server.registerTool("fiche_annonce", {title: "Fiche complète d'une annonce", de
     try { const res = __resume(t.ck, t.a), vb = venteBien(t.ck, t.a), lv = priceLevels(vb), F = ficheOf(t.ck, t.a[3]) || {}, h = hEntry(t.ck, t.a[3]) || {};
       const att = [...ficheAttn(t.a[3]).map(z => z[1]), ...(typeof coproAttn === "function" ? coproAttn(vb).map(z => z[1]) : []), ...(typeof concAttn === "function" ? concAttn(vb, null).map(z => z[1]) : []), ...(typeof bruitAttn === "function" ? bruitAttn(vb, calcBien(vb).t).map(z => z[1]) : [])];
       const br = (() => { if (typeof bruitOf !== "function") return null; const B = bruitOf(vb, calcBien(vb).t), k = ["voie_rapide", "grand_axe", "voie_ferree"];
-        return {mesure: B.adr ? "à l'adresse" : "au centre du quartier", ...Object.fromEntries(k.map((n, i) => [n + "_m", B.v && B.v[i] ? B.v[i][0] : null])), zone_bruit_aeroport: B.peb ? {zone: B.peb.zone, aeroport: B.peb.nom} : null}; })();
+        return {mesure: B.adr ? "à l'adresse" : B.how === "position" ? `autour de la position de l'annonce (à ${B.r} m près)` : "position trop approximative : routes et train non mesurés, aéroports seulement", quartier_expose_pct: typeof bruitExpo === "function" ? bruitExpo(calcBien(vb).t) : null, ...Object.fromEntries(k.map((n, i) => [n + "_m", B.v && B.v[i] ? B.v[i][0] : null])), zone_bruit_aeroport: B.peb ? {zone: B.peb.zone, aeroport: B.peb.nom} : null}; })();
       const cn = (() => { const J = typeof concData === "function" ? concData(t.ck) : null, pt = J ? concPoint(vb, calcBien(vb).t) : null; if (!J || !pt) return null; const A = concAround(J, pt.lat, pt.lon);
         return {mesure: pt.how, residences_etudiantes_1km: A.R.slice(0, 8).map(([d, x]) => ({nom: x[2], distance_m: Math.round(d), logements: x[3], source: x[4] === "crous" ? "Crous" : x[4] === "osm" ? "privée (OpenStreetMap)" : "permis de construire", etat: x[4] === "pc" ? CNET[x[5]] : "en service"})),
           logements_neufs_500m: {autorises_depuis: CN_DEPUIS, logements: A.s.n, studios: A.s.st, autorises_pas_commences: (A.s.e[2] || [0])[0], en_chantier: (A.s.e[5] || [0])[0], termines: (A.s.e[6] || [0])[0],

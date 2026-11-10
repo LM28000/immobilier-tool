@@ -40,12 +40,12 @@ const frD=s=>{if(!s) return ""; const [y,m,d]=s.split("-"); return `${+d} ${MOIS
 const MOISC=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
 function ficheNone(suf){return `<p class="sub" style="margin:0">La fiche complète de cette annonce n'a pas encore été relevée : elle le sera lors d'un prochain relevé. <a href="${esc(VTURL+suf)}" target="_blank" rel="noopener">Voir sur Bien'ici ↗</a></p>`;}
 function ficheHtml(ck,suf,f){const loc=f.k==="l", ext=[f.balc&&`${f.balc} balcon${f.balc>1?"s":""}`,f.terr&&`${f.terr} terrasse${f.terr>1?"s":""}`,f.park&&`${f.park} parking${f.park>1?"s":""}`,f.cave&&`${f.cave} cave${f.cave>1?"s":""}`].filter(Boolean);
- const cop=copAn(f), rows=[
+ const fx=ficx(suf)||{}, cop=copAn(f)||copAn(fx), copD=!copAn(f)&&!!fx.copD, rows=[   /* charges : Bien'ici, sinon lues dans la description (tools/fiches.py cop_desc) ou chez un doublon */
   f.surf&&["Surface",`<b class="mono">${fr(f.surf,f.surf%1?2:0)} m²</b>${f.pcs?` · ${f.pcs} pièce${f.pcs>1?"s":""}`:""}`],
   (f.et!=null||f.asc!=null)&&["Étage",etTxt(f)||"—"],
   (f.an||f.chauf)&&["Immeuble",[f.an&&`construit en ${f.an}`,f.chauf&&esc(f.chauf)].filter(Boolean).join(" · ")],
   f.dpe&&(x=>["DPE",`<b>${x?x.dpe:f.dpe}</b>${x?` <span class="v2sub">(annoncé ${f.dpe})</span>`:""}${f.kwh?` · ${f.kwh} kWh/m²/an`:""}${f.ges?` · GES ${f.ges}`:""}`,(f.dpeDate?`diagnostic du ${frD(f.dpeDate)}`:"")+(x?(f.dpeDate?" · ":"")+dpeNote(x):"")])(dpeAJ(suf)),
-  !loc&&(cop||f.lots||f.proc)&&["Copropriété",`${f.lots?`${f.lots} lots`:""}${cop?`${f.lots?" · ":""}<b class="mono">${eur(cop)}</b> de charges par an (${eur(cop/12)}/mois)`:""}`,`${cop?`${Math.round(PART_PROPRIO*100)} % à votre charge dans le calcul (${eur(cop/12*PART_PROPRIO)}/mois), le reste est payé par le locataire`:"charges non indiquées"}${f.proc?" · <b style=\"color:var(--bad)\">copropriété en procédure</b>":""}`],
+  !loc&&(cop||f.lots||f.proc)&&["Copropriété",`${f.lots?`${f.lots} lots`:""}${cop?`${f.lots?" · ":""}<b class="mono">${eur(cop)}</b> de charges par an (${eur(cop/12)}/mois)${copD?" · lues dans la description":""}`:""}`,`${cop?`${Math.round(PART_PROPRIO*100)} % à votre charge dans le calcul (${eur(cop/12*PART_PROPRIO)}/mois), le reste est payé par le locataire`:"charges non indiquées"}${f.proc?" · <b style=\"color:var(--bad)\">copropriété en procédure</b>":""}`],
   ext.length&&["Extérieurs et annexes",ext.join(" · ")],
   loc&&["Location",`${f.meu===true?"meublée":f.meu===false?"non meublée":"meublé ?"}${f.coloc?" · <b>chambre en colocation</b>":""}`,f.coloc?"écartée des loyers de comparaison":""],
   loc&&(f.chg||f.dep||f.hono)&&["Conditions",[f.chg&&`${eur(f.chg)} de charges/mois`,f.dep&&`dépôt ${eur(f.dep)}`,f.hono&&`honoraires ${eur(f.hono)}`].filter(Boolean).join(" · ")],
@@ -57,7 +57,7 @@ function ficheHtml(ck,suf,f){const loc=f.k==="l", ext=[f.balc&&`${f.balc} balcon
  const ph=(f.ph||[]).map((p,i)=>`<a href="${esc(photoFull(suf,p))}" target="_blank" rel="noopener" aria-label="Photo ${i+1} sur ${f.ph.length}, en grand"><img src="${esc(photoUrl(suf,p,360,270))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>`).join("");
  return `${ph?`<div class="fgal">${ph}</div>`:""}${desc}${rows.length?fRows(rows):""}${iaHtml(f,ck)}<p class="sub" style="margin:6px 0 0">Fiche relevée sur Bien'ici le ${frD(f.lu)}.</p>`;}
 function ficheSum(f,suf){if(f===undefined) return "chargement…"; if(!f) return "pas encore relevée"; const n=(f.ph||[]).length, x=suf?dpeAJ(suf):null;
- return [f.d&&"description",n&&`${n} photo${n>1?"s":""}`,f.dpe&&`DPE ${x?x.dpe+" (annoncé "+f.dpe+")":f.dpe}`,copAn(f)&&`${eur(copAn(f)/12)}/mois de copro`,f.coloc&&"colocation"].filter(Boolean).join(" · ");}
+ return [f.d&&"description",n&&`${n} photo${n>1?"s":""}`,f.dpe&&`DPE ${x?x.dpe+" (annoncé "+f.dpe+")":f.dpe}`,(copAn(f)||copAn(ficx(suf)||{}))&&`${eur((copAn(f)||copAn(ficx(suf)))/12)}/mois de copro`,f.coloc&&"colocation"].filter(Boolean).join(" · ");}
 /* rubrique « L'annonce » des fiches (ordinateur et téléphone) */
 function ficheSec(b){const s=b.kind==="v"?b.suf:(typeof bienSuf==="function"?bienSuf(b):null); if(!s) return ["",""]; const f=ficheOf(b.ville,s);
  return [ficheSum(f,s),f===undefined?`<div data-fwait="${esc(b.ville)}|${esc(s)}"><p class="sub" style="margin:0">Chargement de la description et des photos…</p></div>`:f?ficheHtml(b.ville,s,f):ficheNone(s)];}

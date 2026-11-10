@@ -10,18 +10,12 @@
        [note, supermarché, supérette, boulangerie, pharmacie, cafés-restos-bars à 500 m, laverie, salle de sport] (9999 : rien à 1,2 km)
        note /10 : supermarché ou supérette ×3, boulangerie ×1,5, pharmacie ×1, laverie ×1, salle de sport ×0,5 (plein à 250 m, zéro à 1,2 km)
        et cafés-restos-bars ×2 (plein à 10)                                              → data/commerces.json
-   - grands axes et voies ferrées (tous les quartiers) : OpenStreetMap (Overpass), distance du centre du quartier au tracé le plus proche,
-       [voie rapide (autoroute, voie express : motorway, trunk et bretelles), grand axe (primary), voie ferrée (railway=rail, hors voies de service)]
-       chacun [mètres, nom ou numéro] ou null au-delà de 3 km                         → data/bruit-quartiers.json */
+   Grands axes et voies ferrées (data/bruit-quartiers.json) : tools/bruit_expo.py, avec la part de chaque quartier exposée au bruit. */
 async function collecteQuartiers(VILLES,QUOI){QUOI=QUOI||["trajets","risques","commerces"];
  const hv=(a,b,c,d)=>{const R=6371000,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x));};
  const cen=ring=>{let la=0,lo=0;ring.forEach(p=>{la+=p[0];lo+=p[1];});return [la/ring.length,lo/ring.length];};
  const J=async(u,n=3)=>{for(let k=0;k<n;k++){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),60000);const r=await fetch(u,{signal:ac.signal});clearTimeout(tm);if(r.ok) return await r.json();}catch(e){} await new Promise(r=>setTimeout(r,3000*(k+1)));} return null;};
- const out={trajets:{},risques:{},commerces:{},bruit:{}};
- /* distance (m) d'un point à une ligne [{lat,lon}, …], en projection locale */
- const segD=(la,lo,G)=>{const kx=111320*Math.cos(la*Math.PI/180), ky=110540; let m=1e12;
-  for(let i=0;i+1<G.length;i++){const ax=(G[i].lon-lo)*kx, ay=(G[i].lat-la)*ky, bx=(G[i+1].lon-lo)*kx, by=(G[i+1].lat-la)*ky, dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy, t=L?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L)):0, x=ax+t*dx, y=ay+t*dy; m=Math.min(m,x*x+y*y);}
-  return Math.sqrt(m);};
+ const out={trajets:{},risques:{},commerces:{}};
  for(const ck of VILLES){const ll=irisLL(ck), Q=IR[ck].list.map(t=>{const r=ll[t.i]&&ll[t.i].length?ll[t.i].reduce((a,b)=>b.length>a.length?b:a):null; return r?{t,p:cen(r)}:null;}).filter(Boolean);
   if(QUOI.includes("trajets")&&REPQ[ck]){const M=Object.entries(REPQ[ck]), o={marks:M.map(m=>m[0]),foot:{},bike:{},dist:{}};
    for(const [mode,key] of [["foot","foot"],["bike","bike"]]) for(let i=0;i<Q.length;i+=40){const S=Q.slice(i,i+40), pts=[...S.map(q=>q.p),...M.map(m=>m[1])].map(([la,lo])=>lo.toFixed(5)+","+la.toFixed(5)).join(";");
@@ -42,10 +36,5 @@ async function collecteQuartiers(VILLES,QUOI){QUOI=QUOI||["trajets","risques","c
     H.forEach(({t,p:[la,lo]})=>{const d=cat.map(L=>{const m=L.length?Math.min(...L.map(e=>hv(la,lo,e.la,e.lo))):1e9; return m>1200?9999:Math.round(m);}), n=cat[4].filter(e=>hv(la,lo,e.la,e.lo)<=500).length;
      const s=3*sc(Math.min(d[0],d[1]))+1.5*sc(d[2])+sc(d[3])+sc(d[5])+0.5*sc(d[6])+2*Math.min(1,n/10); o[t.code]=[Math.round(s/9*100)/10,d[0],d[1],d[2],d[3],n,d[5],d[6]];});
     out.commerces[ck]=o;}}
-  if(QUOI.includes("bruit")&&Q.length){const la0=Math.min(...Q.map(q=>q.p[0]))-0.03, la1=Math.max(...Q.map(q=>q.p[0]))+0.03, lo0=Math.min(...Q.map(q=>q.p[1]))-0.045, lo1=Math.max(...Q.map(q=>q.p[1]))+0.045, bb=[la0,lo0,la1,lo1].map(v=>v.toFixed(4)).join(",");
-   const q=`[out:json][timeout:180];(way["highway"~"^(motorway|trunk)(_link)?$"](${bb});way["highway"~"^primary(_link)?$"](${bb});way["railway"="rail"][!"service"](${bb}););out tags geom;`;
-   let j=null; for(const u of ["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"]){j=await J(u+"?data="+encodeURIComponent(q),2); if(j) break;}
-   if(j){const W=(j.elements||[]).filter(e=>e.geometry&&e.geometry.length>1).map(e=>{const h=(e.tags||{}).highway||""; const T=e.tags||{}; return {c:/^(motorway|trunk)/.test(h)?0:h?1:2,n:String(h?T.ref||T.name||"":T.name||"").slice(0,40),g:e.geometry};});   /* voie ferrée : son nom, pas le numéro de ligne SNCF */
-    const o={}; Q.forEach(({t,p:[la,lo]})=>{const b=[[1e12,""],[1e12,""],[1e12,""]]; W.forEach(w=>{const d=segD(la,lo,w.g); if(d<b[w.c][0]) b[w.c]=[d,w.n];}); o[t.code]=b.map(([d,n])=>d<=3000?[Math.round(d),n]:null);});
-    out.bruit[ck]=o;}}}
+}
  return out;}

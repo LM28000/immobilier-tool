@@ -163,6 +163,7 @@
   etu:{l:"Étudiants",f:t=>{const h=habOf(t); return h?h.scol:null;},u:v=>`${fr(v,0)} % d'étudiants`,d:()=>"part des habitants en études (18-24 ans)"},
   rev:{l:"Revenus",f:t=>{const h=habOf(t); return h&&h.med?h.med:null;},u:v=>`${nf(v)} €/an`,d:()=>"revenu médian des habitants"},
   dpe:{l:"DPE F ou G",f:t=>t.dpe&&t.dpe.reduce((a,b)=>a+b,0)>=5?fgPct(t.dpe):null,u:v=>`${fr(v,0)} % en F-G`,d:()=>"petits appartements classés F ou G"},
+  bruit:{l:"Bruit",f:t=>{const v=bruitExpo(t); return v==null?null:v;},u:v=>`${fr(v,0)} % exposé au bruit`,d:()=>"part du quartier près d'une voie rapide, d'un grand axe, d'une voie ferrée ou en zone de bruit d'un aéroport"},
   inond:{l:"Zone inondable",f:t=>{const r=risqOf(t); return r&&r.t?1:0;},u:v=>v?"zone inondable":"hors zone inondable",d:()=>"centre du quartier en zone inondable (TRI)",bin:true}};
  const qmK=()=>QM[V.qm]?V.qm:"irr";
  function qBreaks(k){const m=QM[k]; if(m.bin) return [.5]; const A=[];
@@ -292,8 +293,9 @@
   dot("a-sdot","asel",["boolean",true]);   /* l'annonce ouverte, au-dessus des groupes */
   /* villes : de loin seulement, elles s'effacent quand les quartiers arrivent */
   const vo=zf(ZQ-.4,ZQ+.5,["get","op"],0);
-  M.addLayer({id:"v-dot",type:"circle",source:"villes",maxzoom:ZV,paint:{"circle-radius":["get","r"],"circle-color":["get","c"],"circle-opacity":vo,"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":vo}});
-  M.addLayer({id:"v-lab",type:"symbol",source:"vnoms",maxzoom:ZV,layout:{"text-field":["get","lab"],"text-font":["Noto Sans Bold"],"text-size":12.5,"text-variable-anchor":["bottom","top","right","left"],"text-radial-offset":1.15,"symbol-sort-key":["get","rk"],"text-padding":2},
+  /* de très loin (zoom 4 à 6,5), les ronds et les noms rapetissent pour ne pas se chevaucher ; les noms qui se gênent encore s'effacent (les villes qui ont le plus d'annonces d'abord) */
+  M.addLayer({id:"v-dot",type:"circle",source:"villes",maxzoom:ZV,paint:{"circle-radius":["interpolate",["linear"],["zoom"],4,["*",.35,["get","r"]],5,["*",.55,["get","r"]],6.5,["get","r"]],"circle-color":["get","c"],"circle-opacity":vo,"circle-stroke-color":"#ffffff","circle-stroke-width":zf(4,6.5,1,2),"circle-stroke-opacity":vo}});
+  M.addLayer({id:"v-lab",type:"symbol",source:"vnoms",maxzoom:ZV,layout:{"text-field":["get","lab"],"text-font":["Noto Sans Bold"],"text-size":zf(4,6.5,10,12.5),"text-variable-anchor":["bottom","top","right","left"],"text-radial-offset":1.15,"symbol-sort-key":["get","rk"],"text-padding":2},
    paint:{"text-color":dk?"#e5e9f0":"#18202c","text-halo-color":dk?"#0b1020":"#ffffff","text-halo-width":1.7,"text-opacity":vo}});}
  /* contour d'un quartier (latitude, longitude comme Leaflet) en GeoJSON (longitude, latitude), anneaux fermés */
  function geoPoly(g){const dep=a=>Array.isArray(a)?1+dep(a[0]):0, ring=r=>{const o=r.filter(p=>isFinite(p[0])&&isFinite(p[1])).map(p=>[p[1],p[0]]); if(o.length&&(o[0][0]!==o[o.length-1][0]||o[0][1]!==o[o.length-1][1])) o.push(o[0]); return o;};

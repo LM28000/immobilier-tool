@@ -35,11 +35,8 @@ def rows():
         if isinstance(v, dict):
             for b in [v] + list((v.get("t") or {}).values()):
                 ids |= {str(a[3]).split("/")[-1] for a in b.get("ventes", [])} | {str(a[4]).split("/")[-1] for a in b.get("ads", [])}
-    sys.path.insert(0, os.path.join(R, "tools")); from fiches import ficx_de
-    from fiches import doublons
-    ficx = {i: ficx_de(f) for c in fich.values() for i, f in c.items() if i in ids}
-    for j, i in doublons(fich, ids).items(): ficx.setdefault(j, {})["dup"] = i
-    out = [("ads", ads), ("hist", hist), ("ficx", {i: v for i, v in ficx.items() if v})]
+    sys.path.insert(0, os.path.join(R, "tools")); from fiches import ficx_tous
+    out = [("ads", ads), ("hist", hist), ("ficx", ficx_tous(fich, ids))]
     out += [("fiches-" + ck, c) for ck, c in fich.items()]
     return out
 

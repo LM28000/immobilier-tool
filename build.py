@@ -43,7 +43,7 @@ names = [os.path.basename(p) for p in js]
 before = [p for p, n in zip(js, names) if n < "02"]   # villes, calcul, fiche
 after = [p for p, n in zip(js, names) if n >= "02"]   # carte et la suite
 DATA = [("DVFALL", "dvf.json"), ("TTQ", "temps-trajets.json"), ("RISQ", "risques-quartiers.json"), ("TCQ", "transports.json"), ("LOYQ", "loyers-etat.json"),
-        ("POIQ", "commerces.json"), ("TERQ", "territoire.json"), ("HABQ", "habitants.json"), ("REPQ", "reperes.json"), ("PXTQ", "prix-tendance.json"), ("RAILQ", "rail.json"), ("ETUQ", "etudiants.json"), ("BRUITQ", "bruit-quartiers.json"), ("PEBQ", "peb.json")]
+        ("POIQ", "commerces.json"), ("TERQ", "territoire.json"), ("HABQ", "habitants.json"), ("REPQ", "reperes.json"), ("PXTQ", "prix-tendance.json"), ("RAILQ", "rail.json"), ("ETUQ", "etudiants.json"), ("BRUITQ", "bruit-quartiers.json"), ("BRUITX", "bruit-expo.json"), ("PEBQ", "peb.json")]
 
 ads_txt, ads = jsobj("data/annoncesdata.js", "ADS")
 hist_txt, hist = jsobj("data/historique.js", "HIST")
@@ -57,11 +57,8 @@ for v in ads.values():
     if isinstance(v, dict):
         for b in [v] + list((v.get("t") or {}).values()):
             ids |= {str(a[3]).split("/")[-1] for a in b.get("ventes", [])} | {str(a[4]).split("/")[-1] for a in b.get("ads", [])}
-sys.path.insert(0, P("tools")); from fiches import ficx_de
-from fiches import doublons
-FICX = {i: ficx_de(f) for c in FICH.values() for i, f in c.items() if i in ids}
-for j, i in doublons(FICH, ids).items(): FICX.setdefault(j, {})["dup"] = i   # même bien chez une autre agence
-FICX = {i: v for i, v in FICX.items() if v}
+sys.path.insert(0, P("tools")); from fiches import ficx_tous
+FICX = ficx_tous(FICH, ids)   # champs utiles au calcul ; doublons (même bien chez une autre agence) marqués et complétés l'un par l'autre
 dumps = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
 import math
 def expt():
@@ -114,6 +111,7 @@ def code(public):
         *["const %s=%s;" % (n, jdata("data/" + f)) for n, f in DATA],
         "const LIGNESV=%s;" % json.dumps(hashlib.md5(open(P("data/lignes.js"), "rb").read()).hexdigest()[:10] if os.path.exists(P("data/lignes.js")) else ""),   # lignes de bus et tram : fichier à part, chargé par la carte
         "const COPROV=%s;" % json.dumps(hashlib.md5(b"".join(open(p, "rb").read() for p in sorted(glob.glob(P("data/copro/*.js"))))).hexdigest()[:10] if glob.glob(P("data/copro/*.js")) else ""),   # registre des copropriétés : un fichier par ville, chargé avec la fiche
+        "const BRUITVV=%s;" % json.dumps(hashlib.md5(b"".join(open(p, "rb").read() for p in sorted(glob.glob(P("data/bruit/*.js"))))).hexdigest()[:10] if glob.glob(P("data/bruit/*.js")) else ""),   # voies bruyantes : un fichier par ville, chargé avec la fiche
         "const CONCV=%s;" % json.dumps(hashlib.md5(b"".join(open(p, "rb").read() for p in sorted(glob.glob(P("data/conc/*.js"))))).hexdigest()[:10] if glob.glob(P("data/conc/*.js")) else ""),   # résidences étudiantes et permis : un fichier par ville
         *[open(p, encoding="utf-8").read() for p in before],
         need("data/irisdata.js"),

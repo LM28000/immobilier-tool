@@ -33,7 +33,7 @@ async function mlRoutes(p) {
     ok('ajout d\'un bien · placé sur la carte à son adresse', await p.evaluate(() => { const f = V2MAP().getSource('annonces')._data.features.find(f => f.properties.k === 'b|' + BIENS[0].id); return !!f && Math.abs(f.geometry.coordinates[1] - BIENS[0].lat) < 1e-6 && !f.properties.ap; }));
     await p.evaluate(() => { document.querySelector('[data-v2tab="biens"]').click(); document.querySelector(`[data-v2open="b|${BIENS[0].id}"]`).click(); }); await p.waitForTimeout(600);
     ok('ajout d\'un bien · la fiche dit qu\'il est à l\'adresse saisie', await p.evaluate(() => /Sur la carte : à l'adresse saisie/.test((document.querySelector('#v2fiche .v2pos') || {}).textContent || '')));
-    ok('ajout d\'un bien · bruit mesuré à l\'adresse (grands axes et voies ferrées)', await p.evaluate(() => Array.isArray(BIENS[0].geo.bruit) && BIENS[0].geo.bruit.length === 3 && (BIENS[0].geo.bruit[0] === null || BIENS[0].geo.bruit[0][1] === 'N 138')), await p.evaluate(() => JSON.stringify(BIENS[0].geo.bruit)));
+    ok('ajout d\'un bien · bruit mesuré à l\'adresse (voies de la ville : grands axes et voies ferrées, avec leur nom)', await p.evaluate(() => Array.isArray(BIENS[0].geo.bruit) && BIENS[0].geo.bruit.length === 3 && BIENS[0].geo.bruit.some(x => x && x[0] >= 0 && typeof x[1] === 'string')), await p.evaluate(() => JSON.stringify(BIENS[0].geo.bruit)));
     ok('ajout d\'un bien · adresse sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // thème : clair par défaut même si l'appareil est en sombre ; bouton en haut et choix dans Budget ; la carte change de fond et garde ses couches
@@ -91,7 +91,8 @@ async function mlRoutes(p) {
     await c.close(); }
   // zone tendue, étudiants, revente, bruit : fiche de ville, fiche d'une annonce de Rennes, bien à son adresse près d'une voie rapide
   { const c = await b.newContext({viewport: {width: 1300, height: 850}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await p.route(/overpass|apicarto/, r => r.abort()); await mlRoutes(p);
+    await p.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await p.route(/apicarto/, r => r.abort()); await mlRoutes(p);
+    await p.route(/overpass/, r => r.fulfill({contentType: 'application/json', body: JSON.stringify({elements: [{type: 'way', tags: {railway: 'rail', name: 'Ligne de Paris à Brest'}, geometry: [{lat: 48.1, lon: -1.7}, {lat: 48.2, lon: -1.6}]}]})}));
     await p.goto(URL); await p.waitForTimeout(2000); await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(500);
     const open = s => p.evaluate(s => { const bt = document.createElement('button'); bt.dataset.v2open = s; document.getElementById('v2mlist').appendChild(bt); bt.click(); bt.remove(); }, s);
     const txt = sel => p.evaluate(sel => [...document.querySelectorAll(sel)].map(d => d.innerText).join(' | '), sel);
@@ -106,9 +107,16 @@ async function mlRoutes(p) {
     const s3 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const r = calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})); return r.x.plaf === 'zt' && !horsCalcul(a[3]); }) || ADS.rennes.ventes[0]; return 'v|rennes|' + a[3]; });
     await open(s3); await p.waitForTimeout(800); const v2 = await all();
     ok('annonce en zone tendue · point « à demander » sur le loyer du précédent locataire ou loyer gardé', /Zone tendue : (au départ du locataire|si le logement a été loué)/.test(v2), v2.match(/Zone tendue.{0,100}/s));
-    const s4 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})).t); return 'v|rennes|' + a[3]; });
-    await open(s4); await p.waitForTimeout(800); const v4 = await all();
-    ok('annonce · bruit au centre du quartier et zones des aéroports', /Bruit/i.test(v4) && /Voie rapide/.test(v4) && /Voie ferrée/.test(v4) && /Aéroport/.test(v4), (v4.match(/Bruit.{0,300}/is) || [v4.slice(0, 200)])[0]);
+    // annonce placée à 100 m près : bruit mesuré autour de sa position (Overpass simulé) ; annonce floue : aéroports seulement
+    const s4 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const f = ficx(a[3]); return f && f.r != null && f.r <= 100 && f.la != null; }); return a ? 'v|rennes|' + a[3] : null; });
+    await open(s4); await p.waitForTimeout(1500); const v4 = await all();
+    ok('annonce placée à 100 m près · bruit mesuré autour de sa position (voies de la ville, sans OpenStreetMap en direct), zones des aéroports', /Bruit/i.test(v4) && /autour de la position de l'annonce/.test(v4) && /Grand axe\s*à [\d ,]+ (m|km)/.test(v4) && /Voie ferrée/.test(v4) && /Aéroport/.test(v4) && !/mesure en cours/.test(v4), (v4.match(/Bruit.{0,300}/is) || [v4.slice(0, 200)])[0]);
+    const s5 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const f = ficx(a[3]); return f && (f.r == null || f.r > 100); }); return 'v|rennes|' + a[3]; });
+    await open(s5); await p.waitForTimeout(800); const v5 = await all();
+    const qk = await p.evaluate(() => { const t = IR.rennes.list.find(t => t.type === 'H' && t.price && bruitExpo(t) != null); return 'q|rennes|' + t.code; });
+    await open(qk); await p.waitForTimeout(800); const vq = await all();
+    ok('quartier · part de sa surface exposée au bruit, comparée à la ville', /Quartier exposé\s*\d+ % de sa surface exposée \(ville : \d+ %\)/.test(vq), (vq.match(/Quartier exposé.{0,120}/s) || [''])[0]);
+    ok('annonce à position approchée · pas de distances au centre du quartier, aéroports seulement', /Bruit/i.test(v5) && !/Voie rapide/.test(v5) && /position est trop approximative/.test(v5) && /Aéroport/.test(v5), (v5.match(/Bruit.{0,300}/is) || [v5.slice(0, 200)])[0]);
     await p.evaluate(() => { BIENS.push({id: 'brA', ville: 'lemans', quartier: '', prix: 70000, surface: 22, pieces: 1, type: 'studio', titre: 'Essai bruit', adresse: '1 rue Essai Le Mans', lat: 48.0, lon: 0.2, geo: {bruit: [[90, 'N 138'], [400, 'Avenue X'], null]}}); });
     await open('b|brA'); await p.waitForTimeout(800); const v3 = await all();
     ok('bien à son adresse · bruit mesuré à l\'adresse et point d\'attention près d\'une voie rapide', /Distances mesurées à l'adresse/.test(v3) && /À 90 m d'une voie rapide \(N 138\)/.test(v3) && /plus de 1,5 km/.test(v3), v3.match(/(Bruit|voie rapide).{0,200}/s));
@@ -229,6 +237,8 @@ async function mlRoutes(p) {
         ok('v2 ordi · carte : lignes de bus et tram des réseaux (fichier à part), dessinées en ville', await p.evaluate(() => V2MAPN.lignes > 500 && V2MAP().queryRenderedFeatures({layers: ['p-lig']}).length > 5 && /Tram|Bus/.test(V2MAP().queryRenderedFeatures({layers: ['p-lig']})[0].properties.t)), await p.evaluate(() => V2MAPN.lignes));
         await p.selectOption('[data-v2qm]', 'prix'); await p.waitForTimeout(800);
         ok('v2 ordi · carte : quartiers colorés par le prix au m², échelle dans la légende', await p.evaluate(() => { const F = V2MAP().getSource('quartiers')._data.features, blues = ['#b7d3f6', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b']; return document.querySelector('[data-v2qm]').value === 'prix' && JSON.parse(localStorage.getItem('v2s')).qm === 'prix' && F.filter(f => blues.includes(f.properties.c)).length > 500 && new Set(F.map(f => f.properties.c)).size >= 5 && /€\/m²/.test(document.getElementById('v2mleg').textContent) && F.some(f => /\d €\/m²/.test(f.properties.t)); }), await p.evaluate(() => document.getElementById('v2mleg').textContent));
+        await p.selectOption('[data-v2qm]', 'bruit'); await p.waitForTimeout(800);
+        ok('v2 ordi · carte : vue « Bruit », quartiers colorés par leur part exposée', await p.evaluate(() => { const F = V2MAP().getSource('quartiers')._data.features, blues = ['#b7d3f6', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b']; return F.filter(f => blues.includes(f.properties.c)).length > 500 && new Set(F.map(f => f.properties.c)).size >= 4 && /exposé au bruit/.test(document.getElementById('v2mleg').textContent) && F.some(f => /\d+ % exposé au bruit/.test(f.properties.t)); }), await p.evaluate(() => document.getElementById('v2mleg').textContent));
         await p.selectOption('[data-v2qm]', 'irr'); await p.waitForTimeout(800);
         ok('v2 ordi · carte : retour au rendement', await p.evaluate(() => JSON.parse(localStorage.getItem('v2s')).qm === 'irr' && !V2MAP().getSource('quartiers')._data.features.some(f => f.properties.c === '#3987e5')));
       }

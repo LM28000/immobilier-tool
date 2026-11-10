@@ -56,7 +56,7 @@ function poidsHtml(b){const r=calcBien(b), V=r.V, x=r.x; if(!V||x.irr==null) ret
   ["travaux","Travaux","€",500,V.travaux.v,src(V.travaux,det(V.travaux.L)),[1000,"1 000 €",d({travaux:V.travaux.v+1000})]],
   ["meubles","Meubles","€",250,V.meubles.v,src(V.meubles,det(V.meubles.L)),[1000,"1 000 €",d({meubles:V.meubles.v+1000})]],
   ["loyer","Loyer charges comprises","€/mois",5,loyCC,src(V.loyer,V.loyer.src==="annonce"?`bail en cours lu dans l'annonce (${V.raw.fin_bail?"fin "+esc(V.raw.fin_bail):"départ supposé dans 3 ans"}, puis relevé)`:`loyer du ${r.t?"quartier":"secteur"} pour ${fr(+b.surface||22,0)} m², ${eur(D.chLoc)} de charges`),[25,"25 €/mois",d({loyer:loyCC+25})]],
-  ["copro","Charges de copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`${eur(V.copro.tot)}/mois de charges annoncées, ${Math.round(PART_PROPRIO*100)} % pour vous`:`réglage du type`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
+  ["copro","Charges de copro (votre part)","€/mois",1,Math.round(V.copro.v),src(V.copro,V.copro.src==="annonce"?`${eur(V.copro.tot)}/mois de charges ${V.fx&&V.fx.copD?"lues dans la description":"annoncées"}, ${Math.round(PART_PROPRIO*100)} % pour vous`:`réglage du type`),[20,"20 €/mois",d({copro:V.copro.v+20})]],
   ["tf","Taxe foncière","€/an",10,tfAn,src(V.tf,V.tf.src==="annonce"?"lue dans l'annonce":`taux de ${esc(cityName(b.ville))} × surface`),[200,"200 €/an",d({tf:tfAn+200})]]];
  const key=pwKey(b);
  return `<div class="pwbox" data-pwbox="${esc(key)}">

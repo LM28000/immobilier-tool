@@ -179,9 +179,38 @@ def dpe_a_jour(f):
     if not why: return None
     return c, "+".join(why)
 
+# charges de copropriété écrites dans la description, quand Bien'ici ne les donne pas : montant par an, ou None.
+# Unité écrite (an, mois, trimestre), sinon celle du mot (« annuelles », « mensuelles »), sinon 500 € et plus = par an, 250 € et moins = par mois,
+# entre les deux : non lu. Écartées : charges citées près d'un loyer ou d'un locataire (charges locatives), provisions, honoraires.
+# Contrôle (10 novembre 2026, 2 632 ventes où Bien'ici donne aussi les charges) : le même montant à 15 % près dans 98 % des cas.
+COP_NUM = r"(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:[.,](\d{1,2}))?\s*(?:€|euros?|eur\b)"
+COP_KW = re.compile(r"(montant (?:moyen )?annuel de la quote[- ]part[^.:]{0,60}|charges?\s+(?:de\s+copropri[ée]t[ée]|de\s+copro|courantes|annuelles|mensuelles|trimestrielles|copro)[^.:\d]{0,40}|\bcharges?\b(?=\s*(?:[:=]|d'environ|de|\d)))", re.I)
+COP_EXCL = re.compile(r"loyer|locataire|provision|charges? comprises|hors charges|charges? locatives?|r[ée]cup[ée]rables|\bcc\b|honoraires|frais d'agence", re.I)
+
+def cop_desc(d):
+    if not d: return None
+    for m in COP_KW.finditer(d):
+        if COP_EXCL.search(d[max(0, m.start() - 70):m.start()]) or COP_EXCL.search(m.group(0)): continue
+        rest = d[m.end():m.end() + 45]
+        n = re.match(r"\s*(?:[:=]|d'environ|d'un montant de|de|s'[ée]l[èe]vent? [àa]|environ)?\s*(?:environ\s*)?" + COP_NUM, rest, re.I)
+        if not n or re.search(r"loyer|locataire", d[m.end() + n.end():m.end() + n.end() + 60], re.I): continue
+        v = float(re.sub(r"[ \u00a0\u202f.]", "", n.group(1)) + ("." + n.group(2) if n.group(2) else ""))
+        after, kw = rest[n.end():n.end() + 25].lower(), m.group(0).lower()
+        if re.match(r"\s*(?:/|par|l')?\s*(?:an\b|ann[ée]e|annuel)", after) or "annuel" in kw: y = v
+        elif re.match(r"\s*(?:/|par)?\s*(?:mois|mensuel)", after) or "mensuel" in kw: y = v * 12
+        elif re.match(r"\s*(?:/|par)?\s*(?:trimestre|trim)", after) or "trimestriel" in kw: y = v * 4
+        elif v >= 500: y = v
+        elif v <= 250: y = v * 12
+        else: continue
+        if 60 <= y <= 12000: return round(y)
+    return None
+
 def ficx_de(f):
     """champs d'une fiche utiles au calcul, inclus dans la page (FICX)"""
     x = {k: f[k] for k in ("la", "lo", "r", "dpe", "cop", "coloc", "proc", "fl") if k in f}
+    if "cop" not in x and f.get("k") == "v":
+        c = cop_desc(f.get("d"))
+        if c: x["cop"], x["copD"] = c, 1   # charges lues dans la description
     u = dpe_a_jour(f)
     if u: x["dpe0"], x["dpe"], x["dpeW"] = f["dpe"], u[0], u[1]   # DPE à jour (1er janvier 2027) ; dpe0 = classe annoncée
     if f.get("k") == "v" and f.get("pub"): x["pub"] = str(f["pub"])[:10]   # date de publication (ancienneté de l'annonce)
@@ -190,10 +219,15 @@ def ficx_de(f):
     return x
 
 def doublons(st, ids):
-    """même bien publié par plusieurs agences : ventes de la même ville, même surface (0,1 m²), même étage connu,
-    positions à moins de 100 m et prix à 6 % près. On garde la moins chère ; renvoie {id doublon: id gardé}."""
+    """même bien publié par plusieurs agences, ventes de la même ville :
+      - même surface (0,1 m²), même étage connu, positions à moins de 100 m et prix à 6 % près ;
+      - ou même diagnostic de performance énergétique (même date, même consommation en kWh/m²/an), surface à 0,5 m² près, prix à 10 % près,
+        même étage s'il est connu des deux côtés, positions compatibles avec leur flou (100 m + les deux rayons ; 400 m si le rayon n'est pas dit) :
+        Bien'ici floute chaque annonce de son côté (deux points à 250 m près peuvent être à 500 m l'un de l'autre).
+    On garde la moins chère ; renvoie {id doublon: id gardé}."""
     import math
     out = {}
+    dist = lambda f, g: 6371000 * math.hypot(math.radians(g["lo"] - f["lo"]) * math.cos(math.radians(f["la"])), math.radians(g["la"] - f["la"]))
     for ck, c in st.items():
         L = [(i, f) for i, f in c.items() if i in ids and f.get("k") == "v" and f.get("surf") and f.get("et") is not None and f.get("la") is not None and (f.get("r") or 0) <= 300 and f.get("prix")]
         L.sort(key=lambda x: x[1]["prix"])
@@ -205,7 +239,42 @@ def doublons(st, ids):
                 if j in out or abs(f["surf"] - g["surf"]) > 0.1 or f["et"] != g["et"] or g["prix"] > f["prix"] * 1.06: continue
                 d = 6371000 * math.hypot(math.radians(g["lo"] - f["lo"]) * math.cos(math.radians(f["la"])), math.radians(g["la"] - f["la"]))
                 if d <= 100: out[j] = i
+        L = [(i, f) for i, f in c.items() if i in ids and i not in out and f.get("k") == "v" and f.get("surf") and f.get("prix") and f.get("kwh") and f.get("dpeDate")]
+        L.sort(key=lambda x: x[1]["prix"])
+        for a in range(len(L)):
+            i, f = L[a]
+            if i in out: continue
+            for b in range(a + 1, len(L)):
+                j, g = L[b]
+                if j in out or g["kwh"] != f["kwh"] or g["dpeDate"] != f["dpeDate"] or abs(f["surf"] - g["surf"]) > 0.5 or g["prix"] > f["prix"] * 1.10: continue
+                if f.get("et") is not None and g.get("et") is not None and f["et"] != g["et"]: continue
+                if f.get("la") is not None and g.get("la") is not None:
+                    rr = lambda h: min(1000, h["r"] if h.get("r") is not None else 400)
+                    if dist(f, g) > 100 + rr(f) + rr(g): continue
+                out[j] = i
     return out
+
+def ficx_tous(st, ids):
+    """FICX des annonces du relevé : champs utiles au calcul (ficx_de) et doublons (dup = annonce gardée). Un doublon et l'annonce gardée
+    décrivent le même bien : chacune reprend ce que l'autre dit et qu'elle ne dit pas (signaux de la description, lecture par Claude —
+    bail en cours, loyer —, charges, procédure), pour que les deux donnent le même calcul."""
+    X = {i: ficx_de(f) for c in st.values() for i, f in c.items() if i in ids}
+    for j, i in doublons(st, ids).items():
+        d, k = X.setdefault(j, {}), X.setdefault(i, {})
+        for a, b in ((k, d), (d, k)):
+            fl = sorted(set(a.get("fl", [])) | set(b.get("fl", [])))
+            if fl: a["fl"] = fl
+            if "cop" not in a and "cop" in b:
+                a["cop"] = b["cop"]
+                if b.get("copD"): a["copD"] = 1
+            if "proc" not in a and "proc" in b: a["proc"] = b["proc"]
+            if b.get("ia"):
+                ia = dict(a.get("ia") or {})
+                for f, v in b["ia"].items():
+                    if ia.get(f) in (None, "") and v not in (None, ""): ia[f] = v
+                a["ia"] = ia
+        d["dup"] = i
+    return {i: v for i, v in X.items() if v}
 
 # description qui peut changer le calcul (loyer d'un bien loué, taxe foncière, travaux chiffrés, résidence gérée) : lue en premier
 UTILE = re.compile(r"loyer|lou[ée]e?s?\b|locataire|bail\b|baux|taxe fonci|r[ée]sidence (?:de )?services|[ée]tudiante|gestionnaire|exploitant|travaux[^.]{0,80}\d", re.I)
