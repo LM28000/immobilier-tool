@@ -20,17 +20,18 @@ function ecolesBlock(t){const r=terOf(t); if(!r||!r.e) return ""; const [ec,co,l
 const ecolesSum=t=>{const r=terOf(t); if(!r||!r.e) return ""; return r.e[4]?`${r.e[4]} site${r.e[4]>1?"s":""} du supérieur à 1,5 km`:`supérieur à ${mTxtD(r.e[6])}`;};
 
 /* urbanisme : zone du plan local d'urbanisme et quartiers prioritaires */
-function qpvLine(r){if(!r||!r.q) return ["Quartier prioritaire","non"]; const {d,name}=r.q;
+function qpvLine(r){if(!r||!r.q) return null; const {d,name}=r.q;
  if(d===0) return ["Quartier prioritaire",`<span class="pill p-warn">oui</span> « ${esc(name)} »`,"politique de la ville 2024 : rénovation urbaine fréquente, loyers plus bas, demande à vérifier"];
  if(d<400) return ["Quartier prioritaire",`en bordure de « ${esc(name)} »`,`à ${mTxtD(d)} du centre du quartier`];
- return ["Quartier prioritaire","non"];}
+ return null;}
 function urbaBlock(t){const r=terOf(t); if(!r) return ""; const u=r.u;
  return `${fRows([["Zone du PLU",u?`<b>${esc(u[0])}</b> · ${ZTYPE[u[1]]||u[1]}${zProjet(u)?` · <b>secteur de projet</b>`:""}`:"non trouvée",u?esc(u[2]):""],qpvLine(r)])}${fNote(`Au centre du quartier. Règlement et projets : <a href="https://www.geoportail-urbanisme.gouv.fr/" target="_blank" rel="noopener">Géoportail de l'urbanisme</a>.`)}`;}
 const urbaSum=t=>{const r=terOf(t); if(!r) return ""; return r.q&&r.q.d===0?"quartier prioritaire":r.u?`zone ${r.u[0]}`:"";};
 
 /* catastrophes naturelles reconnues (toute la commune) */
-function catnatLine(ck){const c=catOf(ck); if(!c) return ""; const ty=Object.entries(c.ty).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${RISKSH[k]||k.toLowerCase()} ${n}`).join(" · ");
- return `${fRows([["Catastrophes naturelles",`<b>${c.n}</b> arrêtés depuis 1982 · ${c.n2000} depuis 2000`,ty],c.last[0]&&["Le dernier",dFr(c.last[0][0]),RISKSH[c.last[0][1]]||c.last[0][1]]])}${fNote("Arrêtés pris pour toute la commune : la rue n'a pas forcément été touchée.")}`;}
+function catnatLine(ck){const c=catOf(ck); if(!c) return ""; const T=Object.entries(c.ty).sort((a,b)=>b[1]-a[1]), nm=k=>RISKSH[k]||k.toLowerCase(), l=c.last[0];
+ const ty=T.length>1?T.map(([k,n])=>`${nm(k)} ${n}`).join(", "):T.length?`tous pour ${nm(T[0][0])}`:"";
+ return fRows([["Catastrophes naturelles",`<b>${c.n}</b> arrêtés depuis 1982, dont ${c.n2000} depuis 2000`,[ty,l&&`le dernier le ${dFr(l[0])}${T.length>1?` (${nm(l[1])})`:""}`,"pour toute la commune : la rue n'a pas forcément été touchée"].filter(Boolean).join(" · ")]]);}
 /* à l'adresse d'un bien : zone du PLU et parcelle (API Carto IGN) */
 async function adrUrba(lat,lon){const g=encodeURIComponent(JSON.stringify({type:"Point",coordinates:[+(+lon).toFixed(6),+(+lat).toFixed(6)]})), out={};
  try{const j=await (await fetch(`https://apicarto.ign.fr/api/gpu/zone-urba?geom=${g}`)).json(); const f=(j.features||[])[0]; if(f){const p=f.properties; out.urba=[p.libelle,p.typezone,(p.libelong||"").replace(/\s+/g," ").slice(0,110)];}}catch(_){}
@@ -65,7 +66,7 @@ function demCalc(pop,stud,log,vac,rp,loc,hlm,s30){if(!log) return null; const v=
  return {vac:v,cls:v<7?"p-ok":v<10?"p-n":"p-warn",txt:v<7?"forte":v<10?"moyenne":"faible",etud:s30?stud/s30:null,locp:rp?(loc-hlm)/rp*100:null,s30p:rp?s30/rp*100:null};}
 function demCity(ck){const c=hasHAB(ck)&&HABQ.city[ck]; if(!c||c.length<15) return null; return demCalc(c[0],c[0]*c[2]/100,c[6],c[7],c[8],c[9],c[10],c[12]);}
 function demQ(t){const h=t&&hasHAB(t.ck)&&HABQ.q[t.ck][t.code]; if(!h||h.length<15||h[6]<100) return null; return demCalc(h[0],h[2],h[6],h[7],h[8],h[9],h[10],h[12]);}
-function demRows(d,ref){if(!d) return []; return [["Demande locative",`<span class="pill ${d.cls}">${d.txt}</span> ${pp(d.vac)} de logements vides`,ref?`ville : ${pp(ref.vac)} · forte sous 7 %, faible à 10 % et plus`:"forte sous 7 % de logements vides, faible à 10 % et plus (Insee)"],
+function demRows(d,ref){if(!d) return []; return [["Demande locative",`<span class="pill ${d.cls}">${d.txt}</span> ${fr(d.vac,1)} % de logements vides`,ref?`ville : ${fr(ref.vac,1)} % · forte sous 7 %, faible à 10 % et plus`:"forte sous 7 % de logements vides, faible à 10 % et plus (Insee)"],
  d.locp!=null&&["Locataires du privé",pp(d.locp),ref?`ville : ${pp(ref.locp)}`:"des résidences principales"],
  d.etud!=null&&["Étudiants par petit logement",fr(d.etud,1),`logements de moins de 30 m² : ${pp(d.s30p)} du parc${ref?` · ville : ${fr(ref.etud,1)}`:""}`]];}
 /* une seule source pour les logements vides */

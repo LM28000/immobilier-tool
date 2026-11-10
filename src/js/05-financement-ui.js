@@ -32,10 +32,10 @@ function altIrr(x,short){const o=x.net?x.irrBrut:x.irrNet; return `<small class=
 function irrSpan(x){const o=irr3(x); if(!o) return ""; const f=v=>v==null?"n.d.":pct(v), cur=H.pess?"prudent":"central";
  const l=[["prudent","prudent"],["central","central"],["favorable","favorable"]].filter(([k])=>k!==cur).map(([k,t])=>`${t} ${f(o[k])}`).join(" · ");
  return `<small class="alt irr3">${l}${typeof tipBtn==="function"?" "+tipBtn("scn3"):""}</small>`;}
-function taxLine(x){const cfe=x.fees1-(x.regime==="reel"?H.compta:0), comp=x.regime==="reel"?H.compta:0, m=v=>eur(v/12);
+function taxLine(x){const comp=x.compta1||0, cfe=Math.max(0,x.fees1-comp), m=v=>eur(v/12), tm=[...new Set(H.assoc.map(a=>a.tmi+" %"))];
  return `<details class="b2n"><summary><span>Du brut au net</span><span class="mono"><span class="${x.cfBrut>=0?"pos":"neg"}">${sgn(x.cfBrut)}</span> → <span class="${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}</span>/mois</span></summary>
   <div class="trow"><span>Cash-flow avant impôts</span><b class="mono">${sgn(x.cfBrut)}/mois</b></div>
-  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, TMI ${H.assoc.length>1?H.assoc.map(a=>a.tmi+" %").join(" / "):H.assoc[0].tmi+" %"} + prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
+  <div class="trow"><span>Impôts sur les loyers (${REG[x.regime]}, tranche${tm.length>1?"s":""} ${tm.join(" et ")}, plus prélèvements sociaux)</span><b class="mono">−${m(x.imp1)}</b></div>
   <div class="trow"><span>CFE${cfe?"":" (exonérée sous 5 000 € de recettes)"}</span><b class="mono">−${m(cfe)}</b></div>
   ${comp?`<div class="trow"><span>Comptable (régime réel)</span><b class="mono">−${m(comp)}</b></div>`:""}
   <div class="trow tot"><span>Cash-flow net</span><b class="mono ${x.cfNet>=0?"pos":"neg"}">${sgn(x.cfNet)}/mois</b></div>

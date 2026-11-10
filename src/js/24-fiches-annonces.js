@@ -50,12 +50,12 @@ function ficheHtml(ck,suf,f){const loc=f.k==="l", ext=[f.balc&&`${f.balc} balcon
   loc&&["Location",`${f.meu===true?"meublée":f.meu===false?"non meublée":"meublé ?"}${f.coloc?" · <b>chambre en colocation</b>":""}`,f.coloc?"écartée des loyers de comparaison":""],
   loc&&(f.chg||f.dep||f.hono)&&["Conditions",[f.chg&&`${eur(f.chg)} de charges/mois`,f.dep&&`dépôt ${eur(f.dep)}`,f.hono&&`honoraires ${eur(f.hono)}`].filter(Boolean).join(" · ")],
   !loc&&f.frais&&["Frais d'agence",f.frais==="seller"?"à la charge du vendeur":f.frais==="purchaser"?"à la charge de l'acquéreur":esc(f.frais),f.hors&&f.prix&&f.hors<f.prix?`${eur(f.hors)} hors honoraires (${fr((f.prix/f.hors-1)*100,1)} %)`:""],
-  (f.pub||f.maj)&&["Annonce",[f.pub&&`en ligne au moins depuis le ${frD(f.pub)}`,f.maj&&`modifiée le ${frD(f.maj)}`].filter(Boolean).join(" · "),f.r===0?"adresse exacte connue":f.r?`position à ${f.r} m près`:""],
+  (f.pub||f.maj)&&["Annonce",[f.pub&&`en ligne au moins depuis le ${frD(f.pub)}`,f.maj&&`modifiée le ${frD(f.maj)}`].filter(Boolean).join(" · ")],
   f.off&&["Statut","<b>retirée du marché</b> selon Bien'ici"]].filter(Boolean);
  const d=String(f.d||""), cut=d.length>520?d.lastIndexOf(" ",480):-1;
  const desc=d?`<div class="fdesc">${esc(cut>0?d.slice(0,cut)+"…":d)}</div>${cut>0?`<details class="fdmore"><summary>Lire toute la description</summary><div class="fdesc">${esc(d)}</div></details>`:""}`:`<p class="sub">Pas de description.</p>`;
  const ph=(f.ph||[]).map((p,i)=>`<a href="${esc(photoFull(suf,p))}" target="_blank" rel="noopener" aria-label="Photo ${i+1} sur ${f.ph.length}, en grand"><img src="${esc(photoUrl(suf,p,360,270))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>`).join("");
- return `${ph?`<div class="fgal">${ph}</div>`:""}${desc}${rows.length?fRows(rows):""}${iaHtml(f,ck)}<p class="sub" style="margin:6px 0 0">Fiche relevée sur Bien'ici le ${frD(f.lu)}.</p>`;}
+ return `${ph?`<div class="fgal">${ph}</div>`:""}${desc}${rows.length?fRows(rows):""}${iaHtml(f,ck,suf)}<p class="sub" style="margin:6px 0 0">Fiche relevée sur Bien'ici le ${frD(f.lu)}.</p>`;}
 function ficheSum(f,suf){if(f===undefined) return "chargement…"; if(!f) return "pas encore relevée"; const n=(f.ph||[]).length, x=suf?dpeAJ(suf):null;
  return [f.d&&"description",n&&`${n} photo${n>1?"s":""}`,f.dpe&&`DPE ${x?x.dpe+" (annoncé "+f.dpe+")":f.dpe}`,(copAn(f)||copAn(ficx(suf)||{}))&&`${eur((copAn(f)||copAn(ficx(suf)))/12)}/mois de copro`,f.coloc&&"colocation"].filter(Boolean).join(" · ");}
 /* rubrique « L'annonce » des fiches (ordinateur et téléphone) */
@@ -102,7 +102,15 @@ function lueIA(f){const ia=f&&f.ia||{}, o={loyer:0,travaux:0,tf:0};
  if(ia.loue&&ia.loyer_mensuel) o.loyer=Math.round(ia.loyer_mensuel+(ia.loyer_charges_comprises===false?H.chLoc:0));
  const tr=(ia.travaux_a_prevoir||0)+(ia.travaux_votes||0); if(tr>0) o.travaux=Math.round(tr);
  if(ia.taxe_fonciere) o.tf=Math.round(ia.taxe_fonciere); return o;}
-function iaHtml(f,ck){const ia=f&&f.ia; if(!ia) return ""; const zt=typeof ZTEN!=="undefined"&&ZTEN.has(ck), fg=/^[FG]$/.test(f.dpe||""), sv=!!ia.residence_geree||(f.fl||[]).includes("serv"); const rows=[
+/* points relevés par Claude dans la description, sans ce que les lignes de la fiche disent déjà :
+   montant des charges, loyer du bail, étage, DPE, nombre de lots, « vendu meublé » (chaque morceau d'un point, séparé par une virgule, est jugé à part) */
+function iaPoints(f,suf){const ia=f.ia||{}, fx=(suf&&ficx(suf))||{}, cop=!!(copAn(f)||copAn(fx)), M=[
+  cop&&/^(charges|quote-part|provisions?|budget)\b[^]*\d/i, ia.loue&&ia.loyer_mensuel&&/^(loyer|dernier loyer|loué)\b[^]*\d/i,
+  f.et!=null&&/^((\d+|dernier|premier)\s*(e|er|ème)?\s+étage|rez-de-(chaussée|jardin))( avec ascenseur| sans ascenseur)?$/i,
+  f.dpe&&/^(DPE\s+[A-G]|DPE excessif|logement à consommation énergétique excessive)$/i, f.lots&&/^copropriété de \d+ lots( dont \d+ (d'habitation|logements))?$/i,
+  (f.fl||fx.fl||[]).includes("meub")&&/^vendu meublé$/i].filter(Boolean);
+ return (ia.points||[]).map(p=>String(p).replace(/[.;]\s*$/,"").split(/\s*;\s*|,\s+/).filter(z=>z&&!M.some(r=>r.test(z))).join(", ")).filter(Boolean).map(p=>p[0].toUpperCase()+p.slice(1));}
+function iaHtml(f,ck,suf){const ia=f&&f.ia; if(!ia) return ""; const zt=typeof ZTEN!=="undefined"&&ZTEN.has(ck), fg=/^[FG]$/.test(f.dpe||""), sv=!!ia.residence_geree||(f.fl||[]).includes("serv"); const rows=[
   ia.loue===true&&["Vendu loué",ia.loyer_mensuel?`<b class="mono">${eur(ia.loyer_mensuel)}</b> ${ia.loyer_charges_comprises===false?"hors charges":ia.loyer_charges_comprises?"charges comprises":"charges non précisées (comptées comprises)"}`:"loyer non indiqué",sv?"bail commercial du gestionnaire : le calcul de l'outil ne s'applique pas tel quel":`utilisé jusqu'au départ du locataire (${ia.fin_bail?"fin du bail : "+esc(ia.fin_bail):"supposé dans 3 ans"}), puis ${zt?"gardé au même niveau : zone tendue, le loyer ne peut pas augmenter à la relocation":fg?"relevé après la rénovation énergétique comptée dans les travaux (DPE "+esc(f.dpe)+" : pas de hausse possible avant), sans dépasser le loyer estimé":"relevé de la prime meublé sans dépasser le loyer estimé"}`],
   ia.loue===false&&["Location","libre (pas de bail en cours)"],
   (ia.travaux_a_prevoir||ia.travaux_votes)&&["Travaux",[ia.travaux_a_prevoir&&`${eur(ia.travaux_a_prevoir)} à prévoir`,ia.travaux_votes&&`${eur(ia.travaux_votes)} votés en copropriété`].filter(Boolean).join(" · "),"ajoutés au budget"],
@@ -110,7 +118,7 @@ function iaHtml(f,ck){const ia=f&&f.ia; if(!ia) return ""; const zt=typeof ZTEN!
   ia.surface_carrez&&["Surface Carrez",`${fr(ia.surface_carrez,ia.surface_carrez%1?2:0)} m²`],
   ia.etat&&["État",esc(ia.etat)],ia.exposition&&["Exposition",esc(ia.exposition)],
   ia.residence_geree&&["Résidence gérée","<b>oui</b>","le calcul ne s'applique pas tel quel"]].filter(Boolean);
- const pts=(ia.points||[]).map(p=>`<li>${esc(p)}</li>`).join("");
+ const pts=iaPoints(f,suf).map(p=>`<li>${esc(p)}</li>`).join("");
  return rows.length||pts?`<h4 class="fh4">Lu dans la description</h4>${rows.length?fRows(rows):""}${pts?`<ul class="iapts">${pts}</ul>`:""}`:"";}
 
 /* même bien publié par une autre agence (tools/fiches.py doublons) : retiré des classements, signalé sur sa fiche */

@@ -22,6 +22,6 @@ function liqVille(ck,ty){ty=ty||H.type; const E=typeof HIST!=="undefined"&&HIST[
 function liqRows(ck){const S=liqStock(ck), L=liqVille(ck), R=[];
  if(S&&S.ok){const all=C.map(c=>liqStock(c.k)).filter(z=>z&&z.ok).sort((a,b)=>a.m-b.m), rk=all.findIndex(z=>z===S||z.m===S.m)+1;
   R.push(["Revente : stock d'annonces",`<b>${fr(S.m,1)} mois</b> de ventes`,`${S.n} ${tyPl().toLowerCase()} en vente pour ${fr(S.pm,0)} vendus par mois (DVF 2023-2025) · rang ${rk} sur ${all.length} villes mesurées (1 = le stock le plus court : c'est là qu'un bien se revend le plus vite)`]);}
- else if(S) R.push(["Revente : stock d'annonces","non mesuré",S.n<15?`trop peu d'annonces (${S.n})`:`le relevé s'arrête à ${keur(S.plaf)} : une partie des ${tyPl().toLowerCase()} manque`]);
+ /* non mesuré (trop peu d'annonces, ou plafond du relevé sous le marché) : pas de ligne */
  if(L&&L.km!=null) R.push(["Durée de vente mesurée",`<b>${L.km} jours</b> en médiane`,`annonces apparues depuis le ${frD(L.s0)} ; retirée ne veut pas toujours dire vendue`]);   /* rien tant que trop peu d'annonces sont parties */
  return R;}

@@ -65,9 +65,9 @@ function adsStats(list){const v=adsDedup(list).map(r22); return v.length?{n:v.le
 function adsLine(t){const A=ADS[t.ck]; if(!A) return ""; const d=Object.keys(A.map).find(k=>A.map[k].includes(t.code)); if(!d) return "";
  const st=adsStats(A.ads.filter(a=>a[1]===d)), x=QX[t.ck+t.i]; if(!st) return "";
  return fRows([["Annonces de location",`${tyN(st.n)} · <b class="mono">${eur(st.med)}</b> CC à ${H.surface} m²`,`secteur Bien'ici « ${esc(d)} »${x?` · calcul : ${eur(x.rentHC+H.chLoc)} CC`:""}${st.n<3?" · trop peu pour conclure":""}`]]);}
-function adsCity(ck){const A=ADS[ck]; if(!A) return ""; const c=C.find(v=>v.k===ck), all=adsStats(A.ads), meu=adsStats(A.ads.filter(a=>a[3])); if(!all) return "";
- const model=c.rent*Math.pow(H.surface/c.rentM2,0.6);
- return fRows([["Annonces de location",`${tyN(all.n)} · <b class="mono">${eur(all.med)}</b> CC à ${H.surface} m²`,`Bien'ici, ${ADS.date} · loyers demandés, pas signés`],meu&&["Dont meublés",`<b class="mono">${eur(meu.med)}</b>`,"lots identiques d'une résidence comptés une fois"],["Notre calcul",`<b class="mono">${eur(model)}</b> CC`,meu&&meu.med>=model?"plutôt prudent":"un peu optimiste"]]);}
+function adsCity(ck,x){const A=ADS[ck]; if(!A) return ""; const c=C.find(v=>v.k===ck), all=adsStats(A.ads), meu=adsStats(A.ads.filter(a=>a[3])); if(!all) return "";
+ const model=x?x.rentHC+H.chLoc:c.rent*Math.pow(H.surface/c.rentM2,0.6), ref=meu||all, v=ref.med>=model*1.03?"plutôt prudent":ref.med<=model*0.97?"un peu optimiste":"dans la norme";
+ return fRows([["Annonces de location",`${tyN(all.n)} · <b class="mono">${eur(all.med)}</b> CC à ${H.surface} m²`,`Bien'ici, ${ADS.date} · loyers demandés, pas signés · lots identiques d'une résidence comptés une fois`],["Notre loyer face aux annonces",`<b class="mono">${eur(model)}</b> CC · ${v}`,meu?`meublés : ${eur(meu.med)} en médiane`:""]]);}
 function demLine(t){const d=demandOf(t); if(!d) return "";
  return fRows([["Emplacement",d.real?`<b>${minTxt(d.min)}</b> ${d.mode==="tc"?"en bus ou tram":"à pied"} ${MKDE[d.mk]}`:`à ${fr(d.d,1)} km du repère le plus proche`,d.real?`${minTxt(d.foot)} à pied (${fr(d.d,1)} km) · ${minTxt(d.bike)} à vélo`:""]]);}
 

@@ -96,11 +96,11 @@ function calc(c){
     et avec elle les amortissements (meubles et travaux comptés à partir de là) */
  const wVide=y=>bail&&c.bailVide?Math.min(1,Math.max(0,c.bailAns-y)):0, yB=bail&&c.bailVide?Math.floor(c.bailAns):0;
  // impôt année par année pour un régime
- function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0, bAcc=0;
+ function sim(reg,gross){const T=[], F=[], AB=[], CP=[]; let stock=0, def=0, cumAB=0, bAcc=0;
   for(let y=0;y<25;y++){const g=Math.pow(1+H.ly/100,y), rent=rentAt(y)*12*g, wv=wVide(y), rF=wv*rentHC*12*g, rB=rent-rF, ch=(charges*12*Math.pow(1+H.cg/100,y)+gst*rent)*(1-wv), ly=L.Y[y]||{int:0,ins:0};   /* gestion : déduite au réel */
    let fees=(rB+D.chLoc*12*(1-wv))>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
    if(reg==="micro") taxable=rB*(1-FISC.abatMicro);
-   else {if(wv<1) fees+=H.compta; let res=rB-ch-(ly.int+ly.ins)*(1-wv)-fees-(y===0?bien*H.notaire/100+gar:0);
+   else {if(wv<1){fees+=H.compta; CP[y]=H.compta;} let res=rB-ch-(ly.int+ly.ins)*(1-wv)-fees-(y===0?bien*H.notaire/100+gar:0);
     if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d; const k=y-yB;
     bAcc+=amBati*(1-wv); stock+=amBati*(1-wv)+(k>=0&&k<FISC.ansMeubles?meu/FISC.ansMeubles:0)+(k>=0&&k<FISC.ansTravaux?trav/FISC.ansTravaux:0);
     const u=Math.min(res,stock); stock-=u; res-=u; cumAB+=Math.min(u,bAcc-cumAB); taxable=res;}
@@ -113,12 +113,12 @@ function calc(c){
    const sale=k=>bien*Math.pow(1+px/100,k)*(1-(H.fraisVente||0)/100); /* prix de revente net des frais (agence, diagnostics) */
    if(m===HZ*12) f[f.length-1]+=sale(HZ)-Math.max(crd,0)-pvT(bien,sale(HZ),HZ,trav,AB[HZ-1]);
    if(m%12===0){const k=m/12; gains.push(sale(k)-Math.max(crd,0)-(H.apport-cum)-pvT(bien,sale(k),k,trav,AB[k-1]));}}
-  return {reg,T,F,AB,f,gains,irr:irrMonthly(f)};}
+  return {reg,T,F,AB,CP,f,gains,irr:irrMonthly(f)};}
  let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
  const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], r1=rentAt(0), gest=r1*gst, cfBrut=r1-gest-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
  const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
  const W=H.assoc.map(a=>(a.tmi+FISC.ps)*a.part), Ws=W.reduce((s,w)=>s+w,0)||1, imps=W.map(w=>imp1*w/Ws), impA=imps[0];
- return {plaf,zt:typeof ZTEN!=="undefined"&&ZTEN.has(c.k),bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,gest,vac,px,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
+ return {plaf,zt:typeof ZTEN!=="undefined"&&ZTEN.has(c.k),bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,gest,vac,px,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,compta1:R.CP[0]||0,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
 

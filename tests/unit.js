@@ -94,6 +94,12 @@ const fon = E(`(()=>{const c=C.find(v=>v.k==="lemans"), mk=o=>Object.assign({},c
   const a0=H.assoc.map(a=>a.tmi); H.assoc.forEach(a=>{a.tmi=30;}); CALCC.clear(); const v=calc(mk({bailVide:true})), m=calc(mk({bailVide:false})); H.assoc.forEach((a,i)=>{a.tmi=a0[i];}); CALCC.clear();
   return {v:[v.imp1,v.irr],m:[m.imp1,m.irr],loyer:v.rentHC};})()`);
 ok('bien vendu loué avec un bail vide : revenus fonciers (micro-foncier, 30 % d\'abattement, 17,2 % de prélèvements) jusqu\'au départ du locataire', Math.abs(fon.v[0] - fon.loyer*12*0.7*0.472) < 1 && fon.v[0] > fon.m[0] && fon.v[1] < fon.m[1], JSON.stringify(fon));
+const cpt = E(`(()=>{const c=C.find(v=>v.k==="lemans"), mk=o=>Object.assign({},c,{prixTot:60000,surf:20,type:"studio",rent:380,rentM2:20,rentFixed:true,bailAns:3,rentEst:c.rent*1.3,rentM2Est:c.rentM2},o), r0=H.regime;
+  H.regime="reel"; CALCC.clear(); const v=calc(mk({bailVide:true})), m=calc(mk({bailVide:false})); H.regime=r0; CALCC.clear(); return {v:[v.compta1,v.fees1],m:[m.compta1,m.fees1],compta:H.compta};})()`);
+ok('régime réel : comptable compté à part la première année (aucun pendant un bail vide en cours) : la CFE affichée n\'est jamais négative', cpt.v[0] === 0 && cpt.m[0] === cpt.compta && cpt.v[1] - cpt.v[0] >= 0 && cpt.m[1] - cpt.m[0] >= 0, JSON.stringify(cpt));
+run('const ficx=s=>s==="m"?{fl:["meub"]}:{}; const copAn=f=>f.cop||0;\n' + pick('src/js/24-fiches-annonces.js', 'function iaPoints'), 'iaPoints');
+const ip = E(`iaPoints({cop:650,et:2,dpe:"F",lots:12,ia:{loue:true,loyer_mensuel:417,points:["Dernier étage, DPE excessif","Loyer annuel 5 000 € HC","Copropriété de 12 lots, charges 650 €/an","Ravalement voté en 2025, 1,5 km de la gare","Vendu meublé"]}},"m")`);
+ok('description lue : les points ne répètent pas les lignes de la fiche (étage, DPE, loyer, lots, charges, vendu meublé), le reste est gardé', JSON.stringify(ip) === JSON.stringify(["Ravalement voté en 2025, 1,5 km de la gare"]), JSON.stringify(ip));
 ok('bien vendu loué : pas de mois vides pendant le bail en cours', Math.abs(zt.occ[0] - zt.occ[1]) < 1e-9 && zt.libre[0] > zt.libre[1] + 0.3, JSON.stringify([zt.occ, zt.libre]));
 // bruit des aéroports : zone la plus forte qui contient le point (plan d'exposition au bruit)
 run(`var PEBB=null; var PEBQ={aero:[{oaci:"LFXX",nom:"Essai",date:"2004-09-17"}],z:[{oaci:"LFXX",zone:"D",g:[[[0,0],[4,0],[4,4],[0,4],[0,0]]]},{oaci:"LFXX",zone:"C",g:[[[1,1],[3,1],[3,3],[1,3],[1,1]]]}]};` + pick('src/js/47c-bruit.js', 'function pebAt'), 'pebAt');

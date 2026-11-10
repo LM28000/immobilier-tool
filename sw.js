@@ -1,6 +1,6 @@
 // Service worker : la page s'ouvre hors ligne avec la dernière version téléchargée.
 // VERSION est réécrite par build.py à chaque construction : le navigateur installe alors la nouvelle version et vide l'ancien cache.
-const VERSION = "69cb32c65b";
+const VERSION = "b441d2acc6";
 const CACHE = "studio-" + VERSION, PHOTOS = "studio-photos", MAXPH = 250;
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icone-180.png", "./icons/icone-192.png", "./icons/icone-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });

@@ -17,12 +17,18 @@ const fPct=(a,b,ref)=>{const d=(a/b-1)*100; return Math.abs(d)<0.5?`= ${ref}`:`$
 /* ventes réelles du type choisi (nombre de pièces) dans le quartier */
 function dvfBlock(t,compact){const D=dvfC(t.ck), T=TY(); if(!D) return "";
  const q=dvfOf(t), est=studioPm2(t.ck,t), city=C.find(v=>v.k===t.ck).name, dv=fPct(est,studioPm2(t.ck),"ville");
- if(!q||!q.n) return fRows([["Ventes réelles",`aucun ${T.lab} vendu en 2023-2025`],["Prix retenu",`<b class="mono">${eur(est)}/m²</b>`,`médiane de ${city} (${eur(D.med)}/m²) ajustée au quartier · ${dv}`]]);
+ if(!q||!q.n) return fRows([["Ventes réelles",`aucun ${T.lab.toLowerCase()} vendu en 2023-2025`],["Prix retenu",`<b class="mono">${eur(est)}/m²</b>`,`médiane de ${city} (${eur(D.med)}/m²) ajustée au quartier · ${dv}`]]);
  return `<div class="dvfb">${fRows([[`${T.pl.charAt(0).toUpperCase()+T.pl.slice(1)} vendus`,`<b>${q.n}</b> en 2023-2025 · médiane <b class="mono">${eur(q.med)}/m²</b>`,q.n<5?"peu de ventes : à prendre avec prudence":""],["Ville",`${eur(D.med)}/m²`],["Retenu dans le calcul",`<b class="mono">${eur(est)}/m²</b>`,dv+(H.dvf?"":" · option ventes réelles désactivée")]])}
   ${compact||!(q.last&&q.last.length)?"":`<table class="ftab dvft"><thead><tr><th>Vendu</th><th class="r">Surface</th><th class="r">Prix</th><th class="r">€/m²</th></tr></thead><tbody>${q.last.map(([m,p,s])=>`<tr><td>${mois(m)}</td><td class="r mono">${s} m²</td><td class="r mono">${keur(p)}</td><td class="r mono">${eur(p/s)}</td></tr>`).join("")}</tbody></table>`}</div>`;}
 /* temps de trajet réels (OpenStreetMap, à pied et à vélo) */
-function trajBlock(t){const r=trajOf(t); if(!r) return ""; const sp=stopOf(t);
- return `<div class="trajb">${r.map(o=>`<span class="traj"><b>${MARKTXT[o.k]}</b> ${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?` · <b class="tc">${minTxt(o.tc)} en bus/tram</b>`:hasTC(t.ck)?" · bus pas plus rapide":""}</span>`).join("")}</div>${fNote(`${sp!=null?`Arrêt le plus proche à ${sp<1000?Math.round(sp/10)*10+" m":fr(sp/1000,1)+" km"}. `:""}${hasTC(t.ck)?"Bus et tram : un mardi vers 8 h, attente comprise.":""}`)}`;}
+/* plusieurs campus dans la ville : chacun porte le nom du quartier où il se trouve (sinon trois lignes « Université ») */
+const MKN={};
+function markName(ck,k){if(mkT(k)!=="univ") return MARKTXT[k]; const M=MARK[ck]||{}, L=IR[ck]&&IR[ck].list, p=M[k]; if(!L||!p||Object.keys(M).filter(z=>mkT(z)==="univ").length<2) return MARKTXT[k];
+ const id=ck+"|"+k; if(MKN[id]) return MKN[id]; const [x,y]=pxy(p[0],p[1]); let q=null, bd=Infinity;
+ L.forEach(t=>{const ins=x>=t.bb[0]&&x<=t.bb[2]&&y>=t.bb[1]&&y<=t.bb[3], d=(t.cx-x)**2+(t.cy-y)**2-(ins?1e12:0); if(d<bd){bd=d; q=t;}});
+ return MKN[id]=q?`${MARKTXT[k]} · ${q.name}`:MARKTXT[k];}
+function trajBlock(t,pre){const r=trajOf(t); if(!r) return ""; const sp=stopOf(t);
+ return `<div class="trajb">${r.map(o=>`<span class="traj"><b>${esc(markName(t.ck,o.k))}</b> ${minTxt(o.foot)} à pied · ${minTxt(o.bike)} à vélo${o.tc!=null?` · <b class="tc">${minTxt(o.tc)} en bus/tram</b>`:hasTC(t.ck)?" · bus pas plus rapide":""}</span>`).join("")}</div>${fNote(`${pre||""}${sp!=null?`Arrêt le plus proche à ${sp<1000?Math.round(sp/10)*10+" m":fr(sp/1000,1)+" km"}. `:""}${hasTC(t.ck)?"Bus et tram : un mardi vers 8 h, attente comprise.":""}`)}`;}
 /* risques (Géorisques) */
 const ARG=["","faible","moyen","fort"];
 function risqPills(t){return risqPillsR(risqOf(t));}
@@ -42,7 +48,7 @@ function risqPillsR(r){if(!r) return "";
 /* vie de quartier : commerces et services à pied (OpenStreetMap) */
 function poiOf(t){return typeof POIQ!=="undefined"&&POIQ[t.ck]?POIQ[t.ck][t.code]||null:null;}
 const dTxt=m=>m>=9999?"aucun à 1,2 km":m>=1000?fr(m/1000,1)+" km":Math.round(m/10)*10+" m";
-function poiItems(p){const sup=Math.min(p[1],p[2]); return [["Supermarché ou supérette",dTxt(sup)],["Boulangerie",dTxt(p[3])],["Pharmacie",dTxt(p[4])],["Cafés, restos, bars à 500 m",String(p[5])],["Laverie",dTxt(p[6])],["Salle de sport",dTxt(p[7])]];}
+function poiItems(p){const sup=Math.min(p[1],p[2]); return [["Supermarché ou supérette",dTxt(sup)],["Boulangerie",dTxt(p[3])],["Pharmacie",dTxt(p[4])],["Cafés, restos, bars",`${p[5]} à moins de 500 m`],["Laverie",dTxt(p[6])],["Salle de sport",dTxt(p[7])]];}
 const poiCls=s=>s>=8?"p-ok":s>=5?"p-n":"p-warn";
 function poiBlock(t){const p=poiOf(t); if(!p) return "";
  return `<div class="poib"><span class="pill ${poiCls(p[0])}">Vie de quartier ${fr(p[0],1)}/10</span> ${poiItems(p).map(([l,v])=>`<span class="traj"><b>${l}</b> ${v}</span>`).join("")}</div>`;}
