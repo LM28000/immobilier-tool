@@ -127,9 +127,25 @@ a1, a2 = out
 ok("copropriétés : seules les villes suivies ; syndic, mandat, drapeaux, parcelle", len(Cx["lemans"]) == 2 and not Cx["angers"] and mx == "2026-11-01" and noms == ["SYNDIC X"] and a1[2] == "AA1" and a1[3:7] == [24, 18, 16, 4]
    and per[a1[7]][0] == "avant 1949" and a1[8:12] == [1, 0, 0, 2] and a1[12] == "AB0123" and a2[7] == -1 and a2[8:12] == [0, 1, -1, 5] and a2[13] == "3 rue B", out)
 shutil.rmtree(T3)
+# --- résidences étudiantes et permis (tools/concurrence.py), sans réseau
+sp = importlib.util.spec_from_file_location("concurrence", R + "/tools/concurrence.py"); CO = importlib.util.module_from_spec(sp); sp.loader.exec_module(CO)
+ok("permis : accents réparés (texte encodé deux fois, accents perdus)", CO.accents("17 RUE DE LA RAÃ\x82Â\x89PUBLIQUE") == "17 RUE DE LA RÉPUBLIQUE" and CO.accents("122 RUE EUGAÃ\x82Â\x88NE POTTIER") == "122 RUE EUGÈNE POTTIER" and CO.accents("RUE NATIONALE") == "RUE NATIONALE")
+ok("permis : adresses lisibles", CO.joli("16D - 16E RUE DU JOUANET") == "16D - 16E rue du Jouanet" and CO.joli("SCCV RESIDENCE PARC EOLYS") == "SCCV Residence Parc Eolys" and CO.joli("Rue Déjà Écrite") == "Rue Déjà Écrite" and CO.joli("109 BOUL DE VITRE") == "109 boulevard de Vitre" and CO.joli("19 BOULE VOLNEY") == "19 boulevard Volney" and CO.joli("12 R NATIONALE") == "12 rue Nationale", CO.joli("SCCV RESIDENCE PARC EOLYS"))
+ok("Crous : nombre de logements lu dans le texte (le plus grand), rien sinon", CO.capacite("Résidence de 1993 comportant 618 studios T1, T1Bis et T2. 10 logements PMR de 20m².") == 618 and CO.capacite("La cité comprend des chambres 3 fonctions") is None and CO.capacite("121 Studios T1 (18,05 m²) et 7 studios") == 121)
+cx, cy = CO.centre({"type": "Polygon", "coordinates": [[[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]]})
+cm2 = CO.centre({"type": "MultiPolygon", "coordinates": [[[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]], [[[10, 10], [14, 10], [14, 14], [10, 14], [10, 10]]]]})
+ok("parcelle : centre de la plus grande partie", abs(cx - 1) < 1e-9 and abs(cy - 1) < 1e-9 and abs(cm2[0] - 12) < 1e-9 and abs(cm2[1] - 12) < 1e-9, (cx, cy, cm2))
+so = CO.sites_osm([{"center": {"lon": 0.2, "lat": 48}, "tags": {"name": "Bâtiment A"}}, {"center": {"lon": 0.2005, "lat": 48}, "tags": {"name": "Campus Village"}},
+                   {"center": {"lon": 0.21, "lat": 48}, "tags": {"name": "Résidence universitaire", "operator": "CROUS de Rennes"}}, {"lat": 48.02, "lon": 0.2, "tags": {}}])
+ok("OpenStreetMap : bâtiments voisins réunis en un site, nom le plus précis, Crous repéré", len(so) == 3 and so[0][2] == "Campus Village" and not so[0][3] and so[1][2] == "" and so[1][3] and so[2][2] == "", so)
 VJ = json.load(open(R + "/tools/villes.json", encoding="utf-8"))
 cp = {ck: open(R + "/data/copro/%s.js" % ck, encoding="utf-8").read() if os.path.exists(R + "/data/copro/%s.js" % ck) else "" for ck in VJ}
 ok("copropriétés : un registre par ville suivie (data/copro), daté, 100 copropriétés au moins", all(s.startswith('(window.COPROQ=window.COPROQ||{})["%s"]=' % ck) and s.count("\n[") >= 100 and '"maj":"20' in s for ck, s in cp.items()),
    [ck for ck, s in cp.items() if not s])
 
+cn = {ck: open(R + "/data/conc/%s.js" % ck, encoding="utf-8").read() if os.path.exists(R + "/data/conc/%s.js" % ck) else "" for ck in VJ}
+def cnj(s): return json.loads(s[s.index("]=") + 2:].rstrip().rstrip(";")) if s else {}
+CJ = {ck: cnj(s) for ck, s in cn.items()}
+ok("résidences et chantiers : un fichier par ville suivie (data/conc), daté, des permis placés dans la ville", all(J.get("maj") and len(J.get("pc", [])) >= 5 for J in CJ.values()), [ck for ck, J in CJ.items() if not J or len(J.get("pc", [])) < 5])
+ok("résidences et chantiers : des résidences du Crous dans les grandes villes universitaires", all(sum(r[4] == "crous" for r in CJ[ck].get("res", [])) >= 5 for ck in ("rennes", "nantes", "angers", "caen", "tours", "rouen") if CJ.get(ck)))
 print(f"\n{n - bad}/{n} tests de données réussis"); sys.exit(1 if bad else 0)

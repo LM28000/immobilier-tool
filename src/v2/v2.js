@@ -139,7 +139,7 @@
  const ZQ=9, ZA=9.5, ZV=10, Z3=13.2;   /* paliers : quartiers, annonces, ville (inclinée, liste de la ville), immeubles */
  const P1=()=>PH()?35:45, P2=()=>PH()?45:58;   /* inclinaison en ville, puis de près */
  let ML=null, M=null, MREADY=false, LCITY=null, LTRY=false, RMK=[], RCK=null, POP=null, HQ=null, PB=0, MANP=false, QSIG=null, QSK="", QNSET=false, QBR=null, PT=0, DOWN=false, WHL=0;
- window.V2MAPN={villes:0,quartiers:0,annonces:0,qnoms:0,lignes:0,err:[]};
+ window.V2MAPN={villes:0,quartiers:0,annonces:0,qnoms:0,lignes:0,conc:0,err:[]};
  /* lignes de bus, tram et métro des 22 réseaux (data/lignes.js, tools/gtfs_lignes.py) : chargées à part, une fois, quand la carte s'ouvre */
  let LIGF=null, LIGT=false;
  function polyDec(s){const P=[]; let i=0, la=0, lo=0; while(i<s.length){for(const k of [0,1]){let r=0, sh=0, b; do{b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5;}while(b>=32&&i<=s.length); const d=r&1?~(r>>1):r>>1; if(k) lo+=d; else la+=d;} P.push([lo/1e5,la/1e5]);} return P;}
@@ -200,7 +200,7 @@
   if(!PH()) M.addControl(new ML.NavigationControl({visualizePitch:true}),"top-right");   /* boutons : zoom, boussole (inclinaison et rotation) */
   /* une couche refusée par MapLibre ne lève pas d'erreur : elle est notée (les tuiles et polices manquantes, elles, sont ignorées) */
   M.on("error",e=>{const er=e&&e.error, m=String(er&&er.message||er||""); if(!(er&&er.status)&&!/fetch|network|load|glyph|tile|abort/i.test(m)&&V2MAPN.err.length<10) V2MAPN.err.push(m);});
-  M.on("load",()=>{padSync(); mapLayers(); MREADY=true; if(FLYP&&FLYP===V.sel&&selPos(FLYP).f){LCITY=V.city; drawMap(); flyAd(FLYP,true); FLYP=null;} else drawMap(true); lignesLoad(); M.on("resize",()=>setTimeout(padSync,0)); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
+  M.on("load",()=>{padSync(); mapLayers(); MREADY=true; concMap(V.city); if(FLYP&&FLYP===V.sel&&selPos(FLYP).f){LCITY=V.city; drawMap(); flyAd(FLYP,true); FLYP=null;} else drawMap(true); lignesLoad(); M.on("resize",()=>setTimeout(padSync,0)); const at=$("v2map").querySelector(".maplibregl-ctrl-attrib"); if(at) at.classList.remove("maplibregl-compact-show");});   /* sources de la carte repliées (bouton i) */
   $("v2map").parentNode.classList.add("v2zw");   /* départ sur l'Ouest : pas de légende des quartiers */
   M.on("click",mapClick);
   /* survol (souris seulement) : une fois par image au plus, rien pendant que la carte bouge ; la bulle disparaît dès que la carte bouge ou que la souris sort */
@@ -252,6 +252,13 @@
     filter:["any",["match",["get","class"],["bus","rail"],true,false],["match",["get","subclass"],["supermarket","convenience","bakery","pharmacy","greengrocer","butcher","deli"],true,false]],
     paint:{"circle-color":["case",["match",["get","class"],["bus","rail"],true,false],PC[0],PC[1]],"circle-radius":zf(14,18,2.6,5.5),
      "circle-opacity":zf(14,14.4,0,1),"circle-stroke-color":dk?"#0b1020":"#ffffff","circle-stroke-width":1,"circle-stroke-opacity":zf(14,14.4,0,1)}});}
+  /* résidences étudiantes (pleines, taille selon le nombre de logements) et grands projets de logements à venir (cercles vides), de près */
+  if(!M.getSource("conc")) M.addSource("conc",{type:"geojson",data:EMPTY});
+  {const dk=DARK(), ink=dk?"#cbd5e1":"#334155", rp=["get","s"];
+   M.addLayer({id:"p-conc",type:"circle",source:"conc",minzoom:12,
+    paint:{"circle-radius":["interpolate",["linear"],["zoom"],12,["*",.55,rp],17,["*",1.3,rp]],"circle-color":["case",["==",["get","k"],"r"],ink,"rgba(0,0,0,0)"],
+     "circle-stroke-color":["case",["==",["get","k"],"r"],dk?"#0b1020":"#ffffff",ink],"circle-stroke-width":["case",["==",["get","k"],"r"],1.2,2],
+     "circle-opacity":zf(12,12.4,0,.85),"circle-stroke-opacity":zf(12,12.4,0,1)}},M.getLayer("p-dot")?"p-dot":undefined);}
   /* lignes de bus, tram et métro, aux couleurs du réseau ; les plus fréquentées un peu plus épaisses, tram et métro par-dessus */
   const tr=["boolean",["get","tr"],false], fq=["min",1,["/",["get","f"],150]];
   M.addLayer({id:"p-lig",type:"line",source:"lignes",minzoom:10.5,layout:{"line-join":"round","line-cap":"round","line-sort-key":["case",tr,2,1]},
@@ -295,7 +302,12 @@
  const geoPts=F=>{const P=[], w=a=>{if(typeof a[0]==="number") P.push(a); else a.forEach(w);}; F.forEach(f=>w(f.geometry.coordinates)); return P;};
  /* repères de la ville : gares, campus, centre */
  const REPL={gare:["Gare","M7 3h10a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2zM5 10h14M9 21l2-4M15 21l-2-4"],univ:["Campus","M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5"],centre:["Centre","M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"]};
- function reperes(ck){RCK=ck||null; RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
+ function concMap(ck){if(!M||!MREADY||!M.getSource("conc")) return; const J=ck&&typeof concData==="function"?concData(ck):null; if(J===undefined) return;
+  const F=[]; if(J){J.res.forEach(x=>F.push({type:"Feature",properties:{k:"r",s:Math.min(11,4+Math.sqrt(x[3]||60)/2.6),t:`Résidence étudiante · ${x[2]}${x[3]?` · ${nf(x[3])} logements`:""}${x[4]==="crous"?" (Crous)":x[5]===2?" · autorisée, pas commencée":x[5]===5?" · en chantier":""}`},geometry:{type:"Point",coordinates:[x[0],x[1]]}}));
+   J.pc.filter(x=>x[6]>=20&&x[2]>=CN_DEPUIS&&x[3]!==6&&x[10]!==2).forEach(x=>F.push({type:"Feature",properties:{k:"p",s:Math.min(11,4+Math.sqrt(x[6])/2.6),t:`Projet · ${nf(x[6])} logements${x[7]?` dont ${nf(x[7])} studios`:""}${x[10]?" · "+CNTY[x[10]]:""} · ${x[3]===5?"en chantier":"autorisé en "+cnMois(x[2])}${x[13]?" · "+x[13]:""}`},geometry:{type:"Point",coordinates:[x[0],x[1]]}}));}
+  M.getSource("conc").setData({type:"FeatureCollection",features:F}); V2MAPN.conc=F.length;}
+ document.addEventListener("v2conc",e=>{if(e.detail&&e.detail.ck===V.city) concMap(V.city);});
+ function reperes(ck){concMap(ck); RCK=ck||null; RMK.forEach(m=>m.remove()); RMK=[]; if(!ck||typeof REPQ==="undefined"||!REPQ[ck]) return;
   Object.entries(REPQ[ck]).forEach(([k,p])=>{const d=REPL[k.replace(/\d+$/,"")]; if(!d||!Array.isArray(p)||!isFinite(p[0])) return; const el=document.createElement("div"); el.className="v2rep"; el.title=d[0];
    el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d[1]}"/></svg><span>${d[0]}</span>`; RMK.push(new ML.Marker({element:el,anchor:"bottom"}).setLngLat([p[1],p[0]]).addTo(M));});}
  /* les quartiers des 22 villes (≈ 900 contours, quelques millisecondes) : refaits seulement quand le calcul a changé */
@@ -365,6 +377,7 @@
   const a=at("a-sdot",box).concat(at("a-dot",box)); if(a.length){openSel(a[0].properties.k); return;}
   const g=at("a-clu",box); if(g.length){grpPop(g[0],e.lngLat); return;}
   const pr=PH()?10:5, po=at("p-dot",[[e.point.x-pr,e.point.y-pr],[e.point.x+pr,e.point.y+pr]]); if(po.length){tapPop(poiTxt(po[0].properties),e.lngLat); return;}
+  const cn=at("p-conc",[[e.point.x-pr,e.point.y-pr],[e.point.x+pr,e.point.y+pr]]); if(cn.length){tapPop(cn[0].properties.t,e.lngLat); return;}
   const v=M.getZoom()<ZQ+.3?at("v-dot",box).concat(at("v-lab")):[]; if(v.length){goCity(v[0].properties.k); return;}
   const q=at("q-fill"); if(q.length) openSel(`q|${q[0].properties.ck}|${q[0].properties.code}`);}
  /* les annonces d'un groupe, dans une bulle où l'on peut cliquer (la bulle du survol, elle, ne capte jamais la souris) */
@@ -379,12 +392,12 @@
    GPOP=new ML.Popup({closeButton:true,closeOnClick:true,className:"v2gpop",maxWidth:"320px",offset:14}).setLngLat(f.geometry.coordinates||ll).setHTML(html).addTo(M);}).catch(()=>{});}
  function hoverQ(id){if(id===HQ) return; if(HQ!=null){try{M.setFeatureState({source:"quartiers",id:HQ},{hover:false});}catch(_){}} HQ=id; if(id!=null){try{M.setFeatureState({source:"quartiers",id},{hover:true});}catch(_){}}}
  function hoverOff(){if(!M) return; if(POP) POP.remove(); hoverQ(null); M.getCanvas().style.cursor="";}
- function mapHover(e){if(!MREADY||!e||M.isMoving()) return; const L=["a-sdot","a-dot","a-clu","p-dot","p-lig","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
+ function mapHover(e){if(!MREADY||!e||M.isMoving()) return; const L=["a-sdot","a-dot","a-clu","p-dot","p-conc","p-lig","v-dot","q-fill"].filter(l=>M.getLayer(l)), f=L.length?M.queryRenderedFeatures([[e.point.x-4,e.point.y-4],[e.point.x+4,e.point.y+4]],{layers:L}):[], h=f.find(x=>x.layer.id!=="v-dot"||M.getZoom()<ZQ+.3);
   M.getCanvas().style.cursor=h&&h.layer.id!=="p-lig"?"pointer":"";
   hoverQ(h&&h.layer.id==="q-fill"&&h.id!=null?h.id:null);
   if(!h){if(POP) POP.remove(); return;}
   if(!POP) POP=new ML.Popup({closeButton:false,closeOnClick:false,className:"v2pop",offset:12});
-  POP.setLngLat(e.lngLat).setText(h.layer.id==="p-dot"?poiTxt(h.properties):h.layer.id==="a-clu"?`${h.properties.point_count} annonces ici · jusqu'à ${pctS(h.properties.irr)} · cliquez pour la liste`:h.properties.t); if(!POP.isOpen()) POP.addTo(M);}
+  POP.setLngLat(e.lngLat).setText(h.layer.id==="p-dot"?poiTxt(h.properties):h.layer.id==="p-conc"?h.properties.t:h.layer.id==="a-clu"?`${h.properties.point_count} annonces ici · jusqu'à ${pctS(h.properties.irr)} · cliquez pour la liste`:h.properties.t); if(!POP.isOpen()) POP.addTo(M);}
  /* une annonce ouverte : la vue s'approche et s'incline, les immeubles autour apparaissent */
  /* position d'une annonce ou d'un bien ouvert ({la, lo, r} ; r = flou en mètres) et sa ville */
  function selPos(s){let f=null, ck=null;
@@ -402,7 +415,7 @@
   if(p.ck){V.city=p.ck; LCITY=p.ck; save();} return true;}   /* la liste montre sa ville, sans recadrer la carte sur la ville entière */
  /* thème clair (par défaut) ou sombre : propre à chacun ; la carte change de fond et garde ses couches */
  function setTheme(t){document.documentElement.setAttribute("data-theme",t); try{localStorage.setItem("theme-v2",t);}catch(_){}
-  if(M&&MREADY){MREADY=false; QSIG=null; QNSET=false; hoverOff(); HQ=null; M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap();}); M.setStyle(MLSTYLE(),{diff:false});}
+  if(M&&MREADY){MREADY=false; QSIG=null; QNSET=false; hoverOff(); HQ=null; M.once("style.load",()=>{mapLayers(); MREADY=true; drawMap(); concMap(V.city);}); M.setStyle(MLSTYLE(),{diff:false});}
   render();}
  const themeSeg=()=>`<span class="v2seg" role="group" aria-label="Thème">${[["light","Clair"],["dark","Sombre"]].map(([k,l])=>`<button type="button" data-v2theme="${k}" aria-pressed="${(DARK()?"dark":"light")===k}">${l}</button>`).join("")}</span>`;
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0"; el.dataset.big=V.big&&!V.min?"1":"0"; setTimeout(()=>{if(el.firstElementChild&&!el.querySelector(".v2grip")) el.insertAdjacentHTML("afterbegin",GRIP);},0);
@@ -429,7 +442,8 @@
   const qleg=k==="irr"?`<span class="v2mlr">${rdt}</span>`:!B?"":m.bin?`<span title="${esc(m.d())}">${sw(R[4])}zone inondable</span>`:`<span class="v2ramp" title="${esc(m.d())}">&lt; ${esc(m.u(B[0]))} ${R.map(sw).join("")} ≥ ${esc(m.u(B[B.length-1]))}</span>`;
   const near=z>=ZQ||PB, ann=near?`<span class="v2mlx">${k==="irr"?"":`<b>Annonces</b> <span>${rdt}</span> · `}<span><i class="v2pl"></i>adresse ou à 100 m près</span><span><i class="v2pl v2ph"></i>position approchée</span><span><i class="v2pl v2pn">2</i>plusieurs au même endroit</span> · contour bleu : nouvelle · orange : shortlist</span>`:"";
   const aut=z>=8?`<span class="v2mlx"><b>Autour</b> <span><i class="v2ln v2rl"></i>train</span>${z>=10.5?`<span><i class="v2ln v2lg"></i>bus et tram (couleurs du réseau)</span>`:""}${z<10.5?"":z>=14.2?`<span><i class="v2pl" style="background:${PC[0]}"></i>arrêts, gares</span><span><i class="v2pl" style="background:${PC[1]}"></i>commerces</span>`:" · approchez : arrêts et commerces"}</span>`:`<span class="v2mlx"><b>Train</b> <span><i class="v2ln v2lgv"></i>grande vitesse</span><span><i class="v2ln v2lr2"></i>140 km/h et plus</span></span>`;
-  const html=`${selq}${qleg}${near?"":`<span class="v2mlx">villes : ${k==="irr"?"même couleur":`rendement ${rdt}`} · taille : annonces pour nos critères · approchez : quartiers et annonces</span>`}${ann}${aut}${PB===1?`<span class="v2mlx">approchez : immeubles en 3D</span>`:""}`;
+  const res=z>=12&&V2MAPN.conc?`<span class="v2mlx"><b>Étudiants</b> <span><i class="v2pl v2lres"></i>résidence étudiante</span><span><i class="v2pl v2lpc"></i>projet de logements à venir</span></span>`:"";
+  const html=`${selq}${qleg}${near?"":`<span class="v2mlx">villes : ${k==="irr"?"même couleur":`rendement ${rdt}`} · taille : annonces pour nos critères · approchez : quartiers et annonces</span>`}${ann}${res}${aut}${PB===1?`<span class="v2mlx">approchez : immeubles en 3D</span>`:""}`;
   if(el._h!==html){el._h=html; el.innerHTML=html;}}
  function goCity(ck){V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; save(); V.tab="carte"; if(PH()) V.sel=null; show(); if(V.city&&!PH()) openSel(`c|${V.city}`,true);}
 
@@ -576,7 +590,7 @@
   const slot=$("v2srcslot"); document.querySelectorAll("#appHold .v2src, #v2hold .v2src").forEach(n=>slot.appendChild(n)); HOLD.querySelectorAll(".v2src").forEach(n=>slot.appendChild(n));}
 
  /* ---------- fiche unique en onglets ---------- */
- const FT=[["bien","Le bien",["suivi","annonce","copro"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
+ const FT=[["bien","Le bien",["suivi","annonce","copro"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","offre","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
  function secs(html){const d=document.createElement("div"); d.innerHTML=html; const S={}; d.querySelectorAll("details.fsec").forEach(s=>{s.open=true; S[s.dataset.sec]=s.outerHTML;}); const at=d.querySelector(".fattn"); return {S,attn:at?at.outerHTML:""};}
  function bienOfSel(s){const [k,...r]=s.split("|"); if(k==="b"){const b=BIENS.find(x=>x.id===r[0]); return b?{b,kind:"b"}:null;}
   if(k==="v"){const ck=r[0], suf=r.slice(1).join("|"), a=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a) return null; const ex=bienOf(VTURL+suf); return {b:Object.assign(venteBien(ck,a),{kind:"v",suf}),a,ck,suf,ex:ex&&!isOut(ex)?ex:null,kind:"v"};}

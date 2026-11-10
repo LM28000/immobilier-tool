@@ -69,6 +69,23 @@ async function mlRoutes(p) {
     await open('b|cpA'); await p.waitForTimeout(800); const r2 = await sec();
     ok('copropriété · bien à son adresse : sûr, par la parcelle ; sans syndic → point d\'attention', /sûr/.test(r2.t) && /parcelle cadastrale/.test(r2.t) && /aucun syndic déclaré/.test(r2.t) && /aucun syndic en mandat au registre/.test(r2.a) && !/Copropriété probable/.test(r2.a), r2.t.slice(0, 300) + ' | ' + r2.a.slice(0, 300));
     ok('copropriété · sans erreur', errs.length === 0, errs.join(' | '));
+    // résidences étudiantes et logements neufs autour (data/conc/<ville>.js) : fiche d'une annonce, fiche de la ville, points sur la carte
+    const s2 = await p.evaluate(async () => { const ck = Object.keys(ADS).find(k => (ADS[k].ventes || []).length > 20 && !CONCQ[k]); concData(ck); for (let i = 0; i < 40 && !CONCQ[ck]; i++) await new Promise(r => setTimeout(r, 100));
+      let best = null, bn = -1; for (const a of ADS[ck].ventes) { const pt = concPoint(Object.assign(venteBien(ck, a), {kind: 'v', suf: a[3]}), null); if (!pt) continue; const A = concAround(CONCQ[ck], pt.lat, pt.lon); if (A.R.length + A.P.length > bn) { bn = A.R.length + A.P.length; best = a[3]; } }
+      return {ck, sel: 'v|' + ck + '|' + best, n: bn}; });
+    await open(s2.sel); await p.waitForTimeout(800); await p.evaluate(() => document.querySelector('#v2fiche [data-v2ft="quartier"]').click()); await p.waitForTimeout(400);
+    const o1 = await p.evaluate(() => { const d = document.querySelector('#v2fiche details[data-sec="offre"]'); return d ? d.innerText : ''; });
+    ok('résidences et chantiers · fiche d\'une annonce : résidences à 1 km et logements neufs à 500 m, avec la position utilisée', s2.n > 0 && /Résidences étudiantes à moins de 1 km/i.test(o1) && /Logements neufs autorisés depuis janvier \d{4}, à moins de 500 m/i.test(o1) && /Mesuré autour/.test(o1), o1.slice(0, 300));
+    await open('c|' + s2.ck); await p.waitForTimeout(800); await p.evaluate(() => { const b = document.querySelector('#v2fiche [data-v2ft="quartier"]'); if (b) b.click(); }); await p.waitForTimeout(400);
+    const o2 = await p.evaluate(() => { const d = document.querySelector('#v2fiche details[data-sec="offre"]'); return d ? d.innerText : ''; });
+    ok('résidences et chantiers · fiche de la ville : places pour 100 étudiants, logements et studios autorisés par an', /pour 100 étudiants/.test(o2) && /par an, dont \d[\d  ]* studios/.test(o2), o2.slice(0, 300));
+    const at2 = await p.evaluate(() => { CONCQ.zz = {maj: '2026-11-10', res: [], pc: [[0.2, 48, '2026-06', 2, '', '', 180, 150, 10, 180, 2, 0, 'SCCV T', '1 rue T']]}; return concAttn({ville: 'zz', id: 'x', adresse: '1 rue T', lat: 48.001, lon: 0.2}, null).map(z => z[1]).join(' | '); });
+    ok('résidences et chantiers · point d\'attention : résidence étudiante neuve à moins de 500 m', /Résidence étudiante de 180 logements autorisée en juin 2026 à 110 m/.test(at2), at2);
+    await p.evaluate(() => { document.querySelector('[data-v2tab="carte"]').click(); }); await p.waitForTimeout(600);
+    await p.evaluate(ck => { const c = C.find(v => v.k === ck), x = CONCQ[ck].res[0]; V2MAP().jumpTo({center: x ? [x[0], x[1]] : [c.lon, c.lat], zoom: 13.2}); }, s2.ck); await p.waitForTimeout(2500);
+    const mp = await p.evaluate(() => ({n: V2MAPN.conc, d: V2MAP().getLayer('p-conc') ? V2MAP().queryRenderedFeatures({layers: ['p-conc']}).length : -1, leg: /résidence étudiante/.test(document.getElementById('v2mleg').textContent)}));
+    ok('résidences et chantiers · carte : résidences et projets dessinés de près, avec leur légende', mp.n > 0 && mp.d > 0 && mp.leg, JSON.stringify(mp));
+    ok('résidences et chantiers · sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // l'interface : carte, fiche, annonces, villes, budget (ordinateur et téléphone)
   { const fs = require('fs'), URL2 = URL;

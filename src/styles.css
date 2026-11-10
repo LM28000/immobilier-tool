@@ -377,6 +377,7 @@ details.fsec>summary{flex-wrap:wrap;row-gap:0}
 .fhead em.fd:not(.up):not(.down){color:var(--muted)}
 .fsb{padding:0 0 12px 22px}
 .fh4{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 0 6px}
+.cnl{margin:0 0 6px;padding-left:18px;line-height:1.5}.cnl li{margin:2px 0}
 /* téléphone */
 .mfs{background:var(--surface);border-radius:14px;padding:4px 14px;margin:12px 0}
 

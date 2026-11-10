@@ -86,6 +86,13 @@ run(pick('src/js/24c-coproprietes.js', 'function cpAdr('), 'cpAdr'); run(pick('s
 E(`var CPJ={per:[["avant 1949",0,1948],["de 1961 à 1974",1961,1974]],noms:["SYNDIC X"],c:[
   [0.2,48,"AA1",24,18,16,4,1,1,0,0,0,"AB0123","1 r a"],[0.2003,48,"AA2",24,20,18,2,0,2,0,-1,0,"","3 r a"],[0.2006,48,"AA3",10,8,8,0,0,0,1,-1,1,"","5 r a"],[0.204,48,"AA4",5,5,5,0,0,0,0,-1,0,"0A0007","9 r b"],[0.2,48.002,"AB1",30,20,20,0,1,1,0,0,0,"AC0001","2 r du port"],[0.2001,48.002,"AB2",12,10,10,0,0,0,1,-1,0,"AC0001","4 r du port"]]};`);
 const cm = o => E(`coproMatch(CPJ,${JSON.stringify(o)})`);
+// résidences étudiantes et logements neufs autour d'un point : 1 km pour les résidences, 500 m pour les permis récents
+run(`var CN_RES=1000, CN_PC=500, CN_DEPUIS="2023-01";` + pick('src/js/24d-concurrence.js', 'function concAround'), 'concAround');
+E(`var CNJ={res:[[0.2,48,"Crous A",300,"crous",0,null],[0.2,48.008,"Privée B",null,"osm",0,null],[0.2,48.02,"Loin",100,"crous",0,null]],
+  pc:[[0.201,48,"2024-05",2,"","",120,90,10,120,2,0,"SCCV X","1 rue A"],[0.2,48.003,"2023-02",5,"2024-01","",40,10,20,0,0,8,"","3 rue B"],[0.2,48.001,"2021-06",6,"2022-01","2023-09",60,20,20,0,0,0,"",""],[0.21,48,"2025-01",2,"","",500,200,100,0,0,0,"",""]]};`);
+const ca = E('concAround(CNJ,48,0.2)');
+ok('autour d\'un point : résidences à 1 km au plus, par distance', ca.R.length === 2 && ca.R[0][1][2] === 'Crous A' && ca.R[1][1][2] === 'Privée B', JSON.stringify(ca.R));
+ok('autour d\'un point : permis à 500 m au plus et autorisés depuis 2023, du plus grand au plus petit ; totaux par état', ca.P.length === 2 && ca.P[0][1][6] === 120 && ca.s.n === 160 && ca.s.st === 100 && ca.s.e[2][0] === 120 && ca.s.e[5][1] === 10, JSON.stringify(ca.s));
 const c0 = cm({exact: true, lat: 48, lon: 0.2004, cad: ['A', '7']}), c1 = cm({exact: true, lat: 48, lon: 0.2004, cad: ['ab', '123']}), c2 = cm({exact: true, lat: 48, lon: 0.2007, cad: ['ZZ', '9']}), c3 = cm({exact: true, lat: 48.01, lon: 0.2, cad: null});
 ok('copropriété d\'une adresse : celle de la parcelle, même plus loin qu\'une autre', c1.how === 'parcelle' && c1.x[2] === 'AA1' && c1.k === 'AB0123', JSON.stringify(c1));
 const eq = (x, y) => E(`cpAdrEq(cpAdr(${JSON.stringify(x)}),cpAdr(${JSON.stringify(y)}))`);

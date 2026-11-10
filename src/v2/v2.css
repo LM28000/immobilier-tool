@@ -93,6 +93,8 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
 .v2mleg i.v2pn{width:15px;height:15px;font:800 9px/15px var(--f-ui);font-style:normal;text-align:center;color:#fff;background:var(--muted)}
 .v2mleg i.v2ph{background:radial-gradient(circle,var(--surface) 0 32%,var(--muted) 34%)}
 .v2mleg i.v2ln{width:16px;height:3px;border-radius:2px;vertical-align:3px}
+.v2mleg i.v2lres{background:#334155} .v2mleg i.v2lpc{background:transparent;box-shadow:inset 0 0 0 2px #334155}
+:root[data-theme="dark"] .v2mleg i.v2lres{background:#cbd5e1} :root[data-theme="dark"] .v2mleg i.v2lpc{box-shadow:inset 0 0 0 2px #cbd5e1}
 .v2mleg i.v2lgv{height:4px;background:#3f4756} .v2mleg i.v2lr2{height:2px;background:#5b6472}
 :root[data-theme="dark"] .v2mleg i.v2lgv{background:#b4bdca} :root[data-theme="dark"] .v2mleg i.v2lr2{background:#8b96a6}
 .v2mleg i.v2rl{height:4px;background:repeating-linear-gradient(90deg,#5b6472 0 5px,var(--surface) 5px 8px);box-shadow:0 0 0 1px #5b6472}
