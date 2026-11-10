@@ -282,8 +282,6 @@ details.b2n .trow span{color:var(--muted)} details.b2n .tot span{color:var(--fg)
 #tipPop{position:fixed;z-index:120;background:var(--fg);color:var(--bg);font-size:.78rem;line-height:1.45;font-weight:500;padding:9px 11px;border-radius:9px;box-shadow:0 8px 24px rgb(0 0 0 / .25);pointer-events:none;text-transform:none;letter-spacing:0}
 @media print{.tipb{display:none}}
 [hidden]{display:none!important}
-/* --- carte : barre d'outils, repère, pastilles de vente --- */
-.mtools{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 14px rgb(0 0 0 / .14);overflow:hidden;z-index:3}
 #tip .trow{display:flex;justify-content:space-between;gap:8px}
 
 /* données réelles du quartier */
@@ -296,48 +294,10 @@ details.b2n .trow span{color:var(--muted)} details.b2n .tot span{color:var(--fg)
 .risqb .pill{cursor:default}
 .sl.dim input[type=range]{opacity:.45}
 .fbox .risqb{justify-content:flex-end}
-
-/* ================= appli téléphone (body.mob, ≤ 760 px) ================= */
-#mApp{display:none}
-/* barre compacte quand on défile */
-.mbar{position:fixed;left:0;right:0;top:0;z-index:55;height:calc(var(--safet) + 44px);padding-top:var(--safet);display:flex;align-items:center;justify-content:center;
- background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:.5px solid var(--line);opacity:0;pointer-events:none;transition:opacity .15s}
-/* barre d'onglets */
-.mtab{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(5,1fr);padding:0 env(safe-area-inset-right,0px) var(--safeb) env(safe-area-inset-left,0px);
- background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);border-top:.5px solid var(--line)}
-/* pastilles de filtre */
-.mchips{display:flex;gap:8px;overflow-x:auto;padding:4px var(--gr) 10px var(--gl);scrollbar-width:none;-webkit-overflow-scrolling:touch}
-/* chiffres */
-.mkrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
 .mk{background:var(--sunk);border-radius:12px;padding:8px 10px;min-width:0}
 .mk small{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mk b{display:block;font-size:1.08rem;font-family:var(--f-num);font-weight:700;white-space:nowrap}
 .mk em{display:block;font-style:normal;font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* listes groupées (style réglages) */
-.mgroup,.mlist{background:var(--surface);border-radius:14px;overflow:hidden;margin:10px 0}
-/* interrupteurs, +/−, segments */
-.mtg input{position:absolute;opacity:0;pointer-events:none}
-/* résumé budget */
-.msum{background:linear-gradient(135deg,#2f47b3,#5468d8);color:#fff;border-radius:18px;padding:16px;margin:6px 0 4px}
-/* fil d'annonces */
-.mfeed{display:flex;flex-direction:column;gap:14px;padding:0 var(--gr) 0 var(--gl)}
-/* écran carte */
-body.mcarte{overflow:hidden;height:100dvh}
-/* shortlist */
-.mswl{margin-top:4px}
-/* écrans empilés */
-.mpush{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:-8px 0 24px rgb(0 0 0/.12)}
-
-/* Leaflet 1.9.4 (BSD-2) */
- .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas, .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer{ position: absolute; left: 0; top: 0; } .leaflet-tooltip-top:before, .leaflet-tooltip-bottom:before, .leaflet-tooltip-left:before, .leaflet-tooltip-right:before{ position: absolute; pointer-events: none; border: 6px solid transparent; background: transparent; content: ""; } .leaflet-tooltip-bottom:before, .leaflet-tooltip-top:before{ left: 50%; margin-left: -6px; } .leaflet-tooltip-top:before{ bottom: 0; margin-bottom: -12px; border-top-color: #fff; } .leaflet-tooltip-bottom:before{ top: 0; margin-top: -12px; margin-left: -6px; border-bottom-color: #fff; } .leaflet-tooltip-left:before, .leaflet-tooltip-right:before{ top: 50%; margin-top: -6px; } .leaflet-tooltip-left:before{ right: 0; margin-right: -12px; border-left-color: #fff; } .leaflet-tooltip-right:before{ left: 0; margin-left: -12px; border-right-color: #fff; } 
-/* vraie carte */
-#mLeaf{position:absolute;inset:0;z-index:1;background:var(--sea)}
-
-/* tactile */
-body.mob .mscr,body.mob .mpin,body.mob .msheetin{touch-action:pan-y}
-
-/* quartiers : la couleur se mélange au fond de carte pour garder les noms de rues lisibles */
-.mapbox.leaf.ldark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)}
 
 .traj .tc{color:var(--accent)}
 .adrw{position:relative;display:block}
@@ -378,8 +338,6 @@ details.fsec>summary{flex-wrap:wrap;row-gap:0}
 .fsb{padding:0 0 12px 22px}
 .fh4{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 0 6px}
 .cnl{margin:0 0 6px;padding-left:18px;line-height:1.5}.cnl li{margin:2px 0}
-/* téléphone */
-.mfs{background:var(--surface);border-radius:14px;padding:4px 14px;margin:12px 0}
 
 /* lignes libellé → valeur */
 .frows{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:5px 14px;margin:0 0 8px;font-size:.86rem;line-height:1.35}
@@ -402,9 +360,6 @@ details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 .fdesc:has(+.fdmore[open]){display:none}
 /* téléphone : 16 px au moins dans les champs, sinon iOS zoome la page à chaque saisie */
 @media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}}
-
-/* accueil « Où on en est » (ordinateur et téléphone) */
-.mdot.st4{background:var(--accent)}
 .hh{margin:18px 0 8px;font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.hh small{font-weight:600;text-transform:none;letter-spacing:0;margin-left:6px}
 /* suivi de l'achat */
 .suivi{list-style:none;margin:0;padding:0}.suivi li{display:flex;gap:12px;position:relative;padding-bottom:12px}
@@ -414,8 +369,6 @@ details.qmeth>summary{cursor:pointer;color:var(--muted);font-size:.82rem}
 .suivi li>div{display:flex;flex-direction:column;gap:2px}.suivi small{color:var(--muted);font-size:.8rem}.suivi li.next b{color:var(--accent)}
 .sdate{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}.sdate input[type=date]{font:inherit;font-size:.85rem;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--bg);color:var(--fg)}
 .iapts{margin:4px 0 6px;padding-left:18px;font-size:.88rem;line-height:1.45}
-/* barre latérale (ordinateur large) */
-#sideNav{display:none}
 /* fourchette des trois scénarios, sous le rendement */
 small.alt.irr3{display:block;margin-top:2px;font-family:inherit;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
 small.alt.irr3 .tipb{vertical-align:middle}

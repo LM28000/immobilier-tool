@@ -70,6 +70,8 @@ function coproSec(b){const R=coproOf(b); if(!R) return null;
    :m.none==="plusieurs"?`${m.n} copropriétés de ${m.N} lots près de la position de l'annonce : impossible de savoir laquelle sans l'adresse.`
    :m.none==="aucune"?`Aucune copropriété de ${m.N} lots dans le registre près de la position de l'annonce : le nombre de lots annoncé diffère peut-être de celui du registre.`
    :`Aucune copropriété immatriculée${m.k?` sur la parcelle ${esc(m.k.slice(0,-4))} ${esc(m.k.slice(-4))}`:""} ni à moins de 25 m de l'adresse. Si l'immeuble est en copropriété, demandez son numéro d'immatriculation : il est obligatoire et figure sur les appels de charges.`;
+  /* annonce : une ligne (le cas est fréquent et sans enjeu tant que l'adresse n'est pas connue) ; bien à son adresse : le détail */
+  if(!R.bien) return ["non retrouvée",`<p class="sub" style="margin:0">${t?t+" ":""}Avec l'adresse exacte, saisie dans Nos biens, la copropriété est retrouvée par sa parcelle.</p>`];
   return ["non retrouvée",`<p style="margin:0">${t}</p>${tip}${src}`];}
  const x=m.x, per=x[7]>=0&&J.per[x[7]]?J.per[x[7]][0]:"", [sy,syn]=coproSyn(J,x), sure=m.how==="parcelle"||m.how==="meme-adresse";
  const pk=m.k?`${esc(m.k.slice(0,-4))} ${esc(m.k.slice(-4))}`:"";
@@ -77,7 +79,7 @@ function coproSec(b){const R=coproOf(b); if(!R) return null;
   :m.how==="parcelle?"?`la plus proche des ${m.n} copropriétés de la parcelle ${pk} (aucune ou plusieurs à la même adresse) : vérifiez le numéro d'immatriculation`
   :m.how==="meme-adresse"?`copropriété à la même adresse que celle saisie (${Math.round(m.d)} m)`
   :m.how==="adresse"?`la plus proche de l'adresse saisie (${Math.round(m.d)} m) ; le registre ne donne pas sa parcelle`
-  :`seule copropriété de ${m.N} lots à moins de ${m.r+40} m de l'annonce${m.both?", de l'époque annoncée":""}. Environ 9 sur 10 sont justes : vérifiez le numéro d'immatriculation dans les documents de vente`;
+  :`seule copropriété à moins de ${m.r+40} m de l'annonce dont le nombre de lots ou de logements est celui annoncé (${m.N})${m.both?", de l'époque annoncée":""}. Environ 9 sur 10 sont justes : vérifiez le numéro d'immatriculation dans les documents de vente`;
  const rows=[["Copropriété",`<b>${x[3]!=null?x[3]+" lot"+cpS(x[3]):"lots inconnus"}</b>${x[5]!=null?` dont ${x[5]} logement${cpS(x[5])}`:""}${x[6]?` · ${x[6]} parking${cpS(x[6])}`:""}`,`immatriculée n° ${esc(x[2])}${x[13]?" · "+esc(x[13]):""}`],
   per&&["Construction",per,"selon le registre"],
   ["Syndic",sy,syn],

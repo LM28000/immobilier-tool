@@ -1,4 +1,4 @@
-let V={k:1,x:0,y:0}, QSEL=null, QC=null;
+let V={k:1,x:0,y:0};
 const IR={};
 const nrm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 (function decodeIris(){
@@ -77,5 +77,5 @@ const DPECITY={lemans:[5,28,2367,1630,761,236,140],angers:[425,100,4894,3163,195
  laval:[6,31,924,834,715,127,82],orleans:[23,40,4911,2094,1728,591,372],chartres:[0,3,546,684,342,132,73],stnazaire:[8,33,743,540,228,81,58],rennes:[7,610,8505,4759,2432,803,609],
  blois:[7,10,723,612,319,135,75],caen:[135,226,3060,3086,1767,685,456],cholet:[0,1,555,367,135,37,20],laroche:[7,65,1070,1051,252,70,23],
  evreux:[0,11,578,620,337,126,66],bourges:[115,42,483,543,428,122,62],niort:[2,9,678,506,293,54,27],limoges:[3,228,3188,3160,1056,362,201],brest:[186,137,2905,2079,826,254,122],alencon:[1,19,187,292,154,66,40],cherbourg:[0,6,701,479,313,95,51],nantes:[31,774,12080,6080,2640,1145,916],rouen:[165,310,4437,3999,2510,1092,950]};
-const DPE0=[0,0,0,0,0,0,0], dpeCity=k=>DPECITY[k]||DPE0, fgOf=d=>{d=d||DPE0; const s=d.reduce((a,b)=>a+b,0); return s?(d[5]+d[6])/s*100:0;}, rFG=v=>v<8?"p-ok":v<=11?"p-n":"p-warn";
+const DPE0=[0,0,0,0,0,0,0], dpeCity=k=>DPECITY[k]||DPE0, fgOf=d=>{d=d||DPE0; const s=d.reduce((a,b)=>a+b,0); return s?(d[5]+d[6])/s*100:0;};
 

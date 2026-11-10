@@ -104,7 +104,7 @@ server.registerTool("fiche_annonce", {title: "Fiche complète d'une annonce", de
       const r0 = calcBien(vb), qs = (r0.t && r0.t.price ? studioPm2(t.ck, r0.t) : studioPm2(t.ck, null)) * pm2Adj(t.ty, t.a[0]), em = ecartMarche(t.ck);
       return Object.assign(res, {ecart_prix_vs_ventes_du_quartier_pct: qs ? __r((t.a[2] / t.a[0] / qs - 1) * 100) : null, ecart_habituel_dans_la_ville_pct: em ? __r((em.med - 1) * 100) : null, prix_a_proposer: lv ? {ouverture: lv.ouv, cible: lv.cible, maximum: lv.max} : null, points_d_attention: att,
         description: F.d || null, photos: (F.ph || []).map(p => photoFull(t.a[3], p)), etage: F.et ?? null, etages: F.ets ?? null, ascenseur: F.asc ?? null, annee: F.an ?? null, chauffage: F.chauf || null,
-        lots_copro: F.lots ?? null, copropriete_registre: cp, residences_et_chantiers: cn, bruit: br, zone_tendue: typeof ZTEN !== "undefined" ? ZTEN.has(t.ck) : null, frais_agence: F.frais || null, position: F.la != null ? {lat: F.la, lon: F.lo, precision_m: F.r} : null, publiee: F.pub || null,
+        lots_copro: F.lots ?? null, copropriete_registre: cp, residences_et_chantiers: cn, bruit: br, zone_tendue: typeof ZTEN !== "undefined" ? ZTEN.has(t.ck) : null, frais_agence: F.frais || null, position: F.la != null ? {lat: F.la, lon: F.lo, precision_m: F.r} : null, en_ligne_au_moins_depuis: F.pub || null,
         historique_prix: (h.p || []).map(([d, p]) => ({date: d, prix: p})), premiere_vue: h.f || null}); } finally { setType(t0, true); } }, lien); }));
 
 server.registerTool("simuler_bien", {title: "Simuler un bien", description: "Calcule un bien quelconque (une annonce d'un autre site, une contre-offre…) avec les réglages en cours : budget, loyer, cash-flow, rendement 15 ans, impôts, prix à viser.",

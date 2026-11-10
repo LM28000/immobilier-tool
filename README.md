@@ -36,7 +36,7 @@ npm test                  # build + tests du calcul + tests des données + tests
 
 `sync.sh` lance aussi les tests rapides avant chaque publication et n'envoie rien s'ils échouent (notification macOS, ligne « NON PUBLIÉ » dans `sync.log`). GitHub relance tous les tests à chaque envoi (`.github/workflows/tests.yml`).
 
-Les annonces sont relevées chaque jour dans les 22 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 60 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
+Les annonces sont relevées chaque jour dans les 22 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 150 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
 
 ## Annonces privées (Supabase)
 
@@ -56,7 +56,7 @@ Le code (`src/`, `tools/`, `tests/`, `mcp/`, `build.py`, scripts) est sous licen
 | Données | Source | Licence |
 |---|---|---|
 | ventes réelles (`dvf.json`), prix des appartements depuis 2014 (`prix-tendance.json`) | DVF (DGFiP) ; Terralyse d'après DVF | Licence Ouverte 2.0 |
-| contours des quartiers IRIS et fonds de carte (`irisdata.js`, `mapdata.js`, `citymaps.json`), mairies (`reperes.json`), urbanisme (`territoire.json`) | IGN | Licence Ouverte 2.0 |
+| contours des quartiers IRIS et projection de l'ancienne carte (`irisdata.js`, `mapdata.js`), mairies (`reperes.json`), urbanisme (`territoire.json`) | IGN | Licence Ouverte 2.0 |
 | DPE des quartiers (`irisdata.js`) | ADEME | Licence Ouverte 2.0 |
 | habitants, revenus, logements vides (`habitants.json`) | Insee | Licence Ouverte 2.0 |
 | copropriétés : lots, époque, syndic, parcelles (`copro/<ville>.js`) | registre national d'immatriculation des copropriétés (Anah) | Licence Ouverte 2.0 |

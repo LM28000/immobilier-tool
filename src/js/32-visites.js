@@ -15,7 +15,7 @@ function priceLevels(b){const g=targetsFor(b), pr=+b.prix, v=[g.cf,g.r7].filter(
  const cible=Math.min(...v), max=Math.min(pr,Math.max(...v)), ouv=Math.floor(cible*0.95/500)*500; return {ouv:Math.min(ouv,pr),cible:Math.min(cible,pr),max,pr};}
 // questions à poser à l'agent, d'après ce qu'on sait du bien
 function agentQuestions(b){const s=bienSuf(b), v=s?vu("v",b.ville,s):null, Q=["Pourquoi le propriétaire vend-il, et depuis quand le bien est-il en vente ?","Des offres ont-elles déjà été faites ? À quel prix ?"];
- if(v&&v.days>=30) Q.push(`L'annonce est en ligne depuis ${v.days} jours : le vendeur est-il pressé ?`);
+ if(v&&v.days>=30) Q.push(`L'annonce est en ligne depuis au moins ${v.days} jours : le vendeur est-il pressé ?`);
  if(v&&v.drops) Q.push("Le prix a déjà baissé : jusqu'où le vendeur est-il prêt à descendre ?");
  if(!(+b.copro)) Q.push("Combien coûtent les charges de copropriété et que comprennent-elles ?");
  Q.push("Des travaux sont-ils votés ou envisagés en copropriété (ravalement, toiture, ascenseur) ?");
@@ -114,7 +114,7 @@ function negoArgs(b,x,g,t){const A=[], pm2=+b.prix/(+b.surface||22);
  if(/[EFG]/.test(b.dpe||"")) A.push(`DPE <b>${b.dpe}</b> : ${b.dpe==="E"?"location interdite en 2034":b.dpe==="F"?"location interdite en 2028":"location déjà interdite"} sans rénovation. Le coût des travaux est à déduire du prix.`);
  if(+b.travaux>H.travaux) A.push(`<b>${eur(+b.travaux)}</b> de travaux à prévoir d'après la visite.`);
  if(b.visite&&b.visite.votes) A.push(`Travaux votés en copropriété : ${esc(b.visite.votes)}.`);
- if(b.vu&&b.vu.days>=45) A.push(`Annonce en ligne depuis <b>${b.vu.days} jours</b> : le vendeur peut être ouvert à la négociation.`);
+ if(b.vu&&b.vu.days>=45) A.push(`Annonce en ligne depuis au moins <b>${b.vu.days} jours</b> : le vendeur peut être ouvert à la négociation.`);
  if(b.vu&&b.vu.drops) A.push(`Le prix a déjà baissé ${b.vu.drops} fois.`);
  const fl=visitFlags(b); if(fl) A.push(`${fl} point${fl>1?"s":""} négatif${fl>1?"s":""} relevé${fl>1?"s":""} pendant la visite.`);
  return A.slice(0,5);}
@@ -149,7 +149,7 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; if(doc
    ${fg!=null&&nd>=15?`<div class="trow"><span>Petits appartements en DPE F ou G</span><b>${fr(fg,0)} %</b></div>`:""}
    ${t&&poiOf(t)?`<div class="trow"><span>Vie de quartier</span><b>${fr(poiOf(t)[0],1)}/10 · supermarché ${dTxt(Math.min(poiOf(t)[1],poiOf(t)[2]))}</b></div>`:""}
    ${t&&risqOf(t)?`<div class="trow"><span>Risques</span>${risqPills(t)}</div>`:""}
-   ${b.vu?`<div class="trow"><span>Annonce en ligne depuis</span><b>${b.vu.days} jours${b.vu.drops?` · ${b.vu.drops} baisse${b.vu.drops>1?"s":""}`:""}</b></div>`:""}</div></div></div>
+   ${b.vu?`<div class="trow"><span>Annonce en ligne depuis au moins</span><b>${b.vu.days} jours${b.vu.drops?` · ${b.vu.drops} baisse${b.vu.drops>1?"s":""}`:""}</b></div>`:""}</div></div></div>
  ${t&&dvfOf(t)&&dvfOf(t).n?`<div class="fbox"><h2>Studios réellement vendus dans le quartier</h2>${dvfBlock(t)}<p class="fnote">Source : DVF (Cerema), ventes d'un seul appartement du même nombre de pièces, 2023-2025. Prix nets vendeur, hors frais de notaire.</p></div>`:""}
  ${rents.length?`<div class="fbox"><h2>Locations concurrentes${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Type</th><th>Loyer CC</th><th>Ramené à ${H.surface} m²</th></tr></thead><tbody>${rents.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${a[3]?"meublé":"vide"}</td><td>${eur(a[2])}</td><td>${eur(r22(a))}</td></tr>`).join("")}</tbody></table><p class="fnote">Notre calcul retient ${eur(x.rentHC+H.chLoc)} charges comprises pour ce bien. Loyers demandés, pas forcément signés.</p></div>`:""}
  ${sales.length||sold.length?`<div class="fbox"><h2>Ventes comparables${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Prix</th><th>€/m²</th><th>État</th></tr></thead><tbody>${sales.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${keur(a[2])}</td><td>${eur(a[2]/a[0])}</td><td>en vente</td></tr>`).join("")}${sold.map(({e})=>{const p=e.p[e.p.length-1][1]; return `<tr><td>${String(e.m[0]).replace(".",",")} m²</td><td>${keur(p)}</td><td>${eur(p/e.m[0])}</td><td>parti le ${dm(e.g)}</td></tr>`;}).join("")}</tbody></table></div>`:""}

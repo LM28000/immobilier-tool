@@ -81,14 +81,20 @@ ok('hausse des prix selon la ville : pente négative mesurée sur 15 villes au m
 ok('hausse des prix selon la ville : moins de logements vides, plus de hausse ; écart borné à 2 points', px.d.angers > 0 && px.d.bourges < 0 && Object.values(px.d).every(v => Math.abs(v) <= 2), JSON.stringify(px.d));
 ok('hausse des prix selon la ville : décochée, la même partout', px.off);
 E('var RISK=undefined; PXP=null; CALCC.clear();');
-// zone tendue : un bien vendu loué garde son loyer au départ du locataire (Rennes), comme un DPE F ou G partout ; ailleurs, prime meublé
+// zone tendue : un bien vendu loué garde son loyer au départ du locataire (Rennes) ; ailleurs, prime meublé, DPE F ou G compris (sa rénovation est comptée dans les travaux)
 const zt = E(`(()=>{const mk=(k,dpe)=>{const c=C.find(v=>v.k===k); return Object.assign({},c,{prixTot:60000,surf:20,type:"studio",rent:380,rentM2:20,rentFixed:true,bailAns:1,rentEst:c.rent*1.3,rentM2Est:c.rentM2,dpe:dpe||""});};
   CALCC.clear(); const r=calc(mk("rennes")), m=calc(mk("lemans")), f=calc(mk("lemans","F"));
   ZTEN.delete("rennes"); CALCC.clear(); const r0=calc(mk("rennes")); ZTEN.add("rennes"); CALCC.clear();
-  return {r:[r.plaf,r.irr],r0:[r0.plaf,r0.irr],m:[m.plaf,m.irr],f:[f.plaf,f.irr],zt:r.zt,ztm:m.zt};})()`);
+  const lg=v=>calc(Object.assign(mk("lemans"),{bailAns:30,vac:v})).irr;   /* bail plus long que le calcul : logement occupé, aucun mois vide */
+  return {r:[r.plaf,r.irr],r0:[r0.plaf,r0.irr],m:[m.plaf,m.irr],f:[f.plaf,f.irr],zt:r.zt,ztm:m.zt,occ:[lg(0),lg(3)],libre:[calc(Object.assign(mk("lemans"),{bailAns:null,vac:0})).irr,calc(Object.assign(mk("lemans"),{bailAns:null,vac:3})).irr]};})()`);
 ok('zone tendue : Rennes, Nantes, Caen, Orléans, Saint-Nazaire', E('["rennes","nantes","caen","orleans","stnazaire"].every(k=>ZTEN.has(k)) && ZTEN.size===5 && !ZTEN.has("lemans")'));
 ok('zone tendue : bien vendu loué, loyer gardé au départ du locataire (rendement plus bas que sans la règle)', zt.r[0] === 'zt' && zt.r0[0] === null && zt.r[1] < zt.r0[1] && zt.zt === true && zt.ztm === false, JSON.stringify(zt));
-ok('DPE F ou G : pas de hausse à la relocation, même hors zone tendue', zt.f[0] === 'fg' && zt.m[0] === null && zt.f[1] < zt.m[1], JSON.stringify(zt));
+ok('DPE F ou G hors zone tendue : loyer relevé au départ du locataire comme ailleurs (rénovation comptée dans les travaux)', zt.f[0] === null && zt.m[0] === null && zt.f[1] === zt.m[1], JSON.stringify(zt));
+const fon = E(`(()=>{const c=C.find(v=>v.k==="lemans"), mk=o=>Object.assign({},c,{prixTot:60000,surf:20,type:"studio",rent:380,rentM2:20,rentFixed:true,bailAns:3,rentEst:c.rent*1.3,rentM2Est:c.rentM2},o);
+  const a0=H.assoc.map(a=>a.tmi); H.assoc.forEach(a=>{a.tmi=30;}); CALCC.clear(); const v=calc(mk({bailVide:true})), m=calc(mk({bailVide:false})); H.assoc.forEach((a,i)=>{a.tmi=a0[i];}); CALCC.clear();
+  return {v:[v.imp1,v.irr],m:[m.imp1,m.irr],loyer:v.rentHC};})()`);
+ok('bien vendu loué avec un bail vide : revenus fonciers (micro-foncier, 30 % d\'abattement, 17,2 % de prélèvements) jusqu\'au départ du locataire', Math.abs(fon.v[0] - fon.loyer*12*0.7*0.472) < 1 && fon.v[0] > fon.m[0] && fon.v[1] < fon.m[1], JSON.stringify(fon));
+ok('bien vendu loué : pas de mois vides pendant le bail en cours', Math.abs(zt.occ[0] - zt.occ[1]) < 1e-9 && zt.libre[0] > zt.libre[1] + 0.3, JSON.stringify([zt.occ, zt.libre]));
 // bruit des aéroports : zone la plus forte qui contient le point (plan d'exposition au bruit)
 run(`var PEBB=null; var PEBQ={aero:[{oaci:"LFXX",nom:"Essai",date:"2004-09-17"}],z:[{oaci:"LFXX",zone:"D",g:[[[0,0],[4,0],[4,4],[0,4],[0,0]]]},{oaci:"LFXX",zone:"C",g:[[[1,1],[3,1],[3,3],[1,3],[1,1]]]}]};` + pick('src/js/47c-bruit.js', 'function pebAt'), 'pebAt');
 ok('bruit des aéroports : zone la plus forte au point, rien hors des zones', E('pebAt(2,2).zone') === 'C' && E('pebAt(0.5,0.5).zone') === 'D' && E('pebAt(5,5)') === null && E('pebAt(2,2).nom') === 'Essai');
@@ -98,12 +104,12 @@ E(`var CPJ={per:[["avant 1949",0,1948],["de 1961 à 1974",1961,1974]],noms:["SYN
   [0.2,48,"AA1",24,18,16,4,1,1,0,0,0,"AB0123","1 r a"],[0.2003,48,"AA2",24,20,18,2,0,2,0,-1,0,"","3 r a"],[0.2006,48,"AA3",10,8,8,0,0,0,1,-1,1,"","5 r a"],[0.204,48,"AA4",5,5,5,0,0,0,0,-1,0,"0A0007","9 r b"],[0.2,48.002,"AB1",30,20,20,0,1,1,0,0,0,"AC0001","2 r du port"],[0.2001,48.002,"AB2",12,10,10,0,0,0,1,-1,0,"AC0001","4 r du port"]]};`);
 const cm = o => E(`coproMatch(CPJ,${JSON.stringify(o)})`);
 // résidences étudiantes et logements neufs autour d'un point : 1 km pour les résidences, 500 m pour les permis récents
-run(`var CN_RES=1000, CN_PC=500, CN_DEPUIS="2023-01";` + pick('src/js/24d-concurrence.js', 'function concAround'), 'concAround');
+run(`var CN_RES=1000, CN_PC=500, CN_DEPUIS="2023-01", CN_HORS=new Set([1,3,4,5,6]);` + pick('src/js/24d-concurrence.js', 'function concAround'), 'concAround');
 E(`var CNJ={res:[[0.2,48,"Crous A",300,"crous",0,null],[0.2,48.008,"Privée B",null,"osm",0,null],[0.2,48.02,"Loin",100,"crous",0,null]],
-  pc:[[0.201,48,"2024-05",2,"","",120,90,10,120,2,0,"SCCV X","1 rue A"],[0.2,48.003,"2023-02",5,"2024-01","",40,10,20,0,0,8,"","3 rue B"],[0.2,48.001,"2021-06",6,"2022-01","2023-09",60,20,20,0,0,0,"",""],[0.21,48,"2025-01",2,"","",500,200,100,0,0,0,"",""]]};`);
+  pc:[[0.201,48,"2024-05",2,"","",120,90,10,120,2,0,"SCCV X","1 rue A"],[0.2,48.003,"2023-02",5,"2024-01","",40,10,20,0,0,8,"","3 rue B"],[0.2,48.001,"2021-06",6,"2022-01","2023-09",60,20,20,0,0,0,"",""],[0.21,48,"2025-01",2,"","",500,200,100,0,0,0,"",""],[0.2,48.002,"2024-03",2,"","",105,89,10,105,1,0,"","Seniors"]]};`);
 const ca = E('concAround(CNJ,48,0.2)');
 ok('autour d\'un point : résidences à 1 km au plus, par distance', ca.R.length === 2 && ca.R[0][1][2] === 'Crous A' && ca.R[1][1][2] === 'Privée B', JSON.stringify(ca.R));
-ok('autour d\'un point : permis à 500 m au plus et autorisés depuis 2023, du plus grand au plus petit ; totaux par état', ca.P.length === 2 && ca.P[0][1][6] === 120 && ca.s.n === 160 && ca.s.st === 100 && ca.s.e[2][0] === 120 && ca.s.e[5][1] === 10, JSON.stringify(ca.s));
+ok('autour d\'un point : permis à 500 m au plus et autorisés depuis 2023, du plus grand au plus petit ; totaux par état ; résidence seniors à part', ca.P.length === 2 && ca.P[0][1][6] === 120 && ca.s.n === 160 && ca.s.st === 100 && ca.s.e[2][0] === 120 && ca.s.e[5][1] === 10 && ca.s.hors === 105, JSON.stringify(ca.s));
 const c0 = cm({exact: true, lat: 48, lon: 0.2004, cad: ['A', '7']}), c1 = cm({exact: true, lat: 48, lon: 0.2004, cad: ['ab', '123']}), c2 = cm({exact: true, lat: 48, lon: 0.2007, cad: ['ZZ', '9']}), c3 = cm({exact: true, lat: 48.01, lon: 0.2, cad: null});
 ok('copropriété d\'une adresse : celle de la parcelle, même plus loin qu\'une autre', c1.how === 'parcelle' && c1.x[2] === 'AA1' && c1.k === 'AB0123', JSON.stringify(c1));
 const eq = (x, y) => E(`cpAdrEq(cpAdr(${JSON.stringify(x)}),cpAdr(${JSON.stringify(y)}))`);

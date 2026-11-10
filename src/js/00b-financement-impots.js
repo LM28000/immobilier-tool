@@ -6,7 +6,7 @@
    - prélèvements sociaux sur les revenus LMNP : 18,6 % (LFSS 2026) ;
    - revente : plus-value des particuliers, 19 % + 17,2 %, abattements pour durée de détention ;
      depuis 2025, les amortissements du bâti déduits au réel sont réintégrés dans la plus-value. */
-const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5};
+const FISC={abatMicro:0.5, ps:18.6, pvIR:19, pvPS:17.2, terrain:0.15, ansBati:30, ansMeubles:7, ansTravaux:10, fraisForfait:7.5, abatFoncier:0.3, psFoncier:17.2};   /* revenus fonciers (bail vide en cours d'un bien vendu loué) : micro-foncier, prélèvements sociaux hors hausse de la LFSS 2026 */
 const FIN0={garantie:1.0, assurA:0.20, quotA:100, assurB:0.20, quotB:100, tmiA:0, tmiB:0, regime:"auto", cfe:100, compta:150, partA:50, net:true, nomA:"", nomB:""};
 Object.assign(H,FIN0); Object.assign(HDEF,FIN0);
 /* ---------- associés : de 1 à 6 personnes qui achètent ensemble ----------
@@ -37,6 +37,7 @@ HDEF.assoc=[assoc0(2),assoc0(2)];
 function saveFin(){try{localStorage.setItem("fin",JSON.stringify({garantie:H.garantie,regime:H.regime,cfe:H.cfe,compta:H.compta,assoc:H.assoc,nomA:H.nomA,nomB:H.nomB,tmiA:H.tmiA,tmiB:H.tmiB,assurA:H.assurA,quotA:H.quotA,assurB:H.assurB,quotB:H.quotB,v2:1}));}catch(_){} if(typeof regPush==="function") regPush();}
 const insRate=()=>H.assoc.reduce((s,a)=>s+a.assur*a.quot,0)/100;          // % du capital par an : assurance de chaque emprunteur sur sa quotité
 const taxRate=()=>H.assoc.reduce((s,a)=>s+(a.tmi+FISC.ps)*a.part,0)/1e4; // taux moyen : chacun paie l'impôt sur sa part, à sa tranche
+const taxRateF=()=>H.assoc.reduce((s,a)=>s+(a.tmi+FISC.psFoncier)*a.part,0)/1e4; // même chose pour des revenus fonciers
 
 // abattements pour durée de détention (plus-value des particuliers)
 function abatPV(y){const ir=y<6?0:y>=22?1:0.06*(y-5); let ps=y<6?0:y<=21?0.0165*(y-5):y===22?0.0165*16+0.016:Math.min(1,0.0165*16+0.016+0.09*(y-22)); return [Math.min(ir,1),Math.min(ps,1)];}
@@ -79,26 +80,31 @@ function calc(c){
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  /* bien vendu loué : loyer du bail pendant c.bailAns années (départ du locataire), puis le loyer actuel relevé de la prime meublé mesurée,
     sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) ;
-    zone tendue (ZTEN) ou DPE F ou G : le nouveau loyer ne peut pas dépasser l'ancien (loi du 6 juillet 1989, décret n° 2017-1198 ; loi Climat et résilience) :
-    il reste au loyer actuel (sauf gros travaux ou loyer manifestement sous-évalué, non comptés) */
- const plaf=c.bailAns!=null&&c.rentEst>0?(typeof ZTEN!=="undefined"&&ZTEN.has(c.k)?"zt":/^[FG]$/.test(c.dpe||"")?"fg":null):null;
+    zone tendue (ZTEN) : le nouveau loyer ne peut pas dépasser l'ancien (loi du 6 juillet 1989, décret n° 2017-1198) : il reste au loyer actuel
+    (sauf gros travaux ou loyer manifestement sous-évalué, non comptés). Un DPE F ou G n'est pas plafonné ici : le calcul compte sa rénovation
+    (DPE_M2, 12-ce-qui-pese.js), après laquelle le loyer se fixe comme ailleurs. Pendant le bail en cours, le logement est occupé : pas de mois vides. */
+ const bail=c.bailAns!=null&&c.rentEst>0, plaf=bail&&typeof ZTEN!=="undefined"&&ZTEN.has(c.k)?"zt":null;
  let rentEff2=rentEff;
- if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
+ if(bail){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
   const cc2=plaf||rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
- const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
+ const rentAt=y=>{if(!bail) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentHC+(1-w)*rentEff2;};
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);   /* endettement de l'ensemble des associés (ce que la banque regarde) */
  const ratios=H.assoc.map(a=>{const w=a.part/100, d=a.revenus+rentHC*0.7*w; return d>0?(mens*w+a.credits)/d:null;});   /* et celui de chacun, sur sa part */
  const amBati=bien*(1-FISC.terrain)/FISC.ansBati;
+ /* bail vide en cours (bien vendu loué, pas vendu meublé : c.bailVide) : jusqu'au départ du locataire, ses loyers sont des revenus fonciers
+    (micro-foncier : abattement de 30 %, prélèvements sociaux de 17,2 %, sans amortissement) ; la location meublée (LMNP) commence ensuite,
+    et avec elle les amortissements (meubles et travaux comptés à partir de là) */
+ const wVide=y=>bail&&c.bailVide?Math.min(1,Math.max(0,c.bailAns-y)):0, yB=bail&&c.bailVide?Math.floor(c.bailAns):0;
  // impôt année par année pour un régime
- function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0;
-  for(let y=0;y<25;y++){const rent=rentAt(y)*12*Math.pow(1+H.ly/100,y), ch=charges*12*Math.pow(1+H.cg/100,y)+gst*rent, ly=L.Y[y]||{int:0,ins:0};   /* gestion : déduite au réel */
-   let fees=(rent+D.chLoc*12)>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
-   if(reg==="micro") taxable=rent*(1-FISC.abatMicro);
-   else {fees+=H.compta; let res=rent-ch-ly.int-ly.ins-fees-(y===0?bien*H.notaire/100+gar:0);
-    if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d;
-    stock+=amBati+(y<FISC.ansMeubles?meu/FISC.ansMeubles:0)+(y<FISC.ansTravaux?trav/FISC.ansTravaux:0);
-    const u=Math.min(res,stock); stock-=u; res-=u; cumAB+=Math.min(u,amBati*(y+1)-cumAB); taxable=res;}
-   T.push(gross?0:taxable*taxRate()); F.push(gross?0:fees); AB.push(reg==="reel"?cumAB:0);}
+ function sim(reg,gross){const T=[], F=[], AB=[]; let stock=0, def=0, cumAB=0, bAcc=0;
+  for(let y=0;y<25;y++){const g=Math.pow(1+H.ly/100,y), rent=rentAt(y)*12*g, wv=wVide(y), rF=wv*rentHC*12*g, rB=rent-rF, ch=(charges*12*Math.pow(1+H.cg/100,y)+gst*rent)*(1-wv), ly=L.Y[y]||{int:0,ins:0};   /* gestion : déduite au réel */
+   let fees=(rB+D.chLoc*12*(1-wv))>5000?H.cfe:0, taxable; // CFE : pas de cotisation minimum sous 5 000 € de recettes
+   if(reg==="micro") taxable=rB*(1-FISC.abatMicro);
+   else {if(wv<1) fees+=H.compta; let res=rB-ch-(ly.int+ly.ins)*(1-wv)-fees-(y===0?bien*H.notaire/100+gar:0);
+    if(res<0){def+=-res; res=0;} const d=Math.min(res,def); res-=d; def-=d; const k=y-yB;
+    bAcc+=amBati*(1-wv); stock+=amBati*(1-wv)+(k>=0&&k<FISC.ansMeubles?meu/FISC.ansMeubles:0)+(k>=0&&k<FISC.ansTravaux?trav/FISC.ansTravaux:0);
+    const u=Math.min(res,stock); stock-=u; res-=u; cumAB+=Math.min(u,bAcc-cumAB); taxable=res;}
+   T.push(gross?0:taxable*taxRate()+rF*(1-FISC.abatFoncier)*taxRateF()); F.push(gross?0:fees); AB.push(reg==="reel"?cumAB:0);}
   const pvT=(b,sa,k,t,a)=>gross?0:pvTax(b,sa,k,t,a);
   const f=[-H.apport], gains=[bien-P-H.apport]; let crd=P, cum=0, r=taux/1200;
   for(let m=1;m<=300;m++){const y=Math.floor((m-1)/12);
@@ -109,7 +115,7 @@ function calc(c){
    if(m%12===0){const k=m/12; gains.push(sale(k)-Math.max(crd,0)-(H.apport-cum)-pvT(bien,sale(k),k,trav,AB[k-1]));}}
   return {reg,T,F,AB,f,gains,irr:irrMonthly(f)};}
  let R; if(H.regime==="auto"){const a=sim("micro"), b=sim("reel"); R=(b.irr??-99)>(a.irr??-99)?b:a;} else R=sim(H.regime);
- const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], gest=rentEff*gst, cfBrut=rentEff-gest-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
+ const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], r1=rentAt(0), gest=r1*gst, cfBrut=r1-gest-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
  const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
  const W=H.assoc.map(a=>(a.tmi+FISC.ps)*a.part), Ws=W.reduce((s,w)=>s+w,0)||1, imps=W.map(w=>imp1*w/Ws), impA=imps[0];
  return {plaf,zt:typeof ZTEN!=="undefined"&&ZTEN.has(c.k),bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,gest,vac,px,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,

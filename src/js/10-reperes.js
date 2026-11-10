@@ -1,5 +1,5 @@
 /* ---------- repères, demande locative, annonces ---------- */
-/* repères calculés par règle (tools/collecte/reperes.js) : gare la plus fréquentée, campus du supérieur public, mairie */
+/* repères calculés par règle (tools/collecte/reperes.js) : gare la plus fréquentée, campus du supérieur (public et privé), mairie */
 const MARK=typeof REPQ!=="undefined"&&REPQ?REPQ:{};
 /* repères : un type par clé (gare, univ, centre), autant de repères du même type que nécessaire (univ, univ2, univ3…) */
 const mkT=k=>String(k).replace(/\d+$/,"");

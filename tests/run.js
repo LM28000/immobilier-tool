@@ -101,8 +101,9 @@ async function mlRoutes(p) {
     const v1 = await all();
     ok('ville · zone tendue indiquée (Rennes), loyer plafonné à la relocation', /Zone tendue\s*oui/.test(v1) && /ne peut pas dépasser celui du précédent locataire/.test(v1), v1.match(/Zone tendue.{0,120}/s));
     ok('ville · étudiants de la dernière rentrée et tendance depuis 2015', /80\s244/.test(v1) && /\+1,8 % par an/.test(v1) && /depuis 2015/.test(v1), v1.match(/Étudiants.{0,160}/s));
-    ok('ville · revente : stock d\'annonces en mois de ventes et durée de vente à venir', /Revente : stock d'annonces/.test(v1) && /Durée de vente mesurée/.test(v1), v1.match(/Revente.{0,200}/s));
-    const s3 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const r = calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})); return r.x.plaf === 'zt'; }) || ADS.rennes.ventes[0]; return 'v|rennes|' + a[3]; });
+    ok('ville · revente : stock d\'annonces en mois de ventes et rang ; pas de ligne « durée » avant 20 annonces parties', /Revente : stock d'annonces\s*[\d,]+ mois de ventes/.test(v1) && /rang \d+ sur \d+ villes mesurées/.test(v1) && !/Durée de vente mesurée\s*pas encore/.test(v1), v1.match(/Revente.{0,200}/s));
+    ok('revente : non mesuré quand le plafond du relevé coupe le marché (studios de Nantes, plafond 120 000 €)', await p.evaluate(() => { const s = liqStock('nantes'), r = liqStock('rouen'); return !!(s && s.plaf && !s.ok && r && r.plaf && r.ok); }));
+    const s3 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const r = calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})); return r.x.plaf === 'zt' && !horsCalcul(a[3]); }) || ADS.rennes.ventes[0]; return 'v|rennes|' + a[3]; });
     await open(s3); await p.waitForTimeout(800); const v2 = await all();
     ok('annonce en zone tendue · point « à demander » sur le loyer du précédent locataire ou loyer gardé', /Zone tendue : (au départ du locataire|si le logement a été loué)/.test(v2), v2.match(/Zone tendue.{0,100}/s));
     const s4 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})).t); return 'v|rennes|' + a[3]; });

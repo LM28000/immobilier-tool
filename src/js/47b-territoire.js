@@ -48,10 +48,10 @@ function habOf(t){if(!t||!hasHAB(t.ck)) return null; const h=HABQ.q[t.ck][t.code
 const habCity=ck=>{const c=hasHAB(ck)&&HABQ.city[ck]; return c?{pop:c[0],p1824:c[1],scol:c[2],p2539:c[3],med:c[4],tp:c[5]}:null;};
 const pp=v=>fr(v,0)+" %";
 function habBlock(t){const h=habOf(t), c=habCity(t.ck); if(!h) return "";
- return `${fRows([["Habitants",h.pop.toLocaleString("fr-FR")],["Étudiants",`<b>${pp(h.scol)}</b> des habitants`,`18-24 ans encore en études · ville : ${pp(c.scol)}`],["25-39 ans",pp(h.p2539),`jeunes actifs · ville : ${pp(c.p2539)}`],h.med&&["Revenu médian",`${eur(h.med)} par an`,`par unité de consommation · ville : environ ${eur(c.med)}`],h.tp!=null&&["Taux de pauvreté",`${pp(h.tp)}`,`ville : ${pp(c.tp)}`]])}${fNote("Insee : recensement 2022, revenus 2021. Les petits quartiers n'ont pas tous leurs revenus publiés.")}`;}
+ return `${fRows([["Habitants",h.pop.toLocaleString("fr-FR")],["Jeunes en études",`<b>${pp(h.scol)}</b> des habitants`,`habitants de 18 à 24 ans qui étudient (Insee) · ville : ${pp(c.scol)}`],["25-39 ans",pp(h.p2539),`jeunes actifs · ville : ${pp(c.p2539)}`],h.med&&["Revenu médian",`${eur(h.med)} par an`,`par unité de consommation · ville : environ ${eur(c.med)}`],h.tp!=null&&["Taux de pauvreté",`${pp(h.tp)}`,`ville : ${pp(c.tp)}`]])}${fNote("Insee : recensement 2022, revenus 2021. Les petits quartiers n'ont pas tous leurs revenus publiés.")}`;}
 const habSum=t=>{const h=habOf(t); return h?`${pp(h.scol)} d'étudiants`:"";};
 function habAttn(t){const h=habOf(t), c=h&&habCity(t.ck); if(!h) return [];
- return [h.tp!=null&&h.tp>=35&&["warn",`Taux de pauvreté élevé (${pp(h.tp)}, ville ${pp(c.tp)}) : risque d'impayés et revente plus lente.`],h.scol>=c.scol*1.5&&h.scol>=10&&["ok",`Beaucoup d'étudiants : ${pp(h.scol)} des habitants (ville ${pp(c.scol)}).`]];}
+ return [h.tp!=null&&h.tp>=35&&["warn",`Taux de pauvreté élevé (${pp(h.tp)}, ville ${pp(c.tp)}) : risque d'impayés et revente plus lente.`],h.scol>=c.scol*1.5&&h.scol>=10&&["ok",`Beaucoup de jeunes en études : ${pp(h.scol)} des habitants ont 18 à 24 ans et étudient (ville ${pp(c.scol)}).`]];}
 
 /* étiquettes de quartier : même règle partout (10 min ou moins en marchant ou en bus/tram ; quartier prioritaire) */
 function qTags(t){const out=[], tr=typeof trajOf==="function"?trajOf(t):null;
@@ -60,12 +60,12 @@ function qTags(t){const out=[], tr=typeof trajOf==="function"?trajOf(t):null;
  return out.slice(0,2);}
 
 /* demande locative mesurée, même règle partout (Insee) : part de logements vides
-   moins de 7 % : marché tendu · 7 à 10 % : normal · 10 % ou plus : détendu ; en contexte, étudiants par petit logement (< 30 m²) et locataires du privé */
+   moins de 7 % : demande forte · 7 à 10 % : moyenne · 10 % ou plus : faible (sans rapport avec la « zone tendue », zonage légal, ZTEN) ; en contexte, étudiants par petit logement (< 30 m²) et locataires du privé */
 function demCalc(pop,stud,log,vac,rp,loc,hlm,s30){if(!log) return null; const v=vac/log*100;
- return {vac:v,cls:v<7?"p-ok":v<10?"p-n":"p-warn",txt:v<7?"tendu":v<10?"normal":"détendu",etud:s30?stud/s30:null,locp:rp?(loc-hlm)/rp*100:null,s30p:rp?s30/rp*100:null};}
+ return {vac:v,cls:v<7?"p-ok":v<10?"p-n":"p-warn",txt:v<7?"forte":v<10?"moyenne":"faible",etud:s30?stud/s30:null,locp:rp?(loc-hlm)/rp*100:null,s30p:rp?s30/rp*100:null};}
 function demCity(ck){const c=hasHAB(ck)&&HABQ.city[ck]; if(!c||c.length<15) return null; return demCalc(c[0],c[0]*c[2]/100,c[6],c[7],c[8],c[9],c[10],c[12]);}
 function demQ(t){const h=t&&hasHAB(t.ck)&&HABQ.q[t.ck][t.code]; if(!h||h.length<15||h[6]<100) return null; return demCalc(h[0],h[2],h[6],h[7],h[8],h[9],h[10],h[12]);}
-function demRows(d,ref){if(!d) return []; return [["Marché locatif",`<span class="pill ${d.cls}">${d.txt}</span> ${pp(d.vac)} de logements vides`,ref?`ville : ${pp(ref.vac)} · tendu sous 7 %, détendu à 10 %`:"tendu sous 7 %, détendu à 10 % (Insee)"],
+function demRows(d,ref){if(!d) return []; return [["Demande locative",`<span class="pill ${d.cls}">${d.txt}</span> ${pp(d.vac)} de logements vides`,ref?`ville : ${pp(ref.vac)} · forte sous 7 %, faible à 10 % et plus`:"forte sous 7 % de logements vides, faible à 10 % et plus (Insee)"],
  d.locp!=null&&["Locataires du privé",pp(d.locp),ref?`ville : ${pp(ref.locp)}`:"des résidences principales"],
  d.etud!=null&&["Étudiants par petit logement",fr(d.etud,1),`logements de moins de 30 m² : ${pp(d.s30p)} du parc${ref?` · ville : ${fr(ref.etud,1)}`:""}`]];}
 /* une seule source pour les logements vides */
