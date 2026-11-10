@@ -5,6 +5,8 @@
 # En cas de refus : ligne dans sync.log et notification macOS.
 cd "$(dirname "$0")" || exit 1
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+# le Python de python.org n'a pas de certificats à lui : sans le terminal (launchd), il prend ceux de macOS
+[ -z "$SSL_CERT_FILE" ] && [ -f /etc/ssl/cert.pem ] && export SSL_CERT_FILE=/etc/ssl/cert.pem
 now() { date '+%F %T'; }
 # un seul passage à la fois (launchd peut relancer pendant qu'un passage tourne) ; verrou de plus de 30 min = abandonné
 L=.git/sync.lock
