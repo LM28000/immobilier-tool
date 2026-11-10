@@ -5,6 +5,8 @@ const CHECK=[
  ["Le logement",[["chauf","Chauffage récent (type et âge notés)"],["ecs","Eau chaude correcte (ballon, débit)"],["elec","Électricité aux normes (tableau, prises)"],["vitrage","Double vitrage"],["surf","Surface réelle conforme à l'annonce"],["range","Rangements suffisants"]]],
  ["Location meublée",[["mobilier","Place pour le mobilier obligatoire (lit, plaques, frigo, rangements…)"],["lit","Un vrai lit tient, pas seulement un canapé"],["cible","Cible claire : étudiant ou jeune actif"]]],
  ["Documents à obtenir",[["pv","3 derniers PV d'assemblée générale"],["charges","Relevé des charges de copropriété"],["fonds","Fonds de travaux et travaux votés"],["diag","Diagnostics (DPE, électricité, amiante…)"],["tfavis","Dernier avis de taxe foncière"]]]];
+/* grille d'un bien : les documents à obtenir sont ceux de sa liste adaptée (24e-documents.js, mêmes clés) */
+function checkFor(b){const D=typeof docsList==="function"&&b?docsList(b).flatMap(g=>g[1]).map(([k,l])=>[k,l]):null; return D&&D.length?CHECK.slice(0,-1).concat([["Documents à obtenir",D]]):CHECK;}
 const VERD={go:["On fonce","p-ok"],prix:["Oui, au bon prix","p-warn"],non:["Non","p-bad"]};
 const meV=()=>(myName()||H.nomA||"Moi").trim();
 function visitScore(b){const av=(b.visite&&b.visite.avis)||{}, v=Object.values(av).flatMap(a=>CRIT.map(([k])=>+a[k]).filter(n=>n>0)); return v.length?v.reduce((s,n)=>s+n,0)/v.length:null;}
@@ -58,7 +60,7 @@ function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.fi
  </tbody></table>
  <h2 class="psec" id="vs1">Checklist de visite</h2>
  <p class="sub" style="margin:0 0 6px">Une réponse commune. Chaque « non » apparaît en rouge sur la fiche du bien.</p>
- ${CHECK.map(([t,items])=>`<div class="ckgrp"><h4>${t}</h4>${items.map(([k,l])=>`<div class="ckrow${ck[k]==="non"?" bad":""}"><span>${l}</span>${tri(k)}</div>`).join("")}</div>`).join("")}
+ ${checkFor(b).map(([t,items])=>`<div class="ckgrp"><h4>${t}</h4>${items.map(([k,l])=>`<div class="ckrow${ck[k]==="non"?" bad":""}"><span>${l}</span>${tri(k)}</div>`).join("")}</div>`).join("")}
  <h2 class="psec" id="vs2">Nos avis</h2>
  <p class="sub" style="margin:0 0 6px">Vous notez sous le nom « ${esc(me)} »${myName()?"":" (changez-le dans « Partager la liste »)"}.${others.length?"":" L'autre avis apparaîtra ici quand il sera saisi."}</p>
  <table class="scnt vnotes"><thead><tr><th></th><th>${esc(me)}</th>${others.map(n=>`<th>${esc(n)}</th>`).join("")}</tr></thead><tbody>
@@ -153,7 +155,7 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; if(doc
  ${t&&dvfOf(t)&&dvfOf(t).n?`<div class="fbox"><h2>Studios réellement vendus dans le quartier</h2>${dvfBlock(t)}<p class="fnote">Source : DVF (Cerema), ventes d'un seul appartement du même nombre de pièces, 2023-2025. Prix nets vendeur, hors frais de notaire.</p></div>`:""}
  ${rents.length?`<div class="fbox"><h2>Locations concurrentes${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Type</th><th>Loyer CC</th><th>Ramené à ${H.surface} m²</th></tr></thead><tbody>${rents.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${a[3]?"meublé":"vide"}</td><td>${eur(a[2])}</td><td>${eur(r22(a))}</td></tr>`).join("")}</tbody></table><p class="fnote">Notre calcul retient ${eur(x.rentHC+H.chLoc)} charges comprises pour ce bien. Loyers demandés, pas forcément signés.</p></div>`:""}
  ${sales.length||sold.length?`<div class="fbox"><h2>Ventes comparables${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Prix</th><th>€/m²</th><th>État</th></tr></thead><tbody>${sales.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${keur(a[2])}</td><td>${eur(a[2]/a[0])}</td><td>en vente</td></tr>`).join("")}${sold.map(({e})=>{const p=e.p[e.p.length-1][1]; return `<tr><td>${String(e.m[0]).replace(".",",")} m²</td><td>${keur(p)}</td><td>${eur(p/e.m[0])}</td><td>parti le ${dm(e.g)}</td></tr>`;}).join("")}</tbody></table></div>`:""}
- <div class="fbox fbreak"><h2>Checklist de visite</h2>${CHECK.map(([gt,items])=>`<h3>${gt}</h3><ul class="fcheck">${items.map(([k,l])=>`<li><span class="cb${ck[k]==="oui"?" ok":ck[k]==="non"?" ko":""}">${ck[k]==="oui"?"✓":ck[k]==="non"?"✗":""}</span>${l}</li>`).join("")}</ul>`).join("")}</div>
+ <div class="fbox fbreak"><h2>Checklist de visite</h2>${checkFor(b).map(([gt,items])=>`<h3>${gt}</h3><ul class="fcheck">${items.map(([k,l])=>`<li><span class="cb${ck[k]==="oui"?" ok":ck[k]==="non"?" ko":""}">${ck[k]==="oui"?"✓":ck[k]==="non"?"✗":""}</span>${l}</li>`).join("")}</ul>`).join("")}</div>
  <div class="fbox"><h2>Questions à poser</h2><ol>${agentQuestions(b).map(q=>`<li>${esc(q)}</li>`).join("")}</ol></div>
  <div class="fbox"><h2>Notes</h2><div class="flines"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
  <p class="fsrc">Estimations calculées par « Où acheter notre studio ? » avec nos réglages (apport ${eur(H.apport)}, taux ${pct(H.taux,2)} sur ${H.duree} ans, ${REG[x.regime]}). Pas un conseil financier.</p>`;

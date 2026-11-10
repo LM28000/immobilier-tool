@@ -110,7 +110,7 @@ async function mlRoutes(p) {
     ok('revente : non mesuré quand le plafond du relevé coupe le marché (studios de Nantes, plafond 120 000 €)', await p.evaluate(() => { const s = liqStock('nantes'), r = liqStock('rouen'); return !!(s && s.plaf && !s.ok && r && r.plaf && r.ok); }));
     const s3 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const r = calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})); return r.x.plaf === 'zt' && !horsCalcul(a[3]); }) || ADS.rennes.ventes[0]; return 'v|rennes|' + a[3]; });
     await open(s3); await p.waitForTimeout(800); const v2 = await all();
-    ok('annonce en zone tendue · point « à demander » sur le loyer du précédent locataire, ou loyer gardé (dit une fois)', /Zone tendue : (au départ du locataire|si le logement a été loué)/.test(v2) !== /zone tendue, le loyer ne peut pas augmenter/.test(v2), v2.match(/(Zone tendue|zone tendue).{0,100}/s));
+    ok('annonce en zone tendue · loyer gardé au départ du locataire (dit une fois), ou dernier loyer dans les documents à demander', (/Zone tendue : au départ du locataire/.test(v2) !== /zone tendue, le loyer ne peut pas augmenter/.test(v2)) || /Le dernier loyer, si le logement a été loué ces 18 derniers mois/.test(v2), v2.match(/(Zone tendue|zone tendue).{0,100}/s));
     ok('annonce · offre au prix affiché : mêmes chiffres que l\'en-tête (prix exact, pas arrondi à 500 €)', (() => { const h = v2.match(/Mensualité\s*([\d\u202f\u00a0 ]+) €/i), o = v2.match(/affiché\s+[−\d,]+\s*%\s+[−+]?[\d\u202f\u00a0 ]+ €\s+([\d\u202f\u00a0 ]+) €/); return !!h && !!o && h[1].replace(/\D/g, '') === o[1].replace(/\D/g, ''); })(), (v2.match(/Prix proposé.{0,200}/s) || [''])[0]);
     // annonce placée à 100 m près : bruit mesuré autour de sa position (Overpass simulé) ; annonce floue : aéroports seulement
     const s4 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const f = ficx(a[3]); return f && f.r != null && f.r <= 100 && f.la != null; }); return a ? 'v|rennes|' + a[3] : null; });
@@ -126,6 +126,11 @@ async function mlRoutes(p) {
     await p.evaluate(() => { BIENS.push({id: 'brA', ville: 'lemans', quartier: '', prix: 70000, surface: 22, pieces: 1, type: 'studio', titre: 'Essai bruit', adresse: '1 rue Essai Le Mans', lat: 48.0, lon: 0.2, geo: {bruit: [[90, 'N 138'], [400, 'Avenue X'], null]}}); });
     await open('b|brA'); await p.waitForTimeout(800); const v3 = await all();
     ok('bien à son adresse · bruit mesuré à l\'adresse et point d\'attention près d\'une voie rapide', /Distances mesurées à l'adresse/.test(v3) && /À 90 m d'une voie rapide \(N 138\)/.test(v3) && /plus de 1,5 km/.test(v3), v3.match(/(Bruit|voie rapide).{0,200}/s));
+    const dz = await p.evaluate(() => { const mk = o => Object.assign({id: 'dz' + Math.random(), prix: 70000, surface: 22, pieces: 1, type: 'studio', titre: 'Essai documents'}, o);
+      const K = b => docsList(b).flatMap(g => g[1].map(x => x[0])), z = K(mk({ville: 'rennes', dpe: 'F'})), l = K(mk({ville: 'lemans', dpe: 'C'})), g = checkFor(mk({ville: 'rennes', dpe: 'F'}));
+      return {z, l, grille: g[g.length - 1][1].map(x => x[0]), titre: g[g.length - 1][0]}; });
+    ok('documents à demander : copropriété (pièces de la loi ALUR, plan de travaux, DPE collectif), diagnostics, taxe foncière ; DPE F → audit ; zone tendue → dernier loyer ; mêmes cases que la grille de visite', ['copro', 'pv', 'charges', 'preetat', 'fonds', 'pppt', 'dpecol', 'diag', 'tfavis'].every(k => dz.z.includes(k) && dz.l.includes(k)) && dz.z.includes('dpefg') && !dz.l.includes('dpefg') && dz.z.includes('dernierloyer') && !dz.l.includes('dernierloyer') && dz.titre === 'Documents à obtenir' && JSON.stringify(dz.grille) === JSON.stringify(dz.z), JSON.stringify(dz));
+    ok('fiche d\'une annonce · onglet L\'achat : documents à demander, et lien depuis « Le bien »', /Documents à demander/.test(v2) && /Pré-état daté/.test(v2) && /Documents à demander avant une offre \(\d+\)/.test(v2), (v2.match(/Documents à demander.{0,120}/s) || [''])[0]);
     ok('zone tendue, étudiants, revente, bruit · sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // l'interface : carte, fiche, annonces, villes, budget (ordinateur et téléphone)
@@ -162,6 +167,25 @@ async function mlRoutes(p) {
         ok('v2 tel · liste basse d\'une ville : deux annonces entières, cash-flow compris', await p.evaluate(() => { const L = document.getElementById('v2mlist').getBoundingClientRect(), R = document.querySelectorAll('#v2mlist .v2row'), r = R[0], c = r && r.querySelector('.v2cfl');
           return !!c && R.length >= 2 && R[1].getBoundingClientRect().bottom <= L.bottom + 1 && c.scrollWidth <= c.clientWidth + 1; }), await p.evaluate(() => { const L = document.getElementById('v2mlist').getBoundingClientRect(), r = document.querySelector('#v2mlist .v2row'), c = r && r.querySelector('.v2cfl');
           return JSON.stringify({liste: [Math.round(L.top), Math.round(L.bottom)], ligne: r && [Math.round(r.getBoundingClientRect().top), Math.round(r.getBoundingClientRect().bottom)], cf: c && [c.scrollWidth, c.clientWidth], vue: [innerWidth, innerHeight], tete: Math.round(document.querySelector('#v2mlist .v2mhead').getBoundingClientRect().height)}); }));
+        { // fiche en demi-écran : chiffres sur une ligne, onglets visibles ; annonce suivante (glisser, bouton), partager, lien direct
+          await p.evaluate(() => document.querySelector('#v2mlist [data-v2open^="v|"]').click()); await p.waitForTimeout(900);
+          const hf = await p.evaluate(() => { const f = document.getElementById('v2fiche'), t = f.querySelector('.v2tabs2'), k = f.querySelector('.v2kl'); return {half: f.dataset.half, onglets: Math.round(t.getBoundingClientRect().top), vue: innerHeight, kl: !!k && getComputedStyle(k).display !== 'none' && k.getBoundingClientRect().height < 50, cases: getComputedStyle(f.querySelector('.v2kp')).display}; });
+          ok('v2 tel · fiche en demi-écran : chiffres sur une ligne, onglets visibles sans faire défiler', hf.half === '1' && hf.kl && hf.cases === 'none' && hf.onglets < hf.vue - 100, JSON.stringify(hf));
+          const tit = () => p.evaluate(() => document.querySelector('#v2fiche .v2fh b').innerText);
+          const t0 = await tit(), cdp = await c.newCDPSession(p), y = await p.evaluate(() => Math.round(Math.min(document.querySelector('#v2fiche .v2tabs2').getBoundingClientRect().bottom + 40, innerHeight - 20)));
+          const sw = async (x0, x1) => { await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x: x0, y}]}); for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x: x0 + (x1 - x0) * i / 6, y}]}); await p.waitForTimeout(16); } await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []}); await p.waitForTimeout(700); };
+          await sw(300, 110); const t1 = await tit(), half1 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half); await sw(90, 300); const t2 = await tit();
+          ok('v2 tel · glisser vers la gauche : annonce suivante de la liste, sans fermer la fiche ; vers la droite : retour', t1 !== t0 && t2 === t0 && half1 === '1', JSON.stringify([t0, t1, t2, half1]));
+          await p.tap('#v2fiche [data-v2nav="1"]'); await p.waitForTimeout(700); const t3 = await tit();
+          await p.evaluate(() => { Object.defineProperty(navigator, 'share', {configurable: true, value: d => { window.__sh = d; return Promise.resolve(); }}); }); await p.tap('#v2fiche [data-v2lien]'); await p.waitForTimeout(300);
+          const sh = await p.evaluate(() => window.__sh || null);
+          ok('v2 tel · bouton suivant, puis partager : feuille de partage du téléphone, texte et lien de la fiche', t3 === t1 && !!sh && /#f=v%7C/.test(sh.url) && /sur 15 ans/.test(sh.text), JSON.stringify(sh));
+          const p2 = await c.newPage(); await p2.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await mlRoutes(p2); await p2.goto(URL + sh.url.slice(sh.url.indexOf('#'))); await p2.waitForTimeout(3500);
+          const o2 = await p2.evaluate(() => ({t: (document.querySelector('#v2fiche:not([hidden]) .v2fh b') || {}).innerText || null, h: location.hash}));
+          ok('v2 · lien partagé : la fiche s\'ouvre directement, l\'adresse redevient celle de l\'app', o2.t === t3 && o2.h === '', JSON.stringify(o2)); await p2.close();
+          await p.evaluate(() => document.querySelector('#v2fiche [data-v2close]').click()); await p.waitForTimeout(500);
+          const lg = await p.evaluate(() => { const r = document.getElementById('v2mleg').getBoundingClientRect(), q = document.querySelector('#v2mleg .v2mlq>span'); return {w: Math.round(r.width), h: Math.round(r.height), mot: q ? getComputedStyle(q).display : null, icone: !!document.querySelector('#v2mleg .v2mlqi')}; });
+          ok('v2 tel · légende de la carte : une pastille (icône et menu), sans le mot « Quartiers »', lg.mot === 'none' && lg.icone && lg.w <= 200 && lg.h <= 48, JSON.stringify(lg)); }
         { // bouton ou geste « retour » : visionneuse, puis fiche, puis onglet ; fermer par l'app retire l'étape
           const back = async () => { await p.evaluate(() => { if (history.state && history.state.v2bk) history.back(); }); await p.waitForTimeout(600); };
           const st = () => p.evaluate(() => ({lb: !!document.querySelector('.v2lb'), fiche: !document.getElementById('v2fiche').hidden, tab: document.querySelector('#v2tabbar [aria-current="page"]').dataset.v2tab, h: history.state && history.state.v2bk || 0}));
@@ -256,7 +280,7 @@ async function mlRoutes(p) {
         ok('v2 ordi · annonce à position approchée : zone dessinée, fiche qui le dit', !!ka && await p.evaluate(() => V2MAP().queryRenderedFeatures({layers: ['a-zone']}).length === 1 && /position approchée/.test(document.querySelector('#v2fiche .v2pos').textContent)), String(ka));
         await p.evaluate(() => document.querySelector('#v2mlist [data-v2open]').click()); await p.waitForTimeout(800);
       }
-      ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
+      ok(`v2 ${dev} · fiche en onglets avec la fourchette`, await p.evaluate(() => !document.getElementById('v2fiche').hidden && document.querySelectorAll('#v2fiche .v2tabs2 [data-v2ft]').length === 5 && /prudent .* favorable/.test(document.getElementById('v2fiche').textContent)));
       // photos en grand : la photo de la fiche ouvre toutes les photos (pas de seconde bande de photos dans la fiche)
       if (await p.$('#v2fiche .v2fthb')) {
         await p.click('#v2fiche .v2fthb'); await p.waitForTimeout(500);

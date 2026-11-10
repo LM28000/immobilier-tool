@@ -734,6 +734,56 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .v2fhg{touch-action:none}   /* l'en-tête se tire (réduire, fermer, agrandir) sans faire défiler la page */
   .v2fsh .v2mlist{display:none}   /* une fiche ouverte sur la carte : un seul panneau en bas */
 }
+
+/* ---------- en-tête de la fiche : précédente / suivante, partager ---------- */
+.v2nav{display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.v2nav .v2btn{min-width:36px;padding-left:0;padding-right:0;font-size:18px;line-height:1}
+.v2nav .v2btn:disabled{opacity:.35;cursor:default}
+.v2nav .v2sub{font-size:12px;min-width:34px;text-align:center}
+.v2lien{flex-shrink:0;min-width:36px;padding-left:0;padding-right:0;display:inline-flex;align-items:center;justify-content:center}
+.v2lien svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:no-preference){.v2fb.v2swl{animation:v2swl .22s ease-out}.v2fb.v2swr{animation:v2swr .22s ease-out}
+ @keyframes v2swl{from{opacity:.3;transform:translateX(28px)}to{opacity:1;transform:none}} @keyframes v2swr{from{opacity:.3;transform:translateX(-28px)}to{opacity:1;transform:none}}}
+/* ligne compacte des chiffres : seulement dans la fiche en demi-écran du téléphone (les trois cases prennent sa place sinon) */
+.v2kl{display:none}
+.v2klst{margin-left:auto;min-width:44px;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:20px;line-height:1;color:var(--accent);cursor:pointer}
+.v2klst[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.v2doclk{margin:10px 0 0}
+/* ---------- documents à demander ---------- */
+.v2docl{list-style:none;margin:0;padding:0}
+.v2docl li{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.v2docl li:last-child{border-bottom:0}
+.v2docl li>span:last-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.v2docl b{font-weight:650}
+.v2docl small{color:var(--muted);font-size:12.5px;line-height:1.4}
+.v2docl li.ko b{color:var(--bad)}
+.v2dck{flex-shrink:0;width:26px;height:26px;margin-top:1px;border-radius:7px;border:2px solid var(--line);background:var(--surface);cursor:pointer;position:relative;padding:0}
+.v2dck::before{content:"";position:absolute;inset:-9px}
+.v2dck[aria-pressed="true"]{background:var(--ok);border-color:var(--ok)}
+.v2dck[aria-pressed="true"]::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:var(--surface);font-weight:800;font-size:15px}
+.v2dck:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.v2dbul{flex-shrink:0;width:7px;height:7px;border-radius:50%;background:var(--muted);margin:8px 6px 0 4px}
+.v2mlqi{display:none}
+@media (max-width:860px){
+  /* fiche en demi-écran : une ligne de chiffres et l'étoile, puis tout de suite les onglets (photo réduite, cases, position, boutons et votes dans la fiche agrandie) */
+  .v2fiche[data-half="1"] .v2kp,.v2fiche[data-half="1"] .v2pos,.v2fiche[data-half="1"] .v2adeux,.v2fiche[data-half="1"] .v2fnote,.v2fiche[data-half="1"] .v2fb>.v2bar{display:none}
+  .v2fiche[data-half="1"] .v2kl{display:flex;flex-wrap:nowrap;align-items:center;gap:14px;font-size:13.5px;color:var(--muted);margin:6px 0 2px;white-space:nowrap}
+  .v2fiche[data-half="1"] .v2kl b{font-size:16px}
+  .v2fiche[data-half="1"] .v2fth{width:64px;height:48px;border-radius:8px}
+  .v2fiche[data-half="1"] .v2fthn{display:none}
+  .v2fiche[data-half="1"] .v2fhd{gap:10px;align-items:center}
+  .v2fiche[data-half="1"] .v2ft{font-size:16px;margin:0}
+  .v2fiche[data-half="1"] .v2fhdt .v2sub{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .v2fiche[data-half="1"] .v2fb>.v2chips{flex-wrap:nowrap;overflow:hidden;margin-top:2px}
+  .v2nav .v2btn,.v2lien{min-width:40px;min-height:40px}
+  .v2nav .v2sub{display:none}
+  /* légende : une pastille (icône, menu) au lieu de « Quartiers » et du menu */
+  .v2mleg{border-radius:999px;padding:0 4px 0 10px}
+  .v2mlqi{display:block;width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--muted);stroke-width:2;stroke-linejoin:round}
+  .v2mlq{gap:2px}
+  .v2mlq>span{display:none}
+  .v2mlq select{border:0;background:transparent;padding:0 2px;font-weight:700}
+}
 </style>
 <!-- L'interface est construite par src/v2/v2.js. Ici seulement ce qu'elle réutilise : le formulaire d'ajout d'un bien,
      la méthode et les sources (montrées dans l'onglet Budget), la grille de visite et la fiche à emporter. -->
@@ -2409,6 +2459,69 @@ function concVille(c){const J=concData(c.k); if(J===null) return null; if(J===un
 /* le fichier d'une ville vient d'arriver : la fiche ouverte qui l'attendait est redessinée, la carte aussi */
 function concFill(ck){if(typeof document==="undefined") return; if(document.querySelector(`[data-cnw="${ck}"]`)) document.dispatchEvent(new CustomEvent("v2fiche-maj",{detail:{ck}})); document.dispatchEvent(new CustomEvent("v2conc",{detail:{ck}}));}
 
+/* ================= documents à demander avant une offre =================
+   Liste adaptée au bien : la copropriété (registre national : syndic, taille, époque, aides de l'Anah, résidence-service),
+   l'annonce (bail en cours, vendu meublé, travaux votés, procédure, DPE, année de construction) et la loi :
+   - documents de la copropriété à remettre au plus tard à la signature du compromis (loi ALUR, art. L721-2 du code de la construction) ;
+   - diagnostics selon l'âge de l'immeuble : amiante si le permis de construire date d'avant le 1er juillet 1997, plomb si l'immeuble
+     date d'avant 1949, électricité et gaz si l'installation a plus de 15 ans ; état des risques (moins de 6 mois), surface Carrez, DPE ;
+     un DPE d'avant juillet 2021 n'est plus valable ;
+   - projet de plan pluriannuel de travaux : copropriétés de plus de 15 ans, de toutes tailles depuis le 1er janvier 2025 ;
+   - DPE collectif : immeubles dont le permis date d'avant 2013 (plus de 200 lots depuis 2024, 51 à 200 depuis 2025, 50 ou moins depuis 2026).
+   Les clés pv, charges, fonds, diag et tfavis sont celles de la grille de visite (visite.check, communes à deux) : cocher ici ou là revient au même. */
+function docsCtx(b){const s=b.kind==="v"?b.suf:(typeof bienSuf==="function"?bienSuf(b):null), f=s?ficheOf(b.ville,s):null, fx=(s&&ficx(s))||{}, ia=(f&&f.ia)||{}, fl=fx.fl||(f&&f.fl)||[];
+ const R=typeof coproOf==="function"?coproOf(b):null, m=R&&R.m&&R.m.x?R.m:null, x=m?m.x:null, J=R&&R.J, per=x&&x[7]>=0&&J&&J.per[x[7]]?J.per[x[7]]:null;
+ const an=(f&&+f.an)||null, Y=new Date().getFullYear(), y0=an||(per?per[1]:null), y1=an||(per?Math.min(per[2],Y):null);   /* années de construction possibles */
+ return {f,fx,ia,fl,x,sure:!!m&&(m.how==="parcelle"||m.how==="meme-adresse"),Y,y0,y1,lots:x&&x[3]!=null?x[3]:(f&&f.lots)||null,
+  loue:ia.loue===true||fl.includes("loue"),serv:fl.includes("serv")||!!ia.residence_geree,meub:fl.includes("meub"),vote:fl.includes("vote")||!!ia.travaux_votes,
+  proc:!!(fx.proc||(f&&f.proc)),dpe:b.dpe||fx.dpe||(f&&f.dpe)||"",dpeDate:(f&&f.dpeDate)||"",dpe0:!!fx.dpe0,cop:(f&&typeof copAn==="function"&&(copAn(f)||copAn(fx)))||+b.copro*12||0,tf:ia.taxe_fonciere||+b.tf||0};}
+/* l'immeuble est-il d'avant l'année a ? "oui" (construit avant a), "non" (construit en a2 ou après), "?" sinon (année inconnue, période du registre
+   à cheval, ou entre les deux : le permis précède la construction de un à deux ans) */
+const docsAvant=(c,a,a2)=>c.y1!=null&&c.y1<a?"oui":c.y0!=null&&c.y0>=(a2||a)?"non":"?";
+function docsList(b){const c=docsCtx(b), G=[], reg=c.sure?"selon le registre des copropriétés":"selon le registre des copropriétés (copropriété probable)";
+ /* la copropriété */
+ const pp=docsAvant(c,c.Y-15), dc=docsAvant(c,2013,2015), dcq=c.lots==null?"depuis 2024 à 2026 selon sa taille":c.lots>200?"depuis 2024":c.lots>50?"depuis 2025":"depuis 2026";
+ G.push(["La copropriété",[
+  ["copro","Règlement de copropriété, état descriptif de division, fiche synthétique et carnet d'entretien","à remettre au plus tard à la signature du compromis (loi ALUR)"],
+  ["pv","Procès-verbaux des 3 dernières assemblées générales","travaux votés ou envisagés, litiges, impayés : c'est là qu'ils se lisent"],
+  ["charges","Charges des deux derniers exercices, courantes et hors budget",c.cop?`l'annonce dit ${eur(c.cop)} par an : à vérifier sur les appels de fonds`:"le calcul les estime : le vrai montant change le rendement"],
+  ["preetat","Pré-état daté","sommes dues par le vendeur, impayés de la copropriété, dettes envers les fournisseurs"],
+  ["fonds","Fonds de travaux et travaux votés",c.vote?"l'annonce parle de travaux votés : leur montant, et qui les paie (celui qui est propriétaire à la date de chaque appel de fonds, sauf accord au compromis)":"montant attaché au lot, travaux votés ou envisagés et leur calendrier"],
+  pp!=="non"&&["pppt","Projet de plan pluriannuel de travaux",`obligatoire depuis 2025 ${pp==="?"?"si l'immeuble a plus de 15 ans":"(immeuble de plus de 15 ans)"} ; il chiffre les travaux des dix prochaines années`],
+  dc!=="non"&&["dpecol","DPE collectif de l'immeuble",`obligatoire ${dcq} ${dc==="?"?"si le permis de construire date d'avant 2013":"(immeuble d'avant 2013)"} ; il annonce les travaux d'énergie de tout l'immeuble`],
+  c.x&&(c.x[9]===1||c.x[9]===2)&&["syndic","Qui gère la copropriété, ses comptes et ses dernières décisions",`aucun syndic en mandat ${reg} : sans syndic, ni assemblée générale ni fonds de travaux ; il faudra peut-être en faire désigner un`],
+  c.x&&c.x[8]===2&&!(c.x[9]===1||c.x[9]===2)&&["benevole","Comptes approuvés et budget voté",`syndic bénévole (un copropriétaire) ${reg} : vérifiez que les comptes sont tenus et approuvés chaque année`],
+  c.x&&c.x[11]&2&&["anah","Travaux aidés par l'Anah",`aides reçues depuis 2014 ${reg} : quels travaux, et la copropriété suit-elle un plan de sauvegarde ou un programme pour copropriétés en difficulté ?`],
+  c.x&&c.x[11]&1&&["service","Détail des charges de services",`résidence-service ${reg} : accueil, restauration ou animation payés dans les charges, en partie non récupérables sur le locataire`],
+  c.proc&&["proc","Procédure en cours : jugements et état de la procédure","l'annonce signale une procédure : impayés, litige avec un copropriétaire ou une entreprise ?"]].filter(Boolean)]);
+ /* le logement */
+ const am=docsAvant(c,1998,2000), pb=docsAvant(c,1949), fg=/^[FG]$/.test(c.dpe);
+ const dg=["DPE","surface Carrez","état des risques et pollutions (moins de 6 mois)",am==="oui"?"amiante (permis d'avant juillet 1997)":am==="?"?"amiante si le permis de construire date d'avant juillet 1997":"",pb==="oui"?"plomb (immeuble d'avant 1949)":pb==="?"?"plomb si l'immeuble date d'avant 1949":"","électricité et gaz si les installations ont plus de 15 ans","termites si la commune est en zone délimitée par arrêté"].filter(Boolean);
+ const B=typeof bruitOf==="function"?(()=>{try{const r=calcBien(b); return bruitOf(b,r.t);}catch(_){return {};}})():{};
+ G.push(["Le logement",[
+  ["diag","Dossier de diagnostics techniques",dg.join(" · ")+(c.y0!=null?` ; immeuble ${c.an?"de "+c.an:c.y0===c.y1?"de "+c.y0:`construit de ${c.y0} à ${c.y1}`}${c.an?"":" "+reg}`:"")],
+  c.dpeDate&&c.dpeDate<"2021-07"&&["dpeold","Un DPE récent","celui de l'annonce date d'avant juillet 2021 (ancienne méthode) : il n'est plus valable"],
+  !fg&&c.dpe0&&["dpe27","L'étiquette DPE à jour au 1er janvier 2027","le nouveau calcul donne une meilleure classe que l'annonce : elle est gratuite sur l'Observatoire DPE de l'ADEME"],
+  fg&&["dpefg","Audit ou devis de rénovation énergétique",`DPE ${c.dpe} : location ${c.dpe==="G"?"déjà interdite":"interdite en 2028"} sans travaux ; le coût réel remplace l'estimation du calcul`],
+  ["tfavis","Dernier avis de taxe foncière",c.tf?"l'annonce donne un montant : à vérifier":"le calcul l'estime avec le taux de la ville"],
+  c.meub&&["meubles","Liste des meubles vendus, avec leur valeur","vendu meublé : listés et chiffrés au compromis, les meubles ne paient pas les droits de mutation (frais de notaire)"],
+  B&&B.peb&&["peb",`Exposition au bruit de l'aéroport (${esc(B.peb.nom)})`,`zone ${(typeof BRZ!=="undefined"&&BRZ[B.peb.zone])||B.peb.zone} du plan d'exposition au bruit : à mentionner par le vendeur ; écoutez les survols à la visite`]].filter(Boolean)]);
+ /* le bail */
+ const zt=typeof ZTEN!=="undefined"&&ZTEN.has(b.ville);
+ const bl=c.serv?[["bailcom","Bail commercial, avenants et loyers versés par l'exploitant sur 3 ans","résidence gérée : durée restante du bail, indexation, travaux à la charge du propriétaire, santé du gestionnaire"]]
+  :c.loue?[["bail","Bail en cours et ses avenants",`${c.ia.fin_bail?"fin annoncée : "+esc(c.ia.fin_bail)+" ; ":""}type de bail (vide ou meublé), loyer et révisions : le bail continue avec vous`],
+   ["edl",`État des lieux d'entrée${c.meub?" et inventaire du mobilier":""}`,"la référence au départ du locataire"],
+   ["depot","Montant du dépôt de garantie","le nouveau propriétaire devra le rendre au locataire : à transférer à la vente ou à déduire du prix"],
+   ["quittances","Relevé des loyers payés sur un an","le locataire paie-t-il à l'heure ?"]]
+  :zt?[["dernierloyer","Le dernier loyer, si le logement a été loué ces 18 derniers mois","zone tendue : il plafonne le loyer du prochain locataire (revalorisé de l'indice des loyers)"]]:[];
+ if(bl.length) G.push([c.serv?"Le bail commercial":c.loue?"Le bail en cours":"Le loyer",bl]);
+ return G;}
+const docsN=b=>docsList(b).reduce((s,g)=>s+g[1].length,0);
+/* cocher un document reçu (bien suivi) : la même case que dans la grille de visite */
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2doc]"); if(!t) return; e.preventDefault();
+ const [id,k]=t.dataset.v2doc.split("|"), b=(typeof BIENS!=="undefined"?BIENS:[]).find(x=>x.id===id); if(!b||typeof updBien!=="function") return;
+ const v=JSON.parse(JSON.stringify(b.visite||{})); v.check=v.check||{}; v.check[k]=v.check[k]==="oui"?null:"oui"; t.setAttribute("aria-pressed",String(v.check[k]==="oui")); updBien(id,{visite:v});});
+
 /* ---------- annonces, historique et fiches dans Supabase (table « annonces », supabase.sql) ----------
    tools/supabase_annonces.py y envoie chaque soir : ads (annonces du jour), hist (historique), ficx (champs de calcul) et fiches-<ville>.
    Depuis le 9 novembre 2026, tout le monde les lit, sans code, dans la vue « annonces_publiques » (supabase.sql : cle, data et maj
@@ -2497,6 +2610,8 @@ const CHECK=[
  ["Le logement",[["chauf","Chauffage récent (type et âge notés)"],["ecs","Eau chaude correcte (ballon, débit)"],["elec","Électricité aux normes (tableau, prises)"],["vitrage","Double vitrage"],["surf","Surface réelle conforme à l'annonce"],["range","Rangements suffisants"]]],
  ["Location meublée",[["mobilier","Place pour le mobilier obligatoire (lit, plaques, frigo, rangements…)"],["lit","Un vrai lit tient, pas seulement un canapé"],["cible","Cible claire : étudiant ou jeune actif"]]],
  ["Documents à obtenir",[["pv","3 derniers PV d'assemblée générale"],["charges","Relevé des charges de copropriété"],["fonds","Fonds de travaux et travaux votés"],["diag","Diagnostics (DPE, électricité, amiante…)"],["tfavis","Dernier avis de taxe foncière"]]]];
+/* grille d'un bien : les documents à obtenir sont ceux de sa liste adaptée (24e-documents.js, mêmes clés) */
+function checkFor(b){const D=typeof docsList==="function"&&b?docsList(b).flatMap(g=>g[1]).map(([k,l])=>[k,l]):null; return D&&D.length?CHECK.slice(0,-1).concat([["Documents à obtenir",D]]):CHECK;}
 const VERD={go:["On fonce","p-ok"],prix:["Oui, au bon prix","p-warn"],non:["Non","p-bad"]};
 const meV=()=>(myName()||H.nomA||"Moi").trim();
 function visitScore(b){const av=(b.visite&&b.visite.avis)||{}, v=Object.values(av).flatMap(a=>CRIT.map(([k])=>+a[k]).filter(n=>n>0)); return v.length?v.reduce((s,n)=>s+n,0)/v.length:null;}
@@ -2550,7 +2665,7 @@ function renderVisit(){const el=document.getElementById("visitBody"), b=BIENS.fi
  </tbody></table>
  <h2 class="psec" id="vs1">Checklist de visite</h2>
  <p class="sub" style="margin:0 0 6px">Une réponse commune. Chaque « non » apparaît en rouge sur la fiche du bien.</p>
- ${CHECK.map(([t,items])=>`<div class="ckgrp"><h4>${t}</h4>${items.map(([k,l])=>`<div class="ckrow${ck[k]==="non"?" bad":""}"><span>${l}</span>${tri(k)}</div>`).join("")}</div>`).join("")}
+ ${checkFor(b).map(([t,items])=>`<div class="ckgrp"><h4>${t}</h4>${items.map(([k,l])=>`<div class="ckrow${ck[k]==="non"?" bad":""}"><span>${l}</span>${tri(k)}</div>`).join("")}</div>`).join("")}
  <h2 class="psec" id="vs2">Nos avis</h2>
  <p class="sub" style="margin:0 0 6px">Vous notez sous le nom « ${esc(me)} »${myName()?"":" (changez-le dans « Partager la liste »)"}.${others.length?"":" L'autre avis apparaîtra ici quand il sera saisi."}</p>
  <table class="scnt vnotes"><thead><tr><th></th><th>${esc(me)}</th>${others.map(n=>`<th>${esc(n)}</th>`).join("")}</tr></thead><tbody>
@@ -2645,7 +2760,7 @@ function openFiche(id){const b0=BIENS.find(x=>x.id===id); if(!b0) return; if(doc
  ${t&&dvfOf(t)&&dvfOf(t).n?`<div class="fbox"><h2>Studios réellement vendus dans le quartier</h2>${dvfBlock(t)}<p class="fnote">Source : DVF (Cerema), ventes d'un seul appartement du même nombre de pièces, 2023-2025. Prix nets vendeur, hors frais de notaire.</p></div>`:""}
  ${rents.length?`<div class="fbox"><h2>Locations concurrentes${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Type</th><th>Loyer CC</th><th>Ramené à ${H.surface} m²</th></tr></thead><tbody>${rents.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${a[3]?"meublé":"vide"}</td><td>${eur(a[2])}</td><td>${eur(r22(a))}</td></tr>`).join("")}</tbody></table><p class="fnote">Notre calcul retient ${eur(x.rentHC+H.chLoc)} charges comprises pour ce bien. Loyers demandés, pas forcément signés.</p></div>`:""}
  ${sales.length||sold.length?`<div class="fbox"><h2>Ventes comparables${sec?" · secteur « "+esc(sec)+" »":""}</h2><table class="ftab"><thead><tr><th>Surface</th><th>Prix</th><th>€/m²</th><th>État</th></tr></thead><tbody>${sales.map(a=>`<tr><td>${String(a[0]).replace(".",",")} m²</td><td>${keur(a[2])}</td><td>${eur(a[2]/a[0])}</td><td>en vente</td></tr>`).join("")}${sold.map(({e})=>{const p=e.p[e.p.length-1][1]; return `<tr><td>${String(e.m[0]).replace(".",",")} m²</td><td>${keur(p)}</td><td>${eur(p/e.m[0])}</td><td>parti le ${dm(e.g)}</td></tr>`;}).join("")}</tbody></table></div>`:""}
- <div class="fbox fbreak"><h2>Checklist de visite</h2>${CHECK.map(([gt,items])=>`<h3>${gt}</h3><ul class="fcheck">${items.map(([k,l])=>`<li><span class="cb${ck[k]==="oui"?" ok":ck[k]==="non"?" ko":""}">${ck[k]==="oui"?"✓":ck[k]==="non"?"✗":""}</span>${l}</li>`).join("")}</ul>`).join("")}</div>
+ <div class="fbox fbreak"><h2>Checklist de visite</h2>${checkFor(b).map(([gt,items])=>`<h3>${gt}</h3><ul class="fcheck">${items.map(([k,l])=>`<li><span class="cb${ck[k]==="oui"?" ok":ck[k]==="non"?" ko":""}">${ck[k]==="oui"?"✓":ck[k]==="non"?"✗":""}</span>${l}</li>`).join("")}</ul>`).join("")}</div>
  <div class="fbox"><h2>Questions à poser</h2><ol>${agentQuestions(b).map(q=>`<li>${esc(q)}</li>`).join("")}</ol></div>
  <div class="fbox"><h2>Notes</h2><div class="flines"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
  <p class="fsrc">Estimations calculées par « Où acheter notre studio ? » avec nos réglages (apport ${eur(H.apport)}, taux ${pct(H.taux,2)} sur ${H.duree} ans, ${REG[x.regime]}). Pas un conseil financier.</p>`;
@@ -3145,8 +3260,7 @@ function bienFicheBody(b,opt){opt=opt||{}; {const s0=b.kind==="v"?b.suf:bienSuf(
  const attn=fAttn([/[FG]/.test(b.dpe||"")&&["bad",`DPE ${esc(b.dpe)} : location ${b.dpe==="G"?"déjà interdite":"interdite en 2028"} sans travaux.`],bank(x.ratio)[0]==="p-bad"&&["bad","La banque refuserait ce prix."],bank(x.ratio)[0]==="p-warn"&&["warn",`Banque à la limite : ${pct(x.ratio*100,0)} d'endettement pour 35 % maximum.`],
   dif>15&&["warn",`Prix au m² ${fr(dif,0)} % au-dessus d'un ${tyLow(bty)} du quartier : de la marge à négocier.`],dif<-20&&["warn",`Prix au m² ${fr(-dif,0)} % sous le quartier : vérifiez l'état et la copropriété.`],v&&v.days>=60&&["ok",`En ligne depuis au moins ${v.days} jours : le vendeur peut être pressé.`],v&&v.last&&["ok",`Le prix a déjà baissé de ${keur(v.last.amt)}.`],
   ...ficheAttn(b.kind==="v"?b.suf:bienSuf(b)||""),fxa&&fxa.proc&&["bad","Copropriété en procédure selon l'annonce : demandez les procès-verbaux d'assemblée générale."],...(typeof coproAttn==="function"?coproAttn(b):[]),...(typeof concAttn==="function"?concAttn(b,t):[]),...(typeof bruitAttn==="function"?bruitAttn(b,t):[]),
-  typeof ZTEN!=="undefined"&&ZTEN.has(b.ville)&&!(b.kind==="v"?horsCalcul(b.suf):bienSuf(b)&&horsCalcul(bienSuf(b)))&&!(x.plaf==="zt"&&luBail)&&(x.plaf==="zt"?["info","Zone tendue : au départ du locataire, le loyer ne pourra pas dépasser le loyer actuel (revalorisé de l'indice des loyers), sauf gros travaux ou loyer manifestement sous-évalué. Le calcul garde le loyer actuel."]
-   :["info","Zone tendue : si le logement a été loué au cours des 18 derniers mois, le nouveau loyer ne pourra pas dépasser celui du précédent locataire (revalorisé de l'indice des loyers). Demandez-le au vendeur."]),risqR&&risqR.t&&["bad",g.risq?"L'adresse est en zone inondable (TRI).":"Le quartier est en zone inondable : vérifiez l'adresse."],isB&&visitFlags(b)&&["warn",`${visitFlags(b)} point${visitFlags(b)>1?"s":""} à problème relevé${visitFlags(b)>1?"s":""} à la visite.`],...(t?habAttn(t):[]),ter&&ter.q&&ter.q.d===0&&["warn",`Dans le quartier prioritaire « ${esc(ter.q.name)} » : demande et revente à regarder de près.`],g.urba&&/^[NA]/.test(g.urba[1])&&["warn","L'adresse est en zone naturelle ou agricole du PLU : vérifiez auprès de la mairie."],(r.V?r.V.copro.src==="estimé":!(+b.copro))&&["info","Le vrai montant des charges de copropriété (estimées ici)."],!(+b.tf)&&isB&&["info","La dernière taxe foncière."]]);
+  typeof ZTEN!=="undefined"&&ZTEN.has(b.ville)&&!(b.kind==="v"?horsCalcul(b.suf):bienSuf(b)&&horsCalcul(bienSuf(b)))&&!(x.plaf==="zt"&&luBail)&&x.plaf==="zt"&&["info","Zone tendue : au départ du locataire, le loyer ne pourra pas dépasser le loyer actuel (revalorisé de l'indice des loyers), sauf gros travaux ou loyer manifestement sous-évalué. Le calcul garde le loyer actuel."],   /* le dernier loyer à demander est dans « Documents à demander » (24e-documents.js) */risqR&&risqR.t&&["bad",g.risq?"L'adresse est en zone inondable (TRI).":"Le quartier est en zone inondable : vérifiez l'adresse."],isB&&visitFlags(b)&&["warn",`${visitFlags(b)} point${visitFlags(b)>1?"s":""} à problème relevé${visitFlags(b)>1?"s":""} à la visite.`],...(t?habAttn(t):[]),ter&&ter.q&&ter.q.d===0&&["warn",`Dans le quartier prioritaire « ${esc(ter.q.name)} » : demande et revente à regarder de près.`],g.urba&&/^[NA]/.test(g.urba[1])&&["warn","L'adresse est en zone naturelle ou agricole du PLU : vérifiez auprès de la mairie."]   /* charges et taxe foncière à demander : dans « Documents à demander » */]);
  const prix=fRows([["Prix affiché",`<b class="mono">${eur(+b.prix)}</b> · ${eur(pm2)}/m²`],[`${tyPl(bty).replace(/s$/,"")} du ${t?"quartier":"secteur"}`,`${eur(qs)}/m²`,`${dif>=0?"+":"−"}${fr(Math.abs(dif),0)} % pour ce bien`],...(bty===H.type&&typeof liqRows==="function"?liqRows(b.ville).slice(0,1):[]),(()=>{const e=ecartMarche(b.ville); if(!e) return null; const h=(e.med-1)*100, d=dif-h; return [`Annonces de ${cityName(b.ville)}`,`${h>=0?"+":"−"}${fr(Math.abs(h),0)} % en médiane`,`au-dessus des ventes de leur quartier (${e.n} annonces) · ce bien : ${Math.abs(d)<3?"dans la norme":d>0?fr(d,0)+" points de plus, à négocier":fr(-d,0)+" points de moins"}`];})()].filter(Boolean))+(v?priceCurve(v):"")+negoBlock(b);
  const loyer=fRows([["Loyer HC",`<b class="mono">${eur(x.rentHC)}</b>`,r.V?(r.V.loyer.src==="annonce"?"bail en cours":r.V.loyer.src==="saisi"?"saisi":"estimé"):+b.loyer>0?"visé":"estimé"],xq&&["Quartier",`${eur(xq.rentHC)}`,`pour ${H.surface} m²`],["Mois vides retenus",`${fr(r.vac,1)} par an`,g.foot?"d'après l'adresse":"d'après le quartier"]])+(A&&sec?(()=>{const L=(A.ads||[]).filter(a=>a[1]===sec); return L.length?adsTable(L,false,b.ville):"";})():"");
  const calcH=`${taxLine(x)}<h4 class="fh4">Et si…</h4>${scnBox(isB?"bien":"ad",scnBien(b))}`;
@@ -3244,7 +3358,7 @@ render();
  const nf=v=>Math.round(v).toLocaleString("fr-FR");
 
  /* ---------- le marché : les annonces de vente, avec leur calcul ---------- */
- let FEED=null;
+ let FEED=null, LASTF=null, NAVK=false;   /* LASTF : dernière fiche dessinée (partage) ; NAVK : navigation précédente / suivante en cours */
  /* mode « Tous » : studios, T2 et T3 ensemble, chaque annonce calculée avec son type (le type courant revient ensuite) ;
     la liste est gardée jusqu'au prochain recalcul (réglages, liste commune, annonces reçues) */
  const TYS=["studio","t2","t3"];
@@ -3660,7 +3774,7 @@ render();
  function mapLegend(){const el=$("v2mleg"); if(!el) return; const z=M&&MREADY?M.getZoom():0, k=qmK(), m=QM[k], R=RAMP(), PC=POIC(), B=QBR;
   if(document.activeElement&&document.activeElement.matches&&document.activeElement.matches("[data-v2qm]")) return;
   const sw=c=>`<i style="background:${c}"></i>`, rdt=`<span>${sw(cv("var(--bad)"))}&lt; 2,5 %</span><span>${sw(cv("var(--warn)"))}2,5–5</span><span>${sw(cv("var(--ok)"))}≥ 5 %</span>`;
-  const selq=`<label class="v2mlq"><span>Quartiers</span><select data-v2qm aria-label="Couleur des quartiers">${Object.entries(QM).map(([kk,o])=>`<option value="${kk}"${kk===k?" selected":""}>${o.l}</option>`).join("")}</select></label>`;
+  const selq=`<label class="v2mlq"><svg class="v2mlqi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5zM2 13l10 5 10-5M2 17.5l10 5 10-5"/></svg><span>Quartiers</span><select data-v2qm aria-label="Couleur des quartiers">${Object.entries(QM).map(([kk,o])=>`<option value="${kk}"${kk===k?" selected":""}>${o.l}</option>`).join("")}</select></label>`;
   const qleg=k==="irr"?`<span class="v2mlr">${rdt}</span>`:!B?"":m.bin?`<span title="${esc(m.d())}">${sw(R[4])}zone inondable</span>`:`<span class="v2ramp" title="${esc(m.d())}">&lt; ${esc(m.u(B[0]))} ${R.map(sw).join("")} ≥ ${esc(m.u(B[B.length-1]))}</span>`;
   const near=z>=ZQ||PB, ann=near?`<span class="v2mlx">${k==="irr"?"":`<b>Annonces</b> <span>${rdt}</span> · `}<span><i class="v2pl"></i>adresse ou à 100 m près</span><span><i class="v2pl v2ph"></i>position approchée</span><span><i class="v2pl v2pn">2</i>plusieurs au même endroit</span> · contour bleu : nouvelle · orange : shortlist</span>`:"";
   const aut=z>=8?`<span class="v2mlx"><b>Autour</b> <span><i class="v2ln v2rl"></i>train</span>${z>=10.5?`<span><i class="v2ln v2lg"></i>bus et tram (couleurs du réseau)</span>`:""}${z<10.5?"":z>=14.2?`<span><i class="v2pl" style="background:${PC[0]}"></i>arrêts, gares</span><span><i class="v2pl" style="background:${PC[1]}"></i>commerces</span>`:" · approchez : arrêts et commerces"}</span>`:`<span class="v2mlx"><b>Train</b> <span><i class="v2ln v2lgv"></i>grande vitesse</span><span><i class="v2ln v2lr2"></i>140 km/h et plus</span></span>`;
@@ -3849,35 +3963,65 @@ render();
   const chips=`${bc!=="p-ok"?`<span class="v2pill ${bc==="p-warn"?"warn":"bad"}" title="part des revenus prise par les crédits">Banque : ${bt.toLowerCase()} · ${Math.round(x.ratio*100)} % des revenus</span>`:""}${dpe?`<span class="v2pill ${"FG".includes(dpe)?"bad":dpe==="E"?"warn":""}">DPE ${dpe}${dpe==="G"?" · location interdite":dpe==="F"?" · interdite en 2028":dpe==="E"?" · interdite en 2034":""}</span>`:""}${R.kind==="v"?ficheBadges(R.suf,true)||"":""}`;
   const psuf=R.kind==="v"?R.suf:(typeof bienSuf==="function"?bienSuf(b)||"":""), pf=psuf?ficheOf(b.ville,psuf):null, pn=pf&&pf.ph?pf.ph.length:0, hc=!!psuf&&horsCalcul(psuf);
   const head=`<div class="v2fhd">${ph?`<button type="button" class="v2fthb" data-v2photos="${esc(b.ville)}|${esc(psuf)}" aria-label="Voir les photos en grand"><img class="v2fth" src="${esc(ph)}" alt="" referrerpolicy="no-referrer" onerror="this.closest('.v2fthb').remove()"><span class="v2fthn">${pn>1?`${pn} photos`:"agrandir"}</span></button>`:""}<div class="v2fhdt"><h2 class="v2ft">${keur(+b.prix)} · ${esc(tit)}</h2><p class="v2sub">${esc(cityName(b.ville))}${qn?" · quartier "+esc(qn):""}${ann&&qn&&ann!==qn?` <span title="nom du secteur dans l'annonce">(« ${esc(ann)} » dans l'annonce)</span>`:""} · ${eur(+b.prix/(+b.surface||1))}/m² ${R.kind==="v"?_vuBadgesF("v",R.ck,R.suf):""}</p></div></div>
+   <div class="v2kl"><span><b class="mono" style="color:${hc?"var(--muted)":c}">${pctS(x.irr)}</b> 15 ans${hc?" (indicatif)":""}</span><span><b class="mono" style="color:${cfC(x.cf)}">${sgn(x.cf)}</b>/mois</span>${R.kind==="v"?`<button type="button" class="v2klst" data-v2star="${R.ck}|${esc(R.suf)}" aria-pressed="${on}" aria-label="${on?"Dans la shortlist":"Ajouter à la shortlist"}">${on?"★":"☆"}</button>`:""}</div>
    <div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${hc?"indicatif":scn()}</span><b style="color:${hc?"var(--muted)":c}">${pctS(x.irr)}</b>${hc?`<small>le calcul de l'outil ne s'applique pas à ce bien (voir « À vérifier »)</small>`:`<div class="v2bigbar" aria-hidden="true">${z.prudent!=null?`<i style="left:${p(z.prudent)}%;width:${p(z.favorable)-p(z.prudent)}%;background:${c}"></i>`:""}<b style="left:${p(x.irr)}%;background:${c}"></b></div><small>prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}</small>`}</div>
     <div class="v2k"><span>Cash-flow${H.assoc.length>1?" à "+H.assoc.length:""}</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois · loyer ${eur(x.rentHC)} HC</small></div><div class="v2k"><span>Mensualité</span><b>${eur(x.mens)}</b><small>budget ${keur(x.cost)} tout compris</small></div></div>
    <p class="v2sub v2pos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/>${hasLL(bb)||posQ(fx)===0?'<circle cx="12" cy="10" r="2.6"/>':""}</svg>Sur la carte : ${esc(posTxt(R.kind==="v"||(b.url&&feed().some(o=>o.url===b.url))?fx:null,hasLL(bb),R.kind==="b"))}</p>
    ${chips?`<div class="v2chips">${chips}</div>`:""}
    <div class="v2bar">${R.kind==="v"?`<button type="button" class="v2btn${on?"":" pri"}" data-v2star="${R.ck}|${esc(R.suf)}" aria-pressed="${on}">${on?"★ Dans la shortlist":"☆ Ajouter à la shortlist"}</button>`:`${stPill(b)}<button type="button" class="v2btn sm" data-unshort="${esc(b.id)}">Retirer</button>`}${b.url?`<a class="v2btn sm" href="${esc(b.url)}" target="_blank" rel="noopener">Voir l'annonce ↗</a>`:""}${bb?`<button type="button" class="v2btn sm" data-fiche="${esc(bb.id)}">Fiche à emporter</button>`:""}</div>
-   ${bb?`<div class="v2sec"><h3>À deux</h3><div class="v2vrow"><b>${esc(me||"Vous")}</b>${me?voteBtns(bb,me):`<span class="v2sub">indiquez votre prénom dans Nos biens</span>`}</div>${oth.map(o=>`<div class="v2vrow"><b>${esc(o)}</b>${voteTxt(bb,o)}</div>`).join("")}</div>`:""}`;
-  const extra={prix:prixNuage(b,t),achat:offre(b,id,bb)+visite(b,id,bb),bien:attn,calc:assocDetail(x)};
-  return {title:`${keur(+b.prix)} · ${cityName(b.ville)}`,head,S,extra};}
+   ${bb?`<div class="v2sec v2adeux"><h3>À deux</h3><div class="v2vrow"><b>${esc(me||"Vous")}</b>${me?voteBtns(bb,me):`<span class="v2sub">indiquez votre prénom dans Nos biens</span>`}</div>${oth.map(o=>`<div class="v2vrow"><b>${esc(o)}</b>${voteTxt(bb,o)}</div>`).join("")}</div>`:""}`;
+  const nd=typeof docsN==="function"?docsN(b):0, dl0=nd?`<p class="v2doclk"><button type="button" class="v2btn sm" data-v2ft="achat" data-v2focus="v2docs">Documents à demander avant une offre (${nd})</button></p>`:"";
+  const extra={prix:prixNuage(b,t),achat:offre(b,id,bb)+(nd?docsBlock(b,bb):"")+visite(b,id,bb),bien:attn+dl0,calc:assocDetail(x)};
+  return {title:`${keur(+b.prix)} · ${cityName(b.ville)}`,head,S,extra,share:`${keur(+b.prix)} · ${tit} · ${cityName(b.ville)}${qn?" ("+qn+")":""} : ${pctS(x.irr)} sur 15 ans, ${sgn(x.cf)} par mois`};}
+ /* documents à demander (24e-documents.js) : cochés à deux sur un bien suivi, mêmes cases que la grille de visite */
+ function docsBlock(b,bb){const G=docsList(b), ck=bb?((bb.visite||{}).check||{}):{}, all=G.flatMap(g=>g[1]), n=all.length, got=all.filter(([k])=>ck[k]==="oui").length, ko=all.filter(([k])=>ck[k]==="non").length;
+  return `<div class="v2sec v2docs" id="v2docs" tabindex="-1"><h3>Documents à demander</h3><p class="v2sub" style="margin:0">${bb?`${got} reçu${got>1?"s":""} sur ${n}${ko?` · <b style="color:var(--bad)">${ko} problème${ko>1?"s":""}</b> (grille de visite)`:""} · cochez un document reçu, pour ${nous()}`:`D'après l'annonce et le registre des copropriétés. Sur un bien suivi, vous les cochez à deux.`}</p>
+   ${G.map(([tt,L])=>`<h4 class="fh4">${tt}</h4><ul class="v2docl">${L.map(([k,l,w])=>`<li${ck[k]==="non"?' class="ko"':""}>${bb?`<button type="button" class="v2dck" data-v2doc="${esc(bb.id)}|${k}" aria-pressed="${ck[k]==="oui"}" aria-label="Reçu : ${esc(l)}"></button>`:'<span class="v2dbul" aria-hidden="true"></span>'}<span><b>${l}</b>${w?`<small>${w}</small>`:""}</span></li>`).join("")}</ul>`).join("")}</div>`;}
  const dl=L=>`<dl class="v2dl">${L.filter(Boolean).map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>`;
  function ficheQV(sel){const [k,ck,code]=sel.split("|");
   if(k==="q"){const t=IR[ck]&&IR[ck].list.find(v=>v.code===code); if(!t) return null; const {S,attn}=secs(quartierFiche(t)); let x=null; try{x=t.type==="H"?(QX[t.ck+t.i]||calcIris(t)):null;}catch(_){}
    const A=feed().filter(o=>o.ck===ck&&o.t&&o.t.code===code), m=A.filter(pass).length;
    const kp=x&&x.irr!=null?`<div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b><small>${(z=>`prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}`)(cz(x))}</small></div><div class="v2k"><span>Cash-flow</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois</small></div><div class="v2k"><span>Budget</span><b>${keur(x.cost)}</b><small>tout compris</small></div></div>`:"";
    const bref=`<div class="v2sec"><h3>En bref</h3>${dl([["Annonces pour nos critères",A.length?`<b>${m}</b> sur ${A.length} dans le quartier`:"aucune annonce relevée dans le quartier"],x&&x.irr!=null&&["Loyer hors charges",`${eur(x.rentHC)} par mois`]])}</div>`;
-   return {title:`${t.name} · ${cityName(ck)}`,head:`<h2 class="v2ft">${esc(t.name)}</h2><p class="v2sub">Quartier de ${esc(cityName(ck))}${x&&x.irr!=null?` · ${tyl().toLowerCase()} type de ${H.surface} m²`:""}</p>${kp}`,S,extra:{bien:bref+attn},city:ck};}
+   const kl=x&&x.irr!=null?`<div class="v2kl"><span><b class="mono" style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b> 15 ans</span><span><b class="mono" style="color:${cfC(x.cf)}">${sgn(x.cf)}</b>/mois</span><span>budget <b class="mono">${keur(x.cost)}</b></span></div>`:"";
+   return {title:`${t.name} · ${cityName(ck)}`,head:`<h2 class="v2ft">${esc(t.name)}</h2><p class="v2sub">Quartier de ${esc(cityName(ck))}${x&&x.irr!=null?` · ${tyl().toLowerCase()} type de ${H.surface} m²`:""}</p>${kl}${kp}`,S,extra:{bien:bref+attn},city:ck,share:`Quartier ${t.name} (${cityName(ck)})${x&&x.irr!=null?` : ${pctS(x.irr)} sur 15 ans pour ${tyLow()==="studio"?"un studio":"un "+tyl()} type`:""}`};}
   if(k==="c"){const c=C.find(v=>v.k===ck); if(!c) return null; const {S,attn}=secs(villeFiche(c)); const x=V.tous?Object.assign({},calcVille(c),stats(ck)):calcVille(c), z=cz(x), [m,n]=cityCnt(ck);
    const bref=`<div class="v2sec"><h3>En bref</h3>${dl([["Annonces pour nos critères",n?`<b>${m}</b> sur ${n}`:"pas d'annonces relevées"],[`Prix d'${tyLow()==="studio"?"un studio":"un "+tyl()} type${x.qt&&!V.tous?" (quartier du milieu)":""}`,`${keur(x.bien)} pour ${H.surface} m² (${nf(x.bien/H.surface)} €/m²)`],["Loyer hors charges",`${eur(x.rentHC)} par mois`],["Étudiants",nf(c.students)],["Paris en train",hm(c.paris)],c.note&&["À savoir",esc(c.note)]])}</div>`;
-   return {title:c.name,head:`<h2 class="v2ft">${esc(c.name)}</h2><div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b><small>${V.tous?`médiane de ${x.n} annonces`:`prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}`}</small></div><div class="v2k"><span>Cash-flow</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois</small></div><div class="v2k"><span>Budget</span><b>${keur(x.cost)}</b><small>tout compris</small></div></div><p class="v2sub" style="margin:0">${V.tous?`Médiane des ${x.n} annonces de la ville, tous types ; les rubriques ci-dessous sont pour ${tyLow()==="studio"?"un studio":"un "+tyl()} type.`:x.qt?`Quartier du milieu : ${esc(x.qt.name)}. La moitié des ${typl()} vendus le sont dans des quartiers au rendement plus haut, l'autre moitié plus bas ; la couleur de la ville est celle de ce quartier.`:`Moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type dans la ville.`}</p>`,S,extra:{bien:bref+attn}};}
+   return {title:c.name,share:`${c.name} : ${pctS(x.irr)} sur 15 ans pour ${tyLow()==="studio"?"un studio":"un "+tyl()} type`,head:`<h2 class="v2ft">${esc(c.name)}</h2><div class="v2kl"><span><b class="mono" style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b> 15 ans</span><span><b class="mono" style="color:${cfC(x.cf)}">${sgn(x.cf)}</b>/mois</span><span>budget <b class="mono">${keur(x.cost)}</b></span></div><div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${scn()}</span><b style="color:${cv(colIrr(x.irr))}">${pctS(x.irr)}</b><small>${V.tous?`médiane de ${x.n} annonces`:`prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}`}</small></div><div class="v2k"><span>Cash-flow</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois</small></div><div class="v2k"><span>Budget</span><b>${keur(x.cost)}</b><small>tout compris</small></div></div><p class="v2sub v2fnote" style="margin:0">${V.tous?`Médiane des ${x.n} annonces de la ville, tous types ; les rubriques ci-dessous sont pour ${tyLow()==="studio"?"un studio":"un "+tyl()} type.`:x.qt?`Quartier du milieu : ${esc(x.qt.name)}. La moitié des ${typl()} vendus le sont dans des quartiers au rendement plus haut, l'autre moitié plus bas ; la couleur de la ville est celle de ce quartier.`:`Moyenne d'${tyLow()==="studio"?"un studio":"un "+tyl()} type dans la ville.`}</p>`,S,extra:{bien:bref+attn}};}
   return null;}
  function fiche(){const el=$("v2fiche"); if(!V.sel){el.hidden=true; el.innerHTML=""; return;}
-  const F=V.sel[0]==="v"||V.sel[0]==="b"?ficheBien(V.sel):ficheQV(V.sel); if(!F){V.sel=null; el.hidden=true; return;}
+  const F=V.sel[0]==="v"||V.sel[0]==="b"?ficheBien(V.sel):ficheQV(V.sel); if(!F){V.sel=null; el.hidden=true; return;} LASTF=F;
   const tabs=FT.filter(([k,,ss])=>ss.some(s=>F.S[s])||(F.extra[k]&&F.extra[k].length)); let cur=tabs.some(t=>t[0]===V.ftab)?V.ftab:(tabs[0]||["bien"])[0];
   const g=FT.find(t=>t[0]===cur)||FT[0], zone=V.sel[0]==="c"||V.sel[0]==="q";
   const gp=PH()&&V.tab==="carte", half=gp&&!V.fbig; el.dataset.half=half?"1":"0";   /* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran, l'annonce reste visible au-dessus */
-  el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?(half?"Fermer":"Retour"):"×"}</button><b>${esc(F.title)}</b></div>
+  el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="Fermer la fiche">${PH()?(half?"Fermer":"Retour"):"×"}</button><b>${esc(F.title)}</b>${(()=>{const L=/^[vb]\|/.test(V.sel)?navList():[], i=L.indexOf(V.sel); return i>=0&&L.length>1?`<span class="v2nav"><button type="button" class="v2btn sm" data-v2nav="-1" aria-label="Annonce précédente"${i?"":" disabled"}>‹</button><span class="v2sub mono">${i+1}/${L.length}</span><button type="button" class="v2btn sm" data-v2nav="1" aria-label="Annonce suivante"${i<L.length-1?"":" disabled"}>›</button></span>`:"";})()}<button type="button" class="v2btn sm v2lien" data-v2lien aria-label="Partager cette fiche" title="Partager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div>
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>{const t=zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l, c=PH()?t.replace(/^L(e |')/,""):t; return `<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${c[0].toUpperCase()+c.slice(1)}</button>`;}).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
   if(M) requestAnimationFrame(()=>M.resize());}
- function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw) V.fbig=false; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
+ function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw&&!NAVK) V.fbig=false; NAVK=false; FLYP=V.tab!=="carte"&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab&&(s[0]==="v"||s[0]==="b")&&!["bien","prix","calc","quartier","achat"].includes(V.ftab)) V.ftab="bien"; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
+ /* ---------- d'une annonce à l'autre, et lien vers une fiche ----------
+    Précédente / suivante : dans l'ordre de la liste affichée (carte, Annonces ou Nos biens), sans fermer la fiche ; boutons de l'en-tête,
+    glisser à gauche ou à droite sur le téléphone, flèches du clavier. Partager : feuille de partage du téléphone (sinon lien copié) ;
+    le lien (…#f=<fiche>) ouvre la fiche dès que ses données sont là. */
+ function navList(){const box=V.tab==="carte"?$("v2mlist"):$("v2p-"+V.tab), seen=new Set(), L=[]; if(!box) return L;
+  box.querySelectorAll("[data-v2open]").forEach(e=>{const k=e.dataset.v2open; if(/^[vb]\|/.test(k)&&!seen.has(k)){seen.add(k); L.push(k);}}); return L;}
+ function navGo(dir){if(!V.sel) return; const L=navList(), i=L.indexOf(V.sel), k=i>=0?L[i+dir]:null; if(!k) return; NAVK=true; openSel(k,true);
+  const fb=document.querySelector("#v2fiche .v2fb"); if(fb){fb.classList.add(dir>0?"v2swl":"v2swr"); setTimeout(()=>fb.classList.remove("v2swl","v2swr"),260);}}
+ function shareSel(){if(!V.sel) return; const url=location.origin+location.pathname+"#f="+encodeURIComponent(V.sel), txt=(LASTF&&(LASTF.share||LASTF.title))||"Notre studio";
+  if(navigator.share){navigator.share({title:"Notre studio",text:txt,url}).catch(()=>{}); return;}
+  const ok=()=>toast("Lien copié : collez-le dans un message."); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt+"\n"+url).then(ok,()=>toast(url)); else toast(url);}
+ {let sx=null, sy=0, st=0;
+  document.addEventListener("touchstart",e=>{const f=e.target.closest&&e.target.closest("#v2fiche"); sx=null; if(!f||!V.sel||!/^[vb]\|/.test(V.sel)||e.touches.length!==1||e.target.closest("input,select,textarea,.v2tw,table,svg,.v2chips,.v2tabs2,.v2fh,[data-noswipe]")) return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now();},{passive:true});
+  document.addEventListener("touchend",e=>{if(sx==null) return; const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy; sx=null; if(Date.now()-st>700||Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*0.5) return; navGo(dx<0?1:-1);},{passive:true});}
+ document.addEventListener("keydown",e=>{if((e.key!=="ArrowLeft"&&e.key!=="ArrowRight")||!V.sel||LB||document.querySelector(".v2dlg")||e.altKey||e.metaKey||e.ctrlKey) return; const t=e.target;
+  if(t&&t.closest&&(t.closest("input,select,textarea,[contenteditable],.maplibregl-canvas-container,.maplibregl-canvas")||!$("visitPanel").hidden||!$("fichePanel").hidden)) return; e.preventDefault(); navGo(e.key==="ArrowRight"?1:-1);});
+ function openLink(){const m=/^#f=(.+)$/.exec(location.hash||""); if(!m) return; let s=null; try{s=decodeURIComponent(m[1]);}catch(_){} if(!s||!/^[vbcq]\|/.test(s)) return;
+  try{history.replaceState(history.state,"",location.pathname+location.search);}catch(_){}
+  const t0=Date.now(), ok=()=>{if(s[0]==="v"||s[0]==="b") return !!bienOfSel(s); const [k,ck,code]=s.split("|"); return k==="c"?C.some(v=>v.k===ck):!!(IR[ck]&&IR[ck].list.some(v=>v.code===code));};
+  const go=()=>{let r=false; try{r=ok();}catch(_){} if(r){openSel(s); return;}
+   if(Date.now()-t0>60000){toast(s[0]==="v"?"Cette annonce n'est plus dans nos relevés : vendue ou retirée.":s[0]==="b"?"Ce bien est dans notre liste commune : entrez le code du groupe dans « Nos biens » pour l'ouvrir.":"Fiche introuvable."); return;} setTimeout(go,500);};
+  setTimeout(go,300);}
+ addEventListener("hashchange",openLink);
 
  /* ---------- ajouter un bien à la main ----------
     Le formulaire de l'app (recherche d'adresse, quartier, contrôles, envoi dans la liste commune) est déplacé dans une fenêtre,
@@ -3947,7 +4091,7 @@ render();
   document.addEventListener("pointerup",fin,true); document.addEventListener("pointercancel",()=>{y0=null;},true);}   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2fgrip],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2av],[data-v2cv],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2fgrip],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-v2nav],[data-v2lien],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=d.v2tab; save(); show(); return;}
   if(d.type){if(V.tous){V.tous=false; save(); FEED=null;} return;}   /* Studio, T2, T3 : le type est changé par 49-type-ui.js */
   if(d.v2gonew){V.tab="annonces"; V.vue=d.v2gonew; V.n=60; save(); show(); return;}
@@ -3966,6 +4110,8 @@ render();
    const fo=d.v2focus&&$(d.v2focus); if(fo){fo.scrollIntoView({block:"center"}); fo.focus({preventScroll:true}); return;}
    const f=document.querySelector(`.v2tabs2 [data-v2ft="${d.v2ft}"]`); if(f) f.focus({preventScroll:true}); return;}
   if(d.v2fgrip!=null){if(Date.now()-FGT<500) return; V.fbig=!V.fbig; const sc=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=sc; requestAnimationFrame(()=>{padSync(); if(!V.fbig&&V.sel) flyAd(V.sel);}); return;}
+  if(d.v2nav){navGo(+d.v2nav); return;}
+  if(d.v2lien!=null){shareSel(); return;}
   if(d.v2close!=null){V.sel=null; fiche(); if(V.tab==="carte"){mapList(); drawMap();} else paint(V.tab); return;}
   if(d.v2crit!=null){critDlg(false); return;}
   if(d.v2theme!=null){setTheme(d.v2theme||(DARK()?"light":"dark")); return;}
@@ -4011,7 +4157,7 @@ render();
  addEventListener("resize",()=>{if(M) M.resize();});
 
  /* ---------- départ ---------- */
- show();
+ show(); openLink();
  let CRITASK=false; const askCrit=()=>{if(CRITASK) return; CRITASK=true; if(!NOSCRIT) critDlg(true);};
  if(REGREADY) setTimeout(askCrit,300); else {document.addEventListener("reglages",()=>setTimeout(askCrit,300),{once:true}); setTimeout(askCrit,6000);}
 })();
