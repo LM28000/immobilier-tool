@@ -2,7 +2,7 @@
 
 Comparateur de 22 villes de l'Ouest pour un studio meublé en location : prix, loyers, quartiers (IRIS), DPE, annonces Bien'ici, financement et rendement.
 
-Page en ligne : https://lm28000.github.io/immobilier-tool/
+Page en ligne : https://immobilier.du-cray.eu/ (l'ancienne adresse, https://lm28000.github.io/immobilier-tool/, y renvoie)
 
 ## Organisation
 
