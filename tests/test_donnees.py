@@ -109,4 +109,27 @@ ok("grandes lignes de train (data/rail.json) : grande vitesse et lignes rapides,
 ok("signal « sous offre » : sous offre, sous compromis, déjà vendu", all("offre" in F.signaux({"d": t}) for t in ("SOUS OFFRE ACCEPTÉE par nos soins", "Sous compromis : appartement T3", "DEJA VENDU PAR KADENCE IMMOBILIER", "Cet appartement vient d'être vendu par notre agence !")))
 ok("signal « sous offre » : pas « vendu loué », « vendu libre » ni « faire une offre »", not any("offre" in F.signaux({"d": t}) for t in ("Bien vendu loué, bail en cours", "Bien vendu libre de toute occupation", "N'hésitez pas à faire une offre", "Bien vendu avec locataire en place")))
 
+# --- registre des copropriétés (tools/copro_rnic.py) : petit registre fabriqué, deux villes suivies et une autre
+sp = importlib.util.spec_from_file_location("copro_rnic", R + "/tools/copro_rnic.py"); CR = importlib.util.module_from_spec(sp); sp.loader.exec_module(CR)
+ok("copropriétés : périodes de construction des deux formats du registre", CR.periode("AVANT_1949") == ("avant 1949", 0, 1948) and CR.periode("DE_1961_A_1974") == ("de 1961 à 1974", 1961, 1974)
+   and CR.periode("De 1949 à 1974") == ("de 1949 à 1974", 1949, 1974) and CR.periode("APRES_2010")[1:] == (2011, 9999) and CR.periode("À compter de 2022")[1:] == (2022, 9999) and CR.periode("Inconnue") is None and CR.periode("") is None)
+ok("copropriétés : parcelles en section et numéro, référence complète sur une commune déléguée", CR.parcelles({"section_parcelle_1": "ab", "numero_parcelle_1": "782", "code_insee_parcelle_1": "72181", "prefixe_parcelle_1": "000",
+   "section_parcelle_2": "0C", "numero_parcelle_2": "0012", "code_insee_parcelle_2": "50129", "prefixe_parcelle_2": "173", "section_parcelle_3": "AB", "numero_parcelle_3": "0782"}, "72181") == "AB0782 501291730C0012")
+T3 = tempfile.mkdtemp(); cols = ["code_officiel_commune", "commune", "numero_immatriculation", "type_syndic", "raison_sociale_representant_legal", "mandat_en_cours", "longitude", "latitude", "residence_service", "copro_aidee",
+   "code_qp_2024", "nombre_total_lots", "nombre_lots_habitation_bureaux_commerces", "nombre_lots_habitation", "nombre_lots_stationnement", "periode_construction", "numero_voie_adresse", "date_derniere_maj", "section_parcelle_1", "numero_parcelle_1"]
+rows = [["72181", "72181", "AA1", "professionnel", "SYNDIC X", "Mandat en cours", "0.2", "48.0", "non", "Oui", "", "24", "18", "16", "4", "AVANT_1949", "1 rue A", "2026-11-01", "AB", "123"],
+        ["72181", "72181", "AA2", "", "", "Pas de mandat en cours", "0.21", "48.01", "oui", "Non", "QN07201", "6", "5", "5", "1", "", "3 rue B", "2026-10-01", "", ""],
+        ["75102", "75102", "ZZ9", "professionnel", "PARIS", "Mandat en cours", "2.3", "48.8", "non", "Non", "", "9", "9", "9", "0", "", "", "2026-11-05", "", ""]]
+import csv as _csv
+with open(T3 + "/r.csv", "w", newline="", encoding="utf-8") as f: w = _csv.writer(f); w.writerow(cols); w.writerows(rows)
+Cx, mx = CR.extraire(T3 + "/r.csv", {"lemans": "72181", "angers": "49007"}); per, noms, out = CR.ville(Cx["lemans"], "72181")
+a1, a2 = out
+ok("copropriétés : seules les villes suivies ; syndic, mandat, drapeaux, parcelle", len(Cx["lemans"]) == 2 and not Cx["angers"] and mx == "2026-11-01" and noms == ["SYNDIC X"] and a1[2] == "AA1" and a1[3:7] == [24, 18, 16, 4]
+   and per[a1[7]][0] == "avant 1949" and a1[8:12] == [1, 0, 0, 2] and a1[12] == "AB0123" and a2[7] == -1 and a2[8:12] == [0, 1, -1, 5] and a2[13] == "3 rue B", out)
+shutil.rmtree(T3)
+VJ = json.load(open(R + "/tools/villes.json", encoding="utf-8"))
+cp = {ck: open(R + "/data/copro/%s.js" % ck, encoding="utf-8").read() if os.path.exists(R + "/data/copro/%s.js" % ck) else "" for ck in VJ}
+ok("copropriétés : un registre par ville suivie (data/copro), daté, 100 copropriétés au moins", all(s.startswith('(window.COPROQ=window.COPROQ||{})["%s"]=' % ck) and s.count("\n[") >= 100 and '"maj":"20' in s for ck, s in cp.items()),
+   [ck for ck, s in cp.items() if not s])
+
 print(f"\n{n - bad}/{n} tests de données réussis"); sys.exit(1 if bad else 0)

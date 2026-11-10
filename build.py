@@ -114,6 +114,7 @@ def code(public):
         *["const %s=%s;" % (n, jdata("data/" + f)) for n, f in DATA],
         "const CITYMAP=" + jdata("data/citymaps.json") + ";",
         "const LIGNESV=%s;" % json.dumps(hashlib.md5(open(P("data/lignes.js"), "rb").read()).hexdigest()[:10] if os.path.exists(P("data/lignes.js")) else ""),   # lignes de bus et tram : fichier à part, chargé par la carte
+        "const COPROV=%s;" % json.dumps(hashlib.md5(b"".join(open(p, "rb").read() for p in sorted(glob.glob(P("data/copro/*.js"))))).hexdigest()[:10] if glob.glob(P("data/copro/*.js")) else ""),   # registre des copropriétés : un fichier par ville, chargé avec la fiche
         *[open(p, encoding="utf-8").read() for p in before],
         need("data/irisdata.js"),
         a,

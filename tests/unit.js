@@ -81,5 +81,25 @@ ok('hausse des prix selon la ville : pente négative mesurée sur 15 villes au m
 ok('hausse des prix selon la ville : moins de logements vides, plus de hausse ; écart borné à 2 points', px.d.angers > 0 && px.d.bourges < 0 && Object.values(px.d).every(v => Math.abs(v) <= 2), JSON.stringify(px.d));
 ok('hausse des prix selon la ville : décochée, la même partout', px.off);
 E('var RISK=undefined; PXP=null; CALCC.clear();');
+// copropriété : rapprochement avec le registre (parcelle de l'adresse, sinon nombre de lots et époque près de la position de l'annonce)
+run(pick('src/js/24c-coproprietes.js', 'function cpAdr('), 'cpAdr'); run(pick('src/js/24c-coproprietes.js', 'function cpAdrEq'), 'cpAdrEq'); run(pick('src/js/24c-coproprietes.js', 'function coproMatch'), 'coproMatch');
+E(`var CPJ={per:[["avant 1949",0,1948],["de 1961 à 1974",1961,1974]],noms:["SYNDIC X"],c:[
+  [0.2,48,"AA1",24,18,16,4,1,1,0,0,0,"AB0123","1 r a"],[0.2003,48,"AA2",24,20,18,2,0,2,0,-1,0,"","3 r a"],[0.2006,48,"AA3",10,8,8,0,0,0,1,-1,1,"","5 r a"],[0.204,48,"AA4",5,5,5,0,0,0,0,-1,0,"0A0007","9 r b"],[0.2,48.002,"AB1",30,20,20,0,1,1,0,0,0,"AC0001","2 r du port"],[0.2001,48.002,"AB2",12,10,10,0,0,0,1,-1,0,"AC0001","4 r du port"]]};`);
+const cm = o => E(`coproMatch(CPJ,${JSON.stringify(o)})`);
+const c0 = cm({exact: true, lat: 48, lon: 0.2004, cad: ['A', '7']}), c1 = cm({exact: true, lat: 48, lon: 0.2004, cad: ['ab', '123']}), c2 = cm({exact: true, lat: 48, lon: 0.2007, cad: ['ZZ', '9']}), c3 = cm({exact: true, lat: 48.01, lon: 0.2, cad: null});
+ok('copropriété d\'une adresse : celle de la parcelle, même plus loin qu\'une autre', c1.how === 'parcelle' && c1.x[2] === 'AA1' && c1.k === 'AB0123', JSON.stringify(c1));
+const eq = (x, y) => E(`cpAdrEq(cpAdr(${JSON.stringify(x)}),cpAdr(${JSON.stringify(y)}))`);
+ok('copropriété : même adresse malgré les abréviations du registre, les accents et les plages de numéros', eq('10 Rue Gougeard 72000 Le Mans', '10 r gougeard') && eq('5 Rue du Maréchal de Lattre de Tassigny 61000 Alençon', '5 r marechal jean-marie de lattre de tassigny')
+  && eq('7 Rue Cardinal Paul Gouyon 35000 Rennes', '1-3-5-7-9 Rue Cardinal Paul Gouyon') && eq('12 B avenue Jean Jaurès', '12 av jean jaures'));
+ok('copropriété : autre numéro ou autre voie → pas la même adresse', !eq('12 Rue Gougeard 72000 Le Mans', '10 r gougeard') && !eq('10 Rue Nationale 72000 Le Mans', '10 r gougeard') && !eq('', '10 r gougeard'));
+const p1 = cm({exact: true, lat: 48.002, lon: 0.2, cad: ['AC', '1'], adr: '4 Rue du Port 72000 Le Mans'}), p2 = cm({exact: true, lat: 48.002, lon: 0.2, cad: ['AC', '1'], adr: '8 Rue du Port 72000 Le Mans'});
+ok('copropriété : plusieurs copropriétés sur la parcelle → celle de la même adresse (sûr), sinon la plus proche (probable)', p1.how === 'parcelle' && p1.x[2] === 'AB2' && p1.n === 2 && p2.how === 'parcelle?' && p2.x[2] === 'AB1', JSON.stringify([p1, p2]));
+ok('copropriété d\'une adresse : section d\'une lettre lue « 0A » comme au cadastre', c0.how === 'parcelle' && c0.x[2] === 'AA4' && c0.k === '0A0007', JSON.stringify(c0));
+ok('copropriété d\'une adresse : sans parcelle au registre, la plus proche à 25 m (jamais une copropriété d\'une autre parcelle)', c2.how === 'adresse' && c2.x[2] === 'AA3' && c3.none === 'adresse', JSON.stringify([c2, c3]));
+const a1 = cm({lat: 48, lon: 0.2001, r: 50, lots: 24, an: 1965}), a2 = cm({lat: 48, lon: 0.2001, r: 50, lots: 24}), a3 = cm({lat: 48, lon: 0.2006, r: 50, lots: 8}), a4 = cm({lat: 48, lon: 0.2006, r: 250, lots: 8}), a5 = cm({lat: 48, lon: 0.2, r: 50});
+ok('copropriété d\'une annonce : nombre de lots et époque de construction départagent', a1.how === 'lots' && a1.x[2] === 'AA1' && a1.both === true, JSON.stringify(a1));
+ok('copropriété d\'une annonce : deux copropriétés possibles → aucune', a2.none === 'plusieurs' && a2.n === 2, JSON.stringify(a2));
+ok('copropriété d\'une annonce : lots principaux reconnus ; position à 250 m sans année → aucune', a3.how === 'lots' && a3.x[2] === 'AA3' && a4.none === 'floue', JSON.stringify([a3, a4]));
+ok('copropriété d\'une annonce : sans nombre de lots → aucune', a5.none === 'lots', JSON.stringify(a5));
 
 console.log(`\n${n - bad}/${n} tests unitaires réussis`); process.exit(bad ? 1 : 0);

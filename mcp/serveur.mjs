@@ -27,6 +27,9 @@ async function getPage() {
   await page.route("**/*", r => r.request().url().startsWith("file:") ? r.continue() : r.abort());   // calcul seul : aucun appel réseau
   await page.goto("file://" + PAGE); await page.waitForFunction(() => typeof calcBien === "function" && typeof IR === "object", null, {timeout: 20000});
   loadedAt = mt;
+  // registre des copropriétés (data/copro/<ville>.js, fichiers locaux) : toutes les villes, une fois
+  await page.evaluate(async () => { if (typeof coproData !== "function") return; Object.keys(ADS).forEach(ck => coproData(ck));
+    for (let i = 0; i < 100 && Object.keys(ADS).some(ck => coproData(ck) === undefined); i++) await new Promise(r => setTimeout(r, 50)); }).catch(() => {});
   const hyp = lireHyp(); if (Object.keys(hyp).length) await page.evaluate(h => { Object.assign(H, h); if (typeof assocFromLegacy === "function") assocFromLegacy(h); if (h.type) setType(h.type, true); CALCC.clear(); VC.clear(); Object.keys(TGC).forEach(k => delete TGC[k]); }, hyp);
   log("page chargée", new Date(mt).toISOString());
   return page;
@@ -82,15 +85,20 @@ server.registerTool("annonces", {title: "Annonces à vendre", description: "Anno
       nouveautes: (p, q) => q._f.localeCompare(p._f), ecart_prix_vise: (p, q) => (p.prix - Math.max(p.prix_autofinance || 0, p.prix_7pct || 0)) - (q.prix - Math.max(q.prix_autofinance || 0, q.prix_7pct || 0))};
     R.sort(by[k]); return {type: H.type, releve: ADS.date, total: R.length, annonces: R.slice(0, o.n || 10).map(({_f, ...x}) => Object.assign(x, {vue_le: _f || null}))}; }, a); }));
 
-server.registerTool("fiche_annonce", {title: "Fiche complète d'une annonce", description: "Tout sur une annonce : description, photos, étage, DPE, charges, position, calcul, prix à proposer (ouverture, cible, maximum), points d'attention et historique du prix.",
+server.registerTool("fiche_annonce", {title: "Fiche complète d'une annonce", description: "Tout sur une annonce : description, photos, étage, DPE, charges, position, copropriété retrouvée dans le registre national (lots, époque, syndic), calcul, prix à proposer (ouverture, cible, maximum), points d'attention et historique du prix.",
   inputSchema: {lien: z.string().describe("lien Bien'ici de l'annonce, ou son identifiant")}},
   wrap(async ({lien}) => { await aides(); return run(l => { const t = __chercher(l); if (!t) throw new Error("annonce introuvable dans le dernier relevé : " + l); const t0 = H.type; setType(t.ty, true);
     try { const res = __resume(t.ck, t.a), vb = venteBien(t.ck, t.a), lv = priceLevels(vb), F = ficheOf(t.ck, t.a[3]) || {}, h = hEntry(t.ck, t.a[3]) || {};
-      const att = [...ficheAttn(t.a[3]).map(z => z[1])];
+      const att = [...ficheAttn(t.a[3]).map(z => z[1]), ...(typeof coproAttn === "function" ? coproAttn(vb).map(z => z[1]) : [])];
+      const cp = (() => { const R = typeof coproOf === "function" ? coproOf(vb) : null; if (!R || R.wait || !R.m) return null; const m = R.m, J = R.J;
+        if (!m.x) return {retrouvee: false, raison: {lots: "l'annonce ne donne pas le nombre de lots", position: "position trop approximative", floue: "position trop floue sans année de construction", plusieurs: "plusieurs copropriétés possibles", aucune: "aucune copropriété du registre avec ce nombre de lots à proximité"}[m.none] || m.none};
+        const x = m.x; return {retrouvee: true, fiabilite: m.how === "parcelle" || m.how === "meme-adresse" ? "sûr" : "probable (environ 9 sur 10 justes)", immatriculation: x[2], lots: x[3], logements: x[5], parkings: x[6],
+          construction: x[7] >= 0 ? J.per[x[7]][0] : null, syndic: x[9] === 1 || x[9] === 2 ? "aucun syndic en mandat" : x[8] === 1 ? "professionnel" + (x[10] >= 0 ? " : " + J.noms[x[10]] : "") : x[8] === 2 ? "bénévole" : "non précisé",
+          mandat: CPMAN[x[9]], residence_service: !!(x[11] & 1), aidee_par_l_anah: !!(x[11] & 2), quartier_prioritaire: !!(x[11] & 4), adresse_du_reglement: x[13] || null, registre_a_jour_du: J.maj}; })();
       const r0 = calcBien(vb), qs = (r0.t && r0.t.price ? studioPm2(t.ck, r0.t) : studioPm2(t.ck, null)) * pm2Adj(t.ty, t.a[0]), em = ecartMarche(t.ck);
       return Object.assign(res, {ecart_prix_vs_ventes_du_quartier_pct: qs ? __r((t.a[2] / t.a[0] / qs - 1) * 100) : null, ecart_habituel_dans_la_ville_pct: em ? __r((em.med - 1) * 100) : null, prix_a_proposer: lv ? {ouverture: lv.ouv, cible: lv.cible, maximum: lv.max} : null, points_d_attention: att,
         description: F.d || null, photos: (F.ph || []).map(p => photoFull(t.a[3], p)), etage: F.et ?? null, etages: F.ets ?? null, ascenseur: F.asc ?? null, annee: F.an ?? null, chauffage: F.chauf || null,
-        lots_copro: F.lots ?? null, frais_agence: F.frais || null, position: F.la != null ? {lat: F.la, lon: F.lo, precision_m: F.r} : null, publiee: F.pub || null,
+        lots_copro: F.lots ?? null, copropriete_registre: cp, frais_agence: F.frais || null, position: F.la != null ? {lat: F.la, lon: F.lo, precision_m: F.r} : null, publiee: F.pub || null,
         historique_prix: (h.p || []).map(([d, p]) => ({date: d, prix: p})), premiere_vue: h.f || null}); } finally { setType(t0, true); } }, lien); }));
 
 server.registerTool("simuler_bien", {title: "Simuler un bien", description: "Calcule un bien quelconque (une annonce d'un autre site, une contre-offre…) avec les réglages en cours : budget, loyer, cash-flow, rendement 15 ans, impôts, prix à viser.",

@@ -14,6 +14,8 @@ const q = await call("quartiers", {ville: "Le Mans", n: 5}); ok("quartiers du Ma
 ok("ville inconnue : message clair", /ville inconnue/.test((await call("quartiers", {ville: "Atlantis"})).erreur || ""));
 const an = await call("annonces", {n: 5}); ok("annonces : 5, sans résidence gérée", an.annonces.length === 5 && an.annonces.every(a => a.calcul_applicable), JSON.stringify(an).slice(0, 300));
 const f = await call("fiche_annonce", {lien: an.annonces[0].lien}); ok("fiche complète : prix à proposer et historique", !!f.prix_a_proposer && Array.isArray(f.historique_prix), JSON.stringify(f).slice(0, 300));
+const fs5 = []; for (const a of an.annonces) fs5.push((await call("fiche_annonce", {lien: a.lien})).copropriete_registre);
+ok("fiche complète : copropriété du registre, retrouvée (immatriculation, syndic) ou raison donnée", fs5.every(c => c && (c.retrouvee ? /^[A-Z]{2}\d{7}$/.test(c.immatriculation) && c.syndic && c.fiabilite : !!c.raison)), JSON.stringify(fs5).slice(0, 400));
 const s = await call("simuler_bien", {ville: "lemans", prix: 60000, surface: 22}); ok("simulation d'un bien", s.budget_tout_compris > 60000 && s.rendement_15ans_pct != null && s.prix_a_proposer, JSON.stringify(s).slice(0, 300));
 const nv = await call("nouveautes"); ok("nouveautés", Array.isArray(nv.nouvelles) && Array.isArray(nv.baisses));
 const rg = await call("reglages"); ok("réglages lus", typeof rg.taux === "number" && rg.type);

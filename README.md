@@ -12,7 +12,7 @@ Page en ligne : https://lm28000.github.io/immobilier-tool/
 | `src/js/` | le code, découpé par thème ; les fichiers sont assemblés dans l'ordre de leur numéro |
 | `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour (`annoncesdata.js`), historique des prix (`historique.js`), secteurs Bien'ici → IRIS (`secteurs-nouvelles-villes.json` : toutes les villes sauf Le Mans et Saint-Nazaire, dont la carte est d'origine) |
 | `mcp/` | serveur MCP : brancher l'outil sur une IA (voir `mcp/README.md`) |
-| `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE à jour du calcul de 2027, étage, position), `prix_tendance.py` (prix des appartements depuis 2014, pour la hausse des prix selon la ville), `rail_rfn.py` (grandes lignes de train de la vue dézoomée) |
+| `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE à jour du calcul de 2027, étage, position), `prix_tendance.py` (prix des appartements depuis 2014, pour la hausse des prix selon la ville), `rail_rfn.py` (grandes lignes de train de la vue dézoomée), `copro_rnic.py` (copropriétés du registre national, une ville par fichier dans `data/copro/`) |
 | `data/fiches/` | fiches complètes des annonces, une par ville, lues une seule fois par annonce |
 | `tests/run.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright, dont la carte (ce qui est réellement dessiné à chaque zoom), le thème et les réglages communs à deux personnes sur une liste commune simulée ; `tests/vendor/` : MapLibre pour tester la carte 3D sans réseau |
 | `tests/unit.js`, `tests/test_donnees.py` | tests rapides : calcul financier et fiscal, nettoyage des biens partagés, scripts de données, cohérence des villes |
@@ -59,6 +59,7 @@ Le code (`src/`, `tools/`, `tests/`, `mcp/`, `build.py`, scripts) est sous licen
 | contours des quartiers IRIS et fonds de carte (`irisdata.js`, `mapdata.js`, `citymaps.json`), mairies (`reperes.json`), urbanisme (`territoire.json`) | IGN | Licence Ouverte 2.0 |
 | DPE des quartiers (`irisdata.js`) | ADEME | Licence Ouverte 2.0 |
 | habitants, revenus, logements vides (`habitants.json`) | Insee | Licence Ouverte 2.0 |
+| copropriétés : lots, époque, syndic, parcelles (`copro/<ville>.js`) | registre national d'immatriculation des copropriétés (Anah) | Licence Ouverte 2.0 |
 | loyers de référence (`loyers-etat.json`) | carte des loyers de l'État | Licence Ouverte 2.0 |
 | risques et catastrophes naturelles (`risques-quartiers.json`, `territoire.json`) | Géorisques | Licence Ouverte 2.0 |
 | écoles, quartiers prioritaires (`territoire.json`), campus (`reperes.json`) | Éducation nationale ; ANCT, via la Caisse des dépôts ; Enseignement supérieur | Licence Ouverte 2.0 |

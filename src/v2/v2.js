@@ -576,7 +576,7 @@
   const slot=$("v2srcslot"); document.querySelectorAll("#appHold .v2src, #v2hold .v2src").forEach(n=>slot.appendChild(n)); HOLD.querySelectorAll(".v2src").forEach(n=>slot.appendChild(n));}
 
  /* ---------- fiche unique en onglets ---------- */
- const FT=[["bien","Le bien",["suivi","annonce"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
+ const FT=[["bien","Le bien",["suivi","annonce","copro"]],["prix","Le prix",["prix","ann"]],["calc","Le calcul",["poids","loyer","calc"]],["quartier","Le quartier",["traj","vie","bati","risq","hab","ecoles","urba"]],["achat","L'achat",["visite","src"]]];
  function secs(html){const d=document.createElement("div"); d.innerHTML=html; const S={}; d.querySelectorAll("details.fsec").forEach(s=>{s.open=true; S[s.dataset.sec]=s.outerHTML;}); const at=d.querySelector(".fattn"); return {S,attn:at?at.outerHTML:""};}
  function bienOfSel(s){const [k,...r]=s.split("|"); if(k==="b"){const b=BIENS.find(x=>x.id===r[0]); return b?{b,kind:"b"}:null;}
   if(k==="v"){const ck=r[0], suf=r.slice(1).join("|"), a=(ADS[ck]&&ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a) return null; const ex=bienOf(VTURL+suf); return {b:Object.assign(venteBien(ck,a),{kind:"v",suf}),a,ck,suf,ex:ex&&!isOut(ex)?ex:null,kind:"v"};}
@@ -698,6 +698,7 @@
  new MutationObserver(bkLater).observe(document.body,{childList:true});
  {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); const pc=$("v2p-carte"); if(pc) pc.classList.toggle("v2fsh",PH()&&!!V.sel&&V.tab==="carte"); if(PH()) requestAnimationFrame(()=>padSync()); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
  window.V2CITY=()=>V.city||null;
+ document.addEventListener("v2fiche-maj",()=>{if(!V.sel) return; const el=$("v2fiche"), y=el.scrollTop; fiche(); el.scrollTop=y;});
  /* tirer la fiche du téléphone par son en-tête (hors boutons) : vers le bas, elle se réduit puis se ferme ; vers le haut, elle s'agrandit */
  let FGT=0;
  {let y0=null, mv=false;

@@ -50,6 +50,26 @@ async function mlRoutes(p) {
     ok('thème · retour au clair depuis Budget', await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'light' && document.querySelector('#v2p-budget [data-v2theme="light"]').getAttribute('aria-pressed') === 'true') && await fond() === 'rgb(243, 245, 247)');
     ok('thème · sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
+  // copropriété (registre national, data/copro/<ville>.js chargé avec la fiche) : annonce rapprochée « probable », bien à son adresse « sûr » par sa parcelle
+  { const c = await b.newContext({viewport: {width: 1300, height: 850}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await p.route('**/apicarto.ign.fr/**', r => r.abort()); await mlRoutes(p);
+    await p.goto(URL); await p.waitForTimeout(2000); await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(500);
+    const open = s => p.evaluate(s => { const bt = document.createElement('button'); bt.dataset.v2open = s; document.getElementById('v2mlist').appendChild(bt); bt.click(); bt.remove(); }, s);
+    const sec = () => p.evaluate(() => { const d = document.querySelector('#v2fiche details[data-sec="copro"]'), a = document.querySelector('#v2fiche .fattn'); return {t: d ? d.innerText : '', a: a ? a.innerText : ''}; });
+    // une ville pas encore chargée : la fiche s'ouvre, puis la rubrique se remplit quand le registre arrive
+    const s0 = await p.evaluate(() => { const ck = Object.keys(ADS).find(k => !COPROQ[k] && (ADS[k].ventes || []).some(a => { const f = FICHES[k] && FICHES[k][adId(a[3])]; return f && f.lots; })); const a = ADS[ck].ventes.find(a => { const f = FICHES[ck][adId(a[3])]; return f && f.lots; }); return 'v|' + ck + '|' + a[3]; });
+    await open(s0); await p.waitForTimeout(1500); const r0 = await sec();
+    ok('copropriété · la rubrique se remplit quand le registre de la ville arrive', /^Copropriété/.test(r0.t) && !/Recherche de la copropriété/.test(r0.t) && /Registre national d'immatriculation des copropriétés/.test(r0.t), r0.t.slice(0, 200));
+    const s1 = await p.evaluate(async () => { for (const ck of Object.keys(ADS)) coproData(ck); await new Promise(r => setTimeout(r, 1500));
+      for (const ck of Object.keys(ADS)) for (const a of ADS[ck].ventes || []) { const R = coproOf(Object.assign(venteBien(ck, a), {kind: 'v', suf: a[3]})); if (R && R.m && R.m.x) return 'v|' + ck + '|' + a[3]; } return null; });
+    await open(s1); await p.waitForTimeout(800); const r1 = await sec();
+    ok('copropriété · annonce : copropriété probable, avec son numéro d\'immatriculation et son syndic', !!s1 && /probable/.test(r1.t) && /immatriculée n° [A-Z]{2}\d{7}/.test(r1.t) && /Syndic/.test(r1.t), r1.t.slice(0, 300));
+    await p.evaluate(() => { const J = COPROQ.lemans, x = J.c.find(x => /^[A-Z]{2}\d{4}$/.test(x[12]) && x[9] === 1 && J.c.filter(y => (y[12] || '').split(' ').includes(x[12])).length === 1);
+      BIENS.push({id: 'cpA', ville: 'lemans', quartier: '', prix: 70000, surface: 22, pieces: 1, type: 'studio', titre: 'Essai', adresse: x[13] + ' Le Mans', lat: x[1] + 0.0002, lon: x[0] + 0.0002, geo: {cad: [x[12].slice(0, 2), x[12].slice(2)]}}); });
+    await open('b|cpA'); await p.waitForTimeout(800); const r2 = await sec();
+    ok('copropriété · bien à son adresse : sûr, par la parcelle ; sans syndic → point d\'attention', /sûr/.test(r2.t) && /parcelle cadastrale/.test(r2.t) && /aucun syndic déclaré/.test(r2.t) && /aucun syndic en mandat au registre/.test(r2.a) && !/Copropriété probable/.test(r2.a), r2.t.slice(0, 300) + ' | ' + r2.a.slice(0, 300));
+    ok('copropriété · sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
   // l'interface : carte, fiche, annonces, villes, budget (ordinateur et téléphone)
   { const fs = require('fs'), URL2 = URL;
     for (const [dev, opt] of [['ordi', {viewport: {width: 1440, height: 900}}], ['tel', {...devices['iPhone 13']}]]) {
