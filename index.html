@@ -2272,7 +2272,8 @@ function coproOf(b){if(!b||!b.ville||typeof COPROV==="undefined"||!COPROV) retur
  return {J,m:o.none?{none:"position"}:coproMatch(J,o),bien:!!o.exact};}
 const cpS=n=>n>1?"s":"";
 function coproSyn(J,x){const nom=x[10]>=0?J.noms[x[10]]:"";
- if(x[9]===1||x[9]===2) return [`<b>aucun syndic${x[9]===2?" en mandat":" déclaré"}</b>`,`${x[9]===2?CPMAN[2]+" ; ":""}fréquent dans les petites copropriétés gérées entre voisins ; sans syndic, ni assemblée générale ni fonds de travaux : à demander au vendeur`];
+ if(x[9]===1||x[9]===2){const pt=(x[5]!=null?x[5]:x[3])!=null&&(x[5]!=null?x[5]:x[3])<=10;   /* petite copropriété : souvent gérée entre voisins, sans syndic déclaré */
+  return [`<b>aucun syndic${x[9]===2?" en mandat":" déclaré"}</b>`,`${x[9]===2?CPMAN[2]+" ; ":""}${pt?"fréquent dans les petites copropriétés gérées entre voisins":"rare pour une copropriété de cette taille, ou registre pas à jour"} ; sans syndic, ni assemblée générale ni fonds de travaux : à demander au vendeur`];}
  return [x[8]===1?`professionnel${nom?" : "+esc(nom):""}`:x[8]===2?"bénévole (un copropriétaire)":"non précisé",x[8]===2?"frais de gestion faibles ; assemblées et travaux reposent sur les copropriétaires":x[9]===3?"changement de syndic déclaré":CPMAN[0]];}
 /* rubrique « Copropriété » de la fiche : [résumé, html] */
 function coproSec(b){const R=coproOf(b); if(!R) return null;
