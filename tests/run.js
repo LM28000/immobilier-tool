@@ -18,6 +18,7 @@ async function mlRoutes(p) {
     await p.route('**/cdnjs.cloudflare.com/**', r => r.abort());
     await p.route('**/data.geopf.fr/geocodage/**', r => r.fulfill({contentType: 'application/json', body: JSON.stringify({features: [{properties: {label: '10 Rue Gougeard 72000 Le Mans', city: 'Le Mans', postcode: '72000', type: 'housenumber'}, geometry: {coordinates: [0.1915, 47.9975]}}]})}));
     await p.route('**/routing.openstreetmap.de/**', r => r.fulfill({contentType: 'application/json', body: JSON.stringify({durations: [[0, 300, 2400, 900]], distances: [[0, 400, 3000, 1100]]})}));
+    await p.route(/overpass/, r => r.fulfill({contentType: 'application/json', body: JSON.stringify({elements: [{type: 'way', tags: {highway: 'trunk', ref: 'N 138'}, geometry: [{lat: 47.9995, lon: 0.1980}, {lat: 48.0005, lon: 0.2000}]}]})}));
     await p.route('**/www.georisques.gouv.fr/**', r => { const u = r.request().url(); r.fulfill({contentType: 'application/json', body: u.includes('rga') ? '{"codeExposition":"1"}' : u.includes('ssp') ? '{"casias":{"results":2},"conclusions_sis":{"results":0},"instructions":{"results":0}}' : '{"results":0}'}); });
     await mlRoutes(p);
     await p.goto(URL); await p.waitForTimeout(2000); await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(500);
@@ -32,6 +33,7 @@ async function mlRoutes(p) {
     ok('ajout d\'un bien · placé sur la carte à son adresse', await p.evaluate(() => { const f = V2MAP().getSource('annonces')._data.features.find(f => f.properties.k === 'b|' + BIENS[0].id); return !!f && Math.abs(f.geometry.coordinates[1] - BIENS[0].lat) < 1e-6 && !f.properties.ap; }));
     await p.evaluate(() => { document.querySelector('[data-v2tab="biens"]').click(); document.querySelector(`[data-v2open="b|${BIENS[0].id}"]`).click(); }); await p.waitForTimeout(600);
     ok('ajout d\'un bien · la fiche dit qu\'il est à l\'adresse saisie', await p.evaluate(() => /Sur la carte : à l'adresse saisie/.test((document.querySelector('#v2fiche .v2pos') || {}).textContent || '')));
+    ok('ajout d\'un bien · bruit mesuré à l\'adresse (grands axes et voies ferrées)', await p.evaluate(() => Array.isArray(BIENS[0].geo.bruit) && BIENS[0].geo.bruit.length === 3 && (BIENS[0].geo.bruit[0] === null || BIENS[0].geo.bruit[0][1] === 'N 138')), await p.evaluate(() => JSON.stringify(BIENS[0].geo.bruit)));
     ok('ajout d\'un bien · adresse sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // thème : clair par défaut même si l'appareil est en sombre ; bouton en haut et choix dans Budget ; la carte change de fond et garde ses couches
@@ -86,6 +88,30 @@ async function mlRoutes(p) {
     const mp = await p.evaluate(() => ({n: V2MAPN.conc, d: V2MAP().getLayer('p-conc') ? V2MAP().queryRenderedFeatures({layers: ['p-conc']}).length : -1, leg: /résidence étudiante/.test(document.getElementById('v2mleg').textContent)}));
     ok('résidences et chantiers · carte : résidences et projets dessinés de près, avec leur légende', mp.n > 0 && mp.d > 0 && mp.leg, JSON.stringify(mp));
     ok('résidences et chantiers · sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
+  // zone tendue, étudiants, revente, bruit : fiche de ville, fiche d'une annonce de Rennes, bien à son adresse près d'une voie rapide
+  { const c = await b.newContext({viewport: {width: 1300, height: 850}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await p.route(/overpass|apicarto/, r => r.abort()); await mlRoutes(p);
+    await p.goto(URL); await p.waitForTimeout(2000); await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(500);
+    const open = s => p.evaluate(s => { const bt = document.createElement('button'); bt.dataset.v2open = s; document.getElementById('v2mlist').appendChild(bt); bt.click(); bt.remove(); }, s);
+    const txt = sel => p.evaluate(sel => [...document.querySelectorAll(sel)].map(d => d.innerText).join(' | '), sel);
+    const tab = k => p.evaluate(k => { const b = document.querySelector(`#v2fiche [data-v2ft="${k}"]`); if (b) b.click(); }, k);
+    await open('c|rennes'); await p.waitForTimeout(800);
+    const all = async () => { let t = ''; for (const k of ['bien', 'prix', 'calc', 'quartier', 'achat']) { await tab(k); await p.waitForTimeout(150); t += await txt('#v2fiche .v2fb'); } return t; };
+    const v1 = await all();
+    ok('ville · zone tendue indiquée (Rennes), loyer plafonné à la relocation', /Zone tendue\s*oui/.test(v1) && /ne peut pas dépasser celui du précédent locataire/.test(v1), v1.match(/Zone tendue.{0,120}/s));
+    ok('ville · étudiants de la dernière rentrée et tendance depuis 2015', /80\s244/.test(v1) && /\+1,8 % par an/.test(v1) && /depuis 2015/.test(v1), v1.match(/Étudiants.{0,160}/s));
+    ok('ville · revente : stock d\'annonces en mois de ventes et durée de vente à venir', /Revente : stock d'annonces/.test(v1) && /Durée de vente mesurée/.test(v1), v1.match(/Revente.{0,200}/s));
+    const s3 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => { const r = calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})); return r.x.plaf === 'zt'; }) || ADS.rennes.ventes[0]; return 'v|rennes|' + a[3]; });
+    await open(s3); await p.waitForTimeout(800); const v2 = await all();
+    ok('annonce en zone tendue · point « à demander » sur le loyer du précédent locataire ou loyer gardé', /Zone tendue : (au départ du locataire|si le logement a été loué)/.test(v2), v2.match(/Zone tendue.{0,100}/s));
+    const s4 = await p.evaluate(() => { const a = ADS.rennes.ventes.find(a => calcBien(Object.assign(venteBien('rennes', a), {kind: 'v', suf: a[3]})).t); return 'v|rennes|' + a[3]; });
+    await open(s4); await p.waitForTimeout(800); const v4 = await all();
+    ok('annonce · bruit au centre du quartier et zones des aéroports', /Bruit/i.test(v4) && /Voie rapide/.test(v4) && /Voie ferrée/.test(v4) && /Aéroport/.test(v4), (v4.match(/Bruit.{0,300}/is) || [v4.slice(0, 200)])[0]);
+    await p.evaluate(() => { BIENS.push({id: 'brA', ville: 'lemans', quartier: '', prix: 70000, surface: 22, pieces: 1, type: 'studio', titre: 'Essai bruit', adresse: '1 rue Essai Le Mans', lat: 48.0, lon: 0.2, geo: {bruit: [[90, 'N 138'], [400, 'Avenue X'], null]}}); });
+    await open('b|brA'); await p.waitForTimeout(800); const v3 = await all();
+    ok('bien à son adresse · bruit mesuré à l\'adresse et point d\'attention près d\'une voie rapide', /Distances mesurées à l'adresse/.test(v3) && /À 90 m d'une voie rapide \(N 138\)/.test(v3) && /plus de 1,5 km/.test(v3), v3.match(/(Bruit|voie rapide).{0,200}/s));
+    ok('zone tendue, étudiants, revente, bruit · sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
   // l'interface : carte, fiche, annonces, villes, budget (ordinateur et téléphone)
   { const fs = require('fs'), URL2 = URL;

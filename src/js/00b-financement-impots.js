@@ -78,10 +78,13 @@ function calc(c){
  const tf=c.tfM!=null?c.tfM:TFREF.mois*(c.tf/TFREF.taux)*(SU/TFREF.m2), charges=(c.copro!=null?c.copro:D.copro)+H.autres+(H.grosTrav||0)*SU/12+tf; /* gros travaux de copropriété : provision visible, non récupérable */
  const rentEff=rentHC*(12-vac)/12, brut=rentHC*12/cost*100;
  /* bien vendu loué : loyer du bail pendant c.bailAns années (départ du locataire), puis le loyer actuel relevé de la prime meublé mesurée,
-    sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) */
+    sans dépasser le loyer estimé (gardé tel quel s'il est déjà au-dessus) ;
+    zone tendue (ZTEN) ou DPE F ou G : le nouveau loyer ne peut pas dépasser l'ancien (loi du 6 juillet 1989, décret n° 2017-1198 ; loi Climat et résilience) :
+    il reste au loyer actuel (sauf gros travaux ou loyer manifestement sous-évalué, non comptés) */
+ const plaf=c.bailAns!=null&&c.rentEst>0?(typeof ZTEN!=="undefined"&&ZTEN.has(c.k)?"zt":/^[FG]$/.test(c.dpe||"")?"fg":null):null;
  let rentEff2=rentEff;
  if(c.bailAns!=null&&c.rentEst>0){const est=c.rentEst*Math.pow(T.surf/c.rentM2Est,rentExp(c.k))*Math.pow(SU/T.surf,expT(tk))*lrc(c.k,tk), pr=(typeof LRC!=="undefined"&&LRC[tk]&&LRC[tk].prime)||1.1;
-  const cc2=rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
+  const cc2=plaf||rentCC>=est?rentCC:Math.min(est,rentCC*pr); rentEff2=Math.max(cc2*(1+la/100)-D.chLoc,0)*(12-vac)/12;}
  const rentAt=y=>{if(rentEff2===rentEff) return rentEff; const w=Math.min(1,Math.max(0,c.bailAns-y)); return w*rentEff+(1-w)*rentEff2;};
  const ratio=(mens+H.pretEtud)/(H.salaires+rentHC*0.7);   /* endettement de l'ensemble des associés (ce que la banque regarde) */
  const ratios=H.assoc.map(a=>{const w=a.part/100, d=a.revenus+rentHC*0.7*w; return d>0?(mens*w+a.credits)/d:null;});   /* et celui de chacun, sur sa part */
@@ -109,7 +112,7 @@ function calc(c){
  const G=sim("micro",true), imp1=R.T[0], fees1=R.F[0], gest=rentEff*gst, cfBrut=rentEff-gest-mens-charges, cfNet=cfBrut-(imp1+fees1)/12, N=H.net;
  const pv15=pvTax(bien,bien*Math.pow(1+px/100,HZ)*(1-(H.fraisVente||0)/100),HZ,trav,R.AB[HZ-1]);
  const W=H.assoc.map(a=>(a.tmi+FISC.ps)*a.part), Ws=W.reduce((s,w)=>s+w,0)||1, imps=W.map(w=>imp1*w/Ws), impA=imps[0];
- return {bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,gest,vac,px,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
+ return {plaf,zt:typeof ZTEN!=="undefined"&&ZTEN.has(c.k),bien,cost,gar,P,M0,ins,mens,rentHC,rentEff,tf,charges,gest,vac,px,cf:N?cfNet:cfBrut,cfNet,cfBrut,irrNet:R.irr,irrBrut:G.irr,gainsNet:R.gains,gainsBrut:G.gains,net:N,pv15,imp1,fees1,impA,impB:imp1-impA,imps,ratios,regime:R.reg,imp10:R.T.slice(0,10).reduce((a,b)=>a+b,0)/10,
   brut,ratio,irr:N?R.irr:G.irr,gains:N?R.gains:G.gains,hz:HZ,loan:L,taux};
 }
 

@@ -81,6 +81,17 @@ ok('hausse des prix selon la ville : pente négative mesurée sur 15 villes au m
 ok('hausse des prix selon la ville : moins de logements vides, plus de hausse ; écart borné à 2 points', px.d.angers > 0 && px.d.bourges < 0 && Object.values(px.d).every(v => Math.abs(v) <= 2), JSON.stringify(px.d));
 ok('hausse des prix selon la ville : décochée, la même partout', px.off);
 E('var RISK=undefined; PXP=null; CALCC.clear();');
+// zone tendue : un bien vendu loué garde son loyer au départ du locataire (Rennes), comme un DPE F ou G partout ; ailleurs, prime meublé
+const zt = E(`(()=>{const mk=(k,dpe)=>{const c=C.find(v=>v.k===k); return Object.assign({},c,{prixTot:60000,surf:20,type:"studio",rent:380,rentM2:20,rentFixed:true,bailAns:1,rentEst:c.rent*1.3,rentM2Est:c.rentM2,dpe:dpe||""});};
+  CALCC.clear(); const r=calc(mk("rennes")), m=calc(mk("lemans")), f=calc(mk("lemans","F"));
+  ZTEN.delete("rennes"); CALCC.clear(); const r0=calc(mk("rennes")); ZTEN.add("rennes"); CALCC.clear();
+  return {r:[r.plaf,r.irr],r0:[r0.plaf,r0.irr],m:[m.plaf,m.irr],f:[f.plaf,f.irr],zt:r.zt,ztm:m.zt};})()`);
+ok('zone tendue : Rennes, Nantes, Caen, Orléans, Saint-Nazaire', E('["rennes","nantes","caen","orleans","stnazaire"].every(k=>ZTEN.has(k)) && ZTEN.size===5 && !ZTEN.has("lemans")'));
+ok('zone tendue : bien vendu loué, loyer gardé au départ du locataire (rendement plus bas que sans la règle)', zt.r[0] === 'zt' && zt.r0[0] === null && zt.r[1] < zt.r0[1] && zt.zt === true && zt.ztm === false, JSON.stringify(zt));
+ok('DPE F ou G : pas de hausse à la relocation, même hors zone tendue', zt.f[0] === 'fg' && zt.m[0] === null && zt.f[1] < zt.m[1], JSON.stringify(zt));
+// bruit des aéroports : zone la plus forte qui contient le point (plan d'exposition au bruit)
+run(`var PEBB=null; var PEBQ={aero:[{oaci:"LFXX",nom:"Essai",date:"2004-09-17"}],z:[{oaci:"LFXX",zone:"D",g:[[[0,0],[4,0],[4,4],[0,4],[0,0]]]},{oaci:"LFXX",zone:"C",g:[[[1,1],[3,1],[3,3],[1,3],[1,1]]]}]};` + pick('src/js/47c-bruit.js', 'function pebAt'), 'pebAt');
+ok('bruit des aéroports : zone la plus forte au point, rien hors des zones', E('pebAt(2,2).zone') === 'C' && E('pebAt(0.5,0.5).zone') === 'D' && E('pebAt(5,5)') === null && E('pebAt(2,2).nom') === 'Essai');
 // copropriété : rapprochement avec le registre (parcelle de l'adresse, sinon nombre de lots et époque près de la position de l'annonce)
 run(pick('src/js/24c-coproprietes.js', 'function cpAdr('), 'cpAdr'); run(pick('src/js/24c-coproprietes.js', 'function cpAdrEq'), 'cpAdrEq'); run(pick('src/js/24c-coproprietes.js', 'function coproMatch'), 'coproMatch');
 E(`var CPJ={per:[["avant 1949",0,1948],["de 1961 à 1974",1961,1974]],noms:["SYNDIC X"],c:[

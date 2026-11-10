@@ -20,7 +20,7 @@ async function adrExtras(lat,lon,ck){const out={}; const M=MARK[ck];
 async function adrPick(w,f){const st=w.querySelector(".adrst"), inp=w.querySelector(".adrin"); inp.value=f.label; w.querySelector(".adrlist").hidden=true;
  const {c,t}=adrPlace(f.lat,f.lon); if(!c){st.textContent="Adresse hors des villes suivies."; return;}
  st.textContent=`${c.name}${t?" · quartier "+t.name:""} · calcul des trajets et des risques…`;
- const geo=Object.assign(await adrExtras(f.lat,f.lon,c.k),typeof adrUrba==="function"?await adrUrba(f.lat,f.lon).catch(()=>({})):{}); const patch={adresse:f.label,lat:+f.lat.toFixed(6),lon:+f.lon.toFixed(6),ville:c.k,quartier:t?t.name:"",geo};
+ const geo=Object.assign(await adrExtras(f.lat,f.lon,c.k),typeof adrUrba==="function"?await adrUrba(f.lat,f.lon).catch(()=>({})):{}); if(typeof adrBruit==="function"){const v=await adrBruit(f.lat,f.lon).catch(()=>undefined); if(v!==undefined) geo.bruit=v;} const patch={adresse:f.label,lat:+f.lat.toFixed(6),lon:+f.lon.toFixed(6),ville:c.k,quartier:t?t.name:"",geo};
  const ok=geo.foot?`${minTxt(Math.min(...geo.foot))} à pied de ${MKFULL[geo.marks[geo.foot.indexOf(Math.min(...geo.foot))]]}`:"";
  st.textContent=`${c.name}${t?" · quartier "+t.name:""}${ok?" · "+ok:""}`;
  const id=w.dataset.adrw;

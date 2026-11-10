@@ -148,4 +148,14 @@ def cnj(s): return json.loads(s[s.index("]=") + 2:].rstrip().rstrip(";")) if s e
 CJ = {ck: cnj(s) for ck, s in cn.items()}
 ok("résidences et chantiers : un fichier par ville suivie (data/conc), daté, des permis placés dans la ville", all(J.get("maj") and len(J.get("pc", [])) >= 5 for J in CJ.values()), [ck for ck, J in CJ.items() if not J or len(J.get("pc", [])) < 5])
 ok("résidences et chantiers : des résidences du Crous dans les grandes villes universitaires", all(sum(r[4] == "crous" for r in CJ[ck].get("res", [])) >= 5 for ck in ("rennes", "nantes", "angers", "caen", "tours", "rouen") if CJ.get(ck)))
+# --- étudiants par rentrée, bruit des quartiers, zones des aéroports
+ET = json.load(open(R + "/data/etudiants.json", encoding="utf-8"))
+ok("étudiants : 22 villes, rentrée de référence complète (la plus récente est provisoire), Le Mans 15 990 en 2024", set(ET["villes"]) == set(VJ) and int(ET["prov"]) == int(ET["ref"]) + 1 and ET["villes"]["lemans"]["serie"]["2024"] == 15990)
+ok("étudiants : séries depuis 2015 et tendances plausibles", all(v["serie"].get("2015") and v["serie"].get(ET["ref"]) and -5 < v["tend"] < 8 for v in ET["villes"].values()), {k: v["tend"] for k, v in ET["villes"].items()})
+BQ = json.load(open(R + "/data/bruit-quartiers.json", encoding="utf-8")) if os.path.exists(R + "/data/bruit-quartiers.json") else {}
+ok("bruit : distances aux grands axes et voies ferrées pour les quartiers des 22 villes", set(BQ) == set(VJ) and all(len(q) >= 10 and all(isinstance(x, list) and len(x) == 3 for x in q.values()) for q in BQ.values()), [k for k in VJ if k not in BQ])
+PB = json.load(open(R + "/data/peb.json", encoding="utf-8")) if os.path.exists(R + "/data/peb.json") else {}
+ok("bruit : zones des aéroports (A à D) autour des villes, contours fermés", len(PB.get("aero", [])) >= 15 and all(z["zone"] in "ABCD" and z["g"] and all(r[0] == r[-1] for r in z["g"]) for z in PB.get("z", [])), len(PB.get("aero", [])))
+def _ext(z): X = [p[0] for r in z["g"] for p in r]; Y = [p[1] for r in z["g"] for p in r]; return max(X) - min(X), max(Y) - min(Y)
+ok("bruit : zones des aéroports de vraie surface (anneaux de 4 points au moins, plus de 200 m de long et de la largeur)", all(all(len(r) >= 4 for r in z["g"]) and max(_ext(z)) > 0.002 and min(_ext(z)) > 0.0003 for z in PB.get("z", [])), [(z["oaci"], z["zone"], _ext(z)) for z in PB.get("z", []) if max(_ext(z)) <= 0.002 or min(_ext(z)) <= 0.0003][:5])
 print(f"\n{n - bad}/{n} tests de données réussis"); sys.exit(1 if bad else 0)

@@ -31,6 +31,10 @@ const C=[
  {k:"nantes",name:"Nantes",lat:47.22,lon:-1.554,pm2:3513,evol:-1.4,rent:513,rentM2:22,tf:53.37,students:67436,paris:1.95,lab:"r",src:["https://explore.data.gouv.fr/fr/immobilier?onglet=carte&filtre=tous&level=commune&code=44109","https://www.data.gouv.fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2025","https://data.economie.gouv.fr/explore/dataset/fiscalite-locale-des-particuliers/"]},
  {k:"rouen",name:"Rouen",lat:49.443,lon:1.099,pm2:2714,evol:0.8,rent:506,rentM2:22,tf:49.49,students:48834,paris:1.18,lab:"r",src:["https://explore.data.gouv.fr/fr/immobilier?onglet=carte&filtre=tous&level=commune&code=76540","https://www.data.gouv.fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2025","https://data.economie.gouv.fr/explore/dataset/fiscalite-locale-des-particuliers/"]}
 ];
+/* étudiants de l'unité urbaine à la dernière rentrée complète (data/etudiants.json, tools/etudiants.py) : remplacent le chiffre écrit ci-dessus */
+if(typeof ETUQ!=="undefined"&&ETUQ&&ETUQ.villes) C.forEach(c=>{const e=ETUQ.villes[c.k]; if(e&&e.serie&&e.serie[ETUQ.ref]>0) c.students=e.serie[ETUQ.ref];});
+const etuOf=ck=>typeof ETUQ!=="undefined"&&ETUQ&&ETUQ.villes?ETUQ.villes[ck]||null:null;
+
 const ORIG={laval:{name:"Laval",lat:48.07,lon:-0.77,mode:"en voiture"},nantes:{name:"Nantes",lat:47.22,lon:-1.55,mode:"en voiture"},paris:{name:"Paris",lat:48.86,lon:2.35,mode:"en train"}};
 
 const H={type:"studio",surface:22,surcote:15,loyerAdj:0,apport:15000,taux:4.07,duree:25,assur:0.40,notaire:8,meubles:3000,travaux:2300,chLoc:45,vacance:1,copro:21,autres:48,grosTrav:6,tfMans:40,px:1,ly:1.5,cg:2,salaires:2500,pretEtud:0,fraisVente:3,gestion:0,pxV:1,pess:false,vacQ:true,dvf:true};
@@ -50,6 +54,9 @@ const keur=v=>Math.abs(v)<1?"0":(v<0?"−":"")+(Math.abs(v)/1000).toFixed(Math.a
 const sgn=v=>(v>=0?"+":"−")+Math.abs(Math.round(v)).toLocaleString("fr-FR")+" €";
 const pct=(v,d=1)=>v.toFixed(d).replace(".",",")+" %";
 const hm=h=>{if(h<0.05)return"sur place";const t=Math.round(h*12)*5,a=Math.floor(t/60),m=t%60;return a?(m?`${a} h ${String(m).padStart(2,"0")}`:`${a} h`):`${m} min`;};
+/* zone tendue (zonage TLV, catégorie 1 « zone tendue », décret n° 2025-1267 du 22 décembre 2025 modifiant le décret n° 2013-392) :
+   loyer plafonné à la relocation (décret n° 2017-1198, prolongé chaque année, en vigueur jusqu'au 31 juillet 2027 : supposé reconduit) */
+const ZTEN=new Set(["rennes","nantes","caen","orleans","stnazaire"]);
 const hav=(a,b,c,d)=>{const R=6371,r=Math.PI/180,dl=(c-a)*r,dg=(d-b)*r,x=Math.sin(dl/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(x));};
 function trip(c,o){if(o==="paris") return c.paris; const g=ORIG[o]; if(c.k===o) return 0; return hav(g.lat,g.lon,c.lat,c.lon)*1.2/105+0.1;}
 

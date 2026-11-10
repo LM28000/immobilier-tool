@@ -55,7 +55,7 @@ function ficheHtml(ck,suf,f){const loc=f.k==="l", ext=[f.balc&&`${f.balc} balcon
  const d=String(f.d||""), cut=d.length>520?d.lastIndexOf(" ",480):-1;
  const desc=d?`<div class="fdesc">${esc(cut>0?d.slice(0,cut)+"…":d)}</div>${cut>0?`<details class="fdmore"><summary>Lire toute la description</summary><div class="fdesc">${esc(d)}</div></details>`:""}`:`<p class="sub">Pas de description.</p>`;
  const ph=(f.ph||[]).map((p,i)=>`<a href="${esc(photoFull(suf,p))}" target="_blank" rel="noopener" aria-label="Photo ${i+1} sur ${f.ph.length}, en grand"><img src="${esc(photoUrl(suf,p,360,270))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>`).join("");
- return `${ph?`<div class="fgal">${ph}</div>`:""}${desc}${rows.length?fRows(rows):""}${iaHtml(f)}<p class="sub" style="margin:6px 0 0">Fiche relevée sur Bien'ici le ${frD(f.lu)}.</p>`;}
+ return `${ph?`<div class="fgal">${ph}</div>`:""}${desc}${rows.length?fRows(rows):""}${iaHtml(f,ck)}<p class="sub" style="margin:6px 0 0">Fiche relevée sur Bien'ici le ${frD(f.lu)}.</p>`;}
 function ficheSum(f,suf){if(f===undefined) return "chargement…"; if(!f) return "pas encore relevée"; const n=(f.ph||[]).length, x=suf?dpeAJ(suf):null;
  return [f.d&&"description",n&&`${n} photo${n>1?"s":""}`,f.dpe&&`DPE ${x?x.dpe+" (annoncé "+f.dpe+")":f.dpe}`,copAn(f)&&`${eur(copAn(f)/12)}/mois de copro`,f.coloc&&"colocation"].filter(Boolean).join(" · ");}
 /* rubrique « L'annonce » des fiches (ordinateur et téléphone) */
@@ -102,8 +102,8 @@ function lueIA(f){const ia=f&&f.ia||{}, o={loyer:0,travaux:0,tf:0};
  if(ia.loue&&ia.loyer_mensuel) o.loyer=Math.round(ia.loyer_mensuel+(ia.loyer_charges_comprises===false?H.chLoc:0));
  const tr=(ia.travaux_a_prevoir||0)+(ia.travaux_votes||0); if(tr>0) o.travaux=Math.round(tr);
  if(ia.taxe_fonciere) o.tf=Math.round(ia.taxe_fonciere); return o;}
-function iaHtml(f){const ia=f&&f.ia; if(!ia) return ""; const rows=[
-  ia.loue===true&&["Vendu loué",ia.loyer_mensuel?`<b class="mono">${eur(ia.loyer_mensuel)}</b> ${ia.loyer_charges_comprises===false?"hors charges":ia.loyer_charges_comprises?"charges comprises":""}`:"loyer non indiqué",`utilisé jusqu'au départ du locataire (${ia.fin_bail?"fin du bail : "+esc(ia.fin_bail):"supposé dans 3 ans"}), puis relevé de la prime meublé sans dépasser le loyer estimé`],
+function iaHtml(f,ck){const ia=f&&f.ia; if(!ia) return ""; const zt=typeof ZTEN!=="undefined"&&ZTEN.has(ck), fg=/^[FG]$/.test(f.dpe||""); const rows=[
+  ia.loue===true&&["Vendu loué",ia.loyer_mensuel?`<b class="mono">${eur(ia.loyer_mensuel)}</b> ${ia.loyer_charges_comprises===false?"hors charges":ia.loyer_charges_comprises?"charges comprises":""}`:"loyer non indiqué",`utilisé jusqu'au départ du locataire (${ia.fin_bail?"fin du bail : "+esc(ia.fin_bail):"supposé dans 3 ans"}), puis ${zt?"gardé au même niveau : zone tendue, le loyer ne peut pas augmenter à la relocation":fg?"gardé au même niveau : DPE "+esc(f.dpe)+", le loyer ne peut pas augmenter":"relevé de la prime meublé sans dépasser le loyer estimé"}`],
   ia.loue===false&&["Location","libre (pas de bail en cours)"],
   (ia.travaux_a_prevoir||ia.travaux_votes)&&["Travaux",[ia.travaux_a_prevoir&&`${eur(ia.travaux_a_prevoir)} à prévoir`,ia.travaux_votes&&`${eur(ia.travaux_votes)} votés en copropriété`].filter(Boolean).join(" · "),"ajoutés au budget"],
   ia.taxe_fonciere&&["Taxe foncière",`<b class="mono">${eur(ia.taxe_fonciere)}</b> par an`,"à la place de l'estimation"],
