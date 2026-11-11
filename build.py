@@ -163,6 +163,7 @@ def w(p, s):  # écriture atomique : jamais de fichier à moitié écrit (sync.s
     tmp = P(p) + ".tmp"; open(tmp, "w", encoding="utf-8").write(s); os.replace(tmp, P(p))
 
 w("dist/artifact.html", full)
+w("dist/moteur.js", code(True))   # le moteur et les données publiques, sans interface : repris par l'app Android (~/insula-app, scripts/moteur.mjs)
 w("dist/test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + full)
 head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
