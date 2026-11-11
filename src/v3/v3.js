@@ -469,7 +469,7 @@
  function sheetSet(big,min){V.big=!!big; V.min=!!min; save(); const el=$("v2mlist"); if(el) el.style.height=""; mapList(); setTimeout(padSync,280);}
  (()=>{let y0=0, h0=0, el=null, moved=false;
   let tapT=false;
-  document.addEventListener("pointerdown",e=>{if(!PH()||!e.target.closest) return; let g=e.target.closest("[data-v2grip]"); tapT=!!g;
+  document.addEventListener("pointerdown",e=>{if(!PH()||!e.target.closest||e.pointerType==="touch") return; let g=e.target.closest("[data-v2grip]"); tapT=!!g;
    if(!g){const hd=e.target.closest("#v2mlist .v2mhead"); if(!hd||e.target.closest("button,a,input,select,.v2scroll,.v2seg")) return; g=hd;}
    el=$("v2mlist"); y0=e.clientY; h0=el.offsetHeight; moved=false; try{g.setPointerCapture(e.pointerId);}catch(_){} if(tapT) e.preventDefault();});
   document.addEventListener("pointermove",e=>{if(!el) return; const dy=e.clientY-y0; if(Math.abs(dy)>6) moved=true; if(moved){const H=$("v2map").offsetHeight; el.style.transition="none"; el.style.minHeight="0"; el.style.height=Math.max(56,Math.min(H*.9,h0-dy))+"px";}});
@@ -875,12 +875,40 @@
  addEventListener("popstate",()=>{if(BKSKIP){BKSKIP--; return;} const k=BK.pop(); if(!k) return; if(k==="x"){try{history.back();}catch(_){} return;} bkClose(k);});
  new MutationObserver(bkLater).observe(document.body,{childList:true});
  {const f0=fiche, s0=show; fiche=function(){const r=f0.apply(this,arguments); bkLater(); const pc=$("v2p-explorer"); if(pc) pc.classList.toggle("v2fsh",PH()&&!!V.sel&&onMap()); app.classList.toggle("v3fmap",!!V.sel&&onMap()); requestAnimationFrame(()=>padSync()); return r;}; show=function(){const r=s0.apply(this,arguments); bkLater(); return r;};}
+
+ /* ---------- au doigt (téléphone) : la liste et la fiche se tirent de n'importe où ----------
+    Le premier mouvement décide : de côté, on laisse faire (filtres, tableaux, annonce suivante) ; vers le haut ou le bas, on tire le
+    panneau si c'est utile — liste ou fiche en demi-écran : toujours ; liste agrandie ou fiche plein écran : vers le bas, une fois
+    remonté tout en haut de son contenu — sinon le contenu défile. Le navigateur ne recharge plus la page en tirant vers le bas. */
+ {let T=null;
+  const scrollOf=(t,box)=>{for(let e=t; e&&e!==box.parentNode; e=e.parentNode){if(e.scrollHeight>e.clientHeight+2&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)) return e;} return null;};
+  document.addEventListener("touchstart",e=>{T=null; if(!PH()||e.touches.length!==1||LB||document.querySelector(".v2dlg")) return; const t=e.target, x=e.touches[0];
+   if(t.closest("input,select,textarea,.maplibregl-canvas-container")) return;
+   const L=t.closest("#v2mlist"), F=onMap()&&V.sel&&t.closest("#v2fiche");
+   if(L) T={k:"l",el:L,x0:x.clientX,y0:x.clientY,h0:L.offsetHeight,sc:scrollOf(t,L)};
+   else if(F) T={k:"f",el:F,x0:x.clientX,y0:x.clientY,half:F.dataset.half==="1",sc:F};},{passive:true});
+  document.addEventListener("touchmove",e=>{if(!T) return; const x=e.touches[0], dx=x.clientX-T.x0, dy=x.clientY-T.y0;
+   if(T.on==null){if(Math.abs(dx)<8&&Math.abs(dy)<8) return; if(Math.abs(dx)>Math.abs(dy)){T=null; return;}
+    const top=!T.sc||T.sc.scrollTop<=0;
+    T.on=T.k==="l"?(dy<0?!V.big:top):(T.half||(dy>0&&top)); if(!T.on){T=null; return;}}
+   e.preventDefault(); T.dy=dy;
+   if(T.k==="l"){const H=$("v2map").offsetHeight; T.el.style.transition="none"; T.el.style.minHeight="0"; T.el.style.height=Math.max(56,Math.min(H*.9,T.h0-dy))+"px";}
+   else T.el.style.transform=dy>0?`translateY(${dy}px)`:"";},{passive:false});
+  const end=()=>{const S=T; T=null; if(!S||!S.on) return; const dy=S.dy||0;
+   if(S.k==="l"){const H=$("v2map").offsetHeight, h=S.el.offsetHeight; S.el.style.transition=""; S.el.style.minHeight=""; S.el.style.height=""; sheetSet(h>H*.65,h<H*.2); return;}
+   S.el.style.transform=""; FGT=Date.now();
+   if(dy>60){if(V.fbig){V.fbig=false; fiche(); requestAnimationFrame(()=>{padSync(); if(V.sel) flyAd(V.sel);});} else closeSel();}
+   else if(dy<-50&&!V.fbig){V.fbig=true; fiche();}};
+  /* toucher la poignée de la liste (sans tirer) : agrandie ou à mi-hauteur */
+  let tch=0; document.addEventListener("touchstart",()=>{tch=Date.now();},{passive:true,capture:true});
+  document.addEventListener("click",e=>{if(Date.now()-tch>800||!PH()||!e.target.closest||!e.target.closest("#v2mlist [data-v2grip]")) return; if(V.min) sheetSet(false,false); else sheetSet(!V.big,false);});
+  document.addEventListener("touchend",end,{passive:true}); document.addEventListener("touchcancel",()=>{if(T&&T.el){T.el.style.transform=""; T.el.style.minHeight=""; T.el.style.height="";} T=null;},{passive:true});}
  window.V2CITY=()=>V.city||null;
  document.addEventListener("v2fiche-maj",()=>{if(!V.sel) return; const el=$("v2fiche"), y=el.scrollTop; fiche(); el.scrollTop=y;});
  /* tirer la fiche du téléphone par son en-tête (hors boutons) : vers le bas, elle se réduit puis se ferme ; vers le haut, elle s'agrandit */
  let FGT=0;
  {let y0=null, mv=false;
-  document.addEventListener("pointerdown",e=>{const f=e.target.closest&&e.target.closest("#v2fiche"); if(!f||!PH()||!V.sel||!onMap()) return;
+  document.addEventListener("pointerdown",e=>{const f=e.target.closest&&e.target.closest("#v2fiche"); if(!f||!PH()||!V.sel||!onMap()||e.pointerType==="touch") return;
    const half=f.dataset.half==="1", h=e.target.closest(".v2fhg,.v2fhd,.v2kl"), ui=e.target.closest("button,a,input,select,textarea,label,summary,[data-stmenu]")&&!e.target.closest("[data-v2fgrip]");
    if(ui||!(half||h)) return; y0=e.clientY; mv=false;},true);   /* demi-écran : tout le bandeau ; fiche agrandie : son en-tête */
   document.addEventListener("pointermove",e=>{if(y0!=null&&Math.abs(e.clientY-y0)>8) mv=true;},true);

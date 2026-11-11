@@ -614,6 +614,22 @@ async function mlRoutes(p) {
       await tire('#v2fiche .v2fhd', 150); await p.waitForTimeout(500); const g2 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
       ok('insula tel · fiche : tout le bandeau (photo, titre) la tire vers le haut ou vers le bas', g1 === '0' && g2 === '1', JSON.stringify({g1, g2}));
       await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(500);
+      // au doigt, de n'importe où : une annonce de la liste, les filtres ; la fiche par son contenu (vrais événements tactiles)
+      const cdp = await c.newCDPSession(p);
+      const td = async (sel, dy) => { const r = await p.evaluate(s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return [b.left + Math.min(b.width / 2, 150), b.top + Math.min(b.height / 2, 20)]; }, sel); if (!r) return false;
+        await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x: r[0], y: r[1]}]}); for (let i = 1; i <= 8; i++) { await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x: r[0], y: r[1] + dy * i / 8}]}); await p.waitForTimeout(16); }
+        await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []}); await p.waitForTimeout(500); return true; };
+      const st = () => p.evaluate(() => ({min: document.getElementById('v2mlist').dataset.min, big: document.getElementById('v2mlist').dataset.big, fiche: !document.getElementById('v2fiche').hidden, half: document.getElementById('v2fiche').dataset.half}));
+      if ((await st()).big === '1') { await p.tap('#v2mlist [data-v2grip]'); await p.waitForTimeout(500); }   // liste à mi-hauteur, en haut de son contenu
+      await p.evaluate(() => { document.querySelector('#v2mlist .v2mrows').scrollTop = 0; });
+      await td('#v2mlist .v2chips', -250); const a1 = await st(); await td('#v2mlist .v2mrows .v2row', 200); const a2 = await st();
+      await td('#v2mlist .v2mhead', 220); const a3 = await st(); await td('#v2mlist .v2mhead', -200); const a4 = await st();
+      ok('insula tel · la liste se tire de n\'importe où au doigt : depuis les filtres elle s\'agrandit, depuis une annonce elle redescend, puis se réduit et revient', a1.big === '1' && a2.big === '0' && a2.min === '0' && a3.min === '1' && a4.min === '0', JSON.stringify({a1, a2, a3, a4}));
+      await p.evaluate(() => __cl('#v2mlist [data-v2open^="v|"]')); await p.waitForTimeout(1200);
+      await td('#v2fiche .v2tabs2', -200); const b1 = await st(); await td('#v2fiche .v2fb', 250); const b2 = await st(); await td('#v2fiche .v2fb', 250); const b3 = await st();
+      ok('insula tel · la fiche se tire de n\'importe où au doigt : vers le haut elle s\'agrandit, vers le bas (en haut de son contenu) elle se réduit puis se ferme', b1.half === '0' && b2.half === '1' && b2.fiche && !b3.fiche, JSON.stringify({b1, b2, b3}));
+      ok('insula tel · l\'espace courant se voit : pastille derrière l\'icône', await p.evaluate(() => { const a = getComputedStyle(document.querySelector('#v2tabbar [aria-current="page"] svg')).backgroundColor, o = getComputedStyle(document.querySelector('#v2tabbar [aria-current="false"] svg')).backgroundColor; return a !== o && a !== 'rgba(0, 0, 0, 0)'; }));
+      ok('insula tel · tirer vers le bas ne recharge pas la page', await p.evaluate(() => getComputedStyle(document.documentElement).overscrollBehaviorY === 'none'));
     }
     ok(`insula ${dev} · nouvelle structure · sans erreur`, errs.length === 0, errs.slice(0, 3).join(' | '));
     await c.close(); }

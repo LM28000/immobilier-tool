@@ -607,9 +607,19 @@ details.v3pc{margin:0}
 .v2nav .v2btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block}
 @media (max-width:860px){
   /* se tirent au doigt : tout l'en-tête de la liste (sauf les filtres, qui défilent de côté), toute la fiche en demi-écran */
-  .v2mhead{touch-action:none}
-  .v2mhead .v2scroll{touch-action:pan-x}
-  .v2fiche[data-half="1"]{touch-action:none}
   .v2fiche[data-half="1"] .v2fh,.v2fiche[data-half="1"] .v2fhd{cursor:grab}
   #v3load{top:calc(118px + env(safe-area-inset-top,0px))}
 }
+/* pas de « tirer pour recharger » du navigateur : tirer vers le bas sert à réduire la liste ou la fiche */
+html.v3,html.v3 body{overscroll-behavior-y:none}
+.v2fiche,.v2mrows{overscroll-behavior-y:contain}
+/* l'espace où l'on est : bien visible (pastille derrière l'icône en bas, accent et soulignement en haut) */
+.v2tabs button[aria-current="page"]{color:var(--accent);border-bottom-width:3px}
+.v2tabbar button{gap:3px}
+.v2tabbar button svg,.v2tabbar button .v3av.sm{box-sizing:content-box;padding:4px 18px;border-radius:999px;transition:background .15s}
+.v2tabbar button .v3av.sm{padding:0;margin:4px 18px}
+.v2tabbar button[aria-current="page"]{color:var(--accent);font-weight:800}
+.v2tabbar button[aria-current="page"] svg{background:var(--accent-soft)}
+.v2tabbar button[aria-current="page"] .v3av.sm{box-shadow:0 0 0 4px var(--accent-soft),0 0 0 4px var(--accent-soft)}
+.v2tabbar button:not([aria-current="page"]){color:var(--muted)}
+.v2tabbar button:not([aria-current="page"]) .v3av.sm{background:var(--sunk);color:var(--muted)}
