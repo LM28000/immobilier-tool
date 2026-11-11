@@ -255,12 +255,13 @@ async function mlRoutes(p) {
             h.dispatchEvent(new PointerEvent('pointerdown', o)); document.dispatchEvent(new PointerEvent('pointermove', Object.assign({}, o, {clientY: r.top + 10 + dy}))); document.dispatchEvent(new PointerEvent('pointerup', Object.assign({}, o, {clientY: r.top + 10 + dy}))); }, dy);
           await tire(-120); await p.waitForTimeout(400); const g1 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
           await tire(120); await p.waitForTimeout(400); const g2 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
-          await tire(120); await p.waitForTimeout(600); const g3 = await p.evaluate(() => ({fiche: !document.getElementById('v2fiche').hidden, liste: getComputedStyle(document.getElementById('v2mlist')).display}));
-          ok('insula tel · fiche : tirée vers le haut elle s\'agrandit, vers le bas elle se réduit puis se ferme, et la liste revient', g1 === '0' && g2 === '1' && !g3.fiche && g3.liste !== 'none', JSON.stringify({g1, g2, g3}));
+          await tire(120); await p.waitForTimeout(600); const g25 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+          await tire(60); await p.waitForTimeout(600); const g3 = await p.evaluate(() => ({fiche: !document.getElementById('v2fiche').hidden, liste: getComputedStyle(document.getElementById('v2mlist')).display})); g3.mini = g25;
+          ok('insula tel · fiche : tirée vers le haut elle s\'agrandit, vers le bas demi-écran, bandeau, puis fermée, et la liste revient', g1 === '0' && g2 === '1' && g3.mini === '2' && !g3.fiche && g3.liste !== 'none', JSON.stringify({g1, g2, g3}));
           if (await p.evaluate(() => !document.getElementById('v2fiche').hidden)) await p.evaluate(() => (document.querySelector('[data-v2close]') || {click() {}}).click()); await p.waitForTimeout(400);
           await p.evaluate(() => __cl('#v3scope [data-v2city=""]')); await p.waitForTimeout(1200);
           await p.evaluate(() => __cl('#v2mlist [data-v2city="lemans"]')); await p.waitForTimeout(1800); }
-        await p.tap('#v3scope [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
+        await p.tap('#v2mlist [data-v2cfiche="lemans"]'); await p.waitForTimeout(800);
         ok('insula tel · fiche de la ville depuis la barre du périmètre', await p.evaluate(() => !document.getElementById('v2fiche').hidden && /Le Mans/.test(document.querySelector('#v2fiche .v2ft').textContent)));
         await p.evaluate(() => (document.querySelector('[data-v2close]') || {click() {}}).click()); await p.waitForTimeout(400);
       }
@@ -549,10 +550,10 @@ async function mlRoutes(p) {
     ok(`insula ${dev} · Explorer : la vue Liste montre les villes puis les annonces (mêmes filtres, sans « Shortlist »), la vue Graphique leur nuage`, !l1.carte && l1.liste && l1.villes === 22 && l2.n > 10 && l2.chips === 'crit,new,drop,long,all' && l3 > 10, JSON.stringify({l1, l2, l3}));
     await p.evaluate(() => { __cl('[data-v3view="carte"]'); __cl('[data-v3obj="villes"]'); }); await p.waitForTimeout(800);
     await p.evaluate(() => __cl('#v2mlist [data-v2city="lemans"]')); await p.waitForTimeout(1500);
-    const sc = await p.evaluate(() => ({crumb: document.querySelector('#v3scope .v3crumb').innerText.replace(/\s+/g, ' '), fiche: !!document.querySelector('#v3scope [data-v2cfiche="lemans"]')}));
+    const sc = await p.evaluate(() => ({crumb: document.querySelector('#v3scope .v3crumb').innerText.replace(/\s+/g, ' '), fiche: !!document.querySelector('[data-v2cfiche="lemans"]')}));
     await p.evaluate(() => __cl('[data-v3view="liste"]')); await p.waitForTimeout(400);
     const lm = await p.evaluate(() => { const K = [...document.querySelectorAll('#v3liste [data-v2open]')].map(e => e.dataset.v2open); return {n: K.length, ok: K.every(k => k.startsWith('v|lemans|'))}; });
-    ok(`insula ${dev} · périmètre : L'Ouest › Le Mans, la fiche de la ville en bouton, la liste ne montre que Le Mans`, /L'Ouest › Le Mans/.test(sc.crumb) && sc.fiche && lm.n > 0 && lm.ok, JSON.stringify({sc, lm}));
+    ok(`insula ${dev} · périmètre : L'Ouest › Le Mans, la fiche de la ville en bouton, la liste ne montre que Le Mans`, (dev === 'ordi' ? /L'Ouest › Le Mans/.test(sc.crumb) : /^Le Mans$/.test(sc.crumb.trim())) && await p.evaluate(() => !!document.querySelector('#v3scope [data-v2city=""]')) && sc.fiche && lm.n > 0 && lm.ok, JSON.stringify({sc, lm}));
     await p.evaluate(() => __cl('[data-v3view="carte"]')); await p.waitForTimeout(800);
     // la fiche : ouverte depuis une liste, sur « L'essentiel » ; ‹ › gardent l'onglet ; « En bref » mène à la rubrique ; scénario affiché dans la fiche
     await p.evaluate(() => __cl('#v2mlist [data-v2open^="v|"]')); await p.waitForTimeout(1200);
@@ -602,6 +603,15 @@ async function mlRoutes(p) {
     await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(1800);
     const ap = await p.evaluate(() => ({head: document.querySelector('#v2mlist .v2mhead').innerText, crumb: document.querySelector('#v3scope .v3crumb').innerText.trim(), z: V2MAP().getZoom()}));
     ok(`insula ${dev} · fermer une fiche ramène à l'écran d'avant (même liste, même cadrage de la carte)`, /^L'Ouest/.test(av.head) && pend.z > 12 && /^L'Ouest/.test(ap.head) && ap.crumb === "L'Ouest" && Math.abs(ap.z - av.z) < 0.6 && pend.fl, JSON.stringify({av, pend, ap}));
+    if (dev === 'ordi') {
+      await p.evaluate(() => __cl('[data-v3view="liste"]')); await p.waitForTimeout(500); await p.evaluate(() => __cl('#v3liste [data-v2open^="v|"]')); await p.waitForTimeout(800);
+      await p.evaluate(() => __cl('#v2fiche [data-v3onmap]')); await p.waitForTimeout(1800);
+      const d1 = await p.evaluate(() => ({view: document.getElementById('v2app').dataset.view, gauche: document.getElementById('v2app').classList.contains('v3fmap'), z: V2MAP().getZoom()}));
+      await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(800);
+      const d2 = await p.evaluate(() => document.getElementById('v2app').dataset.view);
+      ok('insula ordi · « Voir sur la carte » depuis la vue Liste : la fiche à gauche de la carte, sur l\'annonce ; fermée, retour à la liste', d1.view === 'carte' && d1.gauche && d1.z > 12 && d2 === 'liste', JSON.stringify({d1, d2}));
+      await p.evaluate(() => __cl('[data-v3view="carte"]')); await p.waitForTimeout(500);
+    }
     if (dev === 'tel') {   // la liste et la fiche se tirent au doigt par leur en-tête ; plus de bouton « Réduire »
       const tire = (sel, dy) => p.evaluate(([sel, dy]) => { const h = document.querySelector(sel), r = h.getBoundingClientRect(), o = {bubbles: true, clientX: r.left + 120, clientY: r.top + 12, pointerId: 3};
         h.dispatchEvent(new PointerEvent('pointerdown', o)); document.dispatchEvent(new PointerEvent('pointermove', Object.assign({}, o, {clientY: r.top + 12 + dy / 2}))); document.dispatchEvent(new PointerEvent('pointermove', Object.assign({}, o, {clientY: r.top + 12 + dy}))); document.dispatchEvent(new PointerEvent('pointerup', Object.assign({}, o, {clientY: r.top + 12 + dy}))); }, [sel, dy]);
@@ -626,8 +636,24 @@ async function mlRoutes(p) {
       await td('#v2mlist .v2mhead', 220); const a3 = await st(); await td('#v2mlist .v2mhead', -200); const a4 = await st();
       ok('insula tel · la liste se tire de n\'importe où au doigt : depuis les filtres elle s\'agrandit, depuis une annonce elle redescend, puis se réduit et revient', a1.big === '1' && a2.big === '0' && a2.min === '0' && a3.min === '1' && a4.min === '0', JSON.stringify({a1, a2, a3, a4}));
       await p.evaluate(() => __cl('#v2mlist [data-v2open^="v|"]')); await p.waitForTimeout(1200);
-      await td('#v2fiche .v2tabs2', -200); const b1 = await st(); await td('#v2fiche .v2fb', 250); const b2 = await st(); await td('#v2fiche .v2fb', 250); const b3 = await st();
-      ok('insula tel · la fiche se tire de n\'importe où au doigt : vers le haut elle s\'agrandit, vers le bas (en haut de son contenu) elle se réduit puis se ferme', b1.half === '0' && b2.half === '1' && b2.fiche && !b3.fiche, JSON.stringify({b1, b2, b3}));
+      await td('#v2fiche .v2tabs2', -200); const b1 = await st(); await td('#v2fiche .v2fb', 250); const b2 = await st(); await td('#v2fiche .v2fb', 250); const b3 = await st(); await td('#v2fiche .v2fh', -150); const b4 = await st(); await td('#v2fiche .v2fh', 120); await td('#v2fiche .v2fh', 120); const b5 = await st();
+      ok('insula tel · la fiche se tire de n\'importe où au doigt : vers le haut elle s\'agrandit ; vers le bas, demi-écran, puis réduite à son bandeau (la carte visible), puis fermée', b1.half === '0' && b2.half === '1' && b3.half === '2' && b3.fiche && b4.half === '1' && !b5.fiche, JSON.stringify({b1, b2, b3, b4, b5}));
+      // téléphone : le type de bien dans un menu compact ; la fiche de la ville, « Tout sur … » en tête de sa liste
+      await p.evaluate(() => { const s = document.querySelector('#v3scope [data-v3type]'); s.value = 't2'; s.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(1200);
+      const ty = await p.evaluate(() => ({t: H.type, barre: getComputedStyle(document.querySelector('.v2top')).display}));
+      await p.evaluate(() => { const s = document.querySelector('#v3scope [data-v3type]'); s.value = 'studio'; s.dispatchEvent(new Event('change', {bubbles: true})); }); await p.waitForTimeout(1200);
+      ok('insula tel · type de bien : un menu compact dans la barre du périmètre, plus de barre de boutons', ty.t === 't2' && ty.barre === 'none' && await p.evaluate(() => H.type === 'studio'), JSON.stringify(ty));
+      await p.evaluate(() => { __cl('[data-v3obj="villes"]'); __cl('#v2mlist [data-v2city="lemans"]'); }); await p.waitForTimeout(1500);
+      ok('insula tel · « Tout sur la ville » en tête de la liste de la ville', await p.evaluate(() => { const e = document.querySelector('#v2mlist [data-v2cfiche="lemans"]'); return !!e && /Tout sur la ville/.test(e.innerText) && /Tout sur Le Mans/.test(e.getAttribute('aria-label')) && !document.querySelector('#v3scope [data-v2cfiche]'); }));
+      // depuis la vue Liste : tirer la fiche vers le bas montre l'annonce sur la carte ; la fermer ramène à la liste
+      await p.evaluate(() => __cl('[data-v3view="liste"]')); await p.waitForTimeout(500); await p.evaluate(() => __cl('#v3liste [data-v2open^="v|"]')); await p.waitForTimeout(800);
+      const c0 = await p.evaluate(() => ({view: document.getElementById('v2app').dataset.view, half: document.getElementById('v2fiche').dataset.half, bouton: !!document.querySelector('#v2fiche [data-v3onmap]')}));
+      await td('#v2fiche .v2fhd', 200); await p.waitForTimeout(1800);
+      const c1 = await p.evaluate(() => ({view: document.getElementById('v2app').dataset.view, half: document.getElementById('v2fiche').dataset.half, fiche: !document.getElementById('v2fiche').hidden, z: V2MAP().getZoom()}));
+      await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(800);
+      const c2 = await p.evaluate(() => ({view: document.getElementById('v2app').dataset.view, fiche: !document.getElementById('v2fiche').hidden}));
+      ok('insula tel · fiche ouverte depuis la liste : tirée vers le bas, l\'annonce apparaît sur la carte (demi-écran) ; fermée, retour à la liste', c0.view === 'liste' && c0.half === '0' && c0.bouton && c1.view === 'carte' && c1.half === '1' && c1.fiche && c1.z > 12 && c2.view === 'liste' && !c2.fiche, JSON.stringify({c0, c1, c2}));
+      await p.evaluate(() => __cl('[data-v3view="carte"]')); await p.waitForTimeout(500);
       ok('insula tel · l\'espace courant se voit : pastille derrière l\'icône', await p.evaluate(() => { const a = getComputedStyle(document.querySelector('#v2tabbar [aria-current="page"] svg')).backgroundColor, o = getComputedStyle(document.querySelector('#v2tabbar [aria-current="false"] svg')).backgroundColor; return a !== o && a !== 'rgba(0, 0, 0, 0)'; }));
       ok('insula tel · tirer vers le bas ne recharge pas la page', await p.evaluate(() => getComputedStyle(document.documentElement).overscrollBehaviorY === 'none'));
     }

@@ -148,8 +148,13 @@
  function setScn(k){H.pess=k==="prudent"; H.fav=k==="favorable"; try{localStorage.setItem("scn",k);}catch(_){} const p=$("f-pess"); if(p) p.checked=H.pess; if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}
  /* barre du périmètre (Explorer) : l'Ouest › une ville, la fiche de la ville, villes ou annonces (ordinateur), carte, liste ou graphique */
  const objSeg=()=>`<span class="v2seg v3obj" role="group" aria-label="Afficher"><button type="button" data-v3obj="villes" aria-pressed="${V.obj==="villes"}">Villes <small>${C.length}</small></button><button type="button" data-v3obj="annonces" aria-pressed="${V.obj==="annonces"}">Annonces <small>${market(null).length}</small></button></span>`;
+ /* téléphone : le type de bien en menu compact */
+ const typeSel=()=>`<label class="v3typ"><span class="v3vh">Type de bien</span><select data-v3type aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<option value="${k}"${!V.tous&&H.type===k?" selected":""}>${T.lab}</option>`).join("")}<option value="tous"${V.tous?" selected":""}>Tous</option></select></label>`;
+ const cityLink=ck=>`<button type="button" class="v3city" data-v2cfiche="${ck}"><span><b>Tout sur ${esc(cityName(ck))}</b><small>prix, loyers, calcul, quartiers, habitants</small></span>${CHEVR}</button>`;
+ const CHEVR='<svg class="v3chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+ const CHEVL='<svg class="v3chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
  function scope(){const el=$("v3scope"); if(!el) return; el.hidden=V.tab!=="explorer"; if(el.hidden){el.innerHTML=""; return;} const ph=PH();
-  el.innerHTML=`<div class="v2crumb v3crumb">${V.city?`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span><b>${esc(cityName(V.city))}</b>`:`<b>L'Ouest</b>`}</div>${V.city?`<button type="button" class="v2btn sm" data-v2cfiche="${V.city}" title="Prix, loyer, calcul, quartiers, habitants…">${ph?"Fiche":"Fiche de la ville"}</button>`:ph?"":objSeg()}<span class="v2sp"></span><span class="v3vsw" role="group" aria-label="Vue">${VIEWS.map(([k,l,ic])=>`<button type="button" data-v3view="${k}" aria-pressed="${V.view===k}" aria-label="${l}" title="${l}">${svgI(ic)}${ph&&V.view!==k?"":`<span>${l}</span>`}</button>`).join("")}</span>`;}
+  el.innerHTML=`${ph?typeSel():""}<div class="v2crumb v3crumb">${V.city?(ph?`<button type="button" class="v3back" data-v2city="" aria-label="Retour à l'Ouest" title="L'Ouest">${CHEVL}</button><b>${esc(cityName(V.city))}</b>`:`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span><b>${esc(cityName(V.city))}</b>`):`<b>L'Ouest</b>`}</div>${V.city?(ph?"":`<button type="button" class="v2btn sm" data-v2cfiche="${V.city}" title="Prix, loyers, calcul, quartiers, habitants">Tout sur ${esc(cityName(V.city))}</button>`):ph?"":objSeg()}<span class="v2sp"></span><span class="v3vsw" role="group" aria-label="Vue">${VIEWS.map(([k,l,ic])=>`<button type="button" data-v3view="${k}" aria-pressed="${V.view===k}" aria-label="${l}" title="${l}">${svgI(ic)}${ph&&V.view!==k?"":`<span>${l}</span>`}</button>`).join("")}</span>`;}
 
  /* ---------- carte (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
     Tout est sur la carte en même temps et le zoom décide de ce qu'on voit, sans bouton :
@@ -454,7 +459,7 @@
  if(MQD.addEventListener) MQD.addEventListener("change",()=>{if(thMode()==="auto") setTheme("auto");});
  const themeSeg=()=>`<span class="v2seg" role="group" aria-label="Thème">${[["light","Clair"],["dark","Sombre"],["auto","Comme l'appareil"]].map(([k,l])=>`<button type="button" data-v2theme="${k}" aria-pressed="${thMode()===k}">${l}</button>`).join("")}</span>`;
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0"; el.dataset.big=V.big&&!V.min?"1":"0"; setTimeout(()=>{if(el.firstElementChild&&!el.querySelector(".v2grip")) el.insertAdjacentHTML("afterbegin",GRIP);},0);
-  const ph=PH(), head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb"><span>${t}</span><span class="v2sp"></span>${ph?"":`<button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button>`}</div>${sub}</div>`;
+  const ph=PH(), head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb"><span>${t}</span><span class="v2sp"></span>${ph&&V.city?`<button type="button" class="v3citylk" data-v2cfiche="${V.city}" aria-label="Tout sur ${esc(cityName(V.city))} : prix, loyers, calcul, quartiers, habitants">Tout sur la ville ${CHEVR}</button>`:""}${ph?"":`<button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button>`}</div>${sub}</div>`;
   const aRow=o=>`<div class="v2row v2r3${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${V.tous?` <span class="v2ty">${tyOfO(o)}</span>`:""}${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span class="v3suivi" title="suivi, dans Nos biens">★</span>':""}${ageChip(o)}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(V.city?(o.t?o.t.name:o.a[1]||""):where(o))}${o.f.dpe?" · DPE "+o.f.dpe:""}</span><span style="text-align:right">${rng(o,64)}</span>${cfLine(o)}</div>`;
   const aRows=L=>(L.length?L.slice(0,80).map(aRow).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`)+(L.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L.length} : toutes dans la vue Liste.</p>`:"");
   if(!V.city){const tip=V.guide||(()=>{try{return localStorage.getItem("guide-vu");}catch(_){return 1;}})()?"":`<div class="v2tip"><p><b>Première visite ?</b> En deux minutes : la carte, le rendement, les fiches, à plusieurs.</p><div class="v2bar"><button type="button" class="v2btn sm pri" data-v2guide>Comment lire l'app</button><button type="button" class="v2btn sm" data-v2tipx>Plus tard</button></div></div>`;
@@ -547,7 +552,7 @@
   else if(ph) body=`<div class="v2tw">${shown.map(o=>`<div class="v2row v2r3${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${V.tous?` <span class="v2ty">${tyOfO(o)}</span>`:""}${o.nw?'<span class="v2new">nouv.</span>':""}${ageChip(o)}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(where(o))}</span><span>${rng(o,64)}</span>${cfLine(o)}</div>`).join("")}</div>`;
   else body=`<div class="v2tw"><table class="v2t v2wide"><thead><tr><th></th><th></th>${th("p","Prix",1)}${th("s","m²",1)}<th>Ville · quartier</th>${th("irr","Rendement 15 ans",1)}<th>Fourchette</th>${th("cf","Cash-flow",1)}${th("m2","€/m²",1)}${th("age","En ligne",1)}${showBank?"<th>Banque</th>":""}<th>DPE · signaux</th></tr></thead><tbody>${shown.map(o=>{const [bc,bt]=bank(o.x.ratio); return `<tr class="${V.sel===key(o)?"on":""}" data-v2open="${esc(key(o))}" tabindex="0"><td>${starBtn(o)}</td><td>${img(photo(o,160,120),"v2th")}</td><td class="r mono"><b>${keur(o.a[2])}</b>${o.nw?'<span class="v2new">nouv.</span>':""}${o.v&&o.v.last?`<span class="v2drop">↓ ${keur(o.v.last.amt)}</span>`:""}</td><td class="r mono">${String(o.a[0]).replace(".",",")}${V.tous?`<div class="v2sub" style="font-size:11.5px">${tyOfO(o)}</div>`:""}</td><td><b>${esc(cityName(o.ck))}</b><div class="v2sub" style="font-size:12px">${esc(o.t?o.t.name:o.a[1]||"")}</div></td><td class="r mono" style="color:${cv(colIrr(o.x.irr))};font-weight:700">${pctS(o.x.irr)}</td><td>${rng(o)}</td><td class="r mono" style="color:${cfC(o.x.cf)}">${sgn(o.x.cf)}</td><td class="r mono">${nf(o.a[2]/o.a[0])}</td><td class="r mono" title="${esc(ageTxt(o))}">${o.v?`${o.v.days} j`:"—"}${o.v&&o.v.drops?`<div class="v2sub" style="font-size:11.5px;color:var(--ok)">↓ ${fr(dropPct(o),0)} % (${o.v.drops})</div>`:""}</td>${showBank?`<td><span class="v2pill ${bc==="p-ok"?"ok":bc==="p-warn"?"warn":"bad"}">${bt}</span></td>`:""}<td>${o.f.dpe?`<span class="v2pill ${"FG".includes(o.f.dpe)?"bad":o.f.dpe==="E"?"warn":""}">DPE ${o.f.dpe}</span> `:""}${ficheBadges(o.a[3],true)||""}</td></tr>`;}).join("")}</tbody></table></div>`;
   const critB=`<button type="button" class="v2btn sm v2critb" data-v2crit title="Modifier nos critères">≤ ${keur(critV().budget)} · ≥ ${fr(critV().rmin)} %${critV().bank?" · banque":""}</button>`;
-  el.innerHTML=`<div class="v2in">${ph&&!V.city?`<div class="v2bar">${objSeg()}</div>`:""}
+  el.innerHTML=`<div class="v2in">${ph&&!V.city?`<div class="v2bar">${objSeg()}</div>`:""}${ph&&V.city?cityLink(V.city):""}
    <div class="v2bar"><div class="v2chips v2scroll">${vueChips(V.city)}${ph?critB:""}</div>${ph?"":`<span class="v2sp"></span>${critB}`}</div>
    <p class="v2sub">${L0.length} ${typlL()}${V.city?" à "+esc(cityName(V.city)):` dans ${cities.length} villes`} · relevé du ${esc(ADSRAW.date||ADS.date||"")}${av==="nuage"?"":` · ${(SORTM.find(([v])=>v===V.sort.join("|"))||[0,"tri choisi"])[1].toLowerCase()}`}</p>
    ${ph&&av!=="nuage"&&L0.length>1?`<label class="v2sortm"><span>Trier</span><select data-v2sortm aria-label="Trier les annonces">${SORTM.map(([v,l])=>`<option value="${v}"${V.sort.join("|")===v?" selected":""}>${l}</option>`).join("")}${SORTM.some(([v])=>v===V.sort.join("|"))?"":`<option selected>${esc(V.sort[0])}</option>`}</select></label>`:""}
@@ -753,7 +758,7 @@
    <div class="v2kl"><span><b class="mono" style="color:${hc?"var(--muted)":c}">${pctS(x.irr)}</b> 15 ans${hc?" (indicatif)":""}</span><span><b class="mono" style="color:${cfC(x.cf)}">${sgn(x.cf)}</b>/mois</span>${R.kind==="v"?`<button type="button" class="v2klst" data-v2star="${R.ck}|${esc(R.suf)}" aria-pressed="${on}" aria-label="${on?"Suivi : ne plus suivre ce bien":"Suivre ce bien"}">${on?"★ Suivi":"☆ Suivre"}</button>`:""}</div>
    <div class="v2kp v2kp3"><div class="v2k"><span>Rendement 15 ans · ${hc?"indicatif":scn()}</span><b style="color:${hc?"var(--muted)":c}">${pctS(x.irr)}</b>${hc?`<small>le calcul de l'outil ne s'applique pas à ce bien (voir « À vérifier »)</small>`:`<div class="v2bigbar" aria-hidden="true">${z.prudent!=null?`<i style="left:${p(z.prudent)}%;width:${p(z.favorable)-p(z.prudent)}%;background:${c}"></i>`:""}<b style="left:${p(x.irr)}%;background:${c}"></b></div><small>prudent ${pctS(z.prudent)} · favorable ${pctS(z.favorable)}</small>`}</div>
     <div class="v2k"><span>Cash-flow${H.assoc.length>1?" à "+H.assoc.length:""}</span><b style="color:${cfC(x.cf)}">${sgn(x.cf)}</b><small>par mois · loyer ${eur(x.rentHC)} HC</small></div><div class="v2k"><span>Mensualité</span><b>${eur(x.mens)}</b><small>budget ${keur(x.cost)} tout compris</small></div></div>${hc?"":scnRow()}
-   <p class="v2sub v2pos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/>${hasLL(bb)||posQ(fx)===0?'<circle cx="12" cy="10" r="2.6"/>':""}</svg>Sur la carte : ${esc(posTxt(R.kind==="v"||(b.url&&feed().some(o=>o.url===b.url))?fx:null,hasLL(bb),R.kind==="b"))}</p>
+   <p class="v2sub v2pos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/>${hasLL(bb)||posQ(fx)===0?'<circle cx="12" cy="10" r="2.6"/>':""}</svg>Sur la carte : ${esc(posTxt(R.kind==="v"||(b.url&&feed().some(o=>o.url===b.url))?fx:null,hasLL(bb),R.kind==="b"))}${!onMap()&&selPos(sel).f?` <button type="button" class="v2lnk v3onmap" data-v3onmap>Voir sur la carte</button>`:""}</p>
    ${chips?`<div class="v2chips">${chips}</div>`:""}
    <div class="v2bar">${R.kind==="v"?`<button type="button" class="v2btn${on?"":" pri"}" data-v2star="${R.ck}|${esc(R.suf)}" aria-pressed="${on}">${on?"★ Suivi, dans Nos biens":"☆ Suivre ce bien"}</button>`:`${stPill(b)}<button type="button" class="v2btn sm" data-unshort="${esc(b.id)}">Ne plus suivre</button>`}${b.url?`<a class="v2btn sm" href="${esc(b.url)}" target="_blank" rel="noopener">Voir l'annonce ↗</a>`:""}${bb?`<button type="button" class="v2btn sm" data-fiche="${esc(bb.id)}">Fiche à emporter</button>`:""}</div>
    ${bb?`<div class="v2sec v2adeux"><h3>À deux</h3><div class="v2vrow"><b>${esc(me||"Vous")}</b>${me?voteBtns(bb,me):`<button type="button" class="v2btn sm" data-v2tab="reglages">Votre prénom, dans Réglages</button>`}</div>${oth.map(o=>`<div class="v2vrow"><b>${esc(o)}</b>${voteTxt(bb,o)}</div>`).join("")}</div>`:""}`;
@@ -780,20 +785,31 @@
   const F=V.sel[0]==="v"||V.sel[0]==="b"?ficheBien(V.sel):ficheQV(V.sel); if(!F){V.sel=null; el.hidden=true; return;} LASTF=F;
   const tabs=FT.filter(([k,,ss])=>ss.some(s=>F.S[s])||(F.extra[k]&&F.extra[k].length)); let cur=tabs.some(t=>t[0]===V.ftab)?V.ftab:(tabs[0]||["bien"])[0];
   const g=FT.find(t=>t[0]===cur)||FT[0], zone=V.sel[0]==="c"||V.sel[0]==="q";
-  const gp=PH()&&onMap(), half=gp&&!V.fbig; el.dataset.half=half?"1":"0";   /* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran, l'annonce reste visible au-dessus */
+  const gp=PH()&&onMap(), half=gp&&!V.fbig; el.dataset.half=half?(V.fmini?"2":"1"):"0";   /* 2 : réduite à son bandeau, la carte au-dessus */   /* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran, l'annonce reste visible au-dessus */
   el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="${!PH()&&onMap()?"Fermer la fiche et revenir à la liste":"Fermer la fiche"}">${PH()?(half?"Fermer":"Retour"):onMap()?"‹ Liste":"×"}</button><b>${esc(F.title)}</b>${(()=>{const L=/^[vb]\|/.test(V.sel)?navList():[], i=L.indexOf(V.sel); return i>=0&&L.length>1?`<span class="v2nav"><button type="button" class="v2btn sm" data-v2nav="-1" aria-label="Annonce précédente"${i?"":" disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><span class="v2sub mono">${i+1}/${L.length}</span><button type="button" class="v2btn sm" data-v2nav="1" aria-label="Annonce suivante"${i<L.length-1?"":" disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></span>`:"";})()}<button type="button" class="v2btn sm v2lien" data-v2lien aria-label="Partager cette fiche" title="Partager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div>
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>{const t=zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l, c=t.replace(/^L(e |')/,""); return `<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${c[0].toUpperCase()+c.slice(1)}</button>`;}).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
   if(M) requestAnimationFrame(()=>M.resize());}
  /* l'écran d'avant la fiche : ville et vue de la liste, défilement, cadrage de la carte ; rendu à la fermeture */
  let RET=null;
- function retSnap(){const ml=$("v2mlist"), mr=ml&&ml.querySelector(".v2mrows"); RET={city:V.city,obj:V.obj,vue:V.vue,ls:mr?mr.scrollTop:0,ps:$("v3liste").scrollTop,pb:($("v2p-biens")||{}).scrollTop||0,
+ /* tirer la fiche : vers le bas, plein écran › demi-écran › bandeau › fermée ; vers le haut, l'inverse ; hors carte, vers le bas : la carte */
+ function fStep(dir){if(!V.sel) return;
+  if(!onMap()){if(dir>0) showOnMap(); return;}
+  if(dir>0){if(V.fbig) V.fbig=false; else if(!V.fmini) V.fmini=true; else return closeSel();}
+  else{if(V.fmini) V.fmini=false; else if(!V.fbig) V.fbig=true; else return;}
+  const sc=$("v2fiche").scrollTop; fiche(); if(!V.fbig) $("v2fiche").scrollTop=0; else $("v2fiche").scrollTop=sc; requestAnimationFrame(()=>{padSync(); if(!V.fbig&&V.sel) flyAd(V.sel);});}
+ /* voir l'annonce sur la carte depuis sa fiche (vue Liste, Nos biens) : la carte s'ouvre sur elle, fiche en demi-écran ; fermer ramène à l'écran d'avant */
+ function showOnMap(){if(!V.sel) return; V.tab="explorer"; V.view="carte"; V.fbig=false; V.fmini=false; FLYP=/^[vb]\|/.test(V.sel)?V.sel:null; save(); show();}
+ function retSnap(){const ml=$("v2mlist"), mr=ml&&ml.querySelector(".v2mrows"); RET={tab:V.tab,view:V.view,city:V.city,obj:V.obj,vue:V.vue,ls:mr?mr.scrollTop:0,ps:$("v3liste").scrollTop,pb:($("v2p-biens")||{}).scrollTop||0,
    cam:onMap()&&M&&MREADY?{center:M.getCenter(),zoom:M.getZoom(),pitch:M.getPitch(),bearing:M.getBearing()}:null};}
- function closeSel(){const r=RET; RET=null; V.sel=null; fiche();
+ function closeSel(){const r=RET; RET=null; V.sel=null; V.fmini=false;
+  if(r&&(r.tab!==V.tab||r.view!==V.view)){V.tab=r.tab; V.view=r.view; V.city=r.city; LCITY=r.city; V.obj=r.obj; V.vue=r.vue; save(); show();   /* ouverte depuis la liste ou Nos biens, vue sur la carte : retour là-bas */
+   requestAnimationFrame(()=>{$("v3liste").scrollTop=r.ps; const pb=$("v2p-biens"); if(pb) pb.scrollTop=r.pb;}); return;}
+  fiche();
   if(r&&V.tab==="explorer"){if(r.city!==V.city){V.city=r.city; LCITY=r.city; save(); reperes(r.city);} V.obj=r.obj; V.vue=r.vue;}
   if(onMap()){mapList(); scope(); drawMap(); if(r&&r.cam&&M&&MREADY) camAuto(Object.assign({duration:700},r.cam),"easeTo");} else paint(V.tab);
   if(r) requestAnimationFrame(()=>{const mr=$("v2mlist").querySelector(".v2mrows"); if(mr) mr.scrollTop=r.ls; $("v3liste").scrollTop=r.ps; const pb=$("v2p-biens"); if(pb) pb.scrollTop=r.pb;});}
- function openSel(s,keepTab){if(!V.sel) retSnap();if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw&&!NAVK) V.fbig=false; NAVK=false; FLYP=!onMap()&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab) V.ftab="bien"; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
+ function openSel(s,keepTab){if(!V.sel) retSnap();if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw&&!NAVK){V.fbig=false; V.fmini=false;} NAVK=false; FLYP=!onMap()&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab) V.ftab="bien"; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
  /* ---------- d'une annonce à l'autre, et lien vers une fiche ----------
     Précédente / suivante : dans l'ordre de la liste affichée (carte, Annonces ou Nos biens), sans fermer la fiche ; boutons de l'en-tête,
     glisser à gauche ou à droite sur le téléphone, flèches du clavier. Partager : feuille de partage du téléphone (sinon lien copié) ;
@@ -884,9 +900,9 @@
   const scrollOf=(t,box)=>{for(let e=t; e&&e!==box.parentNode; e=e.parentNode){if(e.scrollHeight>e.clientHeight+2&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)) return e;} return null;};
   document.addEventListener("touchstart",e=>{T=null; if(!PH()||e.touches.length!==1||LB||document.querySelector(".v2dlg")) return; const t=e.target, x=e.touches[0];
    if(t.closest("input,select,textarea,.maplibregl-canvas-container")) return;
-   const L=t.closest("#v2mlist"), F=onMap()&&V.sel&&t.closest("#v2fiche");
+   const L=t.closest("#v2mlist"), F=V.sel&&t.closest("#v2fiche");
    if(L) T={k:"l",el:L,x0:x.clientX,y0:x.clientY,h0:L.offsetHeight,sc:scrollOf(t,L)};
-   else if(F) T={k:"f",el:F,x0:x.clientX,y0:x.clientY,half:F.dataset.half==="1",sc:F};},{passive:true});
+   else if(F) T={k:"f",el:F,x0:x.clientX,y0:x.clientY,half:F.dataset.half!=="0",sc:F};},{passive:true});
   document.addEventListener("touchmove",e=>{if(!T) return; const x=e.touches[0], dx=x.clientX-T.x0, dy=x.clientY-T.y0;
    if(T.on==null){if(Math.abs(dx)<8&&Math.abs(dy)<8) return; if(Math.abs(dx)>Math.abs(dy)){T=null; return;}
     const top=!T.sc||T.sc.scrollTop<=0;
@@ -897,8 +913,7 @@
   const end=()=>{const S=T; T=null; if(!S||!S.on) return; const dy=S.dy||0;
    if(S.k==="l"){const H=$("v2map").offsetHeight, h=S.el.offsetHeight; S.el.style.transition=""; S.el.style.minHeight=""; S.el.style.height=""; sheetSet(h>H*.65,h<H*.2); return;}
    S.el.style.transform=""; FGT=Date.now();
-   if(dy>60){if(V.fbig){V.fbig=false; fiche(); requestAnimationFrame(()=>{padSync(); if(V.sel) flyAd(V.sel);});} else closeSel();}
-   else if(dy<-50&&!V.fbig){V.fbig=true; fiche();}};
+   if(dy>60) fStep(1); else if(dy<-50) fStep(-1);};
   /* toucher la poignée de la liste (sans tirer) : agrandie ou à mi-hauteur */
   let tch=0; document.addEventListener("touchstart",()=>{tch=Date.now();},{passive:true,capture:true});
   document.addEventListener("click",e=>{if(Date.now()-tch>800||!PH()||!e.target.closest||!e.target.closest("#v2mlist [data-v2grip]")) return; if(V.min) sheetSet(false,false); else sheetSet(!V.big,false);});
@@ -913,12 +928,11 @@
    if(ui||!(half||h)) return; y0=e.clientY; mv=false;},true);   /* demi-écran : tout le bandeau ; fiche agrandie : son en-tête */
   document.addEventListener("pointermove",e=>{if(y0!=null&&Math.abs(e.clientY-y0)>8) mv=true;},true);
   const fin=e=>{if(y0==null) return; const dy=e.clientY-y0; y0=null; if(!mv) return; FGT=Date.now();
-   if(dy>50){if(V.fbig){V.fbig=false; fiche(); requestAnimationFrame(()=>{padSync(); if(V.sel) flyAd(V.sel);});} else closeSel();}
-   else if(dy<-50&&!V.fbig){V.fbig=true; fiche();}};
+   if(dy>50) fStep(1); else if(dy<-50) fStep(-1);};
   document.addEventListener("pointerup",fin,true); document.addEventListener("pointercancel",()=>{y0=null;},true);}   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
 
  /* ---------- événements ---------- */
- document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2fgrip],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-v2nav],[data-v2lien],[data-v2grp],[data-v2inv],[data-v2guide],[data-v2ret],[data-v2tipx],[data-v3view],[data-v3obj],[data-v3bst],[data-v3showcode],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-v2tab],[data-v2scn],[data-v2vue],[data-v2sort],[data-v2more],[data-v2star],[data-v2vote],[data-v2ft],[data-v2fgrip],[data-v2close],[data-v2crit],[data-v2min],[data-v2nom],[data-v2share],[data-v2city],[data-v2open],[data-v2cfiche],[data-v2photos],[data-v2gonew],[data-v2reset],[data-v2offkeep],[data-v2csort],[data-v2add],[data-v2addx],[data-v2cmpx],[data-v2nas],[data-v2tous],[data-v2theme],[data-v2nav],[data-v2lien],[data-v2grp],[data-v2inv],[data-v2guide],[data-v2ret],[data-v2tipx],[data-v3view],[data-v3obj],[data-v3bst],[data-v3showcode],[data-v3onmap],[data-type]"); if(!t||!app.contains(t)&&!t.closest(".v2dlg")) return; const d=t.dataset;
   if(d.v2tab!=null){e.preventDefault(); V.tab=TABS.some(x=>x[0]===d.v2tab)?d.v2tab:"explorer"; save(); show(); return;}
   if(d.v3view){V.view=d.v3view; V.n=60; save(); show(); return;}
   if(d.v3obj){V.obj=d.v3obj; V.n=60; save(); show(); return;}
@@ -939,7 +953,8 @@
    const fo=d.v2focus&&$(d.v2focus); if(fo){fo.scrollIntoView({block:"center"}); fo.focus({preventScroll:true}); return;}
    const sc=d.v3sec&&fe.querySelector(`details.fsec[data-sec="${d.v3sec}"]`); if(sc){sc.open=true; fe.scrollTop=Math.max(0,sc.offsetTop-hh-56); const su=sc.querySelector("summary"); if(su) su.focus({preventScroll:true}); return;}
    const f=document.querySelector(`.v2tabs2 [data-v2ft="${d.v2ft}"]`); if(f) f.focus({preventScroll:true}); return;}
-  if(d.v2fgrip!=null){if(Date.now()-FGT<500) return; V.fbig=!V.fbig; const sc=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=sc; requestAnimationFrame(()=>{padSync(); if(!V.fbig&&V.sel) flyAd(V.sel);}); return;}
+  if(d.v2fgrip!=null){if(Date.now()-FGT<500) return; if(V.fmini) fStep(-1); else {V.fbig=!V.fbig; const sc=$("v2fiche").scrollTop; fiche(); $("v2fiche").scrollTop=sc; requestAnimationFrame(()=>{padSync(); if(!V.fbig&&V.sel) flyAd(V.sel);});} return;}
+  if(d.v3onmap!=null){showOnMap(); return;}
   if(d.v2nav){navGo(+d.v2nav); return;}
   if(d.v2grp!=null){const n=($("v2nom2")&&$("v2nom2").value||myName()||"").trim(); if(!n){toast("Indiquez d'abord votre prénom."); if($("v2nom2")) $("v2nom2").focus(); return;} if(confirm("Créer un groupe pour vous : un code est choisi au hasard, puis vous invitez les autres par un lien. Continuer ?")) setGroup(genCode(),n); return;}
   if(d.v2inv!=null){inviteLink(); return;}
@@ -974,6 +989,7 @@
    tmp.innerHTML=offre(b,R.kind==="b"?"b"+b.id:V.sel,R.kind==="b"?b:R.ex); const nw=tmp.querySelectorAll(".v2offx"), old=$("v2fiche").querySelectorAll(".v2offx");
    if(nw.length===old.length) old.forEach((o,i)=>{o.innerHTML=nw[i].innerHTML;});}});
  document.addEventListener("change",e=>{const t=e.target, d=t.dataset; if(!d) return;
+  if(t.matches("[data-v3type]")){const k=t.value; if(k==="tous"){if(!V.tous){V.tous=true; save(); FEED=null; toast("Calcul des annonces des trois types…"); refresh(); if(onMap()) drawMap();}} else {if(V.tous){V.tous=false; save(); FEED=null;} setType(k);} return;}
   if(t.matches("[data-v2sortm]")){const [k,dd]=t.value.split("|"); if(dd){V.sort=[k,+dd]; save(); refresh();} return;}
   if(t.matches("[data-v2qm]")){V.qm=QM[t.value]?t.value:"irr"; save(); t.blur(); drawMap(); return;}   /* couleur des quartiers sur la carte */
   if(d.v2h){const v=+t.value; if(isFinite(v)){H[d.v2h]=v; if(TYK.includes(d.v2h)) saveTyv(d.v2h); else saveHyp(); if(typeof CALCC!=="undefined") CALCC.clear(); if(typeof VC!=="undefined") VC.clear(); render();}}
