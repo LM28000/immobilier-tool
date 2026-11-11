@@ -5,6 +5,7 @@ Sorties :
   dist/artifact.html  même page sans squelette (artifact Claude), annonces et fiches toujours incluses
   dist/test.html      copie locale pour les tests Playwright (comme l'artefact)
   index.html          copie de dist/index.html servie par GitHub Pages
+  essai.html          page d'essai de la nouvelle interface (src/v3, Insula) ; dist/essai-test.html pour ses tests
   sw.js               numéro de version mis à jour (le téléphone installe la nouvelle version)
 Réglage : publication.json → "annonces_publiques": false retire annonces, historique et fiches de la page publique ;
   la page les lit alors dans Supabase avec le code de groupe (tools/supabase_annonces.py les y envoie).
@@ -122,13 +123,22 @@ def code(public):
         *[open(p, encoding="utf-8").read() for p in after],
     ])
 
-def page(public):
-    """la page : le moteur et les fiches (src/js), l'interface (src/v2) ; public=False : annonces, historique et fiches incluses (tests, MCP, artefact)"""
-    css = need("src/styles.css") + "\n" + need("src/v2/v2.css")
-    js = code(public) + "\n" + need("src/v2/v2.js")
-    return need("src/head.html") + "<style>\n" + css + "</style>\n" + need("src/body.html") + "<script>\n" + js + "</script>\n"
+def insula_head(s):
+    """page d'essai de la nouvelle interface (src/v3, Insula) : son nom, ses polices et sa couleur"""
+    s = s.replace("<title>Où acheter notre studio ?</title>", "<title>Insula</title>")
+    s = re.sub(r'<link rel="stylesheet" href="https://fonts\.googleapis\.com/css2\?[^"]*">',
+               '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">', s)
+    return s.replace('content="#2f47b3"', 'content="#2c4766"').replace('apple-mobile-web-app-title" content="Notre studio"', 'apple-mobile-web-app-title" content="Insula"')
+
+def page(public, ui="v2"):
+    """la page : le moteur et les fiches (src/js), l'interface (src/v2, ou src/v3 pour la page d'essai) ; public=False : annonces, historique et fiches incluses (tests, MCP, artefact)"""
+    css = need("src/styles.css") + "\n" + need(f"src/{ui}/{ui}.css")
+    js = code(public) + "\n" + need(f"src/{ui}/{ui}.js")
+    head = need("src/head.html")
+    return (insula_head(head) if ui == "v3" else head) + "<style>\n" + css + "</style>\n" + need("src/body.html") + "<script>\n" + js + "</script>\n"
 
 pub, full = page(True), page(False)
+pub3, full3 = page(True, "v3"), page(False, "v3")
 
 # contrôles : déclarations en double, syntaxe, taille
 import re
@@ -136,11 +146,13 @@ decl = re.findall(r"^(?:const|let|function|async function) ([A-Za-z_$][\w$]*)", 
 dup = sorted({n for n in decl if decl.count(n) > 1})
 if dup: ERR.append("déclarations en double : " + ", ".join(dup))
 if shutil.which("node"):
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as t: t.write(code(False) + "\n" + need("src/v2/v2.js"))
-    r = subprocess.run(["node", "--check", t.name], capture_output=True, text=True); os.unlink(t.name)
-    if r.returncode: ERR.append("erreur de syntaxe dans le script assemblé :\n" + "\n".join(r.stderr.splitlines()[:6]))
+    for ui in ("v2", "v3"):
+        with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as t: t.write(code(False) + "\n" + need(f"src/{ui}/{ui}.js"))
+        r = subprocess.run(["node", "--check", t.name], capture_output=True, text=True); os.unlink(t.name)
+        if r.returncode: ERR.append(f"erreur de syntaxe dans le script assemblé (src/{ui}) :\n" + "\n".join(r.stderr.splitlines()[:6]))
 else: print("attention : node introuvable, syntaxe non vérifiée", file=sys.stderr)
 if len(pub) > 3_000_000: ERR.append(f"page publique trop lourde ({len(pub)} octets)")
+if len(pub3) > 3_000_000: ERR.append(f"page d'essai trop lourde ({len(pub3)} octets)")
 if ERR:
     print("BUILD REFUSÉ\n- " + "\n- ".join(ERR), file=sys.stderr); sys.exit(1)
 
@@ -159,13 +171,18 @@ head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
 html = head + pub + "</body></html>"
 w("dist/index.html", html)
 if not os.path.exists(P("index.html")) or rd("index.html") != html: w("index.html", html)   # pas de réécriture inutile (sync.sh surveille ce fichier)
+# page d'essai de la nouvelle interface (src/v3, Insula), à côté de l'actuelle : essai.html, et sa copie de test
+w("dist/essai-test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + full3)
+html3 = insula_head(head) + pub3 + "</body></html>"
+w("dist/essai.html", html3)
+if not os.path.exists(P("essai.html")) or rd("essai.html") != html3: w("essai.html", html3)
 # v2.html (lien d'essai) mène désormais à l'adresse d'origine
 redir = ('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
          '<title>Notre studio</title><meta http-equiv="refresh" content="0; url=./"><link rel="canonical" href="./">'
          '<script>location.replace("./"+location.search+location.hash)</script></head>'
          '<body><p><a href="./">La version 2 est maintenant l\'outil : ouvrir</a></p></body></html>')
 if not os.path.exists(P("v2.html")) or rd("v2.html") != redir: w("v2.html", redir)
-ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
+ver = hashlib.sha1((html + html3).encode("utf-8")).hexdigest()[:10]
 sw = rd("sw.js"); sw2 = re.sub(r'const VERSION = "[^"]*";', f'const VERSION = "{ver}";', sw, count=1)
 if sw2 != sw: w("sw.js", sw2)
 print("exposant loyer/surface par type :", EXPT); print("ok", len(pub), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")

@@ -23,7 +23,7 @@ function feedList(F){F=F||MF; const out=[]; Object.entries(ADS).forEach(([ck,A])
 /* ajouter / retirer de la shortlist */
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
  if(b&&!isOut(b)){await retirer(b); return;}
- if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
+ if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Suivi à nouveau : il est dans Nos biens."); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
- try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
+ try{await DB.collection("biens").add(bien); toast("Suivi ★ : il est dans Nos biens.");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
 

@@ -7,7 +7,7 @@ document.addEventListener("click",e=>{const u=e.target.closest&&e.target.closest
  const id=u.dataset.unshort||u.dataset.reshort, b=BIENS.find(x=>x.id===id); if(!b) return;
  const prev=b.statut||"à voir";
  if(u.dataset.unshort){retirer(b); return;}
- else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Remis dans la shortlist.");}});
+ else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Suivi à nouveau : il est dans Nos biens.");}});
 const isOut=b=>b.statut==="écarté"||b.short===false;
 /* retirer de la shortlist : un bien venu d'une annonce est caché (l'annonce revient dans la liste, et ses notes reviennent si on la rajoute) ;
    un bien saisi à la main, qui n'a pas d'annonce où revenir, est supprimé. Les deux s'annulent depuis le message. */

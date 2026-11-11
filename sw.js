@@ -1,6 +1,6 @@
 // Service worker : la page s'ouvre hors ligne avec la dernière version téléchargée.
 // VERSION est réécrite par build.py à chaque construction : le navigateur installe alors la nouvelle version et vide l'ancien cache.
-const VERSION = "5f809e4d5c";
+const VERSION = "420320f5ce";
 const CACHE = "studio-" + VERSION, PHOTOS = "studio-photos", MAXPH = 250;
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icone-180.png", "./icons/icone-192.png", "./icons/icone-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
@@ -12,12 +12,14 @@ self.addEventListener("fetch", e => {
   const r = e.request; if (r.method !== "GET") return;
   const u = new URL(r.url);
   // la page : réseau d'abord (données du jour) avec 4 s de patience, sinon la dernière copie
-  if (r.mode === "navigate" || (u.origin === location.origin && u.pathname.endsWith("/index.html"))) {
+  if (r.mode === "navigate" || (u.origin === location.origin && /\/(index|essai)\.html$/.test(u.pathname))) {
+    // chaque page sa copie : la page d'essai (essai.html) ne remplace jamais la page de l'app
+    const key = /\/essai\.html$/.test(u.pathname) ? "./essai.html" : "./index.html";
     e.respondWith((async () => {
-      const net = fetch(r).then(res => { if (good(res)) { const cp = res.clone(); e.waitUntil(caches.open(CACHE).then(c => c.put("./index.html", cp))); } return res; });
+      const net = fetch(r).then(res => { if (good(res)) { const cp = res.clone(); e.waitUntil(caches.open(CACHE).then(c => c.put(key, cp))); } return res; });
       const slow = new Promise(ok => setTimeout(ok, 4000));
       try { const res = await Promise.race([net, slow.then(() => null)]); if (res && res.ok) return res; } catch (_) {}
-      const hit = await caches.match("./index.html"); if (hit) return hit;
+      const hit = await caches.match(key); if (hit) return hit;
       return net;
     })());
     return;

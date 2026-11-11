@@ -32,7 +32,7 @@ const TIPS={
  grosTrav:()=>`Provision pour les gros travaux votés en copropriété (ravalement, toiture, ascenseur), jamais récupérables sur le locataire et absents des charges annuelles : ${eur(H.grosTrav*H.surface/12)}/mois pour ${H.surface} m². Hypothèse à ajuster avec les procès-verbaux d'assemblée générale.`,
  copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire) : en moyenne 35 % des charges annoncées, le locataire remboursant le reste avec ses charges. Les charges annoncées d'une annonce remplacent cette valeur.`,
  dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
- statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de la shortlist (×) : l'annonce revient dans la liste des annonces.`};
+ statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de Nos biens : l'annonce revient dans la liste des annonces.`};
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];

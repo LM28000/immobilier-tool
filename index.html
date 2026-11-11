@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="referrer" content="strict-origin-when-cross-origin"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2f47b3"><link rel="apple-touch-icon" href="icons/icone-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Notre studio">
 <script>if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")&&!/claude\.ai|claudeusercontent/.test(location.host))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
-</head><body><script>/* thème : clair par défaut, sombre si on l'a choisi (onglet Budget ou bouton en haut), appliqué avant le premier affichage */(function(){var t="light";try{if(localStorage.getItem("theme-v2")==="dark")t="dark";}catch(e){}document.documentElement.setAttribute("data-theme",t);})();</script>
+</head><body><script>/* thème : clair par défaut, sombre si on l'a choisi, ou celui de l'appareil (« auto », page d'essai) ; appliqué avant le premier affichage */(function(){var t="light";try{var s=localStorage.getItem("theme-v2");if(s==="dark"||(s==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches))t="dark";}catch(e){}document.documentElement.setAttribute("data-theme",t);})();</script>
 <title>Où acheter notre studio ?</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
@@ -2793,7 +2793,7 @@ document.addEventListener("click",e=>{const u=e.target.closest&&e.target.closest
  const id=u.dataset.unshort||u.dataset.reshort, b=BIENS.find(x=>x.id===id); if(!b) return;
  const prev=b.statut||"à voir";
  if(u.dataset.unshort){retirer(b); return;}
- else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Remis dans la shortlist.");}});
+ else {updBien(id,{statut:prev==="écarté"?"à voir":prev,short:true}); toast("Suivi à nouveau : il est dans Nos biens.");}});
 const isOut=b=>b.statut==="écarté"||b.short===false;
 /* retirer de la shortlist : un bien venu d'une annonce est caché (l'annonce revient dans la liste, et ses notes reviennent si on la rajoute) ;
    un bien saisi à la main, qui n'a pas d'annonce où revenir, est supprimé. Les deux s'annulent depuis le message. */
@@ -2875,7 +2875,7 @@ const TIPS={
  grosTrav:()=>`Provision pour les gros travaux votés en copropriété (ravalement, toiture, ascenseur), jamais récupérables sur le locataire et absents des charges annuelles : ${eur(H.grosTrav*H.surface/12)}/mois pour ${H.surface} m². Hypothèse à ajuster avec les procès-verbaux d'assemblée générale.`,
  copro:()=>`Part des charges de copropriété qui reste à votre charge (non récupérable sur le locataire) : en moyenne 35 % des charges annoncées, le locataire remboursant le reste avec ses charges. Les charges annoncées d'une annonce remplacent cette valeur.`,
  dpe:()=>`Diagnostic de performance énergétique. Location interdite pour les G depuis 2025, les F en 2028 et les E en 2034, sauf travaux.`,
- statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de la shortlist (×) : l'annonce revient dans la liste des annonces.`};
+ statut:()=>`Où vous en êtes avec ce bien. Pour ne plus le suivre, retirez-le de Nos biens : l'annonce revient dans la liste des annonces.`};
 // étiquettes reconnues automatiquement → infobulle
 const TIPMAP=[[/^budget( tout compris| moyen)?$/i,"budget"],[/^studio tout compris$/i,"budget"],[/^loyer (estimé |visé )?hc( moyen)?$|^loyer hors charges$/i,"loyer"],[/^cash-flow( net| brut| à deux)?$/i,"cf"],[/^15 ans( net| brut)?$/i,"irr"],
  [/^banque$/i,"banque"],[/^mois vides?$/i,"vac"],[/^autofinancé$/i,"autof"],[/^7 % par an$/i,"r7"],[/^prix maximum à payer$/i,"prixmax"],[/^du brut au net$/i,"b2n"],[/^rendement locatif brut/i,"brutloc"],[/^et si…$/i,"etsi"],[/^€\/m²$/i,"pm2"],[/^dpe$/i,"dpe"]];
@@ -2928,9 +2928,9 @@ function feedList(F){F=F||MF; const out=[]; Object.entries(ADS).forEach(([ck,A])
 /* ajouter / retirer de la shortlist */
 async function mStar(ck,suf){const a=(ADS[ck].ventes||[]).find(v=>v[3]===suf); if(!a||!DB) return; const url=VTURL+suf, b=bienOf(url);
  if(b&&!isOut(b)){await retirer(b); return;}
- if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Remis dans la shortlist."); return;}
+ if(b){await updBien(b.id,{statut:"à voir",short:true}); toast("Suivi à nouveau : il est dans Nos biens."); return;}
  const vb=venteBien(ck,a), bien={titre:vb.titre,url:vb.url,ville:ck,quartier:vb.quartier,type:vb.type,prix:a[2],surface:a[0],copro:0,tf:0,loyer:0,travaux:0,dpe:vb.dpe||"",notes:"",statut:"à voir",fav:false,par:myName(),ts:Date.now()};
- try{await DB.collection("biens").add(bien); toast("Ajouté à la shortlist ★");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
+ try{await DB.collection("biens").add(bien); toast("Suivi ★ : il est dans Nos biens.");}catch(err){toast("Ajout impossible ("+(err&&err.code||"erreur")+").");}}
 
 
 /* ---------- couleurs de l'app et contours des quartiers (carte de src/v2) ---------- */
