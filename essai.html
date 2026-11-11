@@ -1540,7 +1540,18 @@ const ZTEN=new Set(["rennes","nantes","caen","orleans","stnazaire"]);
 const hav=(a,b,c,d)=>{const R=6371,r=Math.PI/180,dl=(c-a)*r,dg=(d-b)*r,x=Math.sin(dl/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(x));};
 function trip(c,o){if(o==="paris") return c.paris; const g=ORIG[o]; if(c.k===o) return 0; return hav(g.lat,g.lon,c.lat,c.lon)*1.2/105+0.1;}
 
-function irrMonthly(f){let lo=-0.05,hi=0.1;const npv=r=>f.reduce((s,v,i)=>s+v/Math.pow(1+r,i),0);
+/* TRI mensuel des flux f (mois 0, 1, 2…), en % par an. Le taux est cherché entre −5 % et +10 % par mois.
+   Flux classiques (valeur actuelle qui baisse quand le taux monte) : méthode de Newton, gardée dans l'intervalle par une dichotomie,
+   en quelques tours au lieu de 90 (le calcul de l'app Android, sans compilation à la volée, était 10 fois trop lent) ; même résultat
+   à 1e-12 près. Autres flux : la dichotomie d'origine. */
+function irrMonthly(f){const n=f.length, npv=r=>{const k=1+r; let s=0; for(let i=0;i<n;i++) s+=f[i]/Math.pow(k,i); return s;};
+ let lo=-0.05,hi=0.1; const a=npv(lo), b=npv(hi); if(a*b>0) return null;
+ if(a>0&&b<0){let r=(lo+hi)/2;
+  for(let it=0;it<60;it++){const k=1+r; let s=0, ds=0, p=1; for(let i=0;i<n;i++){s+=f[i]/p; ds-=i*f[i]/(p*k); p*=k;}
+   if(s>0) lo=r; else hi=r; let nr=ds?r-s/ds:NaN; if(!(nr>lo&&nr<hi)) nr=(lo+hi)/2; if(Math.abs(nr-r)<1e-14){r=nr; break;} r=nr;}
+  return (Math.pow(1+r,12)-1)*100;}
+ for(let i=0;i<90;i++){const m=(lo+hi)/2; if(npv(m)>0) lo=m; else hi=m;} return (Math.pow(1+(lo+hi)/2,12)-1)*100;}
+function irrMonthly0(f){let lo=-0.05,hi=0.1;const npv=r=>f.reduce((s,v,i)=>s+v/Math.pow(1+r,i),0);   /* l'ancienne, pour comparer (tests) */
  if(npv(lo)*npv(hi)>0) return null; for(let i=0;i<90;i++){const m=(lo+hi)/2; if(npv(m)>0) lo=m; else hi=m;} return (Math.pow(1+(lo+hi)/2,12)-1)*100;}
 // calc(c) : voir 00b-financement-impots.js
 function all(){
