@@ -135,7 +135,9 @@ def page(public, ui="v2"):
     css = need("src/styles.css") + "\n" + need(f"src/{ui}/{ui}.css")
     js = code(public) + "\n" + need(f"src/{ui}/{ui}.js")
     head = need("src/head.html")
-    return (insula_head(head) if ui == "v3" else head) + "<style>\n" + css + "</style>\n" + need("src/body.html") + "<script>\n" + js + "</script>\n"
+    boot = ('<div id="v3boot" role="status" aria-live="polite"><svg class="v3mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#2c4766"/><path d="M11 28 L32 12 L53 28 Z" fill="#dbe4ef"/><rect x="16" y="28" width="32" height="26" rx="2" fill="#ffffff"/><rect x="21" y="33" width="8" height="7" rx="1.5" fill="#2c4766"/><rect x="35" y="33" width="8" height="7" rx="1.5" fill="#f2c14e"/><rect x="21" y="44" width="8" height="7" rx="1.5" fill="#2c4766"/><rect x="35" y="44" width="8" height="10" rx="1.5" fill="#2c4766"/></svg><b>Insula</b><span class="v3spin" aria-hidden="true"></span><small>Chargement…</small></div>'
+            '<script>setTimeout(function(){var b=document.getElementById("v3boot");if(b)b.remove();},20000)</script>\n') if ui == "v3" else ""   # écran d'attente : visible pendant que la page se lit, retiré par src/v3 (au plus tard après 20 s)
+    return (insula_head(head) if ui == "v3" else head) + "<style>\n" + css + "</style>\n" + boot + need("src/body.html") + "<script>\n" + js + "</script>\n"
 
 pub, full = page(True), page(False)
 pub3, full3 = page(True, "v3"), page(False, "v3")

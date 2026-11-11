@@ -398,6 +398,7 @@
   let ck=V.city;
   if(z>=ZV){const c=M.getCenter(); let best=null, bd=1e9; C.forEach(v=>{const d=km(c.lat,c.lng,v.lat,v.lon); if(d<bd){bd=d; best=v.k;}}); ck=bd<=25?best:null;}
   else if(z<ZQ) ck=null;
+  if(V.sel&&/^[vb]\|/.test(V.sel)) ck=V.city;   /* fiche d'une annonce ouverte : la liste d'avant reste celle d'avant */
   if(ck!==V.city){V.city=ck; LCITY=ck; save(); if(onMap()){mapList(); scope();} reperes(ck);
    if(ck&&V.sel&&V.sel.startsWith("c|")&&V.sel!==`c|${ck}`){V.sel=`c|${ck}`; fiche();}}   /* la fiche d'une ville suit la ville au centre */
   const zl=$("v2map"); if(zl){zl.classList.toggle("v2zlo",z<12.5); zl.parentNode.classList.toggle("v2zw",z<ZQ);}   /* repères : icône seule de loin, nom en approchant */
@@ -453,7 +454,7 @@
  if(MQD.addEventListener) MQD.addEventListener("change",()=>{if(thMode()==="auto") setTheme("auto");});
  const themeSeg=()=>`<span class="v2seg" role="group" aria-label="Thème">${[["light","Clair"],["dark","Sombre"],["auto","Comme l'appareil"]].map(([k,l])=>`<button type="button" data-v2theme="${k}" aria-pressed="${thMode()===k}">${l}</button>`).join("")}</span>`;
  function mapList(){const el=$("v2mlist"); el.dataset.min=V.min?"1":"0"; el.dataset.big=V.big&&!V.min?"1":"0"; setTimeout(()=>{if(el.firstElementChild&&!el.querySelector(".v2grip")) el.insertAdjacentHTML("afterbegin",GRIP);},0);
-  const ph=PH(), head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb"><span>${t}</span><span class="v2sp"></span><button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button></div>${sub}</div>`;
+  const ph=PH(), head=(t,sub)=>`<div class="v2mhead"><div class="v2crumb"><span>${t}</span><span class="v2sp"></span>${ph?"":`<button type="button" class="v2btn sm" data-v2min aria-expanded="${!V.min}">${V.min?"Liste":"Réduire"}</button>`}</div>${sub}</div>`;
   const aRow=o=>`<div class="v2row v2r3${V.sel===key(o)?" on":""}" role="button" tabindex="0" data-v2open="${esc(key(o))}">${img(photo(o,200,150),"")}<b>${keur(o.a[2])} · ${String(o.a[0]).replace(".",",")} m²${V.tous?` <span class="v2ty">${tyOfO(o)}</span>`:""}${o.nw?'<span class="v2new">nouv.</span>':""}${inShort(o)?' <span class="v3suivi" title="suivi, dans Nos biens">★</span>':""}${ageChip(o)}</b><span class="v2rv" style="color:${cv(colIrr(o.x.irr))}">${pctS(o.x.irr)}</span><span class="v2rs">${esc(V.city?(o.t?o.t.name:o.a[1]||""):where(o))}${o.f.dpe?" · DPE "+o.f.dpe:""}</span><span style="text-align:right">${rng(o,64)}</span>${cfLine(o)}</div>`;
   const aRows=L=>(L.length?L.slice(0,80).map(aRow).join(""):`<p class="v2empty">Aucune annonce dans cette vue.</p>`)+(L.length>80?`<p class="v2sub" style="padding:10px 14px">Les 80 premières sur ${L.length} : toutes dans la vue Liste.</p>`:"");
   if(!V.city){const tip=V.guide||(()=>{try{return localStorage.getItem("guide-vu");}catch(_){return 1;}})()?"":`<div class="v2tip"><p><b>Première visite ?</b> En deux minutes : la carte, le rendement, les fiches, à plusieurs.</p><div class="v2bar"><button type="button" class="v2btn sm pri" data-v2guide>Comment lire l'app</button><button type="button" class="v2btn sm" data-v2tipx>Plus tard</button></div></div>`;
@@ -467,10 +468,13 @@
  const GRIP=`<div class="v2grip" role="button" tabindex="0" aria-label="Agrandir ou réduire la liste" data-v2grip><i></i></div>`;
  function sheetSet(big,min){V.big=!!big; V.min=!!min; save(); const el=$("v2mlist"); if(el) el.style.height=""; mapList(); setTimeout(padSync,280);}
  (()=>{let y0=0, h0=0, el=null, moved=false;
-  document.addEventListener("pointerdown",e=>{const g=e.target.closest&&e.target.closest("[data-v2grip]"); if(!g||!PH()) return; el=$("v2mlist"); y0=e.clientY; h0=el.offsetHeight; moved=false; try{g.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault();});
-  document.addEventListener("pointermove",e=>{if(!el) return; const dy=e.clientY-y0; if(Math.abs(dy)>6) moved=true; if(moved){const H=$("v2map").offsetHeight; el.style.transition="none"; el.style.height=Math.max(56,Math.min(H*.9,h0-dy))+"px";}});
-  document.addEventListener("pointerup",()=>{if(!el) return; const H=$("v2map").offsetHeight, h=el.offsetHeight; el.style.transition=""; const e0=el; el=null;
-   if(!moved){e0.style.height=""; return V.min?sheetSet(false,false):sheetSet(!V.big,false);}
+  let tapT=false;
+  document.addEventListener("pointerdown",e=>{if(!PH()||!e.target.closest) return; let g=e.target.closest("[data-v2grip]"); tapT=!!g;
+   if(!g){const hd=e.target.closest("#v2mlist .v2mhead"); if(!hd||e.target.closest("button,a,input,select,.v2scroll,.v2seg")) return; g=hd;}
+   el=$("v2mlist"); y0=e.clientY; h0=el.offsetHeight; moved=false; try{g.setPointerCapture(e.pointerId);}catch(_){} if(tapT) e.preventDefault();});
+  document.addEventListener("pointermove",e=>{if(!el) return; const dy=e.clientY-y0; if(Math.abs(dy)>6) moved=true; if(moved){const H=$("v2map").offsetHeight; el.style.transition="none"; el.style.minHeight="0"; el.style.height=Math.max(56,Math.min(H*.9,h0-dy))+"px";}});
+  document.addEventListener("pointerup",()=>{if(!el) return; const H=$("v2map").offsetHeight, h=el.offsetHeight; el.style.transition=""; el.style.minHeight=""; const e0=el; el=null;
+   if(!moved){e0.style.height=""; if(!tapT) return; return V.min?sheetSet(false,false):sheetSet(!V.big,false);}
    sheetSet(h>H*.65,h<H*.2);});
   document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches("[data-v2grip]")){e.preventDefault(); if(V.min) sheetSet(false,false); else sheetSet(!V.big,false);}});})();
  function mapLegend(){const el=$("v2mleg"); if(!el) return; const z=M&&MREADY?M.getZoom():0, k=qmK(), m=QM[k], R=RAMP(), PC=POIC(), B=QBR;
@@ -483,7 +487,7 @@
   const res=z>=12&&V2MAPN.conc?`<span class="v2mlx"><b>Étudiants</b> <span><i class="v2pl v2lres"></i>résidence étudiante</span><span><i class="v2pl v2lpc"></i>projet de logements à venir</span></span>`:"";
   const html=`${selq}${qleg}${near?"":`<span class="v2mlx">villes : ${k==="irr"?"même couleur":`rendement ${rdt}`} · taille : annonces pour nos critères · approchez : quartiers et annonces</span>`}${ann}${res}${aut}${PB===1?`<span class="v2mlx">approchez : immeubles en 3D</span>`:""}`;
   if(el._h!==html){el._h=html; el.innerHTML=html;}}
- function goCity(ck){V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; V.tab="explorer"; V.sel=null; save(); show();}
+ function goCity(ck){RET=null; V.city=ck||null; LCITY=undefined; if(V.city&&!ADS[V.city]) V.vue="crit"; V.tab="explorer"; V.sel=null; save(); show();}
 
  /* ---------- photos en grand : la photo de la fiche ouvre toutes les photos de l'annonce (flèches, clavier, glisser au doigt) ---------- */
  let LB=null;
@@ -777,11 +781,19 @@
   const tabs=FT.filter(([k,,ss])=>ss.some(s=>F.S[s])||(F.extra[k]&&F.extra[k].length)); let cur=tabs.some(t=>t[0]===V.ftab)?V.ftab:(tabs[0]||["bien"])[0];
   const g=FT.find(t=>t[0]===cur)||FT[0], zone=V.sel[0]==="c"||V.sel[0]==="q";
   const gp=PH()&&onMap(), half=gp&&!V.fbig; el.dataset.half=half?"1":"0";   /* téléphone, sur la carte : la fiche s'ouvre sur le bas de l'écran, l'annonce reste visible au-dessus */
-  el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="${!PH()&&onMap()?"Fermer la fiche et revenir à la liste":"Fermer la fiche"}">${PH()?(half?"Fermer":"Retour"):onMap()?"‹ Liste":"×"}</button><b>${esc(F.title)}</b>${(()=>{const L=/^[vb]\|/.test(V.sel)?navList():[], i=L.indexOf(V.sel); return i>=0&&L.length>1?`<span class="v2nav"><button type="button" class="v2btn sm" data-v2nav="-1" aria-label="Annonce précédente"${i?"":" disabled"}>‹</button><span class="v2sub mono">${i+1}/${L.length}</span><button type="button" class="v2btn sm" data-v2nav="1" aria-label="Annonce suivante"${i<L.length-1?"":" disabled"}>›</button></span>`:"";})()}<button type="button" class="v2btn sm v2lien" data-v2lien aria-label="Partager cette fiche" title="Partager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div>
+  el.hidden=false; el.innerHTML=`<div class="v2fh${gp?" v2fhg":""}">${gp?`<button type="button" class="v2fgrip" data-v2fgrip aria-label="${half?"Agrandir la fiche":"Réduire la fiche"}" aria-expanded="${!half}"><i></i></button>`:""}<button type="button" class="v2btn sm" data-v2close aria-label="${!PH()&&onMap()?"Fermer la fiche et revenir à la liste":"Fermer la fiche"}">${PH()?(half?"Fermer":"Retour"):onMap()?"‹ Liste":"×"}</button><b>${esc(F.title)}</b>${(()=>{const L=/^[vb]\|/.test(V.sel)?navList():[], i=L.indexOf(V.sel); return i>=0&&L.length>1?`<span class="v2nav"><button type="button" class="v2btn sm" data-v2nav="-1" aria-label="Annonce précédente"${i?"":" disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><span class="v2sub mono">${i+1}/${L.length}</span><button type="button" class="v2btn sm" data-v2nav="1" aria-label="Annonce suivante"${i<L.length-1?"":" disabled"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></span>`:"";})()}<button type="button" class="v2btn sm v2lien" data-v2lien aria-label="Partager cette fiche" title="Partager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div>
    <div class="v2fb">${F.head}<div class="v2tabs2" role="group" aria-label="Rubriques de la fiche">${tabs.map(([k,l])=>{const t=zone&&k==="bien"?"En bref":zone&&k==="achat"?"Sources":l, c=t.replace(/^L(e |')/,""); return `<button type="button" data-v2ft="${k}" aria-pressed="${k===cur}">${c[0].toUpperCase()+c.slice(1)}</button>`;}).join("")}</div>
    ${F.extra[cur]||""}${g[2].map(s=>F.S[s]||"").join("")}</div>`;
   if(M) requestAnimationFrame(()=>M.resize());}
- function openSel(s,keepTab){if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw&&!NAVK) V.fbig=false; NAVK=false; FLYP=!onMap()&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab) V.ftab="bien"; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
+ /* l'écran d'avant la fiche : ville et vue de la liste, défilement, cadrage de la carte ; rendu à la fermeture */
+ let RET=null;
+ function retSnap(){const ml=$("v2mlist"), mr=ml&&ml.querySelector(".v2mrows"); RET={city:V.city,obj:V.obj,vue:V.vue,ls:mr?mr.scrollTop:0,ps:$("v3liste").scrollTop,pb:($("v2p-biens")||{}).scrollTop||0,
+   cam:onMap()&&M&&MREADY?{center:M.getCenter(),zoom:M.getZoom(),pitch:M.getPitch(),bearing:M.getBearing()}:null};}
+ function closeSel(){const r=RET; RET=null; V.sel=null; fiche();
+  if(r&&V.tab==="explorer"){if(r.city!==V.city){V.city=r.city; LCITY=r.city; save(); reperes(r.city);} V.obj=r.obj; V.vue=r.vue;}
+  if(onMap()){mapList(); scope(); drawMap(); if(r&&r.cam&&M&&MREADY) camAuto(Object.assign({duration:700},r.cam),"easeTo");} else paint(V.tab);
+  if(r) requestAnimationFrame(()=>{const mr=$("v2mlist").querySelector(".v2mrows"); if(mr) mr.scrollTop=r.ls; $("v3liste").scrollTop=r.ps; const pb=$("v2p-biens"); if(pb) pb.scrollTop=r.pb;});}
+ function openSel(s,keepTab){if(!V.sel) retSnap();if(GPOP){GPOP.remove(); GPOP=null;}if(V.tous&&s[0]==="v"){const o=feed().find(x=>key(x)===s); if(o&&o.ty!==H.type) setType(o.ty,true);} const nw=V.sel!==s; V.sel=s; if(nw&&!NAVK) V.fbig=false; NAVK=false; FLYP=!onMap()&&(s[0]==="v"||s[0]==="b")?s:null; if(!keepTab) V.ftab="bien"; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab); $("v2fiche").scrollTop=0; if(PH()) padSync(); flyAd(s);}
  /* ---------- d'une annonce à l'autre, et lien vers une fiche ----------
     Précédente / suivante : dans l'ordre de la liste affichée (carte, Annonces ou Nos biens), sans fermer la fiche ; boutons de l'en-tête,
     glisser à gauche ou à droite sur le téléphone, flèches du clavier. Partager : feuille de partage du téléphone (sinon lien copié) ;
@@ -858,7 +870,7 @@
  function bkClose(k){
   if(k==="lb") lbClose();
   else if(k==="dlg"){const d=document.querySelector(".v2dlg"); if(d){if(d.querySelector("#biensForm")) addClose(); else d.remove();}}
-  else if(k==="sel"){V.sel=null; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab);}
+  else if(k==="sel") closeSel();
   else if(k==="tab"){V.tab="explorer"; V.view="carte"; save(); show();}}
  addEventListener("popstate",()=>{if(BKSKIP){BKSKIP--; return;} const k=BK.pop(); if(!k) return; if(k==="x"){try{history.back();}catch(_){} return;} bkClose(k);});
  new MutationObserver(bkLater).observe(document.body,{childList:true});
@@ -868,10 +880,12 @@
  /* tirer la fiche du téléphone par son en-tête (hors boutons) : vers le bas, elle se réduit puis se ferme ; vers le haut, elle s'agrandit */
  let FGT=0;
  {let y0=null, mv=false;
-  document.addEventListener("pointerdown",e=>{const h=e.target.closest&&e.target.closest("#v2fiche .v2fhg"); if(!h||(e.target.closest("button")&&!e.target.closest("[data-v2fgrip]"))) return; y0=e.clientY; mv=false;},true);
+  document.addEventListener("pointerdown",e=>{const f=e.target.closest&&e.target.closest("#v2fiche"); if(!f||!PH()||!V.sel||!onMap()) return;
+   const half=f.dataset.half==="1", h=e.target.closest(".v2fhg,.v2fhd,.v2kl"), ui=e.target.closest("button,a,input,select,textarea,label,summary,[data-stmenu]")&&!e.target.closest("[data-v2fgrip]");
+   if(ui||!(half||h)) return; y0=e.clientY; mv=false;},true);   /* demi-écran : tout le bandeau ; fiche agrandie : son en-tête */
   document.addEventListener("pointermove",e=>{if(y0!=null&&Math.abs(e.clientY-y0)>8) mv=true;},true);
   const fin=e=>{if(y0==null) return; const dy=e.clientY-y0; y0=null; if(!mv) return; FGT=Date.now();
-   if(dy>50){if(V.fbig){V.fbig=false; fiche(); requestAnimationFrame(()=>{padSync(); if(V.sel) flyAd(V.sel);});} else {V.sel=null; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab);}}
+   if(dy>50){if(V.fbig){V.fbig=false; fiche(); requestAnimationFrame(()=>{padSync(); if(V.sel) flyAd(V.sel);});} else closeSel();}
    else if(dy<-50&&!V.fbig){V.fbig=true; fiche();}};
   document.addEventListener("pointerup",fin,true); document.addEventListener("pointercancel",()=>{y0=null;},true);}   /* ville affichée : ses fiches complètes sont lues en avance (25-annonces-cloud.js) */
 
@@ -905,7 +919,7 @@
   if(d.v2ret!=null){retourDlg(); return;}
   if(d.v2tipx!=null){V.guide=1; save(); try{localStorage.setItem("guide-vu","1");}catch(_){} mapList(); return;}
   if(d.v2lien!=null){shareSel(); return;}
-  if(d.v2close!=null){V.sel=null; fiche(); if(onMap()){mapList(); drawMap();} else paint(V.tab); return;}
+  if(d.v2close!=null){closeSel(); return;}
   if(d.v2crit!=null){critDlg(false); return;}
   if(d.v2theme!=null){setTheme(d.v2theme||(DARK()?"light":"dark")); return;}   /* clair, sombre, ou comme l'appareil (Réglages) */
   if(d.v2add!=null){addDlg(); return;}
@@ -925,7 +939,7 @@
   if(d.v2open){if(e.target.closest("button,a,input,select,label,[data-stmenu]")&&!t.matches("button")) return; openSel(d.v2open); return;}});
  document.addEventListener("keydown",e=>{const t=e.target; if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-v2open],[data-v2city],[data-v2gonew],.v2nrow")&&!t.matches("button")){e.preventDefault(); t.click();}
   if(e.key==="Escape"){const dl=document.querySelector(".v2dlg"); if(dl&&dl.querySelector("[data-v2addx]")){addClose(); return;} if(dl&&dl.querySelector("[data-v2cx]")){dl.remove(); return;}}
-  if(e.key==="Escape"&&V.sel&&!document.querySelector(".v2dlg")&&$("visitPanel").hidden&&$("fichePanel").hidden){V.sel=null; fiche(); paint(V.tab);}});
+  if(e.key==="Escape"&&V.sel&&!document.querySelector(".v2dlg")&&$("visitPanel").hidden&&$("fichePanel").hidden) closeSel();});
  document.addEventListener("input",e=>{const t=e.target, d=t.dataset; if(!d) return;
   /* curseur d'offre : seuls les chiffres autour changent (le curseur reste sous le doigt) */
   if(d.v2off){OFFT[d.v2off]=+t.value; const R=V.sel&&bienOfSel(V.sel); if(!R) return; const b=R.b, tmp=document.createElement("div");
@@ -954,6 +968,12 @@
 
  /* ---------- départ ---------- */
  show(); openLink();
+ {const bt=document.getElementById("v3boot"); if(bt){bt.classList.add("v3bootx"); setTimeout(()=>bt.remove(),300);}}
+ const loadAds=()=>{const w=typeof ADSRAW==="object"&&ADSRAW.prive&&typeof ADSCLOUD!=="undefined"&&!ADSCLOUD; let el=$("v3load");
+  if(w&&!el){el=document.createElement("div"); el.id="v3load"; el.setAttribute("role","status"); el.innerHTML='<span class="v3spin" aria-hidden="true"></span>Chargement des annonces…'; app.appendChild(el);}
+  else if(!w&&el) el.remove();};
+ loadAds(); setTimeout(()=>{const el=$("v3load"); if(el) el.remove();},30000);
+ {const r0=render; render=function(){r0.apply(this,arguments); loadAds();};}
  let CRITASK=false; const askCrit=()=>{if(CRITASK) return; CRITASK=true; if(!NOSCRIT) critDlg(true);};
  if(REGREADY) setTimeout(askCrit,300); else {document.addEventListener("reglages",()=>setTimeout(askCrit,300),{once:true}); setTimeout(askCrit,6000);}
 })();

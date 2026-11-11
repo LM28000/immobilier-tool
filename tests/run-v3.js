@@ -591,6 +591,30 @@ async function mlRoutes(p) {
     // Nos biens vide, sans groupe : comment commencer, et où régler le groupe
     await p.evaluate(() => __tab('biens')); await p.waitForTimeout(400);
     ok(`insula ${dev} · Nos biens vide : comment suivre une annonce, et le groupe dans Réglages`, await p.evaluate(() => /Touchez « Suivre »/.test(document.getElementById('v2p-biens').innerText) && !!document.querySelector('#v2p-biens [data-v2tab="reglages"]')));
+    // démarrage : l'écran d'attente est retiré ; flèches de la fiche : des icônes
+    ok(`insula ${dev} · démarrage : l'écran d'attente disparaît quand l'app est prête`, await p.evaluate(() => !document.getElementById('v3boot')));
+    // fermer une fiche : retour à l'écran d'avant (ici toutes les annonces de l'Ouest, carte dézoomée), pas aux annonces de la ville de l'annonce
+    await p.evaluate(() => __tab('carte')); await p.waitForTimeout(300); await p.evaluate(() => { __cl('#v3scope [data-v2city=""]'); __cl('[data-v3obj="annonces"]'); }); await p.waitForTimeout(800);
+    await p.evaluate(() => V2MAP().jumpTo({center: [-0.6, 47.75], zoom: 6.5, pitch: 0, bearing: 0})); await p.waitForTimeout(1200);
+    const av = await p.evaluate(() => ({head: document.querySelector('#v2mlist .v2mhead').innerText, z: V2MAP().getZoom()}));
+    await p.evaluate(() => __cl('#v2mlist [data-v2open^="v|"]')); await p.waitForTimeout(2500);
+    const pend = await p.evaluate(() => ({z: V2MAP().getZoom(), fl: !!document.querySelector('#v2fiche .v2nav svg')}));
+    await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(1800);
+    const ap = await p.evaluate(() => ({head: document.querySelector('#v2mlist .v2mhead').innerText, crumb: document.querySelector('#v3scope .v3crumb').innerText.trim(), z: V2MAP().getZoom()}));
+    ok(`insula ${dev} · fermer une fiche ramène à l'écran d'avant (même liste, même cadrage de la carte)`, /^L'Ouest/.test(av.head) && pend.z > 12 && /^L'Ouest/.test(ap.head) && ap.crumb === "L'Ouest" && Math.abs(ap.z - av.z) < 0.6 && pend.fl, JSON.stringify({av, pend, ap}));
+    if (dev === 'tel') {   // la liste et la fiche se tirent au doigt par leur en-tête ; plus de bouton « Réduire »
+      const tire = (sel, dy) => p.evaluate(([sel, dy]) => { const h = document.querySelector(sel), r = h.getBoundingClientRect(), o = {bubbles: true, clientX: r.left + 120, clientY: r.top + 12, pointerId: 3};
+        h.dispatchEvent(new PointerEvent('pointerdown', o)); document.dispatchEvent(new PointerEvent('pointermove', Object.assign({}, o, {clientY: r.top + 12 + dy / 2}))); document.dispatchEvent(new PointerEvent('pointermove', Object.assign({}, o, {clientY: r.top + 12 + dy}))); document.dispatchEvent(new PointerEvent('pointerup', Object.assign({}, o, {clientY: r.top + 12 + dy}))); }, [sel, dy]);
+      const rb = await p.evaluate(() => !!document.querySelector('#v2mlist [data-v2min]'));
+      await tire('#v2mlist .v2mhead .v2crumb', 330); await p.waitForTimeout(500); const m1 = await p.evaluate(() => document.getElementById('v2mlist').dataset.min);
+      await tire('#v2mlist .v2mhead .v2crumb', -330); await p.waitForTimeout(500); const m2 = await p.evaluate(() => document.getElementById('v2mlist').dataset.min);
+      ok('insula tel · la liste se réduit et revient en tirant son en-tête, sans bouton « Réduire »', !rb && m1 === '1' && m2 === '0', JSON.stringify({rb, m1, m2}));
+      await p.evaluate(() => __cl('#v2mlist [data-v2open^="v|"]')); await p.waitForTimeout(1200);
+      await tire('#v2fiche .v2fhd', -150); await p.waitForTimeout(500); const g1 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+      await tire('#v2fiche .v2fhd', 150); await p.waitForTimeout(500); const g2 = await p.evaluate(() => document.getElementById('v2fiche').dataset.half);
+      ok('insula tel · fiche : tout le bandeau (photo, titre) la tire vers le haut ou vers le bas', g1 === '0' && g2 === '1', JSON.stringify({g1, g2}));
+      await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(500);
+    }
     ok(`insula ${dev} · nouvelle structure · sans erreur`, errs.length === 0, errs.slice(0, 3).join(' | '));
     await c.close(); }
   ok('insula · tous les clics des scénarios ont trouvé leur élément', MISS.length === 0, [...new Set(MISS)].join(' | '));

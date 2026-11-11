@@ -591,3 +591,25 @@ details.v3pc{margin:0}
   .v2fiche[data-half="1"] .v3scnrow{display:none}
   .v3scnrow .v2seg button{min-height:40px}
 }
+/* ---------- démarrage : écran d'attente (avant que l'app soit prête), puis « Chargement des annonces… » tant que la base répond ---------- */
+#v3boot{position:fixed;inset:0;z-index:5000;background:var(--bg);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--font-sans);transition:opacity .25s}
+#v3boot .v3mark{width:64px;height:64px}
+#v3boot b{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:-.01em}
+#v3boot small{color:var(--muted);font-size:14px}
+#v3boot.v3bootx{opacity:0;pointer-events:none}
+.v3spin{display:inline-block;width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:v3spin .8s linear infinite;flex-shrink:0}
+@keyframes v3spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.v3spin{animation-duration:2.4s}}
+#v3load{position:fixed;left:50%;transform:translateX(-50%);top:calc(130px + env(safe-area-inset-top,0px));z-index:1400;display:flex;align-items:center;gap:10px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;box-shadow:var(--shadow-pop);white-space:nowrap}
+#v3load .v3spin{width:16px;height:16px;border-width:2px}
+/* flèches précédente / suivante : icône centrée */
+.v2nav .v2btn{justify-content:center}
+.v2nav .v2btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block}
+@media (max-width:860px){
+  /* se tirent au doigt : tout l'en-tête de la liste (sauf les filtres, qui défilent de côté), toute la fiche en demi-écran */
+  .v2mhead{touch-action:none}
+  .v2mhead .v2scroll{touch-action:pan-x}
+  .v2fiche[data-half="1"]{touch-action:none}
+  .v2fiche[data-half="1"] .v2fh,.v2fiche[data-half="1"] .v2fhd{cursor:grab}
+  #v3load{top:calc(118px + env(safe-area-inset-top,0px))}
+}
