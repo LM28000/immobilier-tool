@@ -52,6 +52,40 @@ async function mlRoutes(p) {
     ok('thème · retour au clair depuis Budget', await p.evaluate(() => document.documentElement.getAttribute('data-theme') === 'light' && document.querySelector('#v2p-budget [data-v2theme="light"]').getAttribute('aria-pressed') === 'true') && await fond() === 'rgb(243, 245, 247)');
     ok('thème · sans erreur', errs.length === 0, errs.join(' | '));
     await c.close(); }
+  // un groupe par foyer (famille, amis) : créer, inviter par un lien, rejoindre ; ce que couvre le relevé ; mode d'emploi ; remarques (Supabase simulé)
+  { const c = await b.newContext({viewport: {width: 1300, height: 850}}); const p = await c.newPage(); const errs = [], posts = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
+    const sb = async q => { await q.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await mlRoutes(q); await q.route(/supabase\.co\/rest\/v1\//, r => { const u = r.request().url(), m = r.request().method(), H = {'access-control-allow-origin': '*'};
+      if (/retours_lecture/.test(u)) return r.fulfill({headers: H, contentType: 'application/json', body: JSON.stringify([{id: 1, cree: '2026-11-11T09:00:00Z', texte: 'Le loyer de Caen me semble haut', prenom: 'Claire', contexte: 'onglet carte', nous: false}])});
+      if (/\/retours/.test(u) && m === 'POST') { posts.push({g: r.request().headers()['x-groupe'], b: JSON.parse(r.request().postData() || '{}')}); return r.fulfill({status: 201, headers: H, body: ''}); }
+      if (/\/biens/.test(u)) return m === 'GET' ? r.fulfill({headers: H, contentType: 'application/json', body: '[]'}) : r.fulfill({status: 201, headers: H, body: ''});
+      return r.abort(); }); };
+    await sb(p); await p.addInitScript(() => { Object.defineProperty(navigator, 'share', {configurable: true, value: d => { window.__sh = d; return Promise.resolve(); }}); });
+    await p.goto(URL); await p.waitForTimeout(2000);
+    const cr = await p.evaluate(() => { const c = document.querySelector('.v2dlg .v2couv'), B = document.getElementById('v2cB'); B.value = 200000; B.dispatchEvent(new Event('input')); const w = document.getElementById('v2cW'); return {c: c && c.innerText, w: !!w && !w.hidden}; });
+    ok('critères : ce que couvre le relevé (villes, types, plafond de prix) ; budget au-delà du plafond signalé', /22 villes de l'Ouest, studios, T2 et T3, jusqu'à 120 k€/.test(cr.c) && cr.w, JSON.stringify(cr));
+    await p.click('.v2dlg button[type=submit]'); await p.waitForTimeout(800);
+    const t0 = await p.evaluate(() => !!document.querySelector('#v2mlist .v2tip [data-v2guide]')); await p.evaluate(() => document.querySelector('#v2mlist .v2tip [data-v2guide]').click()); await p.waitForTimeout(300);
+    const g = await p.evaluate(() => [...document.querySelectorAll('.v2guide h3')].map(h => h.textContent)); await p.evaluate(() => document.querySelector('.v2guide [data-v2cx]').click()); await p.waitForTimeout(300);
+    const t1 = await p.evaluate(() => !!document.querySelector('#v2mlist .v2tip'));
+    ok('première visite : « Comment lire l\'app » en tête de la liste, cinq rubriques, ne revient plus une fois lu', t0 && g.length === 5 && /La carte/.test(g[0]) && /couvre/.test(g[4]) && !t1, JSON.stringify({t0, g, t1}));
+    await p.evaluate(() => document.querySelector('#v2tabs [data-v2tab="biens"], [data-v2tab="biens"]').click()); await p.waitForTimeout(500); await p.fill('#v2nom2', 'Louis');
+    await Promise.all([p.waitForNavigation({timeout: 15000}).catch(() => {}), p.evaluate(() => document.querySelector('[data-v2grp]').click())]); await p.waitForTimeout(2500);
+    const code = await p.evaluate(() => localStorage.getItem('biens-code'));
+    ok('créer notre groupe : code tiré au hasard (15 caractères), prénom gardé', /^[a-z2-9]{5}-[a-z2-9]{5}-[a-z2-9]{5}$/.test(code || '') && await p.evaluate(() => localStorage.getItem('biens-nom')) === 'Louis', code ? code.replace(/./g, '•') : 'aucun');
+    await p.evaluate(() => document.querySelector('[data-v2tab="biens"]').click()); await p.waitForTimeout(500); await p.evaluate(() => document.querySelector('[data-v2inv]').click()); await p.waitForTimeout(300);
+    const inv = await p.evaluate(() => window.__sh || null);
+    ok('inviter : feuille de partage avec un lien qui contient le groupe', !!inv && inv.url.endsWith('#g=' + encodeURIComponent(code)) && /Louis vous invite/.test(inv.text), inv && inv.text);
+    const c2 = await b.newContext({viewport: {width: 1300, height: 850}}), q = await c2.newPage(); q.on('pageerror', e => errs.push('invité : ' + e.message)); await sb(q);
+    await q.goto(URL + '#g=' + encodeURIComponent(code)); await q.waitForTimeout(2500); const jd = await q.evaluate(() => (document.querySelector('.v2dlg form h2') || {}).textContent || null);
+    await q.fill('#v2jN', 'Claire'); await Promise.all([q.waitForNavigation({timeout: 15000}).catch(() => {}), q.evaluate(() => document.querySelector('.v2dlg form [type=submit]').click())]); await q.waitForTimeout(2000);
+    const jo = await q.evaluate(() => ({c: localStorage.getItem('biens-code'), n: localStorage.getItem('biens-nom'), h: location.hash}));
+    ok('lien d\'invitation : « Rejoindre un groupe », prénom, puis même groupe ; l\'adresse ne garde pas le code', jd === 'Rejoindre un groupe' && jo.c === code && jo.n === 'Claire' && jo.h === '', JSON.stringify({jd, n: jo.n, meme: jo.c === code, h: jo.h})); await c2.close();
+    await p.evaluate(() => document.querySelector('[data-v2tab="budget"]').click()); await p.waitForTimeout(1200);
+    const rc = await p.evaluate(() => { const h = [...document.querySelectorAll('#v2p-budget h2')].find(h => /Remarques reçues/i.test(h.textContent)); return h ? h.parentNode.textContent : null; });
+    await p.evaluate(() => document.querySelector('#v2p-budget [data-v2ret]').click()); await p.waitForTimeout(300); await p.fill('#v2rX', 'Essai de remarque'); await p.evaluate(() => document.querySelector('.v2dlg form [type=submit]').click()); await p.waitForTimeout(800);
+    ok('remarques : envoyées avec le prénom et l\'endroit de l\'app ; celles reçues s\'affichent dans Budget', posts.length === 1 && posts[0].b.texte === 'Essai de remarque' && posts[0].b.prenom === 'Louis' && /onglet budget/.test(posts[0].b.contexte) && posts[0].g === code && /Le loyer de Caen me semble haut/.test(rc || ''), JSON.stringify({posts: posts.map(x => x.b), rc: rc && rc.slice(0, 80)}));
+    ok('groupe, invitation, mode d\'emploi, remarques · sans erreur', errs.length === 0, errs.join(' | '));
+    await c.close(); }
   // copropriété (registre national, data/copro/<ville>.js chargé avec la fiche) : annonce rapprochée « probable », bien à son adresse « sûr » par sa parcelle
   { const c = await b.newContext({viewport: {width: 1300, height: 850}}); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.route('**/cdnjs.cloudflare.com/**', r => r.abort()); await p.route('**/apicarto.ign.fr/**', r => r.abort()); await mlRoutes(p);

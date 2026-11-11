@@ -109,3 +109,36 @@ do $$ declare g text; begin
 end $$;
 revoke all on public.annonces_publiques from public, anon, authenticated;
 grant select on public.annonces_publiques to anon, authenticated;
+
+-- ============ 11 novembre 2026 : remarques envoyées depuis l'app (à coller dans SQL Editor puis « Run ») ============
+-- 5. Tout le monde peut envoyer une remarque (texte borné, 100 par jour au plus pour toute l'app) ; personne ne peut les lire
+--    avec la clé publique, sauf le groupe qui relève les annonces (vue « retours_lecture », comme « annonces_publiques »).
+create table if not exists public.retours (
+  id bigserial primary key,
+  cree timestamptz not null default now(),
+  texte text not null check (length(texte) between 3 and 2000),
+  prenom text check (prenom is null or length(prenom) <= 40),
+  contexte text check (contexte is null or length(contexte) <= 300),
+  groupe text
+);
+alter table public.retours enable row level security;
+drop policy if exists "retours : envoi" on public.retours;
+create policy "retours : envoi" on public.retours for insert to anon with check (true);
+grant insert on public.retours to anon;
+grant usage, select on sequence public.retours_id_seq to anon;
+create or replace function public.retours_quota() returns trigger language plpgsql as $$
+begin
+  if (select count(*) from public.retours where cree > now() - interval '1 day') >= 100 then
+    raise exception 'trop de remarques aujourd''hui';
+  end if;
+  new.groupe = public.code_groupe(); new.cree = now();   -- empreinte du code de l'expéditeur (ou rien), date posée par la base
+  return new;
+end $$;
+drop trigger if exists retours_quota on public.retours;
+create trigger retours_quota before insert on public.retours for each row execute function public.retours_quota();
+do $$ declare g text; begin
+  select groupe into g from public.annonces where cle = 'ads' order by maj desc limit 1;
+  execute format('create or replace view public.retours_lecture with (security_barrier = true) as select id, cree, texte, prenom, contexte, groupe = %L as nous from public.retours where public.code_groupe() = %L', g, g);
+end $$;
+revoke all on public.retours_lecture from public, anon, authenticated;
+grant select on public.retours_lecture to anon;

@@ -22,7 +22,7 @@ Page en ligne : https://immobilier.du-cray.eu/ (l'ancienne adresse, https://lm28
 | `src/js/13-reglages-communs.js` | réglages communs à deux (hypothèses, financement, valeurs par type, critères) dans une ligne spéciale de la liste partagée |
 | `v2.html` | ancien lien d'essai : renvoie à l'adresse d'origine |
 | `manifest.webmanifest`, `sw.js`, `icons/` | appli installable sur téléphone, utilisable hors ligne (version GitHub) |
-| `supabase.sql` | tables partagées « Nos biens » et « annonces » (accès par code de groupe) ; `tools/supabase_annonces.py` envoie les annonces |
+| `supabase.sql` | tables partagées « Nos biens » et « annonces » (accès par code de groupe), « retours » (remarques envoyées depuis l'app, partie 5) ; `tools/supabase_annonces.py` envoie les annonces |
 | `sync.sh`, `install-sync.sh` | poussent automatiquement les changements sur GitHub (launchd), après vérification des données et de la page ; en cas de refus, notification macOS et ligne « NON PUBLIÉ » dans `sync.log` |
 
 ## Modifier
@@ -39,6 +39,8 @@ npm test                  # build + tests du calcul + tests des données + tests
 Les annonces sont relevées chaque jour dans les 22 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 150 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
 
 ## Annonces privées (Supabase)
+
+**Famille et amis : un groupe par foyer.** Chaque foyer a son code (onglet Nos biens, « Créer notre groupe » : code tiré au hasard) et sa liste, ses avis, ses offres et ses réglages ; « Inviter » envoie un lien `…#g=<code>` qui ouvre l'app sur ce groupe (le code reste après « # », jamais envoyé au serveur de la page ; la base n'en garde que l'empreinte). Les annonces et les calculs sont les mêmes pour tous ; le relevé couvre les 22 villes, studios, T2 et T3, jusqu'au plafond tiré du budget de notre groupe (120 000 € en novembre 2026), ce que l'app dit à l'accueil. Remarques : bouton « Une remarque ? » (Budget, mode d'emploi), table `retours` (partie 5 de `supabase.sql`), lisibles seulement avec notre code (vue `retours_lecture`, carte « Remarques reçues » dans Budget).
 
 Depuis le 7 novembre 2026, les annonces, leur historique et leurs fiches (descriptions, photos d'agences) ne sont plus dans le dépôt public : la page les lit dans Supabase. Depuis le 9 novembre 2026, tout le monde les voit, sans code, par la vue en lecture seule « annonces_publiques » (partie 3 de `supabase.sql` : elle ne montre jamais la colonne du code) ; le code de groupe ne sert plus qu'à « Nos biens » et aux réglages communs. Sur un nouvel ordinateur : `python3 tools/supabase_annonces.py pull`. Mise en place (déjà faite) :
 

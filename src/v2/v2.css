@@ -390,3 +390,12 @@ html.v2 #v2app{display:flex;flex-direction:column;position:fixed;inset:0;backgro
   .v2mlq>span{display:none}
   .v2mlq select{border:0;background:transparent;padding:0 2px;font-weight:700}
 }
+/* ---------- première visite, mode d'emploi, remarques ---------- */
+.v2lnk{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.v2tip{margin:8px 12px 4px;padding:10px 12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;background:var(--accent-soft)}
+.v2tip p{margin:0 0 8px;font-size:14px}
+.v2guide{width:min(640px,100%)}
+.v2gs{display:flex;gap:12px;align-items:flex-start}
+.v2gs h3{margin:0 0 2px;font-size:15px}
+.v2gs p{margin:0;font-size:14px;line-height:1.5;color:var(--fg)}
+.v2gn{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-size:13px;margin-top:1px}
