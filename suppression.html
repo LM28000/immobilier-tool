@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Insula · Supprimer vos données</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#eef1f5;--surface:#fff;--sunk:#e6ebf2;--line:#d9dfe7;--fg:#18212d;--muted:#52606f;--accent:#2c4766;--on-accent:#fff;--ok:#18703f;--bad:#b3261e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#10161e;--surface:#18212d;--sunk:#222d3b;--line:#2a3647;--fg:#e6ecf3;--muted:#9caabb;--accent:#93b4da;--on-accent:#10161e;--ok:#5cc98a;--bad:#ff8a7a;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:32px 16px 56px}
+h1{font-size:28px;line-height:1.2;margin:0 0 4px}
+h2{font-size:18px;margin:26px 0 6px}
+p,li{margin:6px 0}
+ol,ul{padding-left:22px}
+.sub{color:var(--muted);font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 18px 16px;margin-top:20px}
+label{display:block;font-weight:600;font-size:14px;color:var(--muted);margin:12px 0 4px}
+input,textarea{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--sunk);color:var(--fg)}
+button{margin-top:14px;font:inherit;font-weight:700;min-height:46px;padding:0 18px;border-radius:12px;border:0;background:var(--accent);color:var(--on-accent);cursor:pointer}
+button:disabled{opacity:.5}
+#etat{margin-top:10px;font-weight:600}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>Insula : supprimer vos données</h1>
+<p class="sub">Application Android Insula et site insula.du-cray.eu</p>
+<p>Insula n'a pas de compte : pas d'adresse e-mail, pas de mot de passe. Les seules données gardées sont celles que vous saisissez (prénom, biens suivis, avis, offres, grille de visite, réglages du projet), sur votre téléphone, et dans la liste de votre groupe si vous en avez rejoint un.</p>
+
+<div class="card">
+<h2>Effacer vous-même, depuis l'application</h2>
+<ol>
+<li><b>Un bien suivi</b> : ouvrez sa fiche, puis « Ne plus suivre ». Il est retiré de la liste du groupe, avec son étape, les avis, l'offre et sa grille de visite.</li>
+<li><b>Votre prénom et le partage</b> : dans Réglages, videz le prénom et le code du groupe, puis « Enregistrer ». Ce téléphone ne lit et n'écrit plus rien dans la liste du groupe.</li>
+<li><b>Tout ce qui est sur le téléphone</b> : désinstallez Insula (ou, dans les paramètres d'Android, Applications › Insula › Stockage › Effacer les données).</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Demander l'effacement des données d'un groupe</h2>
+<p>Pour effacer toute la liste d'un groupe (tous ses biens, avis, offres, grilles de visite et réglages du projet) et les remarques envoyées depuis ce groupe, faites la demande ci-dessous. Le code du groupe sert seulement à retrouver ses données : il n'est pas conservé, la base n'en garde que l'empreinte.</p>
+<form id="f">
+<label for="nom">Votre prénom</label><input id="nom" maxlength="30" autocomplete="given-name">
+<label for="code">Code du groupe (Réglages de l'application)</label><input id="code" maxlength="60" autocomplete="off" spellcheck="false" required>
+<label for="msg">Précisions (facultatif)</label><textarea id="msg" rows="3" maxlength="800"></textarea>
+<button type="submit" id="go">Demander la suppression</button>
+<p id="etat" role="status"></p>
+</form>
+<h2>Ce qui est effacé, et quand</h2>
+<ul>
+<li>Toutes les lignes de la liste du groupe et les remarques envoyées depuis ce groupe sont supprimées dans les 30 jours qui suivent la demande. Elles ne sont pas gardées ailleurs.</li>
+<li>Les annonces, les ventes et les données des quartiers ne vous concernent pas : ce sont des données publiques, elles restent.</li>
+<li>Si vous n'avez pas de code de groupe, rien de vous n'est gardé en dehors de votre téléphone.</li>
+</ul>
+<p class="sub">Vous pouvez aussi écrire à l'adresse indiquée sur la fiche d'Insula dans le Play Store. Voir aussi les <a href="confidentialite.html">règles de confidentialité</a>.</p>
+</div>
+</main>
+<script>
+document.getElementById("f").addEventListener("submit", async e => {
+  e.preventDefault(); const code = document.getElementById("code").value.trim(), et = document.getElementById("etat"), bt = document.getElementById("go");
+  if (code.length < 12) { et.textContent = "Ce code paraît trop court : vérifiez-le dans Réglages."; et.style.color = "var(--bad)"; return; }
+  bt.disabled = true; et.style.color = ""; et.textContent = "Envoi…";
+  const texte = "DEMANDE DE SUPPRESSION des données du groupe." + (document.getElementById("msg").value.trim() ? " " + document.getElementById("msg").value.trim() : "");
+  try {
+    const r = await fetch("https://rgemkhdnvxxhcmvevxmj.supabase.co/rest/v1/retours", {method: "POST", headers: {apikey: "sb_publishable_NMyyc7oEJkn9jajEtmfHMg_0bHLOgYS", "x-groupe": code, "Content-Type": "application/json", Prefer: "return=minimal"},
+      body: JSON.stringify({texte, prenom: document.getElementById("nom").value.trim() || null, contexte: "page de suppression des données"})});
+    if (r.ok) { et.textContent = "Demande reçue : les données du groupe seront effacées dans les 30 jours."; et.style.color = "var(--ok)"; document.getElementById("f").reset(); }
+    else { et.textContent = "La demande n'a pas pu être enregistrée (" + r.status + "). Écrivez à l'adresse de la fiche du Play Store."; et.style.color = "var(--bad)"; }
+  } catch (_) { et.textContent = "Pas de réseau : la demande n'est pas partie."; et.style.color = "var(--bad)"; }
+  bt.disabled = false;
+});
+</script>
+</body>
+</html>
