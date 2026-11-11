@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "eu.ducray.insula",
+    "sha256_cert_fingerprints": [
+      "54:1B:BE:ED:02:20:14:00:5F:D6:31:2A:0F:A0:0C:DF:95:5D:97:01:DC:2D:8E:09:8D:A1:22:8F:6D:49:87:69"
+    ]
+  }
+}]
