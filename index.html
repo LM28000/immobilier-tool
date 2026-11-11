@@ -3911,8 +3911,9 @@ render();
   d.querySelector("form").addEventListener("submit",e=>{e.preventDefault(); const n=($("v2jN").value||"").trim(); if(!n){$("v2jN").focus(); return;} setGroup(code,n);});
   if(!PH()) setTimeout(()=>$("v2jN").focus(),50);}
  /* ---------- comment lire l'app ---------- */
- const PLAFR=()=>Math.max(0,...Object.values(ADS).map(a=>a&&typeof a==="object"&&a.plafond||0));
- const couv=()=>`${C.length} villes de l'Ouest, studios, T2 et T3${PLAFR()?`, jusqu'à ${keur(PLAFR())}`:""}`;
+ /* plafond de prix du relevé : celui des annonces reçues, sinon le dernier vu (les annonces arrivent après la première fenêtre) */
+ const PLAFR=()=>{const v=typeof ADS==="object"&&ADS?Math.max(0,...Object.values(ADS).map(a=>a&&typeof a==="object"&&a.plafond||0)):0; try{if(v) localStorage.setItem("plafond-releve",String(v)); else return +localStorage.getItem("plafond-releve")||0;}catch(_){} return v;};
+ const couv=()=>`<span class="v2couvt">${C.length} villes de l'Ouest, studios, T2 et T3${PLAFR()?`, jusqu'à ${keur(PLAFR())}`:""}</span>`;
  function guideDlg(){if(document.querySelector(".v2dlg")) return; const d=document.createElement("div"); d.className="v2dlg";
   const S=[["La carte","Chaque rond est une ville, sa couleur son rendement sur 15 ans : vert à 5 % et plus, orange de 2,5 à 5 %, rouge en dessous. En zoomant, les quartiers se colorent et les annonces apparaissent : point plein, adresse connue à 100 m près ; point creux, position approchée."],
    ["Le rendement sur 15 ans","Ce que rapporte chaque année l'argent que vous mettez (l'apport), tout compris : loyers, mois vides, crédit, charges, impôts et revente au bout de 15 ans. « Prudent », « central » et « favorable » sont trois jeux d'hypothèses : le bouton du scénario est dans Budget."],
@@ -4207,7 +4208,7 @@ render();
   else if(d.v2cmp){if(t.checked){if(CMPS.size>=4){t.checked=false; toast("Quatre biens au plus."); return;} CMPS.add(d.v2cmp);} else CMPS.delete(d.v2cmp); refresh();}
   else if(d.v2offb){const b=BIENS.find(x=>x.id===d.v2offb); if(!b) return; const pr=Math.round(+b.prix*(+t.value)/100/500)*500; delete OFFT[d.v2off]; updBien(b.id,{visite:Object.assign(visCopy(b),{offre:pr})});}});
  /* l'app recalcule (type, scénario, hypothèses, liste partagée, annonces reçues) : la v2 suit */
- const _render=render; render=function(){_render.apply(this,arguments); FEED=null; refresh(); if(V.tab==="carte") drawMap();};
+ const _render=render; render=function(){_render.apply(this,arguments); FEED=null; refresh(); if(V.tab==="carte") drawMap(); document.querySelectorAll(".v2dlg .v2couvt").forEach(e=>{e.outerHTML=couv();});};
  document.addEventListener("biens",()=>{FEED=null; refresh();});   /* la liste commune a changé (11-nos-biens.js) */
  /* liens des fiches : une annonce s'ouvre dans la fiche, une location sur Bien'ici, « toutes les sources » dans Budget */
  document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("#v2fiche [data-ad], #v2fiche [data-opensrc]"); if(!a) return; const inner=e.target.closest("button,a,input,select"); if(inner&&inner!==a) return; e.preventDefault();
