@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Insula · Confidentialité</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#eef1f5;--surface:#fff;--line:#d9dfe7;--fg:#18212d;--muted:#52606f;--accent:#2c4766;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#10161e;--surface:#18212d;--line:#2a3647;--fg:#e6ecf3;--muted:#9caabb;--accent:#93b4da;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:32px 16px 56px}
+h1{font-size:28px;line-height:1.2;margin:0 0 4px}
+h2{font-size:18px;margin:28px 0 6px}
+p,li{margin:6px 0}
+ul{padding-left:20px}
+.sub{color:var(--muted);font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 18px 12px;margin-top:20px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>Insula : confidentialité</h1>
+<p class="sub">Application Android et site insula.du-cray.eu · mise à jour du 11 novembre 2026</p>
+<p>Insula aide à choisir où acheter un petit logement à louer dans l'Ouest de la France. C'est un outil personnel, partagé avec un cercle restreint (famille et amis). Il n'y a ni compte à créer, ni publicité, ni mesure d'audience, ni localisation.</p>
+<div class="card">
+<h2>Ce qui reste sur votre téléphone</h2>
+<ul>
+<li>Vos réglages : critères de recherche, crédit, hypothèses, thème, scénario affiché.</li>
+<li>Votre prénom et, si vous en avez un, le code de votre groupe.</li>
+<li>Une copie des annonces du soir, pour ouvrir l'app hors connexion.</li>
+<li>Sans code de groupe, les biens que vous suivez, vos avis et vos offres restent aussi sur le téléphone.</li>
+</ul>
+<p>Désinstaller l'application efface tout cela.</p>
+<h2>Ce qui est partagé avec votre groupe</h2>
+<p>Seulement si vous entrez un code de groupe (dans Réglages) : les biens suivis, leur étape, les avis (avec votre prénom), les offres, la grille de visite et les réglages du projet sont enregistrés dans une base de données (Supabase) pour que les membres du groupe les voient. Ces données ne sont lisibles qu'avec le code du groupe ; la base n'en garde que l'empreinte, pas le code lui-même. Effacer le code dans Réglages arrête le partage sur ce téléphone.</p>
+<h2>Les remarques</h2>
+<p>Si vous envoyez une remarque (« Une remarque ? »), son texte, votre prénom et l'endroit de l'app sont enregistrés pour que nous la lisions. Rien n'est envoyé sans que vous le demandiez.</p>
+<h2>Ce que l'application lit sur internet</h2>
+<p>L'application télécharge des données publiques : les annonces relevées chaque soir, les photos des annonces (servies par Bien'ici), les fonds de carte (OpenFreeMap) et les données de notre site. Comme pour toute page web, ces services voient l'adresse internet du téléphone au moment de la lecture. Insula ne leur transmet rien d'autre.</p>
+<h2>Supprimer vos données</h2>
+<p>Retirer un bien de « Nos biens » le supprime de la liste du groupe. Pour faire effacer toutes les données d'un groupe, écrivez-nous par « Une remarque ? » ou à l'adresse indiquée sur la fiche de l'application dans le Play Store.</p>
+</div>
+<p class="sub">Les chiffres d'Insula sont des estimations, pas un conseil financier, fiscal ni bancaire.</p>
+</main>
+</body>
+</html>

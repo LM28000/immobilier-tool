@@ -12,7 +12,8 @@ self.addEventListener("fetch", e => {
   const r = e.request; if (r.method !== "GET") return;
   const u = new URL(r.url);
   // la page : réseau d'abord (données du jour) avec 4 s de patience, sinon la dernière copie
-  if (r.mode === "navigate" || (u.origin === location.origin && /\/(index|essai)\.html$/.test(u.pathname))) {
+  // les deux pages de l'app seulement (une autre page, comme confidentialite.html, ne remplace jamais leur copie hors ligne)
+  if (u.origin === location.origin && (/\/$/.test(u.pathname) || /\/(index|essai)\.html$/.test(u.pathname)) && (r.mode === "navigate" || /\.html$/.test(u.pathname))) {
     // chaque page sa copie : la page d'essai (essai.html) ne remplace jamais la page de l'app
     const key = /\/essai\.html$/.test(u.pathname) ? "./essai.html" : "./index.html";
     e.respondWith((async () => {
