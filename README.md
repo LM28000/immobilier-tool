@@ -52,6 +52,7 @@ Sur le Mac de travail, une tâche `launchd` publie automatiquement les changemen
 | Document | Pour |
 |---|---|
 | [Architecture](docs/architecture.md) | comprendre l'organisation du code, l'assemblage de la page et les interfaces |
+| [Design system](docs/design.md) | couleurs, polices, formes, règles d'usage et composants, communs au site et à l'app |
 | [Le calcul](docs/calculs.md) | le modèle financier : crédit, loyers, impôts LMNP, revente, rendement |
 | [Règles des données](REGLES.md) | une règle par donnée, la même pour toutes les villes ; ajouter une ville |
 | [Données et sources](docs/donnees.md) | d'où vient chaque fichier de `data/`, sa licence, l'outil qui le produit |
