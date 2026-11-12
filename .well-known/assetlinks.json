@@ -1,13 +1,18 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "eu.ducray.insula",
-    "sha256_cert_fingerprints": [
-      "54:1B:BE:ED:02:20:14:00:5F:D6:31:2A:0F:A0:0C:DF:95:5D:97:01:DC:2D:8E:09:8D:A1:22:8F:6D:49:87:69",
-      "57:7C:65:4B:3E:23:F3:35:B6:C5:AE:88:57:C7:7C:C4:48:BD:DB:0C:F8:F8:8D:42:C3:83:76:DD:02:77:56:F0",
-      "90:59:99:BF:B7:45:74:AE:BB:21:26:20:C0:07:F0:43:F3:3F:28:25:97:62:98:BD:7E:B3:75:56:6D:6F:01:EF",
-      "8E:C4:1A:00:4E:88:D6:1A:96:4A:CF:A2:1B:C1:D1:53:73:F2:E3:73:87:F0:E5:68:17:C3:6B:7C:07:A4:F4:6F"
-    ]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "eu.ducray.insula",
+      "sha256_cert_fingerprints": [
+        "54:1B:BE:ED:02:20:14:00:5F:D6:31:2A:0F:A0:0C:DF:95:5D:97:01:DC:2D:8E:09:8D:A1:22:8F:6D:49:87:69",
+        "57:7C:65:4B:3E:23:F3:35:B6:C5:AE:88:57:C7:7C:C4:48:BD:DB:0C:F8:F8:8D:42:C3:83:76:DD:02:77:56:F0",
+        "90:59:99:BF:B7:45:74:AE:BB:21:26:20:C0:07:F0:43:F3:3F:28:25:97:62:98:BD:7E:B3:75:56:6D:6F:01:EF",
+        "8E:C4:1A:00:4E:88:D6:1A:96:4A:CF:A2:1B:C1:D1:53:73:F2:E3:73:87:F0:E5:68:17:C3:6B:7C:07:A4:F4:6F"
+      ]
+    }
   }
-}]
+]
