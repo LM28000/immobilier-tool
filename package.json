@@ -5,7 +5,7 @@
   "homepage": "https://insula.du-cray.eu",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LM28000/immobilier-tool"
+    "url": "https://github.com/LM28000/insula"
   },
   "license": "MIT",
   "scripts": {

@@ -1,4 +1,4 @@
--- Liste commune « Nos biens » pour https://lm28000.github.io/immobilier-tool/
+-- Liste commune « Nos biens » pour https://insula.du-cray.eu/
 -- À coller dans Supabase > SQL Editor > New query, puis « Run ».
 create table if not exists public.biens (
   id uuid primary key default gen_random_uuid(),

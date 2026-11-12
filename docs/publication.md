@@ -33,7 +33,7 @@ Si une étape échoue, rien n'est publié. Une ligne « NON PUBLIÉ » s'ajoute 
 - **GitHub Pages** sert la branche `main` à la racine. `.nojekyll` désactive Jekyll.
 - **Domaine** : `insula.du-cray.eu` (fichier `CNAME`), derrière Cloudflare.
 - **Anciennes adresses** :
-  - `https://lm28000.github.io/immobilier-tool/` renvoie vers le domaine ;
+  - le dépôt s'appelait `immobilier-tool` jusqu'au 12 novembre 2026. GitHub redirige les adresses du dépôt, mais plus `https://lm28000.github.io/immobilier-tool/` (404) ; `https://lm28000.github.io/insula/` renvoie vers le domaine ;
   - `essai.html` et `v2.html` renvoient à la page, en gardant `#f=` et `#g=` ;
   - `immobilier.du-cray.eu`, utilisée du 10 au 11 novembre 2026, n'existe plus.
 - Le site n'est pas indexé par les moteurs de recherche (balise `robots noindex`).
