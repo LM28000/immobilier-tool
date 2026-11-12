@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Assemble la page à partir de src/ et data/, et refuse de produire une page cassée.
 Sorties :
-  dist/index.html     page autonome (GitHub Pages)
+  dist/index.html     page autonome (GitHub Pages) : la nouvelle interface (src/v3, Insula)
   dist/artifact.html  même page sans squelette (artifact Claude), annonces et fiches toujours incluses
   dist/test.html      copie locale pour les tests Playwright (comme l'artefact)
   index.html          copie de dist/index.html servie par GitHub Pages
-  essai.html          page d'essai de la nouvelle interface (src/v3, Insula) ; dist/essai-test.html pour ses tests
+  essai.html          ancienne adresse de la page d'essai : renvoie à l'adresse d'origine ; dist/essai-test.html pour les tests de l'interface
+  dist/test.html      l'ancienne interface (src/v2), gardée pour ses tests et le serveur MCP (qui n'en lit que le moteur)
   sw.js               numéro de version mis à jour (le téléphone installe la nouvelle version)
 Réglage : publication.json → "annonces_publiques": false retire annonces, historique et fiches de la page publique ;
   la page les lit alors dans Supabase avec le code de groupe (tools/supabase_annonces.py les y envoie).
@@ -154,7 +155,7 @@ if shutil.which("node"):
         if r.returncode: ERR.append(f"erreur de syntaxe dans le script assemblé (src/{ui}) :\n" + "\n".join(r.stderr.splitlines()[:6]))
 else: print("attention : node introuvable, syntaxe non vérifiée", file=sys.stderr)
 if len(pub) > 3_000_000: ERR.append(f"page publique trop lourde ({len(pub)} octets)")
-if len(pub3) > 3_000_000: ERR.append(f"page d'essai trop lourde ({len(pub3)} octets)")
+if len(pub3) > 3_000_000: ERR.append(f"page du site trop lourde ({len(pub3)} octets)")
 if ERR:
     print("BUILD REFUSÉ\n- " + "\n- ".join(ERR), file=sys.stderr); sys.exit(1)
 
@@ -171,21 +172,26 @@ head = ('<!doctype html><html lang="fr"><head><meta charset="utf-8">'
         '<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>'
         + (rd("src/pwa-head.html") if os.path.exists(P("src/pwa-head.html")) else "")
         + '</head><body>')
-html = head + pub + "</body></html>"
+# la page du site : la nouvelle interface (src/v3, Insula), depuis le 12 novembre 2026 ; sa copie de test (annonces incluses)
+w("dist/essai-test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + full3)
+html = insula_head(head) + pub3 + "</body></html>"
 w("dist/index.html", html)
 if not os.path.exists(P("index.html")) or rd("index.html") != html: w("index.html", html)   # pas de réécriture inutile (sync.sh surveille ce fichier)
-# page d'essai de la nouvelle interface (src/v3, Insula), à côté de l'actuelle : essai.html, et sa copie de test
-w("dist/essai-test.html", '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + full3)
-html3 = insula_head(head) + pub3 + "</body></html>"
-w("dist/essai.html", html3)
-if not os.path.exists(P("essai.html")) or rd("essai.html") != html3: w("essai.html", html3)
+html3 = html
+# essai.html (page d'essai d'avant la bascule) : ses liens mènent à l'adresse d'origine, avec la fiche ou l'invitation demandée
+redir3 = ('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+          '<title>Insula</title><meta http-equiv="refresh" content="0; url=./"><link rel="canonical" href="./">'
+          '<script>location.replace("./"+location.search+location.hash)</script></head>'
+          '<body><p><a href="./">Insula est maintenant à l\'adresse d\'origine : ouvrir</a></p></body></html>')
+if os.path.exists(P("dist/essai.html")): os.remove(P("dist/essai.html"))
+if not os.path.exists(P("essai.html")) or rd("essai.html") != redir3: w("essai.html", redir3)
 # v2.html (lien d'essai) mène désormais à l'adresse d'origine
 redir = ('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
          '<title>Notre studio</title><meta http-equiv="refresh" content="0; url=./"><link rel="canonical" href="./">'
          '<script>location.replace("./"+location.search+location.hash)</script></head>'
          '<body><p><a href="./">La version 2 est maintenant l\'outil : ouvrir</a></p></body></html>')
 if not os.path.exists(P("v2.html")) or rd("v2.html") != redir: w("v2.html", redir)
-ver = hashlib.sha1((html + html3).encode("utf-8")).hexdigest()[:10]
+ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
 sw = rd("sw.js"); sw2 = re.sub(r'const VERSION = "[^"]*";', f'const VERSION = "{ver}";', sw, count=1)
 if sw2 != sw: w("sw.js", sw2)
-print("exposant loyer/surface par type :", EXPT); print("ok", len(pub), "octets (page publique,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")
+print("exposant loyer/surface par type :", EXPT); print("ok", len(pub3), "octets (page publique, Insula,", "annonces incluses" if PUBLIC_ADS else "annonces dans Supabase", ") ;", len(FICX), "annonces avec fiche ;", len(full) - len(pub), "octets de plus dans l'artefact")

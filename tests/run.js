@@ -510,7 +510,7 @@ async function mlRoutes(p) {
       const k = K.find(k => /[EFG]/.test(FICX[k].dpe0)) || K[0], b = ficheBadges(k); let a = null; for (const ck in ADS) { const v = ADS[ck]; if (!v || !v.ventes) continue; a = v.ventes.find(x => adId(x[3]) === k); if (a) { a = [ck, a]; break; } }
       const L = a ? valeursBien(venteBien(a[0], a[1])).travaux.L.map(z => z[0]).join(' ') : ''; return b.includes('DPE ' + FICX[k].dpe + '*') && /1er janvier 2027/.test(b) && (!a || !/[EFG]/.test(FICX[k].dpe) || /annoncé/.test(L)); }));
     { const rd = n => fs.readFileSync(path.resolve(__dirname, '..', n), 'utf8');
-      ok('une seule interface : index.html est la v2, plus d\'ancienne page, v2.html y renvoie', rd('index.html').includes('app.id="v2app"') && !fs.existsSync(path.resolve(__dirname, '..', 'ancienne.html')) && !rd('index.html').includes('id="mApp"') && rd('v2.html').includes('location.replace')); }
+      ok('une seule interface en ligne : index.html porte Insula (src/v3), plus d\'ancienne page, v2.html y renvoie', rd('index.html').includes('(function v3(){') && !fs.existsSync(path.resolve(__dirname, '..', 'ancienne.html')) && !rd('index.html').includes('id="mApp"') && rd('v2.html').includes('location.replace')); }
     ok('v2 commun · sans erreur', !A.errs.length && !B.errs.length, A.errs.concat(B.errs).slice(0, 3).join(' | '));
     await A.c.close(); await B.c.close(); }
   await b.close();

@@ -1,6 +1,6 @@
 // Service worker : la page s'ouvre hors ligne avec la dernière version téléchargée.
 // VERSION est réécrite par build.py à chaque construction : le navigateur installe alors la nouvelle version et vide l'ancien cache.
-const VERSION = "09f7ffe390";
+const VERSION = "e66c705cbd";
 const CACHE = "studio-" + VERSION, PHOTOS = "studio-photos", MAXPH = 250;
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icone-180.png", "./icons/icone-192.png", "./icons/icone-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
@@ -13,9 +13,9 @@ self.addEventListener("fetch", e => {
   const u = new URL(r.url);
   // la page : réseau d'abord (données du jour) avec 4 s de patience, sinon la dernière copie
   // les deux pages de l'app seulement (une autre page, comme confidentialite.html, ne remplace jamais leur copie hors ligne)
-  if (u.origin === location.origin && (/\/$/.test(u.pathname) || /\/(index|essai)\.html$/.test(u.pathname)) && (r.mode === "navigate" || /\.html$/.test(u.pathname))) {
-    // chaque page sa copie : la page d'essai (essai.html) ne remplace jamais la page de l'app
-    const key = /\/essai\.html$/.test(u.pathname) ? "./essai.html" : "./index.html";
+  if (u.origin === location.origin && (/\/$/.test(u.pathname) || /\/index\.html$/.test(u.pathname)) && (r.mode === "navigate" || /\.html$/.test(u.pathname))) {
+    // seule la page de l'app a sa copie hors ligne (essai.html n'est plus qu'un renvoi vers elle)
+    const key = "./index.html";
     e.respondWith((async () => {
       const net = fetch(r).then(res => { if (good(res)) { const cp = res.clone(); e.waitUntil(caches.open(CACHE).then(c => c.put(key, cp))); } return res; });
       const slow = new Promise(ok => setTimeout(ok, 4000));

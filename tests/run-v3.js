@@ -1,4 +1,4 @@
-// Tests de bout en bout de la nouvelle interface (Insula, src/v3, page d'essai essai.html) : node tests/run-v3.js (après python3 build.py)
+// Tests de bout en bout de l'interface du site (Insula, src/v3, index.html depuis la bascule du 12 novembre 2026) : node tests/run-v3.js (après python3 build.py)
 // Mêmes scénarios que tests/run.js (src/v2), passés à la nouvelle structure : Explorer (carte, liste, graphique), Nos biens, Projet, Réglages.
 const {chromium, devices} = require('playwright');
 const path = require('path');
@@ -529,7 +529,7 @@ async function mlRoutes(p) {
       const k = K.find(k => /[EFG]/.test(FICX[k].dpe0)) || K[0], b = ficheBadges(k); let a = null; for (const ck in ADS) { const v = ADS[ck]; if (!v || !v.ventes) continue; a = v.ventes.find(x => adId(x[3]) === k); if (a) { a = [ck, a]; break; } }
       const L = a ? valeursBien(venteBien(a[0], a[1])).travaux.L.map(z => z[0]).join(' ') : ''; return b.includes('DPE ' + FICX[k].dpe + '*') && /1er janvier 2027/.test(b) && (!a || !/[EFG]/.test(FICX[k].dpe) || /annoncé/.test(L)); }));
     { const rd = n => fs.readFileSync(path.resolve(__dirname, '..', n), 'utf8');
-      ok('page d\'essai : essai.html porte la nouvelle interface (Insula), index.html garde la v2', rd('essai.html').includes('(function v3(){') && rd('essai.html').includes('<title>Insula</title>') && !rd('index.html').includes('(function v3(){') && rd('index.html').includes('(function v2(){')); }
+      ok('bascule : index.html porte Insula (src/v3, titre, couleur), plus la v2 ; essai.html renvoie à l\'adresse d\'origine avec la fiche ou l\'invitation', rd('index.html').includes('(function v3(){') && rd('index.html').includes('<title>Insula</title>') && rd('index.html').includes('content="#2c4766"') && !rd('index.html').includes('(function v2(){') && /location\.replace\("\.\/"\+location\.search\+location\.hash\)/.test(rd('essai.html')) && !rd('essai.html').includes('(function v3(){')); }
     ok('insula commun · sans erreur', !A.errs.length && !B.errs.length, A.errs.concat(B.errs).slice(0, 3).join(' | '));
     await A.c.close(); await B.c.close(); }
   // la nouvelle structure : quatre espaces ; Explorer en carte, liste ou graphique ; la fiche à la place de la liste (ordinateur) ; L'essentiel d'abord ; Projet ; Réglages
