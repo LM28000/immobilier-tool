@@ -848,7 +848,7 @@
 
  /* ---------- dialogue des critères (premier lancement) ---------- */
  function critDlg(first){if(document.querySelector(".v2dlg")) return; const d=document.createElement("div"); d.className="v2dlg"; const c=critV();
-  const n=()=>feed().filter(o=>o.x.cost<=+$("v2cB").value&&o.x.irr>=+$("v2cR").value&&(!$("v2cK").checked||bankOk(o.x.ratio))).length;
+  const n=()=>!feed().length?"…":feed().filter(o=>o.x.cost<=+$("v2cB").value&&o.x.irr>=+$("v2cR").value&&(!$("v2cK").checked||bankOk(o.x.ratio))).length;
   d.innerHTML=`<form aria-labelledby="v2cT"><h2 id="v2cT" class="v2h1">${first?"Que cherchez-vous ?":"Nos critères"}</h2><p class="v2sub">Ces critères filtrent la carte, la liste et le graphique${regShared()?", pour "+nous():""}. Vous pourrez les changer à tout moment.</p><p class="v2sub v2couv" style="margin:0;color:var(--fg)">Annonces relevées chaque soir sur Bien'ici : ${couv()}. ${first?`<button type="button" class="v2lnk" data-v2guide>Comment lire l'app</button>`:""}</p>
    <div class="v2f"><label>Type de bien</label><span class="v2seg" role="group" aria-label="Type de bien">${Object.entries(TYPES).map(([k,T])=>`<button type="button" data-type="${k}" aria-pressed="${!V.tous&&H.type===k}">${T.lab}</button>`).join("")}<button type="button" data-v2tous aria-pressed="${!!V.tous}">Tous</button></span></div>
    <div class="v2f"><label for="v2cB">Budget tout compris : <b class="mono" id="v2cBv" style="color:var(--fg)"></b></label><input type="range" id="v2cB" min="40000" max="250000" step="5000" value="${c.budget}"><small class="v2sub" id="v2cW" hidden></small></div>
@@ -857,7 +857,7 @@
    <p style="margin:0;font-size:16px"><b class="mono" id="v2cN"></b> annonces correspondent aujourd'hui.</p>
    <div class="v2bar"><span class="v2sp"></span>${first?"":'<button type="button" class="v2btn" data-v2cx>Annuler</button>'}<button type="submit" class="v2btn pri">Voir le marché</button></div></form>`;
   document.body.appendChild(d); const up=()=>{$("v2cBv").textContent=keur(+$("v2cB").value); $("v2cRv").textContent=fr(+$("v2cR").value)+" %"; $("v2cN").textContent=n(); const P=PLAFR(), w=$("v2cW"); if(w){w.hidden=!(P&&+$("v2cB").value>P*1.15); w.textContent=`Les annonces ne sont relevées que jusqu'à ${keur(P)} de prix affiché : au-delà, seules les moyennes des villes et des quartiers comptent.`;}};
-  ["v2cB","v2cR","v2cK"].forEach(i=>$(i).addEventListener("input",up)); up();
+  ["v2cB","v2cR","v2cK"].forEach(i=>$(i).addEventListener("input",up)); up(); d._up=up;   /* les annonces arrivent souvent après l'ouverture : le nombre suit (refresh) */
   d.addEventListener("click",e=>{if(e.target.closest("[data-type],[data-v2tous]")) setTimeout(()=>{FEED=null; d.querySelectorAll("[data-type]").forEach(b=>b.setAttribute("aria-pressed",String(!V.tous&&b.dataset.type===H.type))); d.querySelectorAll("[data-v2tous]").forEach(b=>b.setAttribute("aria-pressed",String(!!V.tous))); up();},0); if(e.target.closest("[data-v2cx]")) d.remove();});
   d.querySelector("form").addEventListener("submit",e=>{e.preventDefault(); NOSCRIT={budget:+$("v2cB").value,rmin:+$("v2cR").value,bank:$("v2cK").checked}; saveCrit(); V.vue="crit"; save(); d.remove(); refresh();});
   $("v2cB").focus();}
@@ -869,7 +869,7 @@
   if(onMap()) mapLib(()=>{mapInit(); requestAnimationFrame(()=>{if(!M) return; M.resize(); if(fp&&MREADY&&FLYP===V.sel){padSync(); flyAd(FLYP,true); FLYP=null;}});});}
  /* une relecture de la liste commune (toutes les 20 s) ne repeint pas la page pendant qu'on tape dans un champ : elle attend qu'on en sorte */
  let RQ=0, RWAIT=false; const typing=()=>{const a=document.activeElement; return !!(a&&app.contains(a)&&a.matches("input:not([type=range]):not([type=checkbox]),select,textarea"));};
- function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap();});}
+ function refresh(){cancelAnimationFrame(RQ); RQ=requestAnimationFrame(()=>{if(typing()){RWAIT=true; top(); return;} RWAIT=false; top(); paint(V.tab); fiche(); vuSnap(); const cd=document.querySelector(".v2dlg"); if(cd&&cd._up) try{cd._up();}catch(_){}});}
  app.addEventListener("focusout",()=>{if(RWAIT) setTimeout(()=>{if(!typing()) refresh();},0);});
 
  /* ---------- bouton ou geste « retour » (téléphone, appli installée, navigateur) ----------
