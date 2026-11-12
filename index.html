@@ -1057,6 +1057,23 @@ html.v3,html.v3 body{overscroll-behavior-y:none}
   .v3back{width:28px;margin-left:-4px}
 }
 @media (max-width:860px){.v3scope>.v2sp{display:none}.v3scope .v3crumb{flex:1 1 auto}}
+/* ---------- téléphone, comme l'app : le lieu en titre à gauche, le type de bien en pastille à droite ; menu du bas sans pastille, trait en haut de l'espace courant ---------- */
+@media (max-width:860px){
+  .v3crumb b{font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--fg)}
+  .v3crst{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+  .v3crst small{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .v3typ select{background-color:transparent;color:var(--accent);border:1.5px solid var(--line);font-size:13.5px;min-height:36px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232c4766' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+  :root[data-theme="dark"] .v3typ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2393b4da' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+  .v2tabbar{border-top:0;padding-top:0;box-shadow:0 -1px 0 color-mix(in srgb,var(--line) 60%,transparent),0 -6px 18px rgba(20,32,48,.07)}
+  .v2tabbar button{padding-top:6px}
+  .v2tabbar button::before{content:"";position:absolute;top:0;left:50%;width:28px;height:3px;margin-left:-14px;border-radius:0 0 3px 3px;background:var(--accent);opacity:0;transition:opacity .15s}
+  .v2tabbar button[aria-current="page"]::before{opacity:1}
+  .v2tabbar button svg,.v2tabbar button[aria-current="page"] svg{background:none;padding:2px 18px}
+  .v2tabbar button[aria-current="page"] svg g{stroke-width:2.2;fill:var(--accent-soft)}
+  .v2tabbar button[aria-current="page"] .v3av.sm{box-shadow:none}
+}
+@media (max-width:860px){.v2tabbar button .v3av.sm{margin:1px 18px}}
 </style>
 <div id="v3boot" role="status" aria-live="polite"><svg class="v3mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#2c4766"/><path d="M11 28 L32 12 L53 28 Z" fill="#dbe4ef"/><rect x="16" y="28" width="32" height="26" rx="2" fill="#ffffff"/><rect x="21" y="33" width="8" height="7" rx="1.5" fill="#2c4766"/><rect x="35" y="33" width="8" height="7" rx="1.5" fill="#f2c14e"/><rect x="21" y="44" width="8" height="7" rx="1.5" fill="#2c4766"/><rect x="35" y="44" width="8" height="10" rx="1.5" fill="#2c4766"/></svg><b>Insula</b><span class="v3spin" aria-hidden="true"></span><small>Chargement…</small></div><script>setTimeout(function(){var b=document.getElementById("v3boot");if(b)b.remove();},20000)</script>
 <!-- L'interface est construite par src/v2/v2.js. Ici seulement ce qu'elle réutilise : le formulaire d'ajout d'un bien,
@@ -3773,7 +3790,7 @@ render();
  const CHEVR='<svg class="v3chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
  const CHEVL='<svg class="v3chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
  function scope(){const el=$("v3scope"); if(!el) return; el.hidden=V.tab!=="explorer"; if(el.hidden){el.innerHTML=""; return;} const ph=PH();
-  el.innerHTML=`${ph?typeSel():""}<div class="v2crumb v3crumb">${V.city?(ph?`<button type="button" class="v3back" data-v2city="" aria-label="Retour à l'Ouest" title="L'Ouest">${CHEVL}</button><b>${esc(cityName(V.city))}</b>`:`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span><b>${esc(cityName(V.city))}</b>`):`<b>L'Ouest</b>`}</div>${V.city?(ph?"":`<button type="button" class="v2btn sm" data-v2cfiche="${V.city}" title="Prix, loyers, calcul, quartiers, habitants">Tout sur ${esc(cityName(V.city))}</button>`):ph?"":objSeg()}<span class="v2sp"></span><span class="v3vsw" role="group" aria-label="Vue">${VIEWS.map(([k,l,ic])=>`<button type="button" data-v3view="${k}" aria-pressed="${V.view===k}" aria-label="${l}" title="${l}">${svgI(ic)}${ph&&V.view!==k?"":`<span>${l}</span>`}</button>`).join("")}</span>`;}
+  el.innerHTML=`<div class="v2crumb v3crumb">${V.city?(ph?`<button type="button" class="v3back" data-v2city="" aria-label="Retour à l'Ouest" title="L'Ouest">${CHEVL}</button><b>${esc(cityName(V.city))}</b>`:`<button type="button" data-v2city="">L'Ouest</button><span aria-hidden="true">›</span><b>${esc(cityName(V.city))}</b>`):ph?`<span class="v3crst"><small>Insula</small><b>L'Ouest</b></span>`:`<b>L'Ouest</b>`}</div>${ph?typeSel():""}${V.city?(ph?"":`<button type="button" class="v2btn sm" data-v2cfiche="${V.city}" title="Prix, loyers, calcul, quartiers, habitants">Tout sur ${esc(cityName(V.city))}</button>`):ph?"":objSeg()}<span class="v2sp"></span><span class="v3vsw" role="group" aria-label="Vue">${VIEWS.map(([k,l,ic])=>`<button type="button" data-v3view="${k}" aria-pressed="${V.view===k}" aria-label="${l}" title="${l}">${svgI(ic)}${ph&&V.view!==k?"":`<span>${l}</span>`}</button>`).join("")}</span>`;}
 
  /* ---------- carte (MapLibre, fonds vectoriels OpenFreeMap, sans clé) ----------
     Tout est sur la carte en même temps et le zoom décide de ce qu'on voit, sans bouton :

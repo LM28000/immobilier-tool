@@ -602,7 +602,7 @@ async function mlRoutes(p) {
     const pend = await p.evaluate(() => ({z: V2MAP().getZoom(), fl: !!document.querySelector('#v2fiche .v2nav svg')}));
     await p.evaluate(() => __cl('#v2fiche [data-v2close]')); await p.waitForTimeout(1800);
     const ap = await p.evaluate(() => ({head: document.querySelector('#v2mlist .v2mhead').innerText, crumb: document.querySelector('#v3scope .v3crumb').innerText.trim(), z: V2MAP().getZoom()}));
-    ok(`insula ${dev} · fermer une fiche ramène à l'écran d'avant (même liste, même cadrage de la carte)`, /^L'Ouest/.test(av.head) && pend.z > 12 && /^L'Ouest/.test(ap.head) && ap.crumb === "L'Ouest" && Math.abs(ap.z - av.z) < 0.6 && pend.fl, JSON.stringify({av, pend, ap}));
+    ok(`insula ${dev} · fermer une fiche ramène à l'écran d'avant (même liste, même cadrage de la carte)`, /^L'Ouest/.test(av.head) && pend.z > 12 && /^L'Ouest/.test(ap.head) && /L'Ouest$/.test(ap.crumb) && Math.abs(ap.z - av.z) < 0.6 && pend.fl, JSON.stringify({av, pend, ap}));
     if (dev === 'ordi') {
       await p.evaluate(() => __cl('[data-v3view="liste"]')); await p.waitForTimeout(500); await p.evaluate(() => __cl('#v3liste [data-v2open^="v|"]')); await p.waitForTimeout(800);
       await p.evaluate(() => __cl('#v2fiche [data-v3onmap]')); await p.waitForTimeout(1800);
@@ -654,7 +654,7 @@ async function mlRoutes(p) {
       const c2 = await p.evaluate(() => ({view: document.getElementById('v2app').dataset.view, fiche: !document.getElementById('v2fiche').hidden}));
       ok('insula tel · fiche ouverte depuis la liste : tirée vers le bas, l\'annonce apparaît sur la carte (demi-écran) ; fermée, retour à la liste', c0.view === 'liste' && c0.half === '0' && c0.bouton && c1.view === 'carte' && c1.half === '1' && c1.fiche && c1.z > 12 && c2.view === 'liste' && !c2.fiche, JSON.stringify({c0, c1, c2}));
       await p.evaluate(() => __cl('[data-v3view="carte"]')); await p.waitForTimeout(500);
-      ok('insula tel · l\'espace courant se voit : pastille derrière l\'icône', await p.evaluate(() => { const a = getComputedStyle(document.querySelector('#v2tabbar [aria-current="page"] svg')).backgroundColor, o = getComputedStyle(document.querySelector('#v2tabbar [aria-current="false"] svg')).backgroundColor; return a !== o && a !== 'rgba(0, 0, 0, 0)'; }));
+      ok('insula tel · l\'espace courant se voit : trait en haut, icône remplie ; type de bien à droite du lieu', await p.evaluate(() => { const b = q => getComputedStyle(document.querySelector('#v2tabbar [aria-current="' + q + '"]'), '::before').opacity, f = q => getComputedStyle(document.querySelector('#v2tabbar [aria-current="' + q + '"] svg g')).fill, sc = document.getElementById('v3scope'), c = sc.querySelector('.v3crumb'), t = sc.querySelector('.v3typ'); return b('page') === '1' && b('false') === '0' && f('page') !== f('false') && !!c && !!t && (c.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING) > 0 && c.getBoundingClientRect().left < t.getBoundingClientRect().left; }));
       ok('insula tel · tirer vers le bas ne recharge pas la page', await p.evaluate(() => getComputedStyle(document.documentElement).overscrollBehaviorY === 'none'));
     }
     ok(`insula ${dev} · nouvelle structure · sans erreur`, errs.length === 0, errs.slice(0, 3).join(' | '));
