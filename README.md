@@ -1,81 +1,74 @@
-# Où acheter notre studio ?
+<p align="center">
+  <img src="docs/images/banniere.png" alt="Insula : où acheter un studio à louer dans l'Ouest" width="640">
+</p>
 
-Comparateur de 22 villes de l'Ouest pour un studio meublé en location : prix, loyers, quartiers (IRIS), DPE, annonces Bien'ici, financement et rendement.
+<p align="center">
+  <a href="https://insula.du-cray.eu"><img alt="Site" src="https://img.shields.io/badge/site-insula.du--cray.eu-2c4766"></a>
+  <img alt="22 villes" src="https://img.shields.io/badge/villes-22-2c4766">
+  <img alt="Licence MIT (code)" src="https://img.shields.io/badge/licence%20du%20code-MIT-2c4766">
+  <img alt="Sans dépendance à l'exécution" src="https://img.shields.io/badge/page-un%20seul%20fichier-2c4766">
+</p>
 
-Page en ligne : https://insula.du-cray.eu/ (l'app s'appelle désormais Insula ; l'ancienne adresse https://lm28000.github.io/immobilier-tool/ y renvoie ; immobilier.du-cray.eu, utilisée du 10 au 11 novembre 2026, n'existe plus)
+**Insula** aide à choisir où acheter un petit logement à louer meublé (studio, T2 ou T3) dans 22 villes de l'Ouest de la France. On peut comparer les villes et leurs quartiers, puis les annonces relevées chaque soir. Chaque bien est chiffré : budget tout compris, mensualité, cash-flow et rendement sur 15 ans revente comprise, avec les impôts du loueur en meublé (LMNP).
 
-## Organisation
+C'est un outil personnel, fait pour un couple puis pour la famille et les amis. Il n'y a ni compte, ni publicité, ni mesure d'audience.
 
-| Dossier | Contenu |
+- **Site** : https://insula.du-cray.eu (installable sur téléphone, utilisable hors ligne)
+- **App Android** : Insula, en test sur le Play Store (dépôt privé, même moteur de calcul)
+
+<p align="center">
+  <img src="docs/images/ordinateur.jpg" alt="Insula sur ordinateur : la carte des 22 villes et leur classement" width="72%">
+  &nbsp;
+  <img src="docs/images/telephone.jpg" alt="Insula sur téléphone : la carte et la liste des villes" width="22%">
+</p>
+
+## Ce que fait l'app
+
+| Espace | Contenu |
 |---|---|
-| `src/head.html`, `src/body.html`, `src/styles.css` | squelette et styles de la page |
-| `src/js/` | le code, découpé par thème ; les fichiers sont assemblés dans l'ordre de leur numéro |
-| `data/` | données : fond de carte, villes, quartiers IRIS, annonces du jour (`annoncesdata.js`), historique des prix (`historique.js`), secteurs Bien'ici → IRIS (`secteurs-nouvelles-villes.json` : toutes les villes sauf Le Mans et Saint-Nazaire, dont la carte est d'origine) |
-| `mcp/` | serveur MCP : brancher l'outil sur une IA (voir `mcp/README.md`) |
-| `tools/` | préparation des données (IRIS, DVF, carte), `maj_annonces.py` (relevé quotidien → données + historique), `extraction-bienici.js` (lecture d'une page de résultats), `fiches.py` et `fiches-bienici.js` (fiche complète de chaque annonce : description, photos, charges, DPE à jour du calcul de 2027, étage, position), `prix_tendance.py` (prix des appartements depuis 2014, pour la hausse des prix selon la ville), `rail_rfn.py` (grandes lignes de train de la vue dézoomée), `copro_rnic.py` (copropriétés du registre national, une ville par fichier dans `data/copro/`), `concurrence.py` (résidences étudiantes et logements neufs autorisés, une ville par fichier dans `data/conc/`), `etudiants.py` (inscrits par rentrée depuis 2015), `bruit_aeroports.py` (zones de bruit des aéroports), `bruit_expo.py` (part de chaque quartier exposée au bruit : vue « Bruit » de la carte), `lignes_osm.py` (tracés des lignes de bus et tram d'après OpenStreetMap, après `gtfs_lignes.py`) |
-| `data/fiches/` | fiches complètes des annonces, une par ville, lues une seule fois par annonce |
-| `tests/run.js` | tests de bout en bout (ordinateur et téléphone) avec Playwright, dont la carte (ce qui est réellement dessiné à chaque zoom), le thème et les réglages communs à deux personnes sur une liste commune simulée ; `tests/vendor/` : MapLibre pour tester la carte 3D sans réseau |
-| `tests/unit.js`, `tests/test_donnees.py` | tests rapides : calcul financier et fiscal, nettoyage des biens partagés, scripts de données, cohérence des villes |
-| `publication.json` | annonces dans la page publique ou seulement dans Supabase |
-| `build.py` | assemble `index.html` (la page servie) et `dist/` (`test.html` : la même page avec les annonces, pour les tests et le serveur MCP) |
-| `src/v2/` | l'ancienne interface (du 8 au 12 novembre 2026 à `index.html`), gardée seulement pour ses tests (`dist/test.html`) et le serveur MCP : marché filtré par nos critères en carte (MapLibre : le zoom montre les villes, puis les quartiers et les annonces, puis les immeubles en 3D, la carte s'inclinant en ville ; quartiers colorés au choix — rendement, prix, loyer, trajet, commerces, étudiants, revenus, DPE, zone inondable — et nommés de près ; annonces en point plein à leur adresse ou à 100 m près, en point creux quand la position est approchée ; nos biens saisis à leur adresse ; lignes de bus et tram des réseaux aux couleurs officielles (`data/lignes.js`, chargé à part), trains, arrêts et commerces autour), tableau ou nuage ; thème clair par défaut ou sombre, au choix de chacun ; ce qui a bougé depuis la dernière visite ; fiche unique en onglets ; avis, offre, visite et comparaison à deux ; branchée sur le moteur, les fiches et la liste partagée de l'app (`src/js/`) |
-| `src/v3/` | l'interface du site, Insula, servie à `index.html` (https://insula.du-cray.eu) depuis le 12 novembre 2026 ; `essai.html`, l'ancienne adresse d'essai, y renvoie : quatre espaces identiques sur ordinateur et téléphone — Explorer (l'Ouest › une ville, en carte, liste ou graphique, villes ou annonces, mêmes filtres ; sur ordinateur la fiche prend la place de la liste), Nos biens (par étape : à voir, visité, offre, compromis, acheté ; avis, un seul comparateur), Projet (commun au groupe : critères, crédit, associés et impôts, hypothèses, ce qui pèse le plus) et Réglages (prénom, groupe, thème clair, sombre ou comme l'appareil, scénario, aide) ; fiche ouverte sur « L'essentiel » ; couleurs et polices du design system Insula. Mêmes calculs et mêmes données (`src/js/`). Tests : `tests/run-v3.js` |
-| `src/js/13-reglages-communs.js` | réglages communs à deux (hypothèses, financement, valeurs par type, critères) dans une ligne spéciale de la liste partagée |
-| `v2.html` | ancien lien d'essai : renvoie à l'adresse d'origine |
-| `manifest.webmanifest`, `sw.js`, `icons/` | appli installable sur téléphone, utilisable hors ligne (version GitHub) |
-| `supabase.sql` | tables partagées « Nos biens » et « annonces » (accès par code de groupe), « retours » (remarques envoyées depuis l'app, partie 5) ; `tools/supabase_annonces.py` envoie les annonces |
-| `sync.sh`, `install-sync.sh` | poussent automatiquement les changements sur GitHub (launchd), après vérification des données et de la page ; en cas de refus, notification macOS et ligne « NON PUBLIÉ » dans `sync.log` |
+| **Explorer** | l'Ouest, puis une ville, en carte, en liste ou en graphique. De loin, les villes sont colorées par rendement. De près, on voit les quartiers (IRIS) colorés selon la mesure choisie, les annonces à leur position, les lignes de bus et de tram, et les immeubles en 3D. |
+| **La fiche** | l'essentiel d'abord. Puis le prix comparé aux ventes réelles du quartier, le calcul (modifiable), le quartier (trajets, commerces, risques, bruit, habitants, copropriété) et l'achat (prix à proposer, documents à demander). |
+| **Nos biens** | les biens suivis, étape par étape : à voir, visité, offre, compromis, acheté. Avec l'avis de chacun, l'offre, la grille de visite, les échéances et un comparateur. |
+| **Projet** | ce qui est commun au groupe : critères, crédit, associés (1 à 6) et impôts, hypothèses, ce qui pèse le plus. |
+| **Réglages** | prénom, code de groupe, thème clair ou sombre, scénario (prudent, central, favorable), aide. |
 
-## Modifier
+Un bien suivi peut être partagé dans un **groupe**, réservé à ceux qui ont le code : un foyer, sa liste et ses réglages. Les annonces et les calculs sont les mêmes pour tout le monde.
+
+## Démarrer
 
 ```bash
-python3 build.py          # régénère index.html ; refuse une page cassée (données invalides, erreur de syntaxe)
-npm install               # une fois : Playwright (version figée dans package-lock.json)
-npx playwright install chromium
-npm test                  # build + tests du calcul + tests des données + tests de bout en bout (ordinateur et téléphone)
+npm install                       # Playwright (tests) et le SDK MCP
+npx playwright install chromium   # une fois
+python3 tools/supabase_annonces.py pull   # annonces du jour (privées, lues dans Supabase)
+npm test                          # construit la page puis lance toutes les suites
 ```
 
-`sync.sh` lance aussi les tests rapides avant chaque publication et n'envoie rien s'ils échouent (notification macOS, ligne « NON PUBLIÉ » dans `sync.log`). GitHub relance tous les tests à chaque envoi (`.github/workflows/tests.yml`).
+`python3 build.py` assemble la page servie (`index.html`) à partir de `src/` et `data/`. Il refuse de produire une page cassée.
 
-Les annonces sont relevées chaque jour dans les 22 villes par une routine Claude : elle écrit `data/releve-du-jour.json`, lit les fiches des annonces nouvelles (`python3 tools/fiches.py todo data/releve-du-jour.json`, puis `tools/fiches-bienici.js` dans la page Bien'ici, 150 par soir au plus), puis lance `python3 tools/maj_annonces.py data/releve-du-jour.json`, `python3 tools/fiches.py merge data/fiches-du-jour.json`, `python3 build.py` et `python3 tools/supabase_annonces.py push`.
+Sur le Mac de travail, une tâche `launchd` publie automatiquement les changements (`sync.sh`). Voir [docs/publication.md](docs/publication.md) avant d'écrire quoi que ce soit dans le dossier.
 
-## Annonces privées (Supabase)
+## Documentation
 
-**Famille et amis : un groupe par foyer.** Chaque foyer a son code (onglet Nos biens, « Créer notre groupe » : code tiré au hasard) et sa liste, ses avis, ses offres et ses réglages ; « Inviter » envoie un lien `…#g=<code>` qui ouvre l'app sur ce groupe (le code reste après « # », jamais envoyé au serveur de la page ; la base n'en garde que l'empreinte). Les annonces et les calculs sont les mêmes pour tous ; le relevé couvre les 22 villes, studios, T2 et T3, jusqu'au plafond tiré du budget de notre groupe (120 000 € en novembre 2026), ce que l'app dit à l'accueil. Remarques : bouton « Une remarque ? » (Budget, mode d'emploi), table `retours` (partie 5 de `supabase.sql`), lisibles seulement avec notre code (vue `retours_lecture`, carte « Remarques reçues » dans Budget).
+| Document | Pour |
+|---|---|
+| [Architecture](docs/architecture.md) | comprendre l'organisation du code, l'assemblage de la page et les interfaces |
+| [Le calcul](docs/calculs.md) | le modèle financier : crédit, loyers, impôts LMNP, revente, rendement |
+| [Règles des données](REGLES.md) | une règle par donnée, la même pour toutes les villes ; ajouter une ville |
+| [Données et sources](docs/donnees.md) | d'où vient chaque fichier de `data/`, sa licence, l'outil qui le produit |
+| [Annonces et groupes](docs/annonces-et-groupes.md) | le relevé du soir, Supabase, les codes de groupe |
+| [Publication](docs/publication.md) | construction, publication automatique, domaine, app installable, app Android |
+| [Tests](docs/tests.md) | les cinq suites et ce qu'elles vérifient |
+| [Serveur MCP](mcp/README.md) | brancher l'outil sur une IA (classer, chercher, simuler) |
+| [Journal des changements](CHANGELOG.md) | les grandes étapes |
 
-Depuis le 7 novembre 2026, les annonces, leur historique et leurs fiches (descriptions, photos d'agences) ne sont plus dans le dépôt public : la page les lit dans Supabase. Depuis le 9 novembre 2026, tout le monde les voit, sans code, par la vue en lecture seule « annonces_publiques » (partie 3 de `supabase.sql` : elle ne montre jamais la colonne du code) ; le code de groupe ne sert plus qu'à « Nos biens » et aux réglages communs. Sur un nouvel ordinateur : `python3 tools/supabase_annonces.py pull`. Mise en place (déjà faite) :
+## Pile technique
 
-1. Dans Supabase > SQL Editor, coller la partie « Novembre 2026 » de `supabase.sql`, puis Run.
-2. Sur le Mac, enregistrer le code de groupe (le même que dans la page, « Liste commune ») :
-   `mkdir -p ~/.config/immobilier-tool && pbpaste > ~/.config/immobilier-tool/groupe` (après l'avoir copié).
-3. `python3 tools/supabase_annonces.py push` puis `python3 tools/supabase_annonces.py check`.
-4. Mettre `"annonces_publiques": false` dans `publication.json`, puis `python3 build.py` : la page publique ne contient plus d'annonces ; la page les lit dans Supabase avec le code.
-5. Retirer les fichiers du dépôt (ils restent sur le Mac) : `git rm --cached -r data/annoncesdata.js data/historique.js data/fiches` et les ajouter à `.gitignore`. L'historique git garde les anciennes versions tant qu'il n'est pas réécrit.
+Page unique en HTML, CSS et JavaScript, sans framework ni étape de compilation JavaScript. La carte utilise [MapLibre GL](https://maplibre.org), avec les fonds vectoriels d'[OpenFreeMap](https://openfreemap.org). La préparation des données est en Python. Les annonces et la liste commune sont stockées dans [Supabase](https://supabase.com). Les tests de bout en bout tournent sous [Playwright](https://playwright.dev). Le site est hébergé sur GitHub Pages, derrière Cloudflare.
 
 ## Licence
 
-Le code (`src/`, `tools/`, `tests/`, `mcp/`, `build.py`, scripts) est sous licence MIT (`LICENSE`), © 2026 Louis-Marie Perret du Cray. Les fichiers de `data/` n'en font pas partie : chacun garde la licence de sa source, à citer en cas de réutilisation.
+Le code (`src/`, `tools/`, `tests/`, `mcp/`, `build.py` et les scripts) est sous [licence MIT](LICENSE), © 2026 Louis-Marie Perret du Cray.
 
-| Données | Source | Licence |
-|---|---|---|
-| ventes réelles (`dvf.json`), prix des appartements depuis 2014 (`prix-tendance.json`) | DVF (DGFiP) ; Terralyse d'après DVF | Licence Ouverte 2.0 |
-| contours des quartiers IRIS et projection de l'ancienne carte (`irisdata.js`, `mapdata.js`), mairies (`reperes.json`), urbanisme (`territoire.json`) | IGN | Licence Ouverte 2.0 |
-| DPE des quartiers (`irisdata.js`) | ADEME | Licence Ouverte 2.0 |
-| habitants, revenus, logements vides (`habitants.json`) | Insee | Licence Ouverte 2.0 |
-| copropriétés : lots, époque, syndic, parcelles (`copro/<ville>.js`) | registre national d'immatriculation des copropriétés (Anah) | Licence Ouverte 2.0 |
-| résidences du Crous, permis de construire de logements, parcelles (`conc/<ville>.js`) | ministère de l'Enseignement supérieur ; Sitadel (SDES) ; cadastre Etalab | Licence Ouverte 2.0 |
-| résidences étudiantes privées (`conc/<ville>.js`) | OpenStreetMap et ses contributeurs | ODbL |
-| étudiants par rentrée (`etudiants.json`), campus et leurs inscrits (`reperes.json`) | ministère de l'Enseignement supérieur (SIES, atlas régional) | Licence Ouverte 2.0 |
-| grands axes et voies ferrées autour des quartiers (`bruit-quartiers.json`), part exposée au bruit (`bruit-expo.json`) et voies de chaque ville (`bruit/<ville>.js`), tracés des lignes de bus et tram dans `lignes.js` | OpenStreetMap et ses contributeurs | ODbL |
-| zones de bruit des aéroports (`peb.json`) | DGAC, plans d'exposition au bruit, Géoplateforme de l'IGN | conditions de la Géoplateforme (cartes.gouv.fr) |
-| zone tendue (`ZTEN` dans `src/js/00-villes-calcul.js`) | zonage TLV, ministère de la Transition écologique | Licence Ouverte 2.0 |
-| loyers de référence (`loyers-etat.json`) | carte des loyers de l'État | Licence Ouverte 2.0 |
-| risques et catastrophes naturelles (`risques-quartiers.json`, `territoire.json`) | Géorisques | Licence Ouverte 2.0 |
-| écoles, quartiers prioritaires (`territoire.json`), campus (`reperes.json`) | Éducation nationale ; ANCT, via la Caisse des dépôts ; Enseignement supérieur | Licence Ouverte 2.0 |
-| gares et leur fréquentation (`reperes.json`) | SNCF | ODbL |
-| commerces (`commerces.json`), trajets à pied et à vélo (`temps-trajets.json`) | OpenStreetMap et ses contributeurs | ODbL |
-| lignes de bus et tram, trajets en bus (`lignes.js`, `transports.json`) | horaires GTFS des réseaux (transport.data.gouv.fr) | celle de chaque réseau (souvent ODbL) |
-| prix et loyers RealAdvisor des quartiers (dans `irisdata.js`) | RealAdvisor | non couverts : droits de RealAdvisor |
-| secteurs Bien'ici reliés aux quartiers (`secteurs-nouvelles-villes.json`) | Bien'ici | non couverts : droits de Bien'ici |
+Les fichiers de `data/` n'en font pas partie : chacun garde la licence de sa source, la plupart sous Licence Ouverte 2.0 ou ODbL. Le détail est dans [docs/donnees.md](docs/donnees.md).
 
-Estimations, pas un conseil financier ni fiscal.
+> Les chiffres sont des estimations faites à partir de sources publiques. Ce n'est ni un conseil financier, ni un conseil fiscal : vérifiez avec la banque, le notaire et un comptable avant de signer.

@@ -1,0 +1,29 @@
+name: Problème
+description: Quelque chose ne marche pas ou un chiffre semble faux.
+labels: [problème]
+body:
+  - type: textarea
+    id: quoi
+    attributes:
+      label: Ce qui se passe
+      description: Ce que vous avez vu, et ce que vous attendiez.
+    validations:
+      required: true
+  - type: textarea
+    id: comment
+    attributes:
+      label: Pour le reproduire
+      description: L'espace (Explorer, Nos biens, Projet, Réglages), la ville, l'annonce ou le lien de la fiche (#f=…).
+      placeholder: "1. Explorer › Le Mans\n2. Ouvrir l'annonce…\n3. …"
+  - type: dropdown
+    id: ou
+    attributes:
+      label: Où
+      options: [Site sur ordinateur, Site sur téléphone, App Android]
+    validations:
+      required: true
+  - type: textarea
+    id: capture
+    attributes:
+      label: Capture d'écran
+      description: Facultatif. Masquez le code de groupe s'il apparaît.

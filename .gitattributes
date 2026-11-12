@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+
+# fichiers produits : hors statistiques de langage et repliés dans les diffs
+index.html linguist-generated
+essai.html linguist-generated
+sw.js linguist-generated
+data/** linguist-generated
+tests/vendor/** linguist-vendored
+tools/archive/** linguist-vendored

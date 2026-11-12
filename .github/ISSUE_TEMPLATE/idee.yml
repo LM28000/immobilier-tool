@@ -1,0 +1,16 @@
+name: Idée
+description: Une fonction, une donnée ou une amélioration.
+labels: [idée]
+body:
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Le besoin
+      description: Ce que vous cherchez à savoir ou à faire, et pourquoi.
+    validations:
+      required: true
+  - type: textarea
+    id: proposition
+    attributes:
+      label: Une idée de solution
+      description: Facultatif. Une source de données, un écran, un exemple.

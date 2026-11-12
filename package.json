@@ -1,7 +1,13 @@
 {
   "name": "immobilier-tool",
   "private": true,
-  "description": "Où acheter notre studio ? — comparateur de villes, quartiers et annonces",
+  "description": "Insula : où acheter un studio, un T2 ou un T3 à louer dans 22 villes de l'Ouest (villes, quartiers, annonces, rendement LMNP)",
+  "homepage": "https://insula.du-cray.eu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LM28000/immobilier-tool"
+  },
+  "license": "MIT",
   "scripts": {
     "build": "python3 build.py",
     "test:unit": "node tests/unit.js && python3 tests/test_donnees.py",
